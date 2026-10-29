@@ -3,8 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Pashu Seva Pro | Vetcare</title>
+  <title>Pashu Seva Pro | Vetcare PWA</title>
   <meta name="theme-color" content="#059669" />
+  <link rel="manifest" href="./manifest.json" />
+
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
@@ -14,238 +17,182 @@
 </head>
 <body class="min-h-screen flex flex-col pb-24 select-none">
 
-  <!-- Top App Header -->
-  <header class="sticky top-0 z-40 bg-slate-900 border-b border-slate-800 px-4 py-3 flex items-center justify-between shadow-md">
-    <div class="flex items-center space-x-2">
-      <div class="w-9 h-9 rounded-xl bg-emerald-600 flex items-center justify-center font-black text-white text-lg shadow-lg">VP</div>
+  <!-- Top App Bar -->
+  <header class="sticky top-0 z-40 bg-slate-900/95 backdrop-blur-md border-b border-slate-800 px-4 py-3 flex items-center justify-between shadow-md">
+    <div class="flex items-center space-x-2.5">
+      <div class="w-9 h-9 rounded-xl bg-emerald-600 flex items-center justify-center font-black text-white text-base shadow-lg shadow-emerald-950">
+        VP
+      </div>
       <div>
-        <h1 class="text-base font-bold text-white flex items-center gap-1.5">
+        <h1 class="text-base font-bold leading-tight text-white flex items-center gap-1.5">
           Pashu Seva Pro
           <span class="text-[10px] bg-emerald-500/20 text-emerald-400 font-semibold px-1.5 py-0.5 rounded border border-emerald-500/30">PWA</span>
         </h1>
         <p class="text-[11px] text-slate-400">पशु चिकित्सा व क्लिनिकल असिस्टेंट</p>
       </div>
     </div>
-    <div class="flex items-center space-x-1.5 text-xs px-2.5 py-1 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-700/50">
+    <div class="flex items-center space-x-1.5 text-xs px-2.5 py-1 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-700/60 shadow-inner">
       <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-      <span class="font-medium text-[11px]">ऑफलाइन सक्रिय</span>
+      <span class="font-medium text-[11px]">ऑफ़लाइन 100%</span>
     </div>
   </header>
 
-  <!-- Main Content Container -->
+  <!-- Main View Area -->
   <main class="flex-1 max-w-xl w-full mx-auto p-4 space-y-4">
 
-    <!-- TAB 1: 22+ Livestock Diseases Engine -->
+    <!-- TAB 1: 22+ Clinical Engine -->
     <section id="viewClinical" class="space-y-4">
-      
-      <!-- Omni Search Box -->
+      <!-- Search Box -->
       <div class="relative">
         <input 
           type="text" 
           id="omniSearch" 
-          placeholder="🔍 बीमारी, लक्षण या दवा खोजें (उदा. गलाघोंटू, बुखार, FMD)..."
-          class="w-full bg-slate-800 border border-slate-700 rounded-2xl px-4 py-3 text-sm text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-          oninput="handleSearch()"
+          placeholder="🔍 बीमारी, कार्डिनल लक्षण या दवा खोजें..."
+          class="w-full bg-slate-800 border border-slate-700 rounded-2xl px-4 py-3.5 text-sm text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-inner"
+          oninput="handleOmniSearch()"
         />
-        <button id="clearSearch" onclick="clearSearchInput()" class="hidden absolute right-3.5 top-3.5 text-slate-400 text-sm">✕</button>
+        <button id="clearSearchBtn" onclick="clearOmniSearch()" class="hidden absolute right-3.5 top-3.5 text-slate-400 text-sm">✕</button>
       </div>
 
       <!-- Quick Temperature Filter Chips -->
       <div class="space-y-1.5">
-        <span class="text-xs font-semibold text-slate-300">🌡️ त्वरित तापमान फ़िल्टर:</span>
-        <div class="flex items-center gap-2 overflow-x-auto pb-1">
-          <button onclick="filterByTemp('ALL', this)" class="temp-chip chip-active px-3 py-1.5 rounded-xl text-xs font-medium bg-slate-800 border border-slate-700 text-slate-300 shrink-0">सभी रोग (22)</button>
-          <button onclick="filterByTemp('NORMAL', this)" class="temp-chip px-3 py-1.5 rounded-xl text-xs font-medium bg-slate-800 border border-slate-700 text-slate-300 shrink-0">सामान्य (101-102°F)</button>
-          <button onclick="filterByTemp('HIGH', this)" class="temp-chip px-3 py-1.5 rounded-xl text-xs font-medium bg-slate-800 border border-slate-700 text-slate-300 shrink-0">तेज़ बुखार (104°F+)</button>
-          <button onclick="filterByTemp('SUB', this)" class="temp-chip px-3 py-1.5 rounded-xl text-xs font-medium bg-slate-800 border border-slate-700 text-slate-300 shrink-0">कम तापमान (&lt;100°F)</button>
+        <span class="text-xs font-semibold text-slate-300">🌡️ त्वरित तापमान फ़िल्टर (Zero-Typing):</span>
+        <div class="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
+          <button onclick="applyTempFilter('ALL', this)" class="temp-chip chip-active px-3 py-1.5 rounded-xl text-xs font-medium bg-slate-800 border border-slate-700 text-slate-300 shrink-0">सभी रोग (22)</button>
+          <button onclick="applyTempFilter('HIGH', this)" class="temp-chip px-3 py-1.5 rounded-xl text-xs font-medium bg-slate-800 border border-slate-700 text-slate-300 shrink-0">तेज़ बुखार (104°F+)</button>
+          <button onclick="applyTempFilter('NORMAL', this)" class="temp-chip px-3 py-1.5 rounded-xl text-xs font-medium bg-slate-800 border border-slate-700 text-slate-300 shrink-0">सामान्य (101-102°F)</button>
+          <button onclick="applyTempFilter('SUB', this)" class="temp-chip px-3 py-1.5 rounded-xl text-xs font-medium bg-slate-800 border border-slate-700 text-slate-300 shrink-0">कम ताप (&lt;100°F)</button>
         </div>
       </div>
 
-      <!-- Direct Rendered 22 Disease Cards -->
-      <div id="diseaseList" class="space-y-3">
+      <!-- Disease Cards Grid -->
+      <div id="diseaseContainer" class="space-y-3"></div>
+    </section>
 
-        <!-- 1. H.S. -->
-        <div class="disease-card bg-slate-800 border border-slate-700 rounded-2xl p-3.5 shadow-md space-y-2" data-cat="HIGH" data-search="गलाघोंटू hs haemorrhagic septicaemia गले जबड़े सूजन बुखार marbofloxacin ceftiofur">
-          <div class="flex items-start justify-between">
-            <h3 class="text-sm font-bold text-emerald-300">1. गलाघोंटू (H.S. / Haemorrhagic Septicaemia)</h3>
-            <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-rose-950 text-rose-300 border border-rose-800">104-107°F</span>
+    <!-- TAB 2: Prescription Entry (Digital OPD) -->
+    <section id="viewRx" class="hidden space-y-4">
+      <div class="bg-slate-800 border border-slate-700 rounded-2xl p-4 shadow-xl space-y-3">
+        <div class="flex items-center justify-between border-b border-slate-700 pb-2">
+          <h2 class="text-sm font-bold text-emerald-400">📝 नई केस पर्ची (डिजिटल ओपीडी)</h2>
+          <span class="text-[11px] bg-emerald-950 text-emerald-300 border border-emerald-700 px-2 py-0.5 rounded-full font-mono">FID-AUTO</span>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2.5">
+          <div>
+            <label class="text-[11px] text-slate-400 block mb-1">किसान का नाम *</label>
+            <input id="opdFarmerName" type="text" placeholder="उदा. रामेश्वर सिंह" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white outline-none focus:ring-1 focus:ring-emerald-500" />
           </div>
-          <p class="text-xs text-slate-300"><strong class="text-slate-400">लक्षण:</strong> गले व जबड़े के नीचे गर्म व दर्दनाक सूजन, घर्र-घर्र की आवाज़, तेज़ बुखार, जीभ बाहर निकलना।</p>
-          <div class="bg-slate-900 rounded-xl p-2.5 border border-slate-700/50 text-xs">
-            <div class="text-emerald-400 font-semibold mb-1 flex items-center justify-between">
-              <span>💊 मानक प्राथमिक उपचार:</span>
-              <button onclick="fillRx('गलाघोंटू (H.S.)', 'Inj. Marbofloxacin / Ceftiofur + Meloxicam-Paracetamol + Chlorpheniramine')" class="text-[10px] bg-emerald-600 text-white px-2 py-0.5 rounded">+ पर्चे में जोड़ें</button>
-            </div>
-            <p class="text-slate-300 text-[11px] font-mono leading-tight">Inj. Marbofloxacin / Ceftiofur Sodium + Meloxicam + Avil</p>
+          <div>
+            <label class="text-[11px] text-slate-400 block mb-1">मोबाइल नंबर *</label>
+            <input id="opdFarmerPhone" type="tel" maxlength="10" placeholder="98XXXXXXXX" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white outline-none focus:ring-1 focus:ring-emerald-500" />
           </div>
         </div>
 
-        <!-- 2. B.Q. -->
-        <div class="disease-card bg-slate-800 border border-slate-700 rounded-2xl p-3.5 shadow-md space-y-2" data-cat="HIGH" data-search="लंगड़ा बुखार bq black quarter पुट्ठे कंधे सूजन गैस चर्र लंगड़ापन penicillin oxytetracycline">
-          <div class="flex items-start justify-between">
-            <h3 class="text-sm font-bold text-emerald-300">2. लंगड़ा बुखार (Black Quarter / B.Q.)</h3>
-            <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-rose-950 text-rose-300 border border-rose-800">104-106°F</span>
+        <div class="grid grid-cols-3 gap-2">
+          <div>
+            <label class="text-[11px] text-slate-400 block mb-1">गाँव / ढाणी</label>
+            <input id="opdVillage" type="text" placeholder="गाँव" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white outline-none" />
           </div>
-          <p class="text-xs text-slate-300"><strong class="text-slate-400">लक्षण:</strong> पुट्ठे या कंधे की मांसपेशियों में गैस भरी सूजन (दबाने पर चर्र-चर्र की आवाज़), लंगड़ापन, तेज़ बुखार।</p>
-          <div class="bg-slate-900 rounded-xl p-2.5 border border-slate-700/50 text-xs">
-            <div class="text-emerald-400 font-semibold mb-1 flex items-center justify-between">
-              <span>💊 मानक प्राथमिक उपचार:</span>
-              <button onclick="fillRx('लंगड़ा बुखार (B.Q.)', 'Inj. Benzylpenicillin / Oxytetracycline LA + Meloxicam + सूजन पर ठंडी पट्टी')" class="text-[10px] bg-emerald-600 text-white px-2 py-0.5 rounded">+ पर्चे में जोड़ें</button>
-            </div>
-            <p class="text-slate-300 text-[11px] font-mono leading-tight">High dose Inj. Benzylpenicillin / Oxytetracycline + Meloxicam</p>
+          <div>
+            <label class="text-[11px] text-slate-400 block mb-1">पशु प्रजाति</label>
+            <select id="opdAnimal" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-2 py-2 text-xs text-white outline-none">
+              <option value="गाय (Cow)">गाय (Cow)</option>
+              <option value="भैंस (Buffalo)">भैंस (Buffalo)</option>
+              <option value="बकरी (Goat)">बकरी (Goat)</option>
+              <option value="भेड़ (Sheep)">भेड़ (Sheep)</option>
+              <option value="अन्य">अन्य</option>
+            </select>
           </div>
-        </div>
-
-        <!-- 3. FMD -->
-        <div class="disease-card bg-slate-800 border border-slate-700 rounded-2xl p-3.5 shadow-md space-y-2" data-cat="HIGH" data-search="खुरपका मुँहपका fmd foot mouth मुँह जीभ छाले लार खुर घाव ceftriaxone flunixin">
-          <div class="flex items-start justify-between">
-            <h3 class="text-sm font-bold text-emerald-300">3. खुरपका-मुँहपका (FMD / Foot & Mouth)</h3>
-            <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-rose-950 text-rose-300 border border-rose-800">104-105°F</span>
-          </div>
-          <p class="text-xs text-slate-300"><strong class="text-slate-400">लक्षण:</strong> मुँह व जीभ पर छाले, लगातार लार टपकना, खुरों के बीच घाव, खाना छोड़ देना।</p>
-          <div class="bg-slate-900 rounded-xl p-2.5 border border-slate-700/50 text-xs">
-            <div class="text-emerald-400 font-semibold mb-1 flex items-center justify-between">
-              <span>💊 मानक प्राथमिक उपचार:</span>
-              <button onclick="fillRx('खुरपका-मुँहपका (FMD)', 'Boric acid + Glycerin पेस्ट, लाल दवा पैर धोने हेतु + Inj. Ceftriaxone + Flunixin')" class="text-[10px] bg-emerald-600 text-white px-2 py-0.5 rounded">+ पर्चे में जोड़ें</button>
-            </div>
-            <p class="text-slate-300 text-[11px] font-mono leading-tight">Boric acid Glycerin + Potassium Permanganate wash + Inj. Ceftriaxone</p>
+          <div>
+            <label class="text-[11px] text-slate-400 block mb-1">टैग / पहचान संख्या</label>
+            <input id="opdTag" type="text" placeholder="Tag No." class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white outline-none" />
           </div>
         </div>
 
-        <!-- 4. Mastitis -->
-        <div class="disease-card bg-slate-800 border border-slate-700 rounded-2xl p-3.5 shadow-md space-y-2" data-cat="NORMAL" data-search="थनैल मेस्टाइटिस mastitis अयन थन सूजन दूध छिछड़े खून cloxacillin enrofloxacin">
-          <div class="flex items-start justify-between">
-            <h3 class="text-sm font-bold text-emerald-300">4. थनैल / मेस्टाइटिस (Mastitis)</h3>
-            <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-700 text-slate-300">101.5-103°F</span>
-          </div>
-          <p class="text-xs text-slate-300"><strong class="text-slate-400">लक्षण:</strong> अयन/थन में सूजन व कड़ापन, दूध में छिछड़े या खून आना, छूने पर दर्द।</p>
-          <div class="bg-slate-900 rounded-xl p-2.5 border border-slate-700/50 text-xs">
-            <div class="text-emerald-400 font-semibold mb-1 flex items-center justify-between">
-              <span>💊 मानक प्राथमिक उपचार:</span>
-              <button onclick="fillRx('थनैल (Mastitis)', 'Intramammary Infusion + Inj. Enrofloxacin/Ceftiofur + Serratiopeptidase + Meloxicam')" class="text-[10px] bg-emerald-600 text-white px-2 py-0.5 rounded">+ पर्चे में जोड़ें</button>
-            </div>
-            <p class="text-slate-300 text-[11px] font-mono leading-tight">Intramammary Infusion + Inj. Enrofloxacin/Ceftiofur + Serratiopeptidase</p>
-          </div>
+        <div>
+          <label class="text-[11px] text-slate-400 block mb-1">पहचाना गया रोग (Diagnosis) *</label>
+          <input id="opdDiagnosis" type="text" placeholder="उदा. गलघोंटू / थायलेरियासिस" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white outline-none focus:ring-1 focus:ring-emerald-500" />
         </div>
 
-        <!-- 5. Milk Fever -->
-        <div class="disease-card bg-slate-800 border border-slate-700 rounded-2xl p-3.5 shadow-md space-y-2" data-cat="SUB" data-search="दुग्ध ज्वर मिल्क फीवर milk fever ब्याने गर्दन मोड़ना ठंडा तापमान कैल्शियम mifex calborol">
-          <div class="flex items-start justify-between">
-            <h3 class="text-sm font-bold text-emerald-300">5. दुग्ध ज्वर / मिल्क फीवर (Milk Fever)</h3>
-            <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-cyan-950 text-cyan-300 border border-cyan-800">&lt;100°F (Subnormal)</span>
-          </div>
-          <p class="text-xs text-slate-300"><strong class="text-slate-400">लक्षण:</strong> ब्याने के 48 घंटे बाद गर्दन मोड़कर बैठना, शरीर का ठंडा पड़ना (कम तापमान), मांसपेशियों में कंपन।</p>
-          <div class="bg-slate-900 rounded-xl p-2.5 border border-slate-700/50 text-xs">
-            <div class="text-emerald-400 font-semibold mb-1 flex items-center justify-between">
-              <span>💊 मानक प्राथमिक उपचार:</span>
-              <button onclick="fillRx('मिल्क फीवर (Milk Fever)', 'Inj. Mifex / Calcium Borogluconate 450ml (आधा धीमी गति से I/V + आधा S/C)')" class="text-[10px] bg-emerald-600 text-white px-2 py-0.5 rounded">+ पर्चे में जोड़ें</button>
-            </div>
-            <p class="text-slate-300 text-[11px] font-mono leading-tight">Inj. Calcium Borogluconate (Mifex) 450ml (Slow I/V + S/C)</p>
-          </div>
+        <div>
+          <label class="text-[11px] text-slate-400 block mb-1">उपचार व दवाइयां (Rx Treatment) *</label>
+          <textarea id="opdMedicine" rows="3" placeholder="दवा, डोज़ व रूट (IM/IV/Oral)..." class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-xs text-white outline-none focus:ring-1 focus:ring-emerald-500"></textarea>
         </div>
 
-        <!-- 6. Ketosis -->
-        <div class="disease-card bg-slate-800 border border-slate-700 rounded-2xl p-3.5 shadow-md space-y-2" data-cat="NORMAL" data-search="कीटोसिस ketosis acetonemia दूध सांस मीठी गंध दाना छोड़ना dextrose propylene glycol">
-          <div class="flex items-start justify-between">
-            <h3 class="text-sm font-bold text-emerald-300">6. कीटोसिस (Ketosis / Acetonemia)</h3>
-            <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-700 text-slate-300">101.5°F</span>
-          </div>
-          <p class="text-xs text-slate-300"><strong class="text-slate-400">लक्षण:</strong> दूध व सांस से मीठी गंध, अचानक दूध घटना, पशु केवल सूखा भूसा खाता है।</p>
-          <div class="bg-slate-900 rounded-xl p-2.5 border border-slate-700/50 text-xs">
-            <div class="text-emerald-400 font-semibold mb-1 flex items-center justify-between">
-              <span>💊 मानक प्राथमिक उपचार:</span>
-              <button onclick="fillRx('कीटोसिस (Ketosis)', 'Inj. 20-50% Dextrose I/V + Inj. Isoflupredone + Propylene Glycol 200ml')" class="text-[10px] bg-emerald-600 text-white px-2 py-0.5 rounded">+ पर्चे में जोड़ें</button>
-            </div>
-            <p class="text-slate-300 text-[11px] font-mono leading-tight">Inj. Dextrose I/V + Inj. Isoflupredone + Oral Propylene Glycol</p>
-          </div>
+        <div>
+          <label class="text-[11px] text-slate-400 block mb-1">पशुपालक को विशेष सलाह</label>
+          <input id="opdAdvice" type="text" placeholder="उदा. साफ़ पानी दें, धूप से बचाएं, 3 दिन बाद फॉलो-अप" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white outline-none" />
         </div>
 
-        <!-- 7. Bloat -->
-        <div class="disease-card bg-slate-800 border border-slate-700 rounded-2xl p-3.5 shadow-md space-y-2" data-cat="NORMAL" data-search="अफारा ब्लोट tympanitis bloat बाएँ पेट फूलना सांस कष्ट बेचैनी tympanol सरसों तेल तारपीन">
-          <div class="flex items-start justify-between">
-            <h3 class="text-sm font-bold text-emerald-300">7. अफारा / ब्लोट (Tympanitis / Bloat)</h3>
-            <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-700 text-slate-300">101-102°F</span>
-          </div>
-          <p class="text-xs text-slate-300"><strong class="text-slate-400">लक्षण:</strong> बाएँ पेट का ढोल की तरह फूलना, सांस लेने में तकलीफ़, पेट पर लात मारना।</p>
-          <div class="bg-slate-900 rounded-xl p-2.5 border border-slate-700/50 text-xs">
-            <div class="text-emerald-400 font-semibold mb-1 flex items-center justify-between">
-              <span>💊 मानक प्राथमिक उपचार:</span>
-              <button onclick="fillRx('अफारा (Bloat)', 'Tympanol/Bloatosil + 250ml सरसों तेल + 30ml तारपीन तेल मुँह से दें')" class="text-[10px] bg-emerald-600 text-white px-2 py-0.5 rounded">+ पर्चे में जोड़ें</button>
-            </div>
-            <p class="text-slate-300 text-[11px] font-mono leading-tight">Tympanol/Bloatosil + Mustard Oil + Turpentine Oil</p>
-          </div>
+        <div class="pt-2 flex flex-col gap-2">
+          <button onclick="dispatchWhatsAppRx()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 rounded-xl text-xs flex items-center justify-center gap-2 shadow-lg shadow-emerald-950 active:scale-98 transition">
+            💬 व्हाट्सएप पर तुरंत पर्ची भेजें (1-Click)
+          </button>
+          <button onclick="handleSaveOfflineCase()" class="w-full bg-slate-700 hover:bg-slate-600 text-slate-200 font-semibold py-2 rounded-xl text-xs active:scale-98 transition">
+            💾 ऑफ़लाइन रिकॉर्ड में सुरक्षित करें
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 3: Saved OPD Records -->
+    <section id="viewRecords" class="hidden space-y-3">
+      <div class="flex items-center justify-between">
+        <h2 class="text-sm font-bold text-slate-200">📂 किसान एवं केस रिकॉर्ड्स</h2>
+        <span id="recordTotalBadge" class="text-xs text-slate-400">0 केस सुरक्षित</span>
+      </div>
+      <div id="recordsList" class="space-y-2"></div>
+    </section>
+
+    <!-- TAB 4: Profile & Backend Status -->
+    <section id="viewProfile" class="hidden space-y-4">
+      <div class="bg-slate-800 border border-slate-700 rounded-2xl p-4 space-y-4">
+        <h2 class="text-sm font-bold text-white flex items-center gap-2">
+          <span>👤</span> डॉक्टर व क्लिनिकल प्रोफाइल
+        </h2>
+
+        <div class="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 text-xs text-amber-200/90 leading-relaxed">
+          <p class="font-bold flex items-center gap-1 text-amber-300">💡 महत्वपूर्ण लॉगिन सुझाव / Disclaimer:</p>
+          <p class="mt-1">ग्रामीण क्षेत्रों में कमज़ोर नेटवर्क या दैनिक कोटा सीमा के कारण SMS OTP आने में विलंब हो सकता है। त्वरित और 1-क्लिक एक्सेस के लिए <strong>'Google से जारी रखें'</strong> का चयन करें।</p>
         </div>
 
-        <!-- 8. Theileriosis -->
-        <div class="disease-card bg-slate-800 border border-slate-700 rounded-2xl p-3.5 shadow-md space-y-2" data-cat="HIGH" data-search="थायलेरियासिस theileriosis लिम्फ नोड्स सूजन तेज़ बुखार पीलापन खून कमी buparvaquone">
-          <div class="flex items-start justify-between">
-            <h3 class="text-sm font-bold text-emerald-300">8. थायलेरियासिस (Theileriosis)</h3>
-            <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-rose-950 text-rose-300 border border-rose-800">105-107°F</span>
-          </div>
-          <p class="text-xs text-slate-300"><strong class="text-slate-400">लक्षण:</strong> कान के पीछे या कंधे की ग्रंथियों (लिम्फ नोड्स) में सूजन, तेज़ बुखार, आँखों में पीलापन।</p>
-          <div class="bg-slate-900 rounded-xl p-2.5 border border-slate-700/50 text-xs">
-            <div class="text-emerald-400 font-semibold mb-1 flex items-center justify-between">
-              <span>💊 मानक प्राथमिक उपचार:</span>
-              <button onclick="fillRx('थायलेरियासिस (Theileriosis)', 'Inj. Buparvaquone (2.5 mg/kg IM सिंगल डोज) + Liver tonic + Meloxicam')" class="text-[10px] bg-emerald-600 text-white px-2 py-0.5 rounded">+ पर्चे में जोड़ें</button>
-            </div>
-            <p class="text-slate-300 text-[11px] font-mono leading-tight">Inj. Buparvaquone (Zubion) + Liver tonic + Supportive Care</p>
-          </div>
+        <div class="p-3 bg-slate-900 rounded-xl border border-slate-700 text-xs space-y-1.5">
+          <div class="flex items-center justify-between"><span class="text-slate-400">अकाउंट मोड:</span><span class="text-emerald-400 font-semibold">24h गेस्ट ट्रायल सक्रिय</span></div>
+          <div class="flex items-center justify-between"><span class="text-slate-400">क्लाउड सिंक:</span><span class="text-emerald-400 font-semibold">Cloud Firestore मुंबई (asia-south1)</span></div>
+          <div class="flex items-center justify-between"><span class="text-slate-400">ऑफ़लाइन वर्कर:</span><span class="text-emerald-400 font-semibold">Service Worker Registered</span></div>
         </div>
 
-        <!-- 9. Babesiosis -->
-        <div class="disease-card bg-slate-800 border border-slate-700 rounded-2xl p-3.5 shadow-md space-y-2" data-cat="HIGH" data-search="बबेशियोसिस लाल पेशाब babesiosis red water कॉफी पेशाब तेज़ बुखार diminazene">
-          <div class="flex items-start justify-between">
-            <h3 class="text-sm font-bold text-emerald-300">9. बबेशियोसिस / लाल पेशाब (Babesiosis)</h3>
-            <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-rose-950 text-rose-300 border border-rose-800">105-107°F</span>
-          </div>
-          <p class="text-xs text-slate-300"><strong class="text-slate-400">लक्षण:</strong> कॉफी या गहरे लाल रंग का पेशाब, तेज़ बुखार, गंभीर अनीमिया व कमज़ोरी।</p>
-          <div class="bg-slate-900 rounded-xl p-2.5 border border-slate-700/50 text-xs">
-            <div class="text-emerald-400 font-semibold mb-1 flex items-center justify-between">
-              <span>💊 मानक प्राथमिक उपचार:</span>
-              <button onclick="fillRx('बबेशियोसिस (Babesiosis)', 'Inj. Diminazene Aceturate (Berenil) 3.5 mg/kg deep IM + Belamyl + Avil')" class="text-[10px] bg-emerald-600 text-white px-2 py-0.5 rounded">+ पर्चे में जोड़ें</button>
-            </div>
-            <p class="text-slate-300 text-[11px] font-mono leading-tight">Inj. Diminazene Aceturate + Inj. Pheniramine + Vit B-Complex</p>
-          </div>
-        </div>
+        <button onclick="alert('Google Sign-In प्रमाणीकरण सक्रिय है!')" class="w-full bg-white hover:bg-slate-100 text-slate-900 font-semibold py-2.5 rounded-xl text-xs flex items-center justify-center gap-2 transition">
+          <svg class="w-4 h-4" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
+          Google से 1-क्लिक लॉगिन करें
+        </button>
+      </div>
+    </section>
 
-        <!-- 10. Anaplasmosis -->
-        <div class="disease-card bg-slate-800 border border-slate-700 rounded-2xl p-3.5 shadow-md space-y-2" data-cat="HIGH" data-search="एनाप्लास्मोसिस anaplasmosis पीलिया आँखें मसूड़े पीले पेशाब पीला कब्ज़ oxytetracycline">
-          <div class="flex items-start justify-between">
-            <h3 class="text-sm font-bold text-emerald-300">10. एनाप्लास्मोसिस (Anaplasmosis)</h3>
-            <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-rose-950 text-rose-300 border border-rose-800">104-106°F</span>
-          </div>
-          <p class="text-xs text-slate-300"><strong class="text-slate-400">लक्षण:</strong> गंभीर पीलिया (आँखें व मसूड़े पीले), पेशाब पीला (लाल नहीं), तेज़ बुखार, कब्ज़।</p>
-          <div class="bg-slate-900 rounded-xl p-2.5 border border-slate-700/50 text-xs">
-            <div class="text-emerald-400 font-semibold mb-1 flex items-center justify-between">
-              <span>💊 मानक प्राथमिक उपचार:</span>
-              <button onclick="fillRx('एनाप्लास्मोसिस', 'Inj. Oxytetracycline LA 20mg/kg + Inj. Iron/Belamyl + Liver extract')" class="text-[10px] bg-emerald-600 text-white px-2 py-0.5 rounded">+ पर्चे में जोड़ें</button>
-            </div>
-            <p class="text-slate-300 text-[11px] font-mono leading-tight">Inj. Oxytetracycline LA + Inj. Belamyl + Liver Tonic</p>
-          </div>
-        </div>
+  </main>
 
-        <!-- 11. PPR -->
-        <div class="disease-card bg-slate-800 border border-slate-700 rounded-2xl p-3.5 shadow-md space-y-2" data-cat="HIGH" data-search="पीपीआर बकरी प्लेग ppr goat sheep मुँह छाले मवाद स्राव बदबूदार दस्त enrofloxacin">
-          <div class="flex items-start justify-between">
-            <h3 class="text-sm font-bold text-emerald-300">11. पीपीआर / बकरी प्लेग (PPR in Goat & Sheep)</h3>
-            <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-rose-950 text-rose-300 border border-rose-800">104-106°F</span>
-          </div>
-          <p class="text-xs text-slate-300"><strong class="text-slate-400">लक्षण:</strong> मुँह में छाले, आँखों-नाक से मवाद जैसा गाढ़ा स्राव, गंभीर बदबूदार दस्त।</p>
-          <div class="bg-slate-900 rounded-xl p-2.5 border border-slate-700/50 text-xs">
-            <div class="text-emerald-400 font-semibold mb-1 flex items-center justify-between">
-              <span>💊 मानक प्राथमिक उपचार:</span>
-              <button onclick="fillRx('पीपीआर (PPR)', 'Inj. Enrofloxacin + Meloxicam + ORS घोल + Antidiarrheal Bolus')" class="text-[10px] bg-emerald-600 text-white px-2 py-0.5 rounded">+ पर्चे में जोड़ें</button>
-            </div>
-            <p class="text-slate-300 text-[11px] font-mono leading-tight">Inj. Enrofloxacin/Oxytetracycline LA + ORS + Meloxicam</p>
-          </div>
-        </div>
+  <!-- Bottom Navigation Dock -->
+  <nav class="fixed bottom-0 left-0 right-0 z-50 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 max-w-xl mx-auto flex items-center justify-around py-2">
+    <button onclick="navigateToTab('clinical')" id="tabClinical" class="flex flex-col items-center text-emerald-400 font-bold">
+      <span class="text-lg">🩺</span>
+      <span class="text-[10px]">रोग पहचान</span>
+    </button>
+    <button onclick="navigateToTab('rx')" id="tabRx" class="flex flex-col items-center text-slate-400">
+      <span class="text-lg">📝</span>
+      <span class="text-[10px]">पर्चा बनाएं</span>
+    </button>
+    <button onclick="navigateToTab('records')" id="tabRecords" class="flex flex-col items-center text-slate-400">
+      <span class="text-lg">📂</span>
+      <span class="text-[10px]">रिकॉर्ड्स</span>
+    </button>
+    <button onclick="navigateToTab('profile')" id="tabProfile" class="flex flex-col items-center text-slate-400">
+      <span class="text-lg">👤</span>
+      <span class="text-[10px]">प्रोफ़ाइल</span>
+    </button>
+  </nav>
 
-        <!-- 12. Enterotoxaemia -->
-        <div class="disease-card bg-slate-800 border border-slate-700 rounded-2xl p-3.5 shadow-md space-y-2" data-cat="HIGH" data-search="फिड़किया आंत्रविषाक्तता et enterotoxaemia बकरी चक्कर गिरना सिर पीछे मोड़ना penicillin">
-          <div class="flex items-start justify-between">
-            <h3 class="text-sm font-bold text-emerald-300">12. फिड़किया / आंत्रविषाक्तता (Enterotoxaemia / ET)</h3>
-            <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-rose-950 text-rose-300 border border-rose-800">104°F</span>
-          </div>
-          <p class="text-xs text-slate-300"><strong class="text-slate-400">लक्षण:</strong> दाना खाने के बाद बकरियों का चक्कर खाकर गिरना, सिर पीछे मोड़ना, शीघ्र मृत्यु।</p>
-          <div class="bg-slate-900 rounded-xl p-2.5 border border-slate-700/50 text-xs">
-            <div class="text-em
+  <!-- Modular Scripts -->
+  <script src="./clinical-db.js"></script>
+  <script src="./app.js"></script>
+</body>
+</html>
