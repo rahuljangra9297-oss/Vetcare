@@ -21,7 +21,7 @@ window.addEventListener('DOMContentLoaded', () => {
 function initPWA() {
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('./sw.js')
-      .then(() => console.log('Service Worker Registered'))
+      .then(() => console.log('Service Worker Active (v4)'))
       .catch((err) => console.error('SW Error:', err));
   }
 }
@@ -44,28 +44,14 @@ function acceptDisclaimer() {
 // ==================== 2. MULTILINGUAL ENGINE ====================
 const I18N = {
   HI: {
-    appTitle: "Pashu Seva Pro",
-    appSubtitle: "3-Way क्लिनिकल रोग निदान, ओपीडी व वित्तीय खाता बही",
     tabMode1: "1. केवल लक्षण (%)",
     tabMode2: "2. लक्षण + नाम",
-    tabMode3: "3. केवल रोग नाम",
-    navClinical: "रोग पहचान",
-    navRx: "पर्चा बनाएं",
-    navRecords: "केस रिकॉर्ड",
-    navLedger: "खाता बही",
-    navProfile: "प्रोफ़ाइल"
+    tabMode3: "3. केवल रोग नाम"
   },
   EN: {
-    appTitle: "Pashu Seva Pro",
-    appSubtitle: "3-Way Clinical Diagnosis, OPD & Financial Khata",
     tabMode1: "1. Symptoms Only (%)",
     tabMode2: "2. Symptom + Name",
-    tabMode3: "3. Disease Directory",
-    navClinical: "Diagnosis",
-    navRx: "Prescription",
-    navRecords: "Records",
-    navLedger: "Ledger",
-    navProfile: "Profile"
+    tabMode3: "3. Disease Directory"
   }
 };
 
@@ -96,7 +82,7 @@ function setDiagnosisMode(mode) {
   ['Symptoms', 'Hybrid', 'Name'].forEach(m => {
     const btn = document.getElementById(`btnMode${m}`);
     const panel = document.getElementById(`panelMode${m}`);
-    if (btn) btn.className = 'py-2 px-1 rounded-xl text-slate-400 font-medium transition text-center flex flex-col items-center gap-0.5';
+    if (btn) btn.className = 'py-2 px-1 rounded-xl text-slate-400 font-medium transition text-center flex flex-col items-center gap-0.5 hover:text-white';
     if (panel) panel.classList.add('hidden');
   });
 
@@ -146,7 +132,7 @@ function applyMatrixFilters() {
     const txt = document.getElementById('matchScoreText');
     const bge = document.getElementById('matchCountBadge');
     if (txt) txt.innerText = 'लक्षण चुनें ➔ वेटेड क्लिनिकल संभावना (%) स्वतः गणना होगी';
-    if (bge) bge.innerText = `${CLINICAL_DATABASE.length} रोग सूची`;
+    if (bge) bge.innerText = `${CLINICAL_DATABASE.length} रोग`;
     renderDiseaseList(CLINICAL_DATABASE, false);
     return;
   }
@@ -187,8 +173,8 @@ function handleOmniSearch() {
       d.localName.toLowerCase().includes(q) ||
       d.cardinal.toLowerCase().includes(q) ||
       d.symptoms.toLowerCase().includes(q) ||
-      d.drugs.generic.toLowerCase().includes(q) ||
-      d.drugs.ethical.toLowerCase().includes(q) ||
+      (d.drugs && d.drugs.generic && d.drugs.generic.toLowerCase().includes(q)) ||
+      (d.drugs && d.drugs.ethical && d.drugs.ethical.toLowerCase().includes(q)) ||
       d.etiologyName.toLowerCase().includes(q);
     const matchesTemp = currentHybridTempFilter === 'ALL' || d.category === currentHybridTempFilter;
     return matchesQ && matchesTemp;
@@ -219,14 +205,14 @@ function filterByEtiology(etio, btn) {
   renderDiseaseList(filtered, false);
 }
 
-// ==================== 4. RENDER CLINICAL CARDS ====================
+// ==================== 4. RENDER LUXURY CLINICAL CARDS ====================
 function renderDiseaseList(list, showPercentage) {
   const container = document.getElementById('diseaseContainer');
   if (!container) return;
 
   if (list.length === 0) {
     container.innerHTML = `
-      <div class="p-8 text-center text-slate-400 bg-slate-900/60 rounded-2xl border border-slate-800">
+      <div class="p-8 text-center text-slate-400 bg-[#0f172a] rounded-3xl border border-slate-800">
         <div class="text-3xl mb-2">🔍</div>
         <p class="font-bold text-slate-200">कोई बीमारी या लक्षण मेल नहीं खाया</p>
         <p class="text-xs text-slate-400 mt-1">भिन्न लक्षण चुनें या रीसेट करें।</p>
@@ -237,102 +223,106 @@ function renderDiseaseList(list, showPercentage) {
   container.innerHTML = list.map(d => {
     const isHigh = d.probability >= 80;
     const isMed = d.probability >= 50 && d.probability < 80;
-    const badgeColor = isHigh ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50' : (isMed ? 'bg-amber-500/20 text-amber-300 border-amber-500/50' : 'bg-slate-700/40 text-slate-300 border-slate-600/50');
-    const barColor = isHigh ? 'bg-emerald-400' : (isMed ? 'bg-amber-400' : 'bg-blue-400');
+    const badgeColor = isHigh ? 'bg-cyan-500/15 text-cyan-300 border-cyan-500/40' : (isMed ? 'bg-amber-500/15 text-amber-300 border-amber-500/40' : 'bg-slate-800 text-slate-300 border-slate-700');
+    const barGradient = isHigh ? 'from-blue-600 to-cyan-400' : (isMed ? 'from-amber-600 to-amber-400' : 'from-slate-600 to-slate-400');
 
     return `
-      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-xl space-y-3 transition hover:border-slate-700">
+      <div class="bg-[#0f172a] border border-slate-800/90 rounded-3xl p-4 sm:p-5 shadow-2xl space-y-3.5 transition hover:border-slate-700">
         
         <!-- Header -->
-        <div class="flex items-start justify-between gap-2 border-b border-slate-800 pb-2.5">
+        <div class="flex items-start justify-between gap-2 border-b border-slate-800 pb-3">
           <div>
-            <h3 class="text-sm font-bold text-slate-100 leading-snug">${d.id}. ${d.name}</h3>
-            <p class="text-[11px] text-cyan-400 font-medium">देसी नाम: ${d.localName}</p>
+            <h3 class="text-sm sm:text-base font-bold text-white leading-snug tracking-tight">${d.id}. ${d.name}</h3>
+            <p class="text-xs text-cyan-400 font-medium mt-0.5">देसी नाम: ${d.localName}[cite: 4]</p>
             <p class="text-[10px] text-slate-400 font-mono mt-0.5">${d.etiologyName}</p>
           </div>
           <div class="flex flex-col items-end gap-1.5 shrink-0">
-            <span class="text-[11px] font-mono font-semibold px-2.5 py-0.5 rounded-full border ${d.category === 'HIGH' ? 'bg-rose-950/80 text-rose-300 border-rose-800' : (d.category === 'SUB' ? 'bg-cyan-950/80 text-cyan-300 border-cyan-800' : 'bg-slate-800 text-slate-300 border-slate-700')}">${d.temp}</span>
-            ${showPercentage ? `<span class="text-[11px] font-bold px-2 py-0.5 rounded-lg border ${badgeColor}">★ ${d.probability}% संभावना</span>` : ''}
+            <span class="text-[11px] font-mono font-semibold px-2.5 py-0.5 rounded-full border ${d.category === 'HIGH' ? 'bg-rose-950/80 text-rose-300 border-rose-800/80' : (d.category === 'SUB' ? 'bg-cyan-950/80 text-cyan-300 border-cyan-800/80' : 'bg-slate-800 text-slate-300 border-slate-700')}">${d.temp}</span>
+            ${showPercentage ? `<span class="text-[11px] font-bold px-2.5 py-0.5 rounded-xl border ${badgeColor}">★ ${d.probability}% संभावना</span>` : ''}
           </div>
         </div>
 
         ${showPercentage ? `
-          <div class="w-full bg-slate-950 rounded-full h-1.5 overflow-hidden border border-slate-800">
-            <div class="${barColor} h-1.5 rounded-full transition-all duration-500" style="width: ${d.probability}%"></div>
+          <div class="w-full bg-[#070a12] rounded-full h-2 overflow-hidden border border-slate-800">
+            <div class="bg-gradient-to-r ${barGradient} h-2 rounded-full transition-all duration-500" style="width: ${d.probability}%"></div>
           </div>
         ` : ''}
 
         <!-- Cardinal Sign -->
-        <div class="bg-rose-950/20 border border-rose-900/40 rounded-xl p-3 text-xs">
-          <span class="font-bold text-rose-400 flex items-center gap-1 mb-1">🚨 प्रमुख कार्डिनल लक्षण (Cardinal Sign):</span>
+        <div class="bg-red-500/10 border border-red-500/20 rounded-2xl p-3 text-xs">
+          <span class="font-bold text-red-400 flex items-center gap-1.5 mb-1">
+            <span>🚨</span> प्रमुख कार्डिनल लक्षण (Cardinal Sign):
+          </span>
           <p class="text-slate-200 leading-relaxed font-medium">${d.cardinal}</p>
         </div>
 
-        <!-- On-Site Corroborative Confirmation -->
-        <div class="bg-cyan-950/20 border border-cyan-900/40 rounded-xl p-2.5 text-xs">
-          <span class="font-bold text-cyan-300 flex items-center gap-1 mb-0.5">🔍 मौके पर ही रोग पुष्टिकरण संकेत (On-Site Confirmation):</span>
-          <p class="text-slate-300 text-[11px] leading-relaxed">${d.onSiteConfirm}</p>
+        <!-- On-Site Confirmation -->
+        <div class="bg-cyan-500/10 border border-cyan-500/20 rounded-2xl p-2.5 text-xs">
+          <span class="font-bold text-cyan-300 flex items-center gap-1.5 mb-0.5">
+            <span>🔍</span> मौके पर ही रोग पुष्टिकरण संकेत (On-Site Confirmation):
+          </span>
+          <p class="text-slate-300 text-[11px] leading-relaxed">${d.onSiteConfirm || 'क्लीनिकल इतिहास व शारीरिक लक्षणों से पुष्टि करें।'}</p>
         </div>
 
         <!-- Staging & Trajectory Accordion -->
-        <details class="bg-slate-950/80 rounded-xl border border-slate-800 text-xs">
-          <summary class="p-2.5 font-bold text-slate-300 cursor-pointer flex justify-between items-center">
-            <span>⏱️ रोग की अवस्थाएं व प्रोग्नोसिस (Staging & Trajectory)</span>
+        <details class="bg-[#070a12] rounded-2xl border border-slate-800 text-xs">
+          <summary class="p-3 font-bold text-slate-300 cursor-pointer flex justify-between items-center select-none">
+            <span class="flex items-center gap-1.5">⏱️ रोग की अवस्थाएं व प्रोग्नोसिस (Staging & Trajectory)[cite: 4]</span>
             <span class="text-cyan-400 text-[10px]">विस्तार ▼</span>
           </summary>
-          <div class="p-3 pt-0 space-y-2 border-t border-slate-800/60 mt-1 text-[11px]">
+          <div class="p-3.5 pt-0 space-y-2.5 border-t border-slate-800/80 mt-1 text-[11px]">
             <div class="space-y-1">
               <p class="text-slate-400 font-semibold">रोग के चरण (Stages):</p>
-              <p class="text-slate-300">• ${d.stages.s1}</p>
-              <p class="text-slate-300">• ${d.stages.s2}</p>
-              ${d.stages.s3 ? `<p class="text-slate-300">• ${d.stages.s3}</p>` : ''}
+              <p class="text-slate-300">• ${d.stages ? d.stages.s1 : 'प्रारंभिक लक्षण'}</p>
+              <p class="text-slate-300">• ${d.stages ? d.stages.s2 : 'तीव्र अवस्था'}</p>
+              ${d.stages && d.stages.s3 ? `<p class="text-slate-300">• ${d.stages.s3}</p>` : ''}
             </div>
-            <div class="space-y-1 pt-1 border-t border-slate-800/40">
-              <p class="text-emerald-400 font-semibold">📈 सही दवा से सकारात्मक मार्ग (+ve):</p>
-              <p class="text-slate-300">${d.trajectories.positive}</p>
+            <div class="space-y-1 pt-1.5 border-t border-slate-800/60">
+              <p class="text-cyan-300 font-semibold">📈 सही दवा से सकारात्मक मार्ग (+ve):</p>
+              <p class="text-slate-300">${d.trajectories ? d.trajectories.positive : 'समय पर दवा मिलने पर 3-5 दिन में स्वास्थ्य लाभ।'}</p>
               <p class="text-rose-400 font-semibold mt-1">📉 गलत दवा/विलंब पर नकारात्मक मार्ग (-ve):</p>
-              <p class="text-slate-300">${d.trajectories.negative}</p>
+              <p class="text-slate-300">${d.trajectories ? d.trajectories.negative : 'उपेक्षा होने पर स्थिति अति-गंभीर होना निश्चित।'}</p>
             </div>
           </div>
         </details>
 
         <!-- Ethical vs Generic Drugs -->
-        <div class="bg-slate-950 rounded-xl p-3 border border-slate-800 space-y-2 text-xs">
-          <div class="flex items-center justify-between font-bold text-cyan-400">
+        <div class="bg-[#070a12] rounded-2xl p-3.5 border border-slate-800 space-y-2 text-xs">
+          <div class="flex items-center justify-between font-bold text-cyan-300">
             <span>💊 औषधियां (Ethical Brands vs Generic Salts):</span>
-            <button onclick="transferToRx('${d.name.replace(/'/g, "\\'")}', '${d.drugs.generic.replace(/'/g, "\\'")}')" class="bg-blue-600 hover:bg-blue-500 text-white px-2.5 py-1 rounded-lg text-[10px] font-semibold active:scale-95 transition">
+            <button onclick="transferToRx('${d.name.replace(/'/g, "\\'")}', '${(d.drugs ? d.drugs.generic : d.rxInjections).replace(/'/g, "\\'")}')" class="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1 rounded-xl text-[11px] font-semibold active:scale-95 transition shadow-md shadow-blue-950">
               + पर्चे में लोड करें
             </button>
           </div>
           <div class="text-[11px] space-y-1.5 font-mono">
-            <p><strong class="text-slate-400">जेनेरिक साल्ट:</strong> ${d.drugs.generic}</p>
-            <p><strong class="text-cyan-300">एथिकल ब्रांड्स (MRP):</strong> ${d.drugs.ethical}</p>
-            <p class="text-emerald-400/90 font-sans"><strong class="text-emerald-300">दवा का प्रभाव:</strong> ${d.drugs.correctEffect}</p>
-            <p class="text-rose-400/90 font-sans"><strong class="text-rose-300">गलत दवा का दुष्परिणाम:</strong> ${d.drugs.hazardWrong}</p>
+            <p><strong class="text-slate-400">जेनेरिक साल्ट:</strong> ${d.drugs ? d.drugs.generic : d.rxInjections}</p>
+            <p><strong class="text-cyan-400">एथिकल ब्रांड्स (MRP):</strong> ${d.drugs ? d.drugs.ethical : 'मानक वेट ब्रांड्स उपलब्ध हैं'}</p>
+            <p class="text-slate-300 font-sans"><strong class="text-slate-400">दवा का प्रभाव:</strong> ${d.drugs ? d.drugs.correctEffect : 'रोग निवारक'}</p>
+            <p class="text-rose-400/90 font-sans"><strong class="text-rose-400">गलत दवा का दुष्परिणाम:</strong> ${d.drugs ? d.drugs.hazardWrong : 'रोग की तीव्रता बढ़ना'}</p>
           </div>
         </div>
 
         <!-- Separated Doctor vs Farmer Protocol -->
         <div class="grid grid-cols-2 gap-2 text-[11px]">
-          <div class="bg-blue-950/20 border border-blue-900/30 p-2 rounded-xl space-y-0.5">
-            <span class="font-bold text-blue-300">🩺 डॉक्टर प्रोटोकॉल:</span>
-            <p class="text-slate-300 leading-tight">${d.protocols.doctor}</p>
+          <div class="bg-blue-950/20 border border-blue-900/30 p-2.5 rounded-2xl space-y-0.5">
+            <span class="font-bold text-cyan-300">🩺 डॉक्टर प्रोटोकॉल:</span>
+            <p class="text-slate-300 leading-tight">${d.protocols ? d.protocols.doctor : 'खुराक व तापमान मॉनिटर करें।'}</p>
           </div>
-          <div class="bg-amber-950/20 border border-amber-900/30 p-2 rounded-xl space-y-0.5">
+          <div class="bg-amber-950/20 border border-amber-900/30 p-2.5 rounded-2xl space-y-0.5">
             <span class="font-bold text-amber-300">👨‍🌾 किसान देखभाल:</span>
-            <p class="text-slate-300 leading-tight">${d.protocols.farmer}</p>
+            <p class="text-slate-300 leading-tight">${d.protocols ? d.protocols.farmer : 'सूखा बाड़ा व सुपाच्य दलिया दें।'}</p>
           </div>
         </div>
 
         <!-- Pregnancy Alert -->
-        <p class="p-2 rounded-lg bg-amber-950/20 border border-amber-900/30 text-amber-200 text-[11px]">
-          <strong>🤰 गर्भ सुरक्षा:</strong> ${d.pregnancy}
+        <p class="p-2.5 rounded-xl bg-amber-950/20 border border-amber-900/30 text-amber-200 text-[11px]">
+          <strong>🤰 गर्भ सुरक्षा:</strong> ${d.pregnancy}[cite: 4]
         </p>
 
         <!-- Lab Test Footer -->
-        <div class="pt-2 border-t border-slate-800 text-[10px] text-slate-400 flex items-center justify-between">
-          <span>🔬 लैब: <strong>${d.labTest.name}</strong> (${d.labTest.cost})</span>
-          <span class="text-rose-400 font-semibold">खतरा: ${d.redFlags}</span>
+        <div class="pt-2.5 border-t border-slate-800 text-[10px] text-slate-400 flex items-center justify-between">
+          <span>🔬 लैब टेस्ट: <strong>${d.labTest.name}</strong> (${d.labTest.cost})[cite: 4]</span>
+          <span class="text-rose-400 font-semibold">खतरा: ${d.redFlags}[cite: 4]</span>
         </div>
 
       </div>
@@ -378,13 +368,13 @@ function captureGPSLocation() {
     alert('आपके ब्राउज़र में GPS सपोर्ट नहीं है।');
     return;
   }
-  btn.innerText = '📍 प्राप्त कर रहे हैं...';
+  btn.innerText = '📍 प्राप्त हो रहा...';
   navigator.geolocation.getCurrentPosition(
     (pos) => {
       const lat = pos.coords.latitude.toFixed(5);
       const lon = pos.coords.longitude.toFixed(5);
       document.getElementById('opdGPS').value = `${lat}, ${lon}`;
-      btn.innerText = '✅ GPS सुरक्षित';
+      btn.innerText = '✅ GPS प्राप्त';
     },
     (err) => {
       alert('GPS अनुमति अस्वीकृत हुई। कृपया मैन्युअली पता भरें।');
@@ -531,24 +521,24 @@ function renderRecordsArray(records) {
   if (!container) return;
 
   if (records.length === 0) {
-    container.innerHTML = `<div class="p-8 text-center text-slate-400 bg-slate-900/60 rounded-2xl border border-slate-800">अभी कोई रिकॉर्ड दर्ज नहीं है।</div>`;
+    container.innerHTML = `<div class="p-8 text-center text-slate-400 bg-[#0f172a] rounded-3xl border border-slate-800">अभी कोई रिकॉर्ड दर्ज नहीं है।</div>`;
     return;
   }
 
   container.innerHTML = records.map(r => `
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-2 text-xs">
+    <div class="bg-[#0f172a] border border-slate-800 rounded-3xl p-4 space-y-2 text-xs shadow-xl">
       <div class="flex items-center justify-between border-b border-slate-800 pb-2 font-mono text-[11px]">
         <span class="text-cyan-400 font-bold">${r.fid}</span>
         <span class="text-slate-400">${r.date}</span>
       </div>
-      <div class="text-slate-200 flex justify-between">
+      <div class="text-slate-200 flex justify-between items-center">
         <span><strong>${r.name}</strong> (${r.village}) • ${r.phone}</span>
-        <a href="tel:${r.phone}" class="text-blue-400 font-bold">📞 कॉल</a>
+        <a href="tel:${r.phone}" class="text-blue-400 hover:text-cyan-300 font-bold">📞 कॉल</a>
       </div>
       <div class="text-slate-300">टैग: <strong class="text-cyan-300">${r.tag}</strong> • पशु: ${r.animal} (${r.preg})</div>
       ${r.gps !== 'N/A' ? `<div class="text-[10px] text-slate-400"><a href="https://maps.google.com/?q=${r.gps}" target="_blank" class="text-blue-400 underline">📍 मैप पर घर देखें (${r.gps})</a></div>` : ''}
       <div class="text-amber-300 font-semibold">डायग्नोसिस: ${r.diag}</div>
-      <div class="text-slate-300 text-[11px] font-mono bg-slate-950 p-2 rounded-xl border border-slate-800">Rx: ${r.med}</div>
+      <div class="text-slate-300 text-[11px] font-mono bg-[#070a12] p-2 rounded-xl border border-slate-800">Rx: ${r.med}</div>
       <div class="flex items-center justify-between pt-1 text-[11px]">
         <span class="text-slate-400">कुल: ₹${r.totalFee} | जमा: ₹${r.paidFee}</span>
         <span class="font-bold ${r.dueFee > 0 ? 'text-rose-400' : 'text-emerald-400'}">
@@ -597,7 +587,6 @@ function updateLedgerAnalytics() {
     totalDues += (r.dueFee || 0);
   });
 
-  // Expenses from storage
   const expenses = JSON.parse(localStorage.getItem('vetcare_expenses') || '[]');
   const totalDebit = expenses.reduce((acc, x) => acc + (x.amount || 0), 0);
   const netProfit = totalCollected - totalDebit;
@@ -614,25 +603,24 @@ function updateLedgerAnalytics() {
   if (debitEl) debitEl.innerText = `₹${totalDebit}`;
   if (profitEl) profitEl.innerText = `₹${netProfit}`;
 
-  // Render Khata list
   const dueListContainer = document.getElementById('ledgerDueList');
   if (!dueListContainer) return;
 
   const dueRecords = records.filter(r => (r.dueFee || 0) > 0);
 
   if (dueRecords.length === 0) {
-    dueListContainer.innerHTML = `<div class="p-6 text-center text-slate-400 bg-slate-900/60 rounded-xl border border-slate-800">बाज़ार में कोई बकाया राशि नहीं है। सभी खाते चुकता हैं।</div>`;
+    dueListContainer.innerHTML = `<div class="p-6 text-center text-slate-400 bg-[#070a12] rounded-2xl border border-slate-800">बाज़ार में कोई बकाया राशि नहीं है। सभी खाते चुकता हैं।</div>`;
     return;
   }
 
   dueListContainer.innerHTML = dueRecords.map(r => `
-    <div class="bg-slate-900 border border-rose-950/60 rounded-xl p-3 flex items-center justify-between text-xs">
+    <div class="bg-[#070a12] border border-rose-950/60 rounded-2xl p-3 flex items-center justify-between text-xs">
       <div>
         <div class="font-bold text-slate-100">${r.name} (${r.village})</div>
         <div class="text-[11px] text-slate-400">${r.phone} • ${r.diag}</div>
         <div class="text-rose-400 font-bold mt-0.5">बकाया: ₹${r.dueFee} (कुल: ₹${r.totalFee})</div>
       </div>
-      <button onclick="sendDueReminder('${r.name}', '${r.phone}', ${r.dueFee}, '${r.fid}')" class="bg-rose-600 hover:bg-rose-500 text-white px-3 py-1.5 rounded-lg text-xs font-semibold shadow-md active:scale-95 transition">
+      <button onclick="sendDueReminder('${r.name}', '${r.phone}', ${r.dueFee}, '${r.fid}')" class="bg-rose-600 hover:bg-rose-500 text-white px-3 py-1.5 rounded-xl text-xs font-semibold shadow-md active:scale-95 transition">
         💬 तगादा भेजें
       </button>
     </div>
@@ -640,7 +628,7 @@ function updateLedgerAnalytics() {
 }
 
 function addClinicExpense() {
-  const desc = prompt("खर्च का विवरण (उदा. पेट्रोल, दवाई खरीद, कॉटन):");
+  const desc = prompt("खर्च का विवरण (उदा. पेट्रोल, दवा खरीद, कॉटन):");
   if (!desc) return;
   const amt = parseFloat(prompt("खर्च की राशि (₹):"));
   if (!amt || isNaN(amt)) return;
