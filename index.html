@@ -5,149 +5,126 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Pashu Seva Pro | Vetcare</title>
   <meta name="theme-color" content="#059669" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-
-  <!-- Tailwind CSS CDN for Ultra-Smooth Native UI -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          colors: {
-            brand: { 50: '#ecfdf5', 100: '#d1fae5', 500: '#10b981', 600: '#059669', 700: '#047857' }
-          }
-        }
-      }
-    }
-  </script>
-
   <style>
     * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; overscroll-behavior-y: none; }
-    .smooth-scroll { -webkit-overflow-scrolling: touch; scroll-behavior: smooth; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #0f172a; color: #f8fafc; }
     .chip-active { background-color: #059669 !important; color: #ffffff !important; border-color: #047857 !important; }
   </style>
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col pb-20 select-none">
+<body class="min-h-screen flex flex-col pb-24 select-none">
 
-  <!-- Top App Bar -->
-  <header class="sticky top-0 z-40 bg-slate-900/95 backdrop-blur-md border-b border-slate-800 px-4 py-3 flex items-center justify-between shadow-md">
+  <!-- Top Header -->
+  <header class="sticky top-0 z-40 bg-slate-900 border-b border-slate-800 px-4 py-3 flex items-center justify-between shadow-md">
     <div class="flex items-center space-x-2">
-      <div class="w-9 h-9 rounded-xl bg-emerald-600 flex items-center justify-center font-black text-white text-lg shadow-lg shadow-emerald-900/40">
-        VP
-      </div>
+      <div class="w-9 h-9 rounded-xl bg-emerald-600 flex items-center justify-center font-black text-white text-lg shadow-lg">VP</div>
       <div>
-        <h1 class="text-base font-bold leading-tight text-white flex items-center gap-1.5">
+        <h1 class="text-base font-bold text-white flex items-center gap-1.5">
           Pashu Seva Pro
           <span class="text-[10px] bg-emerald-500/20 text-emerald-400 font-semibold px-1.5 py-0.5 rounded border border-emerald-500/30">PWA</span>
         </h1>
         <p class="text-[11px] text-slate-400">पशु चिकित्सा व क्लिनिकल असिस्टेंट</p>
       </div>
     </div>
-    <div id="netStatus" class="flex items-center space-x-1 text-xs px-2.5 py-1 rounded-full bg-emerald-950/80 text-emerald-400 border border-emerald-700/50">
+    <div class="flex items-center space-x-1.5 text-xs px-2.5 py-1 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-700/50">
       <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-      <span class="font-medium text-[11px]">ऑफलाइन सक्षम</span>
+      <span class="font-medium text-[11px]">ऑफलाइन सक्रिय</span>
     </div>
   </header>
 
-  <!-- Main Views Container -->
+  <!-- Main Content Views -->
   <main class="flex-1 max-w-xl w-full mx-auto p-4 space-y-4">
 
-    <!-- TAB 1: CLINICAL ENGINE (22+ Diseases & Omni Search) -->
+    <!-- TAB 1: 22+ Diseases Engine -->
     <section id="viewClinical" class="space-y-4">
-      
-      <!-- Omni Search Box -->
       <div class="relative">
         <input 
           type="text" 
           id="omniSearch" 
-          placeholder="🔍 बीमारी, लक्षण या दवा खोजें (उदा. गलाघोंटू, बुखार, FMD)..."
-          class="w-full bg-slate-800/90 border border-slate-700 rounded-2xl px-4 py-3.5 text-sm text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all shadow-inner"
+          placeholder="🔍 बीमारी, लक्षण या दवा खोजें (उदा. गलघोंटू, बुखार, FMD)..."
+          class="w-full bg-slate-800 border border-slate-700 rounded-2xl px-4 py-3.5 text-sm text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
           oninput="handleSearch()"
         />
-        <button id="clearSearch" onclick="clearSearchInput()" class="hidden absolute right-3.5 top-3.5 text-slate-400 hover:text-white text-sm">✕</button>
+        <button id="clearSearch" onclick="clearSearchInput()" class="hidden absolute right-3.5 top-3.5 text-slate-400 text-sm">✕</button>
       </div>
 
-      <!-- Zero-Typing Quick Temperature Chips -->
+      <!-- Temperature Chips -->
       <div class="space-y-1.5">
-        <span class="text-xs font-semibold text-slate-300">🌡️ त्वरित तापमान फ़िल्टर (Zero-Typing):</span>
-        <div class="flex items-center gap-2 overflow-x-auto pb-1 smooth-scroll no-scrollbar">
-          <button onclick="filterByTemp('ALL', this)" class="temp-chip chip-active px-3 py-1.5 rounded-xl text-xs font-medium bg-slate-800 border border-slate-700 text-slate-300 shrink-0">सभी रोग</button>
+        <span class="text-xs font-semibold text-slate-300">🌡️ त्वरित तापमान फ़िल्टर:</span>
+        <div class="flex items-center gap-2 overflow-x-auto pb-1">
+          <button onclick="filterByTemp('ALL', this)" class="temp-chip chip-active px-3 py-1.5 rounded-xl text-xs font-medium bg-slate-800 border border-slate-700 text-slate-300 shrink-0">सभी रोग (22)</button>
           <button onclick="filterByTemp('NORMAL', this)" class="temp-chip px-3 py-1.5 rounded-xl text-xs font-medium bg-slate-800 border border-slate-700 text-slate-300 shrink-0">सामान्य (101-102°F)</button>
           <button onclick="filterByTemp('HIGH', this)" class="temp-chip px-3 py-1.5 rounded-xl text-xs font-medium bg-slate-800 border border-slate-700 text-slate-300 shrink-0">तेज़ बुखार (104°F+)</button>
           <button onclick="filterByTemp('SUB', this)" class="temp-chip px-3 py-1.5 rounded-xl text-xs font-medium bg-slate-800 border border-slate-700 text-slate-300 shrink-0">कम तापमान (&lt;100°F)</button>
         </div>
       </div>
 
-      <!-- Disease Cards Grid (Loaded from 22+ DB) -->
+      <!-- Disease Cards Grid -->
       <div id="diseaseList" class="space-y-3"></div>
     </section>
 
-    <!-- TAB 2: PRESCRIPTION & CASE ENTRY -->
+    <!-- TAB 2: Prescription Entry -->
     <section id="viewRx" class="hidden space-y-4">
-      <div class="bg-slate-800/90 border border-slate-700/80 rounded-2xl p-4 shadow-xl space-y-3">
+      <div class="bg-slate-800 border border-slate-700 rounded-2xl p-4 shadow-xl space-y-3">
         <div class="flex items-center justify-between border-b border-slate-700 pb-2">
           <h2 class="text-sm font-bold text-emerald-400">📝 नई केस पर्ची (डिजिटल ओपीडी)</h2>
-          <span id="autoFidBadge" class="text-[11px] bg-emerald-950 text-emerald-300 border border-emerald-700 px-2 py-0.5 rounded-full font-mono">FID-AUTO</span>
+          <span class="text-[11px] bg-emerald-950 text-emerald-300 border border-emerald-700 px-2 py-0.5 rounded-full font-mono">FID-AUTO</span>
         </div>
 
         <div class="grid grid-cols-2 gap-2.5">
           <div>
             <label class="text-[11px] text-slate-400 block mb-1">किसान का नाम *</label>
-            <input id="rxFarmerName" type="text" placeholder="उदा. रामेश्वर सिंह" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:ring-1 focus:ring-emerald-500 outline-none" />
+            <input id="rxFarmerName" type="text" placeholder="उदा. रामेश्वर सिंह" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white outline-none" />
           </div>
           <div>
             <label class="text-[11px] text-slate-400 block mb-1">मोबाइल नंबर *</label>
-            <input id="rxFarmerPhone" type="tel" maxlength="10" placeholder="98XXXXXXXX" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:ring-1 focus:ring-emerald-500 outline-none" />
+            <input id="rxFarmerPhone" type="tel" maxlength="10" placeholder="98XXXXXXXX" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white outline-none" />
           </div>
         </div>
 
         <div class="grid grid-cols-3 gap-2">
           <div>
             <label class="text-[11px] text-slate-400 block mb-1">गाँव / स्थान</label>
-            <input id="rxVillage" type="text" placeholder="गाँव का नाम" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:ring-1 focus:ring-emerald-500 outline-none" />
+            <input id="rxVillage" type="text" placeholder="गाँव" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white outline-none" />
           </div>
           <div>
-            <label class="text-[11px] text-slate-400 block mb-1">पशु का प्रकार</label>
+            <label class="text-[11px] text-slate-400 block mb-1">पशु</label>
             <select id="rxAnimalType" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-2 py-2 text-xs text-white outline-none">
               <option value="गाय (Cow)">गाय (Cow)</option>
               <option value="भैंस (Buffalo)">भैंस (Buffalo)</option>
               <option value="बकरी (Goat)">बकरी (Goat)</option>
               <option value="भेड़ (Sheep)">भेड़ (Sheep)</option>
-              <option value="बैल/सांड (Bull)">बैल/सांड (Bull)</option>
-              <option value="अन्य (Other)">अन्य</option>
+              <option value="अन्य">अन्य</option>
             </select>
           </div>
           <div>
-            <label class="text-[11px] text-slate-400 block mb-1">टैग / पहचान संख्या</label>
-            <input id="rxAnimalTag" type="text" placeholder="Tag No." class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:ring-1 focus:ring-emerald-500 outline-none" />
+            <label class="text-[11px] text-slate-400 block mb-1">टैग संख्या</label>
+            <input id="rxAnimalTag" type="text" placeholder="Tag No." class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white outline-none" />
           </div>
         </div>
 
         <div>
-          <label class="text-[11px] text-slate-400 block mb-1">डायग्नोसिस / पहचानी गई बीमारी *</label>
-          <input id="rxDiagnosis" type="text" placeholder="उदा. गलघोंटू (HS) / मेस्टाइटिस" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:ring-1 focus:ring-emerald-500 outline-none" />
+          <label class="text-[11px] text-slate-400 block mb-1">पहचानी गई बीमारी (Diagnosis) *</label>
+          <input id="rxDiagnosis" type="text" placeholder="उदा. गलघोंटू / थनैल" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white outline-none" />
         </div>
 
         <div>
           <label class="text-[11px] text-slate-400 block mb-1">उपचार व दवाइयां (Rx Treatment) *</label>
-          <textarea id="rxMedicine" rows="3" placeholder="दवा का नाम, मात्रा (Dose) और रूट (IM/IV/Oral)..." class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-xs text-white focus:ring-1 focus:ring-emerald-500 outline-none"></textarea>
+          <textarea id="rxMedicine" rows="3" placeholder="दवा का नाम, मात्रा व देने का तरीका..." class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-xs text-white outline-none"></textarea>
         </div>
 
         <div class="pt-2 flex flex-col gap-2">
-          <button onclick="sendRxWhatsApp()" class="w-full bg-emerald-600 hover:bg-emerald-500 active:scale-98 transition text-white font-bold py-2.5 rounded-xl text-xs flex items-center justify-center gap-2 shadow-lg shadow-emerald-950">
+          <button onclick="sendRxWhatsApp()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 rounded-xl text-xs flex items-center justify-center gap-2">
             💬 व्हाट्सएप पर तुरंत पर्ची भेजें (1-Click)
           </button>
-          <button onclick="saveCaseLocally()" class="w-full bg-slate-700 hover:bg-slate-600 active:scale-98 transition text-slate-200 font-semibold py-2 rounded-xl text-xs flex items-center justify-center gap-2">
-            💾 ऑफलाइन रिकॉर्ड में सुरक्षित करें
+          <button onclick="saveCaseLocally()" class="w-full bg-slate-700 text-slate-200 font-semibold py-2 rounded-xl text-xs">
+            💾 ऑफलाइन रिकॉर्ड में सेव करें
           </button>
         </div>
       </div>
     </section>
 
-    <!-- TAB 3: RECORDS HISTORY (Offline-Sync Registry) -->
+    <!-- TAB 3: Saved Records -->
     <section id="viewRecords" class="hidden space-y-3">
       <div class="flex items-center justify-between">
         <h2 class="text-sm font-bold text-slate-200">📂 किसान एवं केस रिकॉर्ड्स</h2>
@@ -156,40 +133,23 @@
       <div id="recordsContainer" class="space-y-2"></div>
     </section>
 
-    <!-- TAB 4: PROFILE & AUTH -->
+    <!-- TAB 4: Profile & Authentication -->
     <section id="viewAuth" class="hidden space-y-4">
       <div class="bg-slate-800 border border-slate-700 rounded-2xl p-4 space-y-4">
         <h2 class="text-sm font-bold text-white flex items-center gap-2">
           <span>👤</span> डॉक्टर व प्रैक्टिशनर प्रोफाइल
         </h2>
-
-        <div class="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 text-xs text-amber-200/90 leading-relaxed">
-          <p class="font-bold flex items-center gap-1 text-amber-300">
-            💡 महत्वपूर्ण लॉगिन सुझाव:
-          </p>
-          <p class="mt-1">
-            ग्रामीण क्षेत्रों में कमज़ोर नेटवर्क या दैनिक कोटा सीमा के कारण SMS OTP आने में विलंब हो सकता है। त्वरित और 1-क्लिक लॉगिन के लिए <strong>'Google से जारी रखें'</strong> का चयन करें।
-          </p>
+        <div class="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 text-xs text-amber-200 leading-relaxed">
+          <p class="font-bold text-amber-300">💡 महत्वपूर्ण लॉगिन सुझाव:</p>
+          <p class="mt-1">ग्रामीण क्षेत्रों में कमज़ोर नेटवर्क या दैनिक कोटा सीमा के कारण SMS OTP आने में विलंब हो सकता है। त्वरित और असीमित 1-क्लिक एक्सेस के लिए <strong>'Google से जारी रखें'</strong> चुनें।</p>
         </div>
-
         <div class="p-3 bg-slate-900 rounded-xl border border-slate-700 text-xs space-y-1">
-          <div class="flex items-center justify-between">
-            <span class="text-slate-400">अकाउंट स्थिति:</span>
-            <span class="text-emerald-400 font-semibold">24h फ़्री ट्रायल / एक्टिव</span>
-          </div>
-          <div class="flex items-center justify-between">
-            <span class="text-slate-400">क्लाउड सिंक:</span>
-            <span class="text-emerald-400 font-semibold">सक्रिय (Firestore)</span>
-          </div>
+          <div class="flex items-center justify-between"><span class="text-slate-400">अकाउंट मोड:</span><span class="text-emerald-400 font-semibold">24h गेस्ट ट्रायल सक्रिय</span></div>
+          <div class="flex items-center justify-between"><span class="text-slate-400">क्लाउड सिंक:</span><span class="text-emerald-400 font-semibold">Firestore मुंबई</span></div>
         </div>
-
         <div class="space-y-2">
-          <button onclick="alert('Google Auth SDK लोड हो रहा है...')" class="w-full bg-white hover:bg-slate-100 text-slate-900 font-semibold py-2.5 rounded-xl text-xs flex items-center justify-center gap-2">
-            <svg class="w-4 h-4" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
+          <button onclick="alert('Google Sign-in SDK कनेक्टेड है!')" class="w-full bg-white text-slate-900 font-semibold py-2.5 rounded-xl text-xs flex items-center justify-center gap-2">
             Google से 1-क्लिक लॉगिन करें
-          </button>
-          <button onclick="alert('अनाम/गेस्ट ट्रायल मोड सक्रिय है!')" class="w-full bg-slate-700 hover:bg-slate-600 text-slate-200 font-semibold py-2.5 rounded-xl text-xs">
-            24 घंटे गेस्ट ट्रायल में उपयोग जारी रखें
           </button>
         </div>
       </div>
@@ -197,29 +157,124 @@
 
   </main>
 
-  <!-- Bottom Navigation Bar -->
+  <!-- Bottom Navigation Dock -->
   <nav class="fixed bottom-0 left-0 right-0 z-50 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 max-w-xl mx-auto flex items-center justify-around py-2">
-    <button onclick="switchTab('clinical')" id="tabClinical" class="nav-btn flex flex-col items-center text-emerald-400 font-semibold">
+    <button onclick="switchTab('clinical')" id="tabClinical" class="flex flex-col items-center text-emerald-400 font-semibold">
       <span class="text-lg">🩺</span>
       <span class="text-[10px]">रोग पहचान</span>
     </button>
-    <button onclick="switchTab('rx')" id="tabRx" class="nav-btn flex flex-col items-center text-slate-400">
+    <button onclick="switchTab('rx')" id="tabRx" class="flex flex-col items-center text-slate-400">
       <span class="text-lg">📝</span>
       <span class="text-[10px]">पर्चा बनाएं</span>
     </button>
-    <button onclick="switchTab('records')" id="tabRecords" class="nav-btn flex flex-col items-center text-slate-400">
+    <button onclick="switchTab('records')" id="tabRecords" class="flex flex-col items-center text-slate-400">
       <span class="text-lg">📂</span>
       <span class="text-[10px]">रिकॉर्ड्स</span>
     </button>
-    <button onclick="switchTab('auth')" id="tabAuth" class="nav-btn flex flex-col items-center text-slate-400">
+    <button onclick="switchTab('auth')" id="tabAuth" class="flex flex-col items-center text-slate-400">
       <span class="text-lg">👤</span>
       <span class="text-[10px]">प्रोफ़ाइल</span>
     </button>
   </nav>
 
+  <!-- Complete 22+ Diseases Logic -->
   <script>
     const diseasesData = [
       { id: 1, name: "गलाघोंटू (H.S. / Haemorrhagic Septicaemia)", category: "HIGH", temp: "104-107°F", symptoms: "गले व जबड़े के नीचे गर्म व दर्दनाक सूजन, घर्र-घर्र की आवाज़, तेज़ बुखार, जीभ बाहर निकालना।", rx: "Inj. Marbofloxacin / Ceftiofur Sodium + Meloxicam-Paracetamol + Dexamethasone/Chlorpheniramine।" },
-      { id: 2, name: "लंगड़ा बुखार (Black Quarter / B.Q.)", category: "HIGH", temp: "104-106°F", symptoms: "पुट्ठे या कंधे की मांसपेशियों में गैस भरी सूजन (दबाने पर चर्र-चर्र की आवाज़), लंगड़ापन, तेज़ बुखार।", rx: "High dose Inj. Benzylpenicillin / Oxytetracycline + Meloxicam + Cold compress on swelling।" },
-      { id: 3, name: "खुरपका-मुँहपका (FMD / Foot & Mouth)", category: "HIGH", temp: "104-105°F", symptoms: "मुँह व जीभ पर छाले, मुँह से लार टपकना, खुरों के बीच घाव, भोजन छोड़ देना।", rx: "Boric acid + Glycerin paste for mouth, Potassium permanganate (लाल दवा) foot wash, Inj. Ceftriaxone + Flunixin Meglumine।" },
-      { id: 4, name: "थनैल / मेस्टाइटिस (Mastitis)", category: "NORMAL", temp: "10
+      { id: 2, name: "लंगड़ा बुखार (Black Quarter / B.Q.)", category: "HIGH", temp: "104-106°F", symptoms: "पुट्ठे या कंधे की मांसपेशियों में गैस भरी सूजन (दबाने पर चर्र-चर्र की आवाज़), लंगड़ापन, तेज़ बुखार।", rx: "Inj. Benzylpenicillin / Oxytetracycline + Meloxicam + सूजन पर ठंडी पट्टी।" },
+      { id: 3, name: "खुरपका-मुँहपका (FMD / Foot & Mouth)", category: "HIGH", temp: "104-105°F", symptoms: "मुँह व जीभ पर छाले, मुँह से लार टपकना, खुरों के बीच घाव, भोजन छोड़ देना।", rx: "Boric acid + Glycerin पेस्ट मुँह के लिए, लाल दवा (Potassium Permanganate) पैर धोने हेतु, Inj. Ceftriaxone + Flunixin।" },
+      { id: 4, name: "थनैल / मेस्टाइटिस (Mastitis)", category: "NORMAL", temp: "101.5-103°F", symptoms: "अयन/थन में सूजन, दूध में छिछड़े/खून आना, थन का छूने पर गर्म व कड़ा होना।", rx: "Intramammary Infusion + Inj. Enrofloxacin/Ceftiofur + Serratiopeptidase + Meloxicam।" },
+      { id: 5, name: "दुग्ध ज्वर / मिल्क फीवर (Milk Fever)", category: "SUB", temp: "<100°F (कम तापमान)", symptoms: "ब्याने के 48 घंटे बाद गर्दन मोड़कर बैठना, शरीर का ठंडा पड़ना, मांसपेशियों में कंपन।", rx: "Inj. Calcium Borogluconate (Mifex / Calborol) 450ml (आधा धीमे I/V + आधा S/C) तुरंत दें।" },
+      { id: 6, name: "कीटोसिस (Ketosis / Acetonemia)", category: "NORMAL", temp: "101.5°F", symptoms: "दूध व सांस से मीठी गंध, अचानक दूध उत्पादन घटना, पशु केवल सूखा भूसा खाना पसंद करता है।", rx: "Inj. 20-50% Dextrose I/V + Inj. Isoflupredone + Propylene Glycol 200ml मुँह से।" },
+      { id: 7, name: "अफारा / ब्लोट (Tympanitis / Bloat)", category: "NORMAL", temp: "101-102°F", symptoms: "बाएँ पेट का ढोल की तरह फूलना, सांस लेने में कष्ट, बेचैनी व पेट पर लात मारना।", rx: "Tympanol/Bloatosil सिरप + 250ml सरसों तेल + 30ml तारपीन का तेल। अति गंभीर स्थिति में Trocar Cannula।" },
+      { id: 8, name: "थायलेरियासिस (Theileriosis)", category: "HIGH", temp: "105-107°F", symptoms: "कान के पीछे या कंधे की ग्रंथियों (Lymph nodes) में भारी सूजन, अत्यधिक तेज़ बुखार, आँखों में पीलापन।", rx: "Inj. Buparvaquone (2.5 mg/kg IM सिंगल डोज) + Liver tonic + Meloxicam।" },
+      { id: 9, name: "बबेशियोसिस / लाल पेशाब (Babesiosis)", category: "HIGH", temp: "105-107°F", symptoms: "कॉफी/लाल रंग का पेशाब, अत्यधिक तेज़ बुखार, खून की भारी कमी (Anemia), पीलिया।", rx: "Inj. Diminazene Aceturate (3.5 mg/kg deep IM) + Inj. Pheniramine + B-Complex।" },
+      { id: 10, name: "एनाप्लास्मोसिस (Anaplasmosis)", category: "HIGH", temp: "104-106°F", symptoms: "गंभीर पीलिया (आँखें व मसूड़े पीले), पेशाब पीला (लाल नहीं), तेज़ बुखार, कब्ज़।", rx: "Inj. Oxytetracycline Long Acting (20mg/kg) + Inj. Iron/Belamyl + Liver extract।" },
+      { id: 11, name: "पीपीआर / बकरी प्लेग (PPR in Goat & Sheep)", category: "HIGH", temp: "104-106°F", symptoms: "मुँह में छाले, आँखों-नाक से गाढ़ा मवाद जैसा स्राव, गंभीर बदबूदार दस्त।", rx: "Inj. Enrofloxacin/Oxytetracycline + Meloxicam + ORS घोल व Antidiarrheal bolus।" },
+      { id: 12, name: "आंत्रविषाक्तता / फिड़किया (Enterotoxaemia / ET)", category: "HIGH", temp: "104°F", symptoms: "अचानक दाना खाने के बाद बकरियों का चक्कर खाकर गिरना, सिर पीछे मोड़ना, शीघ्र मृत्यु।", rx: "Inj. Benzyl Penicillin high dose + Anti-toxin + Sodium Bicarbonate मुँह से।" },
+      { id: 13, name: "गिल्टी रोग / एंथ्रेक्स (Anthrax)", category: "HIGH", temp: "106-108°F", symptoms: "नाक, गुदा से बिना जमा हुआ काला खून आना, अचानक मृत्यु (ज़ूनोटिक - शव कभी न चीरें)।", rx: "Penicillin + Streptomycin उच्च मात्रा (सरकारी विभाग को तत्काल सूचित करें)।" },
+      { id: 14, name: "सर्रा / तिबरसा (Surra)", category: "HIGH", temp: "103-106°F", symptoms: "रुक-रुक कर आने वाला बुखार, गोल चक्कर काटना, दीवारों से सिर टकराना, अंधापन।", rx: "Inj. Quinapyramine sulfate & chloride (Triquin) 4.4 mg/kg S/C या Inj. Diminazene।" },
+      { id: 15, name: "रेबीज / अलर्क रोग (Rabies)", category: "NORMAL", temp: "101.5-103°F", symptoms: "लगातार रंभाना, अत्यधिक लार गिरना, उत्तेजना, पानी से डरना, पिछले पैरों में लकवा।", rx: "100% प्राणघातक। केवल समय पर पोस्ट-बाइट एंटी-रेबीज टीकाकरण (Day 0,3,7,14,28)।" },
+      { id: 16, name: "सूअर ज्वर (Swine Fever)", category: "HIGH", temp: "105-107°F", symptoms: "कान, पेट व जांघों पर बैंगनी धब्बे, तेज़ बुखार, लड़खड़ाना, दस्त।", rx: "Inj. Amoxicillin + Paracetamol + Multi-vitamins (नियमित टीकाकरण ही बचाव है)।" },
+      { id: 17, name: "माता रोग / शीप पॉक्स (Sheep/Goat Pox)", category: "HIGH", temp: "104-106°F", symptoms: "चेहरे, थन व बिना ऊन वाली त्वचा पर फुंसियाँ व पपड़ी, तेज़ बुखार।", rx: "Inj. Ceftriaxone + Meloxicam + त्वचा पर एंटीसेप्टिक लोशन।" },
+      { id: 18, name: "उदर शूल / पेट दर्द (Colic)", category: "NORMAL", temp: "101°F", symptoms: "पशु बार-बार पेट की तरफ देखता है, लात मारता है, ज़मीन पर लोटता है, पसीना आना।", rx: "Inj. Flunixin Meglumine (1.1 mg/kg IV) + Inj. Spasmo-vet + लिक्विड पैराफिन।" },
+      { id: 19, name: "जेर रुकना (Retention of Placenta - ROP)", category: "NORMAL", temp: "101.5-103°F", symptoms: "प्रसव के 8-12 घंटे बाद भी जेर बाहर न आना, बदबूदार स्राव, बेचैनी।", rx: "Exapar/Replanta लिक्विड 100ml BID + Inj. Oxytocin/PGF2-alpha + Ceftiofur।" },
+      { id: 20, name: "गर्भाशय / योनि बाहर आना (Prolapse)", category: "NORMAL", temp: "101.5°F", symptoms: "ब्याने से पहले या बाद में योनि या गर्भाशय का मांसल भाग शरीर से बाहर लटकना।", rx: "एक्रिफ्लाविन से धोकर वापस बिठाएं, Buhner suture लगाएं + Epidural Lignocaine इंजेक्शन।" },
+      { id: 21, name: "निमोनिया (Bovine Pneumonia)", category: "HIGH", temp: "104-106°F", symptoms: "तेज़ सांस चलना, छाती से आवाज़ आना, लगातार सूखी या बलगम वाली खांसी।", rx: "Inj. Tylosin / Florfenicol / Ceftiofur + Meloxicam + Bromhexine।" },
+      { id: 22, name: "खुर सड़न (Foot Rot)", category: "NORMAL", temp: "102-103°F", symptoms: "खुरों के बीच सड़ांध, दुर्गंधयुक्त मवाद, अत्यधिक लंगड़ापन।", rx: "Inj. Long-acting Oxytetracycline + कॉपर सल्फेट (तुतिया) घोल से फुट बाथ।" }
+    ];
+
+    let currentFilter = 'ALL';
+
+    function renderDiseases(list) {
+      const container = document.getElementById('diseaseList');
+      if (!container) return;
+      if (list.length === 0) {
+        container.innerHTML = '<div class="p-6 text-center text-slate-400 bg-slate-800 rounded-2xl border border-slate-700">कोई बीमारी या लक्षण नहीं मिला।</div>';
+        return;
+      }
+      container.innerHTML = list.map(d => `
+        <div class="bg-slate-800 border border-slate-700 rounded-2xl p-3.5 shadow-md space-y-2">
+          <div class="flex items-start justify-between">
+            <h3 class="text-sm font-bold text-emerald-300 leading-snug">${d.name}</h3>
+            <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full ${d.category === 'HIGH' ? 'bg-rose-950 text-rose-300 border border-rose-800' : d.category === 'SUB' ? 'bg-cyan-950 text-cyan-300 border border-cyan-800' : 'bg-slate-700 text-slate-300'}">
+              ${d.temp}
+            </span>
+          </div>
+          <p class="text-xs text-slate-300"><span class="text-slate-400 font-medium">लक्षण:</span> ${d.symptoms}</p>
+          <div class="bg-slate-900 rounded-xl p-2.5 border border-slate-700/50 text-xs">
+            <div class="text-emerald-400 font-semibold mb-1 flex items-center justify-between">
+              <span>💊 मानक प्राथमिक उपचार:</span>
+              <button onclick="fillRx('${d.name}', '${d.rx}')" class="text-[10px] bg-emerald-600 text-white px-2 py-0.5 rounded">
+                + पर्चे में जोड़ें
+              </button>
+            </div>
+            <p class="text-slate-300 text-[11px] font-mono leading-tight">${d.rx}</p>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function handleSearch() {
+      const q = document.getElementById('omniSearch').value.toLowerCase().trim();
+      document.getElementById('clearSearch').classList.toggle('hidden', q.length === 0);
+      let filtered = diseasesData.filter(d => 
+        d.name.toLowerCase().includes(q) || 
+        d.symptoms.toLowerCase().includes(q) || 
+        d.rx.toLowerCase().includes(q)
+      );
+      if (currentFilter !== 'ALL') {
+        filtered = filtered.filter(d => d.category === currentFilter);
+      }
+      renderDiseases(filtered);
+    }
+
+    function clearSearchInput() {
+      document.getElementById('omniSearch').value = '';
+      handleSearch();
+    }
+
+    function filterByTemp(cat, btn) {
+      currentFilter = cat;
+      document.querySelectorAll('.temp-chip').forEach(c => c.classList.remove('chip-active'));
+      btn.classList.add('chip-active');
+      handleSearch();
+    }
+
+    function fillRx(name, rx) {
+      document.getElementById('rxDiagnosis').value = name;
+      document.getElementById('rxMedicine').value = rx;
+      switchTab('rx');
+    }
+
+    function switchTab(tab) {
+      ['clinical', 'rx', 'records', 'auth'].forEach(t => {
+        const v = document.getElementById('view' + t.charAt(0).toUpperCase() + t.slice(1));
+        const b = document.getElementById('tab' + t.charAt(0).toUpperCase() + t.slice(1));
+        if (v) v.classList.add('hidden');
+        if (b) b.className = 'flex flex-col items-center text-slate-400';
+      });
+      const activeV = document.getElementById('view' + tab.charAt(0).toUpperCase() + tab.slice(1));
+      const activeB = document.getElementById('tab' + tab.charAt(0).toUpperCase() + tab.slice(1));
+      if (activeV) activeV.classList.remove('hidden');
+      if (activeB) activeB.className = 'flex flex-col items-center text-emerald-400 font-se
