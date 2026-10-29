@@ -1,22 +1,27 @@
 {
-  "name": "Pashu Seva Pro | Clinical Assistant",
+  "id": "https://rahuljangra9297-oss.github.io/Vetcare/",
+  "name": "Vetcare Clinical Assistant",
   "short_name": "Vetcare",
-  "description": "3-Way पशु रोग निदान, डिजिटल ओपीडी पर्ची व वित्तीय खाता बही",
-  "start_url": "./index.html",
+  "description": "3-Way Veterinary Clinical Diagnosis, Digital OPD & Ledger PWA",
+  "start_url": "https://rahuljangra9297-oss.github.io/Vetcare/",
+  "scope": "https://rahuljangra9297-oss.github.io/Vetcare/",
   "display": "standalone",
-  "background_color": "#0b0f19",
-  "theme_color": "#0b0f19",
+  "background_color": "#f8fafc",
+  "theme_color": "#2563eb",
   "orientation": "portrait-primary",
+  "categories": ["medical", "productivity", "utilities"],
   "icons": [
     {
-      "src": "https://cdn-icons-png.flaticon.com/512/3024/3024095.png",
+      "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d7/Caduceus_hand.svg/192px-Caduceus_hand.svg.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
-      "src": "https://cdn-icons-png.flaticon.com/512/3024/3024095.png",
+      "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d7/Caduceus_hand.svg/512px-Caduceus_hand.svg.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }
