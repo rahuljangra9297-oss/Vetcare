@@ -1,4 +1,4 @@
-const CACHE_NAME = 'vetcare-obsidian-v4';
+const CACHE_NAME = 'vetcare-clinical-light-v5';
 const ASSETS = [
   './',
   './index.html',
