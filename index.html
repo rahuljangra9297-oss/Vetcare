@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Pashu Seva Pro | Vetcare PWA</title>
+  <title>Pashu Seva Pro | 3-Way Diagnostic PWA</title>
   <meta name="theme-color" content="#059669" />
   <link rel="manifest" href="./manifest.json" />
 
@@ -12,7 +12,10 @@
   <style>
     * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #0f172a; color: #f8fafc; }
+    .mode-tab-active { background-color: #059669 !important; color: #ffffff !important; box-shadow: 0 4px 12px rgba(5, 150, 105, 0.4); }
+    .matrix-chip-active { background-color: #10b981 !important; color: #022c22 !important; font-weight: 700 !important; border-color: #34d399 !important; }
     .chip-active { background-color: #059669 !important; color: #ffffff !important; border-color: #047857 !important; }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
   </style>
 </head>
 <body class="min-h-screen flex flex-col pb-24 select-none">
@@ -28,7 +31,7 @@
           Pashu Seva Pro
           <span class="text-[10px] bg-emerald-500/20 text-emerald-400 font-semibold px-1.5 py-0.5 rounded border border-emerald-500/30">PWA</span>
         </h1>
-        <p class="text-[11px] text-slate-400">पशु चिकित्सा व क्लिनिकल असिस्टेंट</p>
+        <p class="text-[11px] text-slate-400">3-Way पशु रोग निदान व क्लिनिकल असिस्टेंट</p>
       </div>
     </div>
     <div class="flex items-center space-x-1.5 text-xs px-2.5 py-1 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-700/60 shadow-inner">
@@ -37,35 +40,169 @@
     </div>
   </header>
 
+  <!-- 3-WAY DIAGNOSIS MODE SELECTOR DOCK -->
+  <div class="bg-slate-900/90 border-b border-slate-800 px-3 py-2.5 sticky top-[61px] z-30">
+    <div class="max-w-xl mx-auto grid grid-cols-3 gap-1.5 bg-slate-950/80 p-1 rounded-2xl border border-slate-800 text-xs">
+      <button onclick="setDiagnosisMode('SYMPTOMS')" id="btnModeSymptoms" class="mode-tab-active py-2 px-1 rounded-xl font-semibold transition text-center flex flex-col items-center gap-0.5">
+        <span class="text-sm">🩺</span>
+        <span class="text-[11px]">1. केवल लक्षण</span>
+      </button>
+      <button onclick="setDiagnosisMode('HYBRID')" id="btnModeHybrid" class="py-2 px-1 rounded-xl text-slate-400 font-medium transition text-center flex flex-col items-center gap-0.5">
+        <span class="text-sm">🔍</span>
+        <span class="text-[11px]">2. लक्षण + रोग</span>
+      </button>
+      <button onclick="setDiagnosisMode('DISEASE_NAME')" id="btnModeName" class="py-2 px-1 rounded-xl text-slate-400 font-medium transition text-center flex flex-col items-center gap-0.5">
+        <span class="text-sm">📋</span>
+        <span class="text-[11px]">3. केवल रोग नाम</span>
+      </button>
+    </div>
+  </div>
+
   <!-- Main View Area -->
   <main class="flex-1 max-w-xl w-full mx-auto p-4 space-y-4">
 
-    <!-- TAB 1: 22+ Clinical Engine -->
+    <!-- TAB 1: 3-WAY CLINICAL DIAGNOSIS ENGINE -->
     <section id="viewClinical" class="space-y-4">
-      <!-- Search Box -->
-      <div class="relative">
-        <input 
-          type="text" 
-          id="omniSearch" 
-          placeholder="🔍 बीमारी, कार्डिनल लक्षण या दवा खोजें..."
-          class="w-full bg-slate-800 border border-slate-700 rounded-2xl px-4 py-3.5 text-sm text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-inner"
-          oninput="handleOmniSearch()"
-        />
-        <button id="clearSearchBtn" onclick="clearOmniSearch()" class="hidden absolute right-3.5 top-3.5 text-slate-400 text-sm">✕</button>
-      </div>
 
-      <!-- Quick Temperature Filter Chips -->
-      <div class="space-y-1.5">
-        <span class="text-xs font-semibold text-slate-300">🌡️ त्वरित तापमान फ़िल्टर (Zero-Typing):</span>
-        <div class="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
-          <button onclick="applyTempFilter('ALL', this)" class="temp-chip chip-active px-3 py-1.5 rounded-xl text-xs font-medium bg-slate-800 border border-slate-700 text-slate-300 shrink-0">सभी रोग (22)</button>
-          <button onclick="applyTempFilter('HIGH', this)" class="temp-chip px-3 py-1.5 rounded-xl text-xs font-medium bg-slate-800 border border-slate-700 text-slate-300 shrink-0">तेज़ बुखार (104°F+)</button>
-          <button onclick="applyTempFilter('NORMAL', this)" class="temp-chip px-3 py-1.5 rounded-xl text-xs font-medium bg-slate-800 border border-slate-700 text-slate-300 shrink-0">सामान्य (101-102°F)</button>
-          <button onclick="applyTempFilter('SUB', this)" class="temp-chip px-3 py-1.5 rounded-xl text-xs font-medium bg-slate-800 border border-slate-700 text-slate-300 shrink-0">कम ताप (&lt;100°F)</button>
+      <!-- ==================== MODE 1: SYMPTOM MATRIX (INTERACTIVE) ==================== -->
+      <div id="panelModeSymptoms" class="space-y-3 bg-slate-850 bg-slate-800/40 p-3.5 rounded-2xl border border-slate-700/70">
+        <div class="flex items-center justify-between border-b border-slate-700/60 pb-2">
+          <span class="text-xs font-bold text-emerald-400 flex items-center gap-1.5">
+            <span>🧬</span> बहु-लक्षण निदान मैट्रिक्स (Symptom Matcher)
+          </span>
+          <button onclick="resetSymptomMatrix()" class="text-[10px] text-rose-400 hover:text-rose-300 font-semibold underline">
+            रीसेट करें ↺
+          </button>
+        </div>
+
+        <!-- 1. Body Temp -->
+        <div class="space-y-1">
+          <span class="text-[11px] font-semibold text-slate-300">🌡️ शरीर का तापमान:</span>
+          <div class="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar text-xs">
+            <button onclick="toggleMatrixParam('temp', 'HIGH', this)" class="m-chip px-2.5 py-1 rounded-xl bg-slate-800 border border-slate-700 text-slate-300 shrink-0">तेज़ बुखार (104°F+)</button>
+            <button onclick="toggleMatrixParam('temp', 'NORMAL', this)" class="m-chip px-2.5 py-1 rounded-xl bg-slate-800 border border-slate-700 text-slate-300 shrink-0">सामान्य (101-102°F)</button>
+            <button onclick="toggleMatrixParam('temp', 'SUB', this)" class="m-chip px-2.5 py-1 rounded-xl bg-slate-800 border border-slate-700 text-slate-300 shrink-0">कम ताप (&lt;100°F)</button>
+          </div>
+        </div>
+
+        <!-- 2. Eyes & Mucous -->
+        <div class="space-y-1">
+          <span class="text-[11px] font-semibold text-slate-300">👁️ आँखें व श्लेष्मा झिल्ली:</span>
+          <div class="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar text-xs">
+            <button onclick="toggleMatrixParam('eyes', 'RED', this)" class="m-chip px-2.5 py-1 rounded-xl bg-slate-800 border border-slate-700 text-slate-300 shrink-0">अत्यधिक लाल</button>
+            <button onclick="toggleMatrixParam('eyes', 'YELLOW', this)" class="m-chip px-2.5 py-1 rounded-xl bg-slate-800 border border-slate-700 text-slate-300 shrink-0">गहरी पीली (पीलिया)</button>
+            <button onclick="toggleMatrixParam('eyes', 'PALE', this)" class="m-chip px-2.5 py-1 rounded-xl bg-slate-800 border border-slate-700 text-slate-300 shrink-0">सफेद/फीकी (अनीमिया)</button>
+            <button onclick="toggleMatrixParam('eyes', 'NORMAL', this)" class="m-chip px-2.5 py-1 rounded-xl bg-slate-800 border border-slate-700 text-slate-300 shrink-0">सामान्य गुलाबी</button>
+          </div>
+        </div>
+
+        <!-- 3. Urine -->
+        <div class="space-y-1">
+          <span class="text-[11px] font-semibold text-slate-300">💧 पेशाब का रंग व स्थिति:</span>
+          <div class="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar text-xs">
+            <button onclick="toggleMatrixParam('urine', 'RED_COFFEE', this)" class="m-chip px-2.5 py-1 rounded-xl bg-slate-800 border border-slate-700 text-slate-300 shrink-0">कॉफी/लाल पेशाब</button>
+            <button onclick="toggleMatrixParam('urine', 'YELLOW', this)" class="m-chip px-2.5 py-1 rounded-xl bg-slate-800 border border-slate-700 text-slate-300 shrink-0">गहरा पीला</button>
+            <button onclick="toggleMatrixParam('urine', 'SCANTY', this)" class="m-chip px-2.5 py-1 rounded-xl bg-slate-800 border border-slate-700 text-slate-300 shrink-0">दर्द से रुक-रुक कर</button>
+            <button onclick="toggleMatrixParam('urine', 'NORMAL', this)" class="m-chip px-2.5 py-1 rounded-xl bg-slate-800 border border-slate-700 text-slate-300 shrink-0">सामान्य</button>
+          </div>
+        </div>
+
+        <!-- 4. Dung -->
+        <div class="space-y-1">
+          <span class="text-[11px] font-semibold text-slate-300">💩 गोबर की स्थिति:</span>
+          <div class="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar text-xs">
+            <button onclick="toggleMatrixParam('dung', 'DIARRHEA', this)" class="m-chip px-2.5 py-1 rounded-xl bg-slate-800 border border-slate-700 text-slate-300 shrink-0">बदबूदार पानी जैसा दस्त</button>
+            <button onclick="toggleMatrixParam('dung', 'HARD', this)" class="m-chip px-2.5 py-1 rounded-xl bg-slate-800 border border-slate-700 text-slate-300 shrink-0">सख्त सूखा गोबर (कब्ज़)</button>
+            <button onclick="toggleMatrixParam('dung', 'BLOODY', this)" class="m-chip px-2.5 py-1 rounded-xl bg-slate-800 border border-slate-700 text-slate-300 shrink-0">खून / आंव युक्त</button>
+            <button onclick="toggleMatrixParam('dung', 'NORMAL', this)" class="m-chip px-2.5 py-1 rounded-xl bg-slate-800 border border-slate-700 text-slate-300 shrink-0">सामान्य</button>
+          </div>
+        </div>
+
+        <!-- 5. Cardinal Signs Selector -->
+        <div class="space-y-1">
+          <span class="text-[11px] font-semibold text-rose-300">🚨 प्रमुख विशिष्ट लक्षण (Cardinal Sign):</span>
+          <select id="selCardinalSign" onchange="applyMatrixFilters()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-200 outline-none focus:ring-1 focus:ring-emerald-500">
+            <option value="ALL">-- कोई भी विशिष्ट लक्षण चुनें (वैकल्पिक) --</option>
+            <option value="NECK_SWELLING">गले व जबड़े के नीचे गर्म सूजन (गलाघोंटू)</option>
+            <option value="GAS_SWELLING">पुट्ठे/कंधे में गैस भरी सूजन - चर्र-चर्र आवाज़ (BQ)</option>
+            <option value="MOUTH_BLISTERS">मुंह, जीभ व खुरों में छाले व लार (FMD)</option>
+            <option value="UDDER_HARD">अयन/थन में कड़ापन व दूध में छिछड़े/खून (थनैल)</option>
+            <option value="STERNAL_RECUMBENCY">ब्याने बाद गर्दन मोड़कर बैठना व ठंडा शरीर (मिल्क फीवर)</option>
+            <option value="SWEET_BREATH">सांस/दूध से मीठी गंध व केवल सूखा भूसा खाना (कीटोसिस)</option>
+            <option value="LEFT_FLANK_DRUM">बायाँ पेट ढोलक की तरह फूलना (अफारा)</option>
+            <option value="LYMPH_SWELLING">कंधे/कान की लिम्फ नोड में कठोर सूजन (थायलेरियासिस)</option>
+            <option value="RED_URINE">कॉफी/लाल रंग का पेशाब (बबेशियोसिस)</option>
+            <option value="SEVERE_JAUNDICE">अत्यधिक पीलिया बिना लाल पेशाब के (एनाप्लास्मोसिस)</option>
+            <option value="MOUTH_EROSION_DIARRHEA">मुंह में छाले व बदबूदार दस्त (PPR बकरी प्लेग)</option>
+            <option value="OPISTHOTONOS">दाना खाने बाद सिर पीछे खींचना व मृत्यु (फिड़किया)</option>
+            <option value="TAR_BLOOD">प्राकृतिक छेदों से काला खून रिसना (एंथ्रेक्स)</option>
+            <option value="CIRCLING_HEAD_PRESSING">गोल चक्कर काटना व सिर टकराना (सर्रा)</option>
+            <option value="HYDROPHOBIA_BELL">अत्यधिक रंभाना, लार व पानी से डर (रेबीज)</option>
+            <option value="ROLLING_PAWING">पेट देखना, लात मारना व ज़मीन पर लोटना (पेट दर्द / Colic)</option>
+            <option value="HANGING_PLACENTA">प्रसव के 8-12 घंटे बाद भी जेर लटकना (ROP)</option>
+            <option value="PROTRUDING_MASS">योनि या गर्भाशय का मांसल भाग बाहर लटकना (प्रोलैप्स)</option>
+            <option value="DYSPNEA_WHEEZING">हांफना, छाती से सायं-सायं आवाज़ व खांसी (निमोनिया)</option>
+            <option value="FOOT_ROT_SMELL">खुरों के बीच सड़ांध व दुर्गंधयुक्त मवाद (खुर सड़न)</option>
+          </select>
+        </div>
+
+        <div id="matchSummaryBar" class="text-[11px] font-semibold text-emerald-300 bg-emerald-950/60 p-2 rounded-xl border border-emerald-800/40 flex items-center justify-between">
+          <span id="matchScoreText">लक्षण चुनें ➔ सर्वाधिक संभावित रोग स्वतः ऊपर आएंगे</span>
+          <span id="matchCountBadge" class="bg-emerald-600 text-white px-2 py-0.5 rounded text-[10px]">22 रोग</span>
         </div>
       </div>
 
-      <!-- Disease Cards Grid -->
+      <!-- ==================== MODE 2: HYBRID SEARCH (OMNI) ==================== -->
+      <div id="panelModeHybrid" class="hidden space-y-3">
+        <div class="relative">
+          <input 
+            type="text" 
+            id="omniSearch" 
+            placeholder="🔍 बीमारी का नाम, कोई भी लक्षण या दवा खोजें (उदा. गलाघोंटू, लार, Ceftiofur)..."
+            class="w-full bg-slate-800 border border-slate-700 rounded-2xl px-4 py-3.5 text-sm text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-inner"
+            oninput="handleOmniSearch()"
+          />
+          <button id="clearSearchBtn" onclick="clearOmniSearch()" class="hidden absolute right-3.5 top-3.5 text-slate-400 text-sm">✕</button>
+        </div>
+
+        <div class="space-y-1.5">
+          <span class="text-xs font-semibold text-slate-300">🌡️ त्वरित तापमान फ़िल्टर:</span>
+          <div class="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar text-xs">
+            <button onclick="applyTempFilter('ALL', this)" class="temp-chip chip-active px-3 py-1.5 rounded-xl font-medium bg-slate-800 border border-slate-700 text-slate-300 shrink-0">सभी रोग (22)</button>
+            <button onclick="applyTempFilter('HIGH', this)" class="temp-chip px-3 py-1.5 rounded-xl font-medium bg-slate-800 border border-slate-700 text-slate-300 shrink-0">तेज़ बुखार (104°F+)</button>
+            <button onclick="applyTempFilter('NORMAL', this)" class="temp-chip px-3 py-1.5 rounded-xl font-medium bg-slate-800 border border-slate-700 text-slate-300 shrink-0">सामान्य (101-102°F)</button>
+            <button onclick="applyTempFilter('SUB', this)" class="temp-chip px-3 py-1.5 rounded-xl font-medium bg-slate-800 border border-slate-700 text-slate-300 shrink-0">कम ताप (&lt;100°F)</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== MODE 3: DISEASE DIRECTORY (BY NAME / ETIOLOGY) ==================== -->
+      <div id="panelModeName" class="hidden space-y-3">
+        <div class="grid grid-cols-2 gap-2 text-xs">
+          <button onclick="filterByEtiology('ALL', this)" class="etio-chip chip-active p-2.5 rounded-xl bg-slate-800 border border-slate-700 text-left">
+            <div class="font-bold text-white">📁 सभी 22 रोग</div>
+            <div class="text-[10px] text-slate-400">संपूर्ण डायरेक्टरी</div>
+          </button>
+          <button onclick="filterByEtiology('BACTERIAL', this)" class="etio-chip p-2.5 rounded-xl bg-slate-800 border border-slate-700 text-left">
+            <div class="font-bold text-emerald-400">🦠 जीवाणुजन्य (Bacterial)</div>
+            <div class="text-[10px] text-slate-400">HS, BQ, थनैल, एंथ्रेक्स आदि</div>
+          </button>
+          <button onclick="filterByEtiology('VIRAL', this)" class="etio-chip p-2.5 rounded-xl bg-slate-800 border border-slate-700 text-left">
+            <div class="font-bold text-cyan-400">🧬 विषाणुजन्य (Viral)</div>
+            <div class="text-[10px] text-slate-400">FMD, PPR, शीप पॉक्स, रेबीज</div>
+          </button>
+          <button onclick="filterByEtiology('PROTOZOAL', this)" class="etio-chip p-2.5 rounded-xl bg-slate-800 border border-slate-700 text-left">
+            <div class="font-bold text-amber-400">🩸 रक्त परजीवी (Protozoal)</div>
+            <div class="text-[10px] text-slate-400">थायलेरियासिस, बबेशिया, सर्रा</div>
+          </button>
+          <button onclick="filterByEtiology('METABOLIC', this)" class="etio-chip p-2.5 rounded-xl bg-slate-800 border border-slate-700 text-left col-span-2">
+            <div class="font-bold text-rose-400">🌾 उपापचयी व अन्य विकार (Metabolic)</div>
+            <div class="text-[10px] text-slate-400">मिल्क फीवर, कीटोसिस, अफारा, पेट दर्द (Colic), प्रोलैप्स, ROP</div>
+          </button>
+        </div>
+      </div>
+
+      <!-- Disease Cards Grid (Dynamically Populated) -->
       <div id="diseaseContainer" class="space-y-3"></div>
     </section>
 
@@ -104,14 +241,14 @@
             </select>
           </div>
           <div>
-            <label class="text-[11px] text-slate-400 block mb-1">टैग / पहचान संख्या</label>
+            <label class="text-[11px] text-slate-400 block mb-1">टैग संख्या</label>
             <input id="opdTag" type="text" placeholder="Tag No." class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white outline-none" />
           </div>
         </div>
 
         <div>
           <label class="text-[11px] text-slate-400 block mb-1">पहचाना गया रोग (Diagnosis) *</label>
-          <input id="opdDiagnosis" type="text" placeholder="उदा. गलघोंटू / थायलेरियासिस" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white outline-none focus:ring-1 focus:ring-emerald-500" />
+          <input id="opdDiagnosis" type="text" placeholder="उदा. गलाघोंटू / थायलेरियासिस" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white outline-none focus:ring-1 focus:ring-emerald-500" />
         </div>
 
         <div>
@@ -158,8 +295,8 @@
 
         <div class="p-3 bg-slate-900 rounded-xl border border-slate-700 text-xs space-y-1.5">
           <div class="flex items-center justify-between"><span class="text-slate-400">अकाउंट मोड:</span><span class="text-emerald-400 font-semibold">24h गेस्ट ट्रायल सक्रिय</span></div>
-          <div class="flex items-center justify-between"><span class="text-slate-400">क्लाउड सिंक:</span><span class="text-emerald-400 font-semibold">Cloud Firestore मुंबई (asia-south1)</span></div>
-          <div class="flex items-center justify-between"><span class="text-slate-400">ऑफ़लाइन वर्कर:</span><span class="text-emerald-400 font-semibold">Service Worker Registered</span></div>
+          <div class="flex items-center justify-between"><span class="text-slate-400">डायग्नोस्टिक इंजन:</span><span class="text-emerald-400 font-semibold">3-Way Active (लक्षण / हाइब्रिड / नाम)</span></div>
+          <div class="flex items-center justify-between"><span class="text-slate-400">ऑफ़लाइन कैश:</span><span class="text-emerald-400 font-semibold">Service Worker Enabled</span></div>
         </div>
 
         <button onclick="alert('Google Sign-In प्रमाणीकरण सक्रिय है!')" class="w-full bg-white hover:bg-slate-100 text-slate-900 font-semibold py-2.5 rounded-xl text-xs flex items-center justify-center gap-2 transition">
