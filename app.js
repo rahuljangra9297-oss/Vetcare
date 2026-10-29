@@ -338,7 +338,7 @@ function transferToRx(diseaseName, rxTreatment) {
 
 // ==================== 5. NAVIGATION ====================
 function navigateToTab(tabName) {
-  const tabs = ['clinical', 'rx', 'records', 'ledger', 'profile'];
+  const tabs = ['clinical', 'rx', 'ai', 'records', 'ledger'];
   tabs.forEach(t => {
     const sec = document.getElementById(`view${t.charAt(0).toUpperCase() + t.slice(1)}`);
     const btn = document.getElementById(`tab${t.charAt(0).toUpperCase() + t.slice(1)}`);
@@ -356,6 +356,10 @@ function navigateToTab(tabName) {
     activeBtn.classList.add('text-blue-600', 'font-bold');
     activeBtn.classList.remove('text-slate-400');
   }
+
+  // Hide 3-way top selector if not in clinical tab
+  const modeDock = document.getElementById('dockModeSelector');
+  if (modeDock) modeDock.classList.toggle('hidden', tabName !== 'clinical');
 
   if (tabName === 'records') renderSavedRecords();
   if (tabName === 'ledger') updateLedgerAnalytics();
@@ -477,6 +481,41 @@ function directPhoneCall() {
   window.open(`tel:${phone}`, '_self');
 }
 
+function printCurrentOPDSlip() {
+  const c = generateCaseDataFromForm();
+  if (!c) return;
+
+  const printArea = document.getElementById('printableSlipArea');
+  printArea.innerHTML = `
+    <div style="text-align: center; border-bottom: 2px solid #0f172a; padding-bottom: 8px; margin-bottom: 12px;">
+      <h2 style="font-size: 18px; font-weight: bold; margin: 0;">PASHU SEVA PRO CLINIC</h2>
+      <p style="font-size: 11px; color: #475569; margin: 2px 0 0 0;">डिजिटल पशु चिकित्सा ओपीडी पर्ची</p>
+    </div>
+    <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 8px;">
+      <span><strong>FID:</strong> ${c.fid}</span>
+      <span><strong>दिनांक:</strong> ${c.date}</span>
+    </div>
+    <div style="font-size: 12px; line-height: 1.5; margin-bottom: 10px; border-bottom: 1px dashed #cbd5e1; padding-bottom: 8px;">
+      <div><strong>किसान:</strong> ${c.name} (${c.village}) | <strong>फ़ोन:</strong> ${c.phone}</div>
+      <div><strong>पशु:</strong> ${c.animal} | <strong>टैग सं:</strong> ${c.tag} | <strong>गर्भ स्थिति:</strong> ${c.preg}</div>
+    </div>
+    <div style="font-size: 12px; margin-bottom: 10px;">
+      <div><strong>पहचाना गया रोग (Diagnosis):</strong> ${c.diag}</div>
+      <div style="margin-top: 4px;"><strong>उपचार व दवाइयां (Rx):</strong></div>
+      <div style="font-family: monospace; background: #f8fafc; padding: 6px; border-radius: 4px; margin-top: 4px;">${c.med}</div>
+    </div>
+    <div style="font-size: 12px; border-top: 1px dashed #cbd5e1; padding-top: 8px; display: flex; justify-content: space-between;">
+      <span>कुल शुल्क: ₹${c.totalFee}</span>
+      <span>प्राप्त: ₹${c.paidFee}</span>
+      <span style="font-weight: bold; color: ${c.dueFee > 0 ? '#b91c1c' : '#15803d'}">बकाया: ₹${c.dueFee}</span>
+    </div>
+    <div style="font-size: 9px; color: #64748b; text-align: center; margin-top: 14px;">
+      * वैधानिक सूचना: दवा का प्रयोग पंजीकृत पशु चिकित्सक की देखरेख में ही करें।
+    </div>
+  `;
+  window.print();
+}
+
 function handleSaveOfflineCase() {
   const c = generateCaseDataFromForm();
   if (!c) return;
@@ -492,7 +531,113 @@ function saveLocalCase(item) {
   updateLedgerAnalytics();
 }
 
-// ==================== 7. UNIVERSAL CASE SEARCH & REGISTRY ====================
+// ==================== 7. LIVE GEMINI AI VETERINARY CONSULTANT ====================
+function openAIKeyModal() {
+  const modal = document.getElementById('modalAIKey');
+  const storedKey = localStorage.getItem('vetcare_gemini_key') || '';
+  document.getElementById('inputGeminiKey').value = storedKey;
+  if (modal) modal.classList.remove('hidden');
+}
+
+function closeAIKeyModal() {
+  const modal = document.getElementById('modalAIKey');
+  if (modal) modal.classList.add('hidden');
+}
+
+function saveGeminiKey() {
+  const key = document.getElementById('inputGeminiKey').value.trim();
+  if (!key) { alert('कृपया मान्य API Key दर्ज करें!'); return; }
+  localStorage.setItem('vetcare_gemini_key', key);
+  alert('Gemini API Key सुरक्षित कर ली गई!');
+  closeAIKeyModal();
+}
+
+function sendCaseToAIConsultant() {
+  const animal = document.getElementById('opdAnimal').value;
+  const preg = document.getElementById('opdPregnancy').value;
+  const drop = document.getElementById('opdMilkDrop').value.trim() || 'N/A';
+  const diag = document.getElementById('opdDiagnosis').value.trim();
+  const notes = document.getElementById('opdMedicine').value.trim();
+
+  const casePrompt = `पशु प्रकार: ${animal}, गर्भ स्थिति: ${preg}, दूध में गिरावट: ${drop}\nप्राथमिक संदेहास्पद रोग: ${diag || 'अज्ञात'}\nनैदानिक लक्षण / दवा इतिहास: ${notes || 'खाना-पीना बंद, सुस्ती, तेज़ बुखार'}`;
+  
+  document.getElementById('aiInputPrompt').value = casePrompt;
+  navigateToTab('ai');
+}
+
+async function runAIConsultant() {
+  const promptText = document.getElementById('aiInputPrompt').value.trim();
+  if (!promptText) {
+    alert('कृपया विश्लेषण हेतु पशु के लक्षण दर्ज करें!');
+    return;
+  }
+
+  const apiKey = localStorage.getItem('vetcare_gemini_key');
+  if (!apiKey) {
+    alert('कृपया पहले ऊपर "🤖 AI Key" बटन दबाकर अपनी Google Gemini API Key दर्ज करें!');
+    openAIKeyModal();
+    return;
+  }
+
+  const btn = document.getElementById('btnRunAI');
+  const outArea = document.getElementById('aiOutputArea');
+  const outText = document.getElementById('aiOutputText');
+
+  btn.disabled = true;
+  btn.innerHTML = `<span class="animate-spin">⏳</span> AI सर्जन विश्लेषण कर रहे हैं...`;
+  outArea.classList.remove('hidden');
+  outText.innerHTML = `क्लिनिकल केस शीट का सूक्ष्म विश्लेषण जारी है...`;
+
+  const systemInstruction = 
+`Role: आप एक Senior Veterinary Surgeon (वरिष्ठ पशु चिकित्सक) व Lab Specialist हैं।
+नीचे दिए गए पशु के लक्षणों का गहन वैज्ञानिक विश्लेषण कर निम्नलिखित 5 खंडों में स्पष्ट समाधान प्रदान करें:
+1. रोग के संभावित नाम (English, Hindi, Local Rural Names)
+2. रोग का मूल कारण व संचरण (Bacteria, Virus, Protozoa, Metabolic)
+3. पुष्टिकरण लैब जांच व अनुमानित खर्च (₹)
+4. संपूर्ण उपचार योजना (आपातकालीन इंजेक्शन mg/kg, ओरल टॉनिक, देसी नुस्खे, व गर्भावस्था लाल चेतावनी)
+5. समग्र पूर्वानुमान (Prognosis) व ठीक होने के न्यूनतम/अधिकतम दिन।
+भाषा: मुख्य रूप से हिंदी (Bilingual)।`;
+
+  try {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [
+          { role: 'user', parts: [{ text: `${systemInstruction}\n\nमरीज पशु का विवरण:\n${promptText}` }] }
+        ]
+      })
+    });
+
+    const data = await response.json();
+    if (data.error) {
+      throw new Error(data.error.message);
+    }
+
+    const aiResult = data.candidates[0].content.parts[0].text;
+    outText.innerText = aiResult;
+  } catch (err) {
+    outText.innerHTML = `<span class="text-rose-600 font-bold">त्रुटि: ${err.message}</span>\nकृपया अपनी API Key या इंटरनेट कनेक्शन की जांच करें।`;
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = `<span>✨</span> AI से संपूर्ण क्लिनिकल रिपोर्ट मांगें`;
+  }
+}
+
+function clearAIOutput() {
+  document.getElementById('aiInputPrompt').value = '';
+  document.getElementById('aiOutputArea').classList.add('hidden');
+  document.getElementById('aiOutputText').innerText = '';
+}
+
+function transferAIToRx() {
+  const text = document.getElementById('aiOutputText').innerText;
+  if (!text) return;
+  document.getElementById('opdMedicine').value = text.slice(0, 500) + '...';
+  navigateToTab('rx');
+}
+
+// ==================== 8. UNIVERSAL CASE SEARCH & REGISTRY ====================
 function handleUniversalRecordSearch() {
   const q = document.getElementById('searchRecordsInput').value.toLowerCase().trim();
   const records = JSON.parse(localStorage.getItem('vetcare_opd_cases') || '[]');
@@ -549,7 +694,7 @@ function renderRecordsArray(records) {
   `).join('');
 }
 
-// ==================== 8. GRANULAR FINANCE & DEBIT/CREDIT KHATA ====================
+// ==================== 9. GRANULAR FINANCE & DEBIT/CREDIT KHATA ====================
 function setLedgerTimeFilter(filterType, btn) {
   currentLedgerFilter = filterType;
   document.querySelectorAll('.ledger-time-chip').forEach(c => c.classList.remove('chip-active'));
@@ -651,7 +796,7 @@ _पशु सेवा क्लिनिकल एकाउंट्स_`;
   window.open(`https://wa.me/91${cleanPhone}?text=${encodeURIComponent(msg)}`, '_blank');
 }
 
-// ==================== 9. SUBSCRIPTION & TRIAL COUNTDOWN ====================
+// ==================== 10. TRIAL COUNTDOWN ====================
 function initTrialCountdown() {
   let trialStart = localStorage.getItem('vetcare_trial_start');
   if (!trialStart) {
@@ -677,24 +822,4 @@ function initTrialCountdown() {
       }
     }
   }, 1000);
-}
-
-function openSubscriptionModal() {
-  const m = document.getElementById('modalSubscription');
-  if (m) m.classList.remove('hidden');
-}
-
-function closeSubscriptionModal() {
-  const m = document.getElementById('modalSubscription');
-  if (m) m.classList.add('hidden');
-}
-
-function openLoginModal() {
-  const m = document.getElementById('modalLogin');
-  if (m) m.classList.remove('hidden');
-}
-
-function closeLoginModal() {
-  const m = document.getElementById('modalLogin');
-  if (m) m.classList.add('hidden');
 }
