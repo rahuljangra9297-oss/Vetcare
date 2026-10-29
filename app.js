@@ -1,3 +1,28 @@
+// ==================== FIREBASE CLOUD CONFIGURATION ====================
+const firebaseConfig = {
+  apiKey: "AIzaSyC3v_iCbTFYm7bcGns7MBC0i06fOW6ePg8",
+  authDomain: "vetcare-9981e.firebaseapp.com",
+  projectId: "vetcare-9981e",
+  storageBucket: "vetcare-9981e.firebasestorage.app",
+  messagingSenderId: "830031070631",
+  appId: "1:830031070631:web:3aee25429c11fd75eee282"
+};
+
+let db = null;
+try {
+  if (typeof firebase !== 'undefined') {
+    firebase.initializeApp(firebaseConfig);
+    db = firebase.firestore();
+    // Enable offline local cache for Firestore
+    db.enablePersistence({ synchronizeTabs: true }).catch((err) => {
+      console.warn('Firestore offline persistence note:', err.code);
+    });
+    console.log('Firebase Cloud Firestore Connected Successfully!');
+  }
+} catch (err) {
+  console.error('Firebase Initialization Error:', err);
+}
+
 // Global Application State
 let currentDiagnosisMode = 'SYMPTOMS';
 let currentLanguage = localStorage.getItem('vetcare_lang') || 'HI';
@@ -15,6 +40,7 @@ window.addEventListener('DOMContentLoaded', () => {
   updateLedgerAnalytics();
   initTrialCountdown();
   initPWA();
+  initCloudRealtimeSync();
 });
 
 // PWA Service Worker
@@ -24,6 +50,70 @@ function initPWA() {
       .then(() => console.log('Service Worker Active (v5 Light)'))
       .catch((err) => console.error('SW Error:', err));
   }
+}
+
+// ==================== REALTIME CLOUD SYNC ENGINE ====================
+function initCloudRealtimeSync() {
+  if (!db) return;
+
+  const statusBadge = document.getElementById('cloudSyncStatusBadge');
+
+  // Realtime Sync for OPD Cases
+  db.collection('opd_cases').onSnapshot((snapshot) => {
+    let cloudCases = [];
+    snapshot.forEach((doc) => cloudCases.push(doc.data()));
+
+    if (cloudCases.length > 0) {
+      let localRecords = JSON.parse(localStorage.getItem('vetcare_opd_cases') || '[]');
+      
+      // Merge unique by FID
+      const map = new Map();
+      localRecords.forEach(item => map.set(item.fid, item));
+      cloudCases.forEach(item => map.set(item.fid, item));
+      
+      const merged = Array.from(map.values()).sort((a, b) => new Date(b.timestamp || b.date) - new Date(a.timestamp || a.date));
+      localStorage.setItem('vetcare_opd_cases', JSON.stringify(merged));
+      
+      renderSavedRecords();
+      updateLedgerAnalytics();
+    }
+
+    if (statusBadge) {
+      statusBadge.innerText = '☁️ LIVE SYNC';
+      statusBadge.className = 'text-[9px] bg-emerald-50 text-emerald-700 font-mono font-bold px-1.5 py-0.5 rounded border border-emerald-300';
+    }
+  }, (error) => {
+    console.warn('Realtime sync offline mode active:', error);
+    if (statusBadge) {
+      statusBadge.innerText = '⚡ OFFLINE';
+      statusBadge.className = 'text-[9px] bg-slate-100 text-slate-600 font-mono font-medium px-1.5 py-0.5 rounded border border-slate-200';
+    }
+  });
+
+  // Realtime Sync for Expenses
+  db.collection('expenses').onSnapshot((snapshot) => {
+    let cloudExpenses = [];
+    snapshot.forEach(doc => cloudExpenses.push(doc.data()));
+    if (cloudExpenses.length > 0) {
+      localStorage.setItem('vetcare_expenses', JSON.stringify(cloudExpenses));
+      updateLedgerAnalytics();
+    }
+  });
+}
+
+function syncCaseToCloud(item) {
+  if (!db) return;
+  db.collection('opd_cases').doc(item.fid).set(item)
+    .then(() => console.log('Case synced to Firebase Cloud:', item.fid))
+    .catch((err) => console.warn('Offline: queued for cloud sync when online:', err));
+}
+
+function syncExpenseToCloud(expItem) {
+  if (!db) return;
+  const expId = 'EXP-' + Date.now();
+  db.collection('expenses').doc(expId).set(expItem)
+    .then(() => console.log('Expense synced to Cloud:', expId))
+    .catch((err) => console.warn('Expense queued locally:', err));
 }
 
 // ==================== 1. WELCOME DISCLAIMER ====================
@@ -233,7 +323,7 @@ function renderDiseaseList(list, showPercentage) {
         <div class="flex items-start justify-between gap-2 border-b border-slate-100 pb-3">
           <div>
             <h3 class="text-sm sm:text-base font-bold text-slate-900 leading-snug tracking-tight">${d.id}. ${d.name}</h3>
-            <p class="text-xs text-blue-600 font-semibold mt-0.5">देसी नाम: ${d.localName}[cite: 4]</p>
+            <p class="text-xs text-blue-600 font-semibold mt-0.5">देसी नाम: ${d.localName}</p>
             <p class="text-[10px] text-slate-500 font-mono mt-0.5">${d.etiologyName}</p>
           </div>
           <div class="flex flex-col items-end gap-1.5 shrink-0">
@@ -267,7 +357,7 @@ function renderDiseaseList(list, showPercentage) {
         <!-- Staging & Trajectory Accordion -->
         <details class="bg-slate-50 rounded-2xl border border-slate-200 text-xs">
           <summary class="p-3 font-bold text-slate-800 cursor-pointer flex justify-between items-center select-none">
-            <span class="flex items-center gap-1.5">⏱️ रोग की अवस्थाएं व प्रोग्नोसिस (Staging & Trajectory)[cite: 4]</span>
+            <span class="flex items-center gap-1.5">⏱️ रोग की अवस्थाएं व प्रोग्नोसिस (Staging & Trajectory)</span>
             <span class="text-blue-600 text-[10px]">विस्तार ▼</span>
           </summary>
           <div class="p-3.5 pt-0 space-y-2.5 border-t border-slate-200/60 mt-1 text-[11px]">
@@ -316,13 +406,13 @@ function renderDiseaseList(list, showPercentage) {
 
         <!-- Pregnancy Alert -->
         <p class="p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-[11px]">
-          <strong>🤰 गर्भ सुरक्षा:</strong> ${d.pregnancy}[cite: 4]
+          <strong>🤰 गर्भ सुरक्षा:</strong> ${d.pregnancy}
         </p>
 
         <!-- Lab Test Footer -->
         <div class="pt-2.5 border-t border-slate-100 text-[10px] text-slate-500 flex items-center justify-between">
-          <span>🔬 लैब टेस्ट: <strong>${d.labTest.name}</strong> (${d.labTest.cost})[cite: 4]</span>
-          <span class="text-rose-600 font-semibold">खतरा: ${d.redFlags}[cite: 4]</span>
+          <span>🔬 लैब टेस्ट: <strong>${d.labTest.name}</strong> (${d.labTest.cost})</span>
+          <span class="text-rose-600 font-semibold">खतरा: ${d.redFlags}</span>
         </div>
 
       </div>
@@ -357,7 +447,6 @@ function navigateToTab(tabName) {
     activeBtn.classList.remove('text-slate-400');
   }
 
-  // Hide 3-way top selector if not in clinical tab
   const modeDock = document.getElementById('dockModeSelector');
   if (modeDock) modeDock.classList.toggle('hidden', tabName !== 'clinical');
 
@@ -439,7 +528,7 @@ function dispatchWhatsAppRx() {
   if (!c) return;
 
   const slip = 
-`🐾 *पशु चिकित्सा सेवा पर्ची (Pashu Seva Pro)*
+`🐾 *पशु चिकित्सा सेवा पर्ची (Vetcare)*
 ━━━━━━━━━━━━━━━━━━━━
 🆔 *FID:* ${c.fid} | *टैग सं:* ${c.tag}
 📅 *दिनांक:* ${c.date}
@@ -470,7 +559,7 @@ _डिजिटल पशु चिकित्सा क्लिनिकल 
 function dispatchNativeSMS() {
   const c = generateCaseDataFromForm();
   if (!c) return;
-  const smsText = `PashuSevaPro: FID ${c.fid}. Kisan: ${c.name}, Rog: ${c.diag}, Dawa: ${c.med}, Kul: Rs.${c.totalFee}, Bakaya: Rs.${c.dueFee}. Call doctor for help.`;
+  const smsText = `Vetcare: FID ${c.fid}. Kisan: ${c.name}, Rog: ${c.diag}, Dawa: ${c.med}, Kul: Rs.${c.totalFee}, Bakaya: Rs.${c.dueFee}. Call doctor for help.`;
   saveLocalCase(c);
   window.open(`sms:${c.phone}?body=${encodeURIComponent(smsText)}`, '_blank');
 }
@@ -488,7 +577,7 @@ function printCurrentOPDSlip() {
   const printArea = document.getElementById('printableSlipArea');
   printArea.innerHTML = `
     <div style="text-align: center; border-bottom: 2px solid #0f172a; padding-bottom: 8px; margin-bottom: 12px;">
-      <h2 style="font-size: 18px; font-weight: bold; margin: 0;">PASHU SEVA PRO CLINIC</h2>
+      <h2 style="font-size: 18px; font-weight: bold; margin: 0;">VETCARE CLINICAL ASSISTANT</h2>
       <p style="font-size: 11px; color: #475569; margin: 2px 0 0 0;">डिजिटल पशु चिकित्सा ओपीडी पर्ची</p>
     </div>
     <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 8px;">
@@ -520,7 +609,7 @@ function handleSaveOfflineCase() {
   const c = generateCaseDataFromForm();
   if (!c) return;
   saveLocalCase(c);
-  alert('केस सफलता से सुरक्षित कर लिया गया!');
+  alert('केस सफलता से सुरक्षित कर लिया गया (Local + Cloud Sync)!');
   navigateToTab('records');
 }
 
@@ -528,6 +617,7 @@ function saveLocalCase(item) {
   let records = JSON.parse(localStorage.getItem('vetcare_opd_cases') || '[]');
   records.unshift(item);
   localStorage.setItem('vetcare_opd_cases', JSON.stringify(records));
+  syncCaseToCloud(item);
   updateLedgerAnalytics();
 }
 
@@ -778,9 +868,11 @@ function addClinicExpense() {
   const amt = parseFloat(prompt("खर्च की राशि (₹):"));
   if (!amt || isNaN(amt)) return;
 
+  const expItem = { desc, amount: amt, date: new Date().toLocaleDateString('hi-IN'), timestamp: new Date().toISOString() };
   let expenses = JSON.parse(localStorage.getItem('vetcare_expenses') || '[]');
-  expenses.push({ desc, amount: amt, date: new Date().toLocaleDateString('hi-IN') });
+  expenses.push(expItem);
   localStorage.setItem('vetcare_expenses', JSON.stringify(expenses));
+  syncExpenseToCloud(expItem);
   alert('खर्च सफलता से दर्ज हुआ!');
   updateLedgerAnalytics();
 }
@@ -790,7 +882,7 @@ function sendDueReminder(name, phone, dueFee, fid) {
 `नमस्कार ${name} जी, 
 पशु चिकित्सा सेवा पर्ची (*${fid}*) का आपका ₹${dueFee} का उपचार शुल्क बकाया है। 
 कृपया सुविधानुसार यह बकाया राशि PhonePe/GPay या नकद द्वारा चुकता करने का कष्ट करें। 
-_पशु सेवा क्लिनिकल एकाउंट्स_`;
+_Vetcare क्लिनिकल एकाउंट्स_`;
 
   const cleanPhone = phone.replace(/\D/g, '');
   window.open(`https://wa.me/91${cleanPhone}?text=${encodeURIComponent(msg)}`, '_blank');
