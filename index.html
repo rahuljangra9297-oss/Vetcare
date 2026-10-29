@@ -24,7 +24,6 @@
   </script>
 
   <style>
-    /* 120 FPS Native Feel & GPU Acceleration */
     * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; overscroll-behavior-y: none; }
     .smooth-scroll { -webkit-overflow-scrolling: touch; scroll-behavior: smooth; }
@@ -83,9 +82,7 @@
       </div>
 
       <!-- Disease Cards Grid (Loaded from 22+ DB) -->
-      <div id="diseaseList" class="space-y-3">
-        <!-- Rendered via JavaScript -->
-      </div>
+      <div id="diseaseList" class="space-y-3"></div>
     </section>
 
     <!-- TAB 2: PRESCRIPTION & CASE ENTRY -->
@@ -139,7 +136,6 @@
           <textarea id="rxMedicine" rows="3" placeholder="दवा का नाम, मात्रा (Dose) और रूट (IM/IV/Oral)..." class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-xs text-white focus:ring-1 focus:ring-emerald-500 outline-none"></textarea>
         </div>
 
-        <!-- 1-Click Multi-Channel Action Buttons -->
         <div class="pt-2 flex flex-col gap-2">
           <button onclick="sendRxWhatsApp()" class="w-full bg-emerald-600 hover:bg-emerald-500 active:scale-98 transition text-white font-bold py-2.5 rounded-xl text-xs flex items-center justify-center gap-2 shadow-lg shadow-emerald-950">
             💬 व्हाट्सएप पर तुरंत पर्ची भेजें (1-Click)
@@ -157,9 +153,7 @@
         <h2 class="text-sm font-bold text-slate-200">📂 किसान एवं केस रिकॉर्ड्स</h2>
         <span id="recordCount" class="text-xs text-slate-400">0 केस दर्ज</span>
       </div>
-      <div id="recordsContainer" class="space-y-2">
-        <!-- Loaded via JavaScript -->
-      </div>
+      <div id="recordsContainer" class="space-y-2"></div>
     </section>
 
     <!-- TAB 4: PROFILE & AUTH -->
@@ -169,7 +163,6 @@
           <span>👤</span> डॉक्टर व प्रैक्टिशनर प्रोफाइल
         </h2>
 
-        <!-- Suggestion / Disclaimer Box as requested -->
         <div class="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 text-xs text-amber-200/90 leading-relaxed">
           <p class="font-bold flex items-center gap-1 text-amber-300">
             💡 महत्वपूर्ण लॉगिन सुझाव:
@@ -179,7 +172,6 @@
           </p>
         </div>
 
-        <!-- Demo Mode Badge -->
         <div class="p-3 bg-slate-900 rounded-xl border border-slate-700 text-xs space-y-1">
           <div class="flex items-center justify-between">
             <span class="text-slate-400">अकाउंट स्थिति:</span>
@@ -205,7 +197,7 @@
 
   </main>
 
-  <!-- Bottom Navigation Bar (App Dock) -->
+  <!-- Bottom Navigation Bar -->
   <nav class="fixed bottom-0 left-0 right-0 z-50 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 max-w-xl mx-auto flex items-center justify-around py-2">
     <button onclick="switchTab('clinical')" id="tabClinical" class="nav-btn flex flex-col items-center text-emerald-400 font-semibold">
       <span class="text-lg">🩺</span>
@@ -225,35 +217,9 @@
     </button>
   </nav>
 
-  <!-- Core Embedded 22+ Clinical Engine Database & Offline Controller -->
   <script>
-    // 22+ Livestock Diseases Clinical Knowledge Base
     const diseasesData = [
       { id: 1, name: "गलाघोंटू (H.S. / Haemorrhagic Septicaemia)", category: "HIGH", temp: "104-107°F", symptoms: "गले व जबड़े के नीचे गर्म व दर्दनाक सूजन, घर्र-घर्र की आवाज़, तेज़ बुखार, जीभ बाहर निकालना।", rx: "Inj. Marbofloxacin / Ceftiofur Sodium + Meloxicam-Paracetamol + Dexamethasone/Chlorpheniramine।" },
       { id: 2, name: "लंगड़ा बुखार (Black Quarter / B.Q.)", category: "HIGH", temp: "104-106°F", symptoms: "पुट्ठे या कंधे की मांसपेशियों में गैस भरी सूजन (दबाने पर चर्र-चर्र की आवाज़), लंगड़ापन, तेज़ बुखार।", rx: "High dose Inj. Benzylpenicillin / Oxytetracycline + Meloxicam + Cold compress on swelling।" },
       { id: 3, name: "खुरपका-मुँहपका (FMD / Foot & Mouth)", category: "HIGH", temp: "104-105°F", symptoms: "मुँह व जीभ पर छाले, मुँह से लार टपकना, खुरों के बीच घाव, भोजन छोड़ देना।", rx: "Boric acid + Glycerin paste for mouth, Potassium permanganate (लाल दवा) foot wash, Inj. Ceftriaxone + Flunixin Meglumine।" },
-      { id: 4, name: "थनैल / मेस्टाइटिस (Mastitis)", category: "NORMAL", temp: "101.5-103°F", symptoms: "अयन/थन में सूजन, दूध में छिछड़े/खून आना, थन का छूने पर गर्म व कड़ा होना।", rx: "Intramammary Infusion (Cloxacillin/Cephalosporin) + Inj. Enrofloxacin/Ceftiofur + Serratiopeptidase + Meloxicam।" },
-      { id: 5, name: "दुग्ध ज्वर / मिल्क फीवर (Milk Fever)", category: "SUB", temp: "<100°F (Subnormal)", symptoms: "ब्याने के 48 घंटे बाद गर्दन मोड़कर बैठना, शरीर का ठंडा पड़ना (कम तापमान), मांसपेशियों में कंपन।", rx: "Inj. Calcium Borogluconate (Mifex / Calborol) 450ml (Half Slow I/V + Half S/C) immediately।" },
-      { id: 6, name: "कीटोसिस (Ketosis / Acetonemia)", category: "NORMAL", temp: "101.5°F", symptoms: "दूध व सांस से मीठी गंध, अचानक दूध उत्पादन घटना, पशु का दाना छोड़कर केवल सूखा भूसा खाना।", rx: "Inj. 20-50% Dextrose I/V + Inj. Dexamethasone/Isoflupredone + Oral Propylene Glycol 200ml BID।" },
-      { id: 7, name: "अफारा / ब्लोट (Tympanitis / Bloat)", category: "NORMAL", temp: "101-102°F", symptoms: "बाएँ पेट का ढोल की तरह फूलना, सांस लेने में कष्ट, बेचैनी व पेट पर लात मारना।", rx: "Tympanol/Bloatosil orally + Mustard oil (250ml) + Turpentine oil (30ml). Severe: Trocar & Cannula on left flank." },
-      { id: 8, name: "थायलेरियासिस (Theileriosis)", category: "HIGH", temp: "105-107°F", symptoms: "कान के पीछे या कंधे की लिम्फ नोड्स में भारी सूजन, अत्यधिक तेज़ बुखार, आँखों में पीलापन/खून की कमी।", rx: "Inj. Buparvaquone (2.5 mg/kg body wt IM, single dose) + Supportive Iron tonic + Meloxicam。" },
-      { id: 9, name: "बबेशियोसिस / लाल पेशाब (Babesiosis / Red Water)", category: "HIGH", temp: "105-107°F", symptoms: "गहरे लाल/कॉफी रंग का पेशाब, तेज़ बुखार, खून की भारी कमी (Anemia), पीलिया।", rx: "Inj. Diminazene Aceturate (3.5-5 mg/kg deep IM) + Inj. Pheniramine + Vit B-Complex + Fluid therapy." },
-      { id: 10, name: "एनाप्लास्मोसिस (Anaplasmosis / Gall Sickness)", category: "HIGH", temp: "104-106°F", symptoms: "गंभीर पीलिया (मसूड़े व आँखें पीली), पेशाब पीला (लाल नहीं), तेज़ बुखार, कब्ज़।", rx: "Inj. Oxytetracycline (Long Acting 20mg/kg) + Inj. Iron/Belamyl + Liver extract supportive." },
-      { id: 11, name: "पीपीआर / बकरी प्लेग (PPR in Goat & Sheep)", category: "HIGH", temp: "104-106°F", symptoms: "मुँह में छाले, आँखों-नाक से मवाद जैसा स्राव, बदबूदार दस्त (Pneumo-enteritis)।", rx: "Inj. Enrofloxacin/Oxytetracycline + Meloxicam + Oral electrolyte hydration + Antidiarrheal bolus." },
-      { id: 12, name: "आंत्रविषाक्तता / फिड़किया (Enterotoxaemia / ET)", category: "HIGH", temp: "104°F", symptoms: "अचानक दाने के बाद बकरियों का चक्कर खाकर गिरना, सिर पीछे मोड़ना, तेजी से मृत्यु।", rx: "Inj. Benzyl Penicillin high dose + Anti-toxin if early + Sodium Bicarbonate orally." },
-      { id: 13, name: "गिल्टी रोग / एंथ्रेक्स (Anthrax)", category: "HIGH", temp: "106-108°F", symptoms: "प्राकृतिक छेदों (नाक, गुदा) से बिना जमा हुआ काला खून निकलना, अचानक मृत्यु (ज़ूनोटिक - कभी शव न चीरें)।", rx: "High dose Penicillin + Streptomycin (Notification to Govt Department mandatory)." },
-      { id: 14, name: "सर्रा / तिबरसा (Surra / Trypanosomiasis)", category: "HIGH", temp: "103-106°F", symptoms: "रुक-रुक कर आने वाला बुखार, गोल-गोल चक्कर काटना, दीवारों से सिर टकराना, अंधापन।", rx: "Inj. Quinapyramine sulfate & chloride (Triquin) 4.4 mg/kg S/C or Inj. Diminazene + Dextrose." },
-      { id: 15, name: "रेबीज / अलर्क रोग (Rabies)", category: "NORMAL", temp: "101.5-103°F", symptoms: "लगातार रंभाना, अत्यधिक लार गिरना, उत्तेजना, पानी से भय, पीछे के पैरों में लकवा।", rx: "100% प्राणघातक (Zoonotic). केवल समय पर पोस्ट-बाइट एंटी-रेबीज टीकाकरण (Day 0,3,7,14,28)।" },
-      { id: 16, name: "सूअर ज्वर (Classical Swine Fever)", category: "HIGH", temp: "105-107°F", symptoms: "कान, पेट व जांघों पर बैंगनी धब्बे, तेज़ बुखार, लड़खड़ाना, दस्त।", rx: "Supportive Antibiotics (Amoxicillin) + Paracetamol + Multi-vitamins (Vaccination preventive)." },
-      { id: 17, name: "माता रोग / शीप पॉक्स (Sheep & Goat Pox)", category: "HIGH", temp: "104-106°F", symptoms: "चेहरे, थन व बिना ऊन वाली त्वचा पर फुंसियाँ और पपड़ी जमना, तेज़ बुखार।", rx: "Inj. Enrofloxacin/Ceftriaxone for secondary infection + Meloxicam + Antiseptic skin wash." },
-      { id: 18, name: "उदर शूल / पेट दर्द (Colic in Equine/Cattle)", category: "NORMAL", temp: "101°F", symptoms: "पशु बार-बार पेट की तरफ देखता है, लात मारता है, ज़मीन पर लोटता है, पसीना आना।", rx: "Inj. Flunixin Meglumine (1.1 mg/kg IV) + Inj. Spasmo-vet / Dicyclomine + Liquid paraffin if impaction." },
-      { id: 19, name: "जेर रुकना (Retention of Placenta - ROP)", category: "NORMAL", temp: "101.5-103°F", symptoms: "प्रसव के 8-12 घंटे बाद भी जेर बाहर न आना, बदबूदार स्राव, बेचैनी।", rx: "Oral Replanta / Exapar liquid 100ml BID + Inj. Oxytocin/PGF2-alpha (under supervision) + Ceftiofur." },
-      { id: 20, name: "गर्भाशय / योनि बाहर आना (Prolapse)", category: "NORMAL", temp: "101.5°F", symptoms: "ब्याने से पहले या बाद में योनि या गर्भाशय का मांसल भाग शरीर से बाहर लटकना।", rx: "Wash with mild antiseptic (Acriflavin), lift & gently push back, Buhner's suture + Epidural Lignocaine." },
-      { id: 21, name: "निमोनिया (Bovine Pneumonia)", category: "HIGH", temp: "104-106°F", symptoms: "तेज़ सांस लेना, छाती से सायं-सायं की आवाज़, लगातार सूखी या बलगम वाली खांसी, नाक से स्राव।", rx: "Inj. Tylosin / Florfenicol / Ceftiofur + Inj. Meloxicam + Mucolytic (Bromhexine)." },
-      { id: 22, name: "खुर सड़न (Foot Rot in Cattle & Sheep)", category: "NORMAL", temp: "102-103°F", symptoms: "खुरों के बीच सड़ांध, दुर्गंधयुक्त मवाद, अत्यधिक लंगड़ापन, सूजन।", rx: "Inj. Long-acting Oxytetracycline + Foot bath (5% Copper Sulphate / Zinc Sulphate) + Local dressing." }
-    ];
-
-    let currentFilter = 'ALL';
-
-    // Render Disease Cards
-    function renderDiseases(list)
+      { id: 4, name: "थनैल / मेस्टाइटिस (Mastitis)", category: "NORMAL", temp: "10
