@@ -1,4 +1,4 @@
-const CACHE_NAME = 'vetcare-pwa-v1';
+const CACHE_NAME = 'vetcare-titanium-v3';
 const ASSETS = [
   './',
   './index.html',
@@ -8,7 +8,6 @@ const ASSETS = [
   'https://cdn.tailwindcss.com'
 ];
 
-// Install Service Worker & Precache Assets
 self.addEventListener('install', (e) => {
   e.waitUntil(
     caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS))
@@ -16,7 +15,6 @@ self.addEventListener('install', (e) => {
   self.skipWaiting();
 });
 
-// Activate & Cleanup Stale Caches
 self.addEventListener('activate', (e) => {
   e.waitUntil(
     caches.keys().then((keys) =>
@@ -30,7 +28,6 @@ self.addEventListener('activate', (e) => {
   self.clients.claim();
 });
 
-// Cache-First Strategy with Network Fallback
 self.addEventListener('fetch', (e) => {
   e.respondWith(
     caches.match(e.request).then((res) => {
