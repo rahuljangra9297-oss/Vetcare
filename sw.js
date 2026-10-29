@@ -1,4 +1,4 @@
-const CACHE_NAME = 'vetcare-titanium-v3';
+const CACHE_NAME = 'vetcare-obsidian-v4';
 const ASSETS = [
   './',
   './index.html',
