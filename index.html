@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Pashu Seva Pro | Clinical Assistant</title>
+  <title>Vetcare | Clinical Assistant</title>
   <meta name="theme-color" content="#ffffff" />
   <link rel="manifest" href="./manifest.json" />
 
@@ -22,6 +22,11 @@
       #printableSlipArea { position: absolute; left: 0; top: 0; width: 100%; border: none !important; }
     }
   </style>
+
+  <!-- Firebase Official Libraries (Compat) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 </head>
 <body class="min-h-screen flex justify-center bg-[#f1f5f9]">
 
@@ -35,13 +40,13 @@
           <div class="w-11 h-11 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl font-bold border border-amber-200">⚠️</div>
           <div>
             <h2 class="text-base font-bold text-slate-900 tracking-tight">वैधानिक क्लिनिकल डिस्क्लेमर</h2>
-            <p class="text-[11px] text-slate-500 font-medium">Pashu Seva Pro Operational Notice</p>
+            <p class="text-[11px] text-slate-500 font-medium">Vetcare Clinical Operational Notice</p>
           </div>
         </div>
         <div class="p-4 bg-slate-50 rounded-2xl border border-slate-200/80 text-xs leading-relaxed space-y-2 text-slate-600">
-          <p>1. यह एप्लिकेशन केवल पंजीकृत पशु चिकित्सकों, पैरावेट्स और पशु स्वास्थ्य कार्यकर्ताओं के लिए एक क्लिनिकल असिस्टेंट टूल है।</p>
-          <p>2. किसी भी दवा की खुराक पशु के प्रत्यक्ष शारीरिक परीक्षण, अवस्था व वजन अनुसार ही निर्धारित करें।</p>
-          <p>3. गंभीर स्थिति में निकटतम पशु चिकित्सालय से तुरंत संपर्क करें।</p>
+          <p>1. यह एप्लिकेशन केवल पंजीकृत पशु चिकित्सकों, पैरावेट्स और पशु स्वास्थ्य कार्यकर्ताओं के लिए एक क्लिनिकल असिस्टेंट टूल है[cite: 4]。</p>
+          <p>2. किसी भी दवा की खुराक पशु के प्रत्यक्ष शारीरिक परीक्षण, अवस्था व वजन अनुसार ही निर्धारित करें[cite: 4]。</p>
+          <p>3. गंभीर स्थिति में निकटतम पशु चिकित्सालय से तुरंत संपर्क करें[cite: 4]。</p>
         </div>
         <button onclick="acceptDisclaimer()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-2xl text-xs shadow-lg shadow-blue-600/20 active:scale-98 transition">
           शर्तें स्वीकार हैं / I Understand & Accept
@@ -73,12 +78,12 @@
     <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/80 px-4 py-3 flex items-center justify-between shadow-sm">
       <div class="flex items-center space-x-2.5">
         <div class="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center font-black text-white text-sm shadow-md shadow-blue-500/20">
-          VP
+          VC
         </div>
         <div>
           <h1 class="text-sm font-bold leading-tight text-slate-900 flex items-center gap-1.5">
-            Pashu Seva Pro
-            <span class="text-[9px] bg-blue-50 text-blue-700 font-mono font-semibold px-1.5 py-0.5 rounded border border-blue-200">AI CLINICAL</span>
+            Vetcare
+            <span id="cloudSyncStatusBadge" class="text-[9px] bg-emerald-50 text-emerald-700 font-mono font-semibold px-1.5 py-0.5 rounded border border-emerald-200">☁️ SYNC</span>
           </h1>
           <p class="text-[10px] text-slate-500 font-mono mt-0.5" id="trialTimerBadge">ट्रायल: 24h शेष</p>
         </div>
@@ -119,7 +124,7 @@
         <div id="panelModeSymptoms" class="space-y-3 bg-white p-4 sm:p-5 rounded-3xl border border-slate-200 shadow-sm">
           <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
             <span class="text-xs font-bold text-blue-700 flex items-center gap-1.5">
-              <span>🧬</span> क्लिनिकल वेटेड सिम्पटम मैट्रिक्स
+              <span>🧬</span> क्लिनिकल वेटेड सिम्पटम मैट्रिक्स[cite: 1, 4]
             </span>
             <button onclick="resetSymptomMatrix()" class="text-[10px] text-rose-600 hover:text-rose-700 font-semibold underline">रीसेट ↺</button>
           </div>
@@ -172,26 +177,26 @@
             <span class="text-[11px] font-semibold text-rose-600">🚨 प्रमुख विशिष्ट लक्षण (Cardinal Sign - 40% वेटेज):</span>
             <select id="selCardinalSign" onchange="applyMatrixFilters()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 outline-none focus:ring-2 focus:ring-blue-500">
               <option value="ALL">-- कोई भी विशिष्ट लक्षण चुनें (वैकल्पिक) --</option>
-              <option value="NECK_SWELLING">गले व जबड़े के नीचे गर्म सूजन (गलाघोंटू)</option>
-              <option value="GAS_SWELLING">पुट्ठे/कंधे में गैस भरी सूजन - चर्र-चर्र आवाज़ (BQ)</option>
-              <option value="MOUTH_BLISTERS">मुंह, जीभ व खुरों में छाले व लार (FMD)</option>
-              <option value="UDDER_HARD">अयन/थन में कड़ापन व दूध में छिछड़े/खून (थनैल)</option>
-              <option value="STERNAL_RECUMBENCY">ब्याने बाद गर्दन मोड़कर बैठना व ठंडा शरीर (मिल्क फीवर)</option>
-              <option value="SWEET_BREATH">सांस/दूध से मीठी गंध व केवल सूखा भूसा खाना (कीटोसिस)</option>
-              <option value="LEFT_FLANK_DRUM">बायाँ पेट ढोलक की तरह फूलना (अफारा)</option>
-              <option value="LYMPH_SWELLING">कंधे/कान की लिम्फ नोड में कठोर सूजन (थायलेरियासिस)</option>
-              <option value="RED_URINE">कॉफी/लाल रंग का पेशाब (बबेशियोसिस)</option>
-              <option value="SEVERE_JAUNDICE">अत्यधिक पीलिया बिना लाल पेशाब के (एनाप्लास्मोसिस)</option>
-              <option value="MOUTH_EROSION_DIARRHEA">मुंह में छाले व बदबूदार दस्त (PPR बकरी प्लेग)</option>
-              <option value="OPISTHOTONOS">दाना खाने बाद सिर पीछे खींचना व मृत्यु (फिड़किया)</option>
-              <option value="TAR_BLOOD">प्राकृतिक छेदों से काला खून रिसना (एंथ्रेक्स)</option>
-              <option value="CIRCLING_HEAD_PRESSING">गोल चक्कर काटना व सिर टकराना (सर्रा)</option>
-              <option value="HYDROPHOBIA_BELL">अत्यधिक रंभाना, लार व पानी से डर (रेबीज)</option>
-              <option value="ROLLING_PAWING">पेट देखना, लात मारना व ज़मीन पर लोटना (पेट दर्द / Colic)</option>
-              <option value="HANGING_PLACENTA">प्रसव के 8-12 घंटे बाद भी जेर लटकना (ROP)</option>
-              <option value="PROTRUDING_MASS">योनि या गर्भाशय का मांसल भाग बाहर लटकना (प्रोलैप्स)</option>
-              <option value="DYSPNEA_WHEEZING">हांफना, छाती से सायं-सायं आवाज़ व खांसी (निमोनिया)</option>
-              <option value="FOOT_ROT_SMELL">खुरों के बीच सड़ांध व दुर्गंधयुक्त मवाद (खुर सड़न)</option>
+              <option value="NECK_SWELLING">गले व जबड़े के नीचे गर्म सूजन (गलाघोंटू)[cite: 4]</option>
+              <option value="GAS_SWELLING">पुट्ठे/कंधे में गैस भरी सूजन - चर्र-चर्र आवाज़ (BQ)[cite: 4]</option>
+              <option value="MOUTH_BLISTERS">मुंह, जीभ व खुरों में छाले व लार (FMD)[cite: 4]</option>
+              <option value="UDDER_HARD">अयन/थन में कड़ापन व दूध में छिछड़े/खून (थनैल)[cite: 4]</option>
+              <option value="STERNAL_RECUMBENCY">ब्याने बाद गर्दन मोड़कर बैठना व ठंडा शरीर (मिल्क फीवर)[cite: 4]</option>
+              <option value="SWEET_BREATH">सांस/दूध से मीठी गंध व केवल सूखा भूसा खाना (कीटोसिस)[cite: 4]</option>
+              <option value="LEFT_FLANK_DRUM">बायाँ पेट ढोलक की तरह फूलना (अफारा)[cite: 4]</option>
+              <option value="LYMPH_SWELLING">कंधे/कान की लिम्फ नोड में कठोर सूजन (थायलेरियासिस)[cite: 4]</option>
+              <option value="RED_URINE">कॉफी/लाल रंग का पेशाब (बबेशियोसिस)[cite: 4]</option>
+              <option value="SEVERE_JAUNDICE">अत्यधिक पीलिया बिना लाल पेशाब के (एनाप्लास्मोसिस)[cite: 4]</option>
+              <option value="MOUTH_EROSION_DIARRHEA">मुंह में छाले व बदबूदार दस्त (PPR बकरी प्लेग)[cite: 4]</option>
+              <option value="OPISTHOTONOS">दाना खाने बाद सिर पीछे खींचना व मृत्यु (फिड़किया)[cite: 4]</option>
+              <option value="TAR_BLOOD">प्राकृतिक छेदों से काला खून रिसना (एंथ्रेक्स)[cite: 4]</option>
+              <option value="CIRCLING_HEAD_PRESSING">गोल चक्कर काटना व सिर टकराना (सर्रा)[cite: 4]</option>
+              <option value="HYDROPHOBIA_BELL">अत्यधिक रंभाना, लार व पानी से डर (रेबीज)[cite: 4]</option>
+              <option value="ROLLING_PAWING">पेट देखना, लात मारना व ज़मीन पर लोटना (पेट दर्द / Colic)[cite: 4]</option>
+              <option value="HANGING_PLACENTA">प्रसव के 8-12 घंटे बाद भी जेर लटकना (ROP)[cite: 4]</option>
+              <option value="PROTRUDING_MASS">योनि या गर्भाशय का मांसल भाग बाहर लटकना (प्रोलैप्स)[cite: 4]</option>
+              <option value="DYSPNEA_WHEEZING">हांफना, छाती से सायं-सायं आवाज़ व खांसी (निमोनिया)[cite: 4]</option>
+              <option value="FOOT_ROT_SMELL">खुरों के बीच सड़ांध व दुर्गंधयुक्त मवाद (खुर सड़न)[cite: 4]</option>
             </select>
           </div>
 
