@@ -1,14 +1,23 @@
 // Global State
-let currentFilter = 'ALL';
+let currentDiagnosisMode = 'SYMPTOMS'; // 'SYMPTOMS', 'HYBRID', 'DISEASE_NAME'
+let activeMatrixParams = {
+  temp: null,
+  eyes: null,
+  urine: null,
+  dung: null,
+  cardinalSign: null
+};
+let currentHybridTempFilter = 'ALL';
+let currentEtiologyFilter = 'ALL';
 
-// Initialize App
+// Initialize
 window.addEventListener('DOMContentLoaded', () => {
-  renderDiseases(CLINICAL_DATABASE);
+  applyMatrixFilters();
   renderSavedRecords();
   initPWA();
 });
 
-// PWA Service Worker Registration
+// PWA Service Worker
 function initPWA() {
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('./sw.js')
@@ -17,13 +26,139 @@ function initPWA() {
   }
 }
 
-// Render Disease Cards
-function renderDiseases(list) {
+// ==================== 3 DIAGNOSIS MODES SWITCHER ====================
+function setDiagnosisMode(mode) {
+  currentDiagnosisMode = mode;
+  ['Symptoms', 'Hybrid', 'Name'].forEach(m => {
+    document.getElementById(`btnMode${m}`).className = 'py-2 px-1 rounded-xl text-slate-400 font-medium transition text-center flex flex-col items-center gap-0.5';
+    document.getElementById(`panelMode${m}`).classList.add('hidden');
+  });
+
+  if (mode === 'SYMPTOMS') {
+    document.getElementById('btnModeSymptoms').className = 'mode-tab-active py-2 px-1 rounded-xl font-semibold transition text-center flex flex-col items-center gap-0.5';
+    document.getElementById('panelModeSymptoms').classList.remove('hidden');
+    applyMatrixFilters();
+  } else if (mode === 'HYBRID') {
+    document.getElementById('btnModeHybrid').className = 'mode-tab-active py-2 px-1 rounded-xl font-semibold transition text-center flex flex-col items-center gap-0.5';
+    document.getElementById('panelModeHybrid').classList.remove('hidden');
+    handleOmniSearch();
+  } else if (mode === 'DISEASE_NAME') {
+    document.getElementById('btnModeName').className = 'mode-tab-active py-2 px-1 rounded-xl font-semibold transition text-center flex flex-col items-center gap-0.5';
+    document.getElementById('panelModeName').classList.remove('hidden');
+    filterByEtiology(currentEtiologyFilter);
+  }
+}
+
+// ==================== MODE 1: SYMPTOM MATRIX ENGINE ====================
+function toggleMatrixParam(traitKey, traitValue, btnElement) {
+  if (activeMatrixParams[traitKey] === traitValue) {
+    activeMatrixParams[traitKey] = null;
+    btnElement.classList.remove('matrix-chip-active');
+  } else {
+    activeMatrixParams[traitKey] = traitValue;
+    btnElement.parentElement.querySelectorAll('.m-chip').forEach(b => b.classList.remove('matrix-chip-active'));
+    btnElement.classList.add('matrix-chip-active');
+  }
+  applyMatrixFilters();
+}
+
+function resetSymptomMatrix() {
+  activeMatrixParams = { temp: null, eyes: null, urine: null, dung: null, cardinalSign: null };
+  document.querySelectorAll('.m-chip').forEach(b => b.classList.remove('matrix-chip-active'));
+  document.getElementById('selCardinalSign').value = 'ALL';
+  applyMatrixFilters();
+}
+
+function applyMatrixFilters() {
+  const selectedCardinal = document.getElementById('selCardinalSign') ? document.getElementById('selCardinalSign').value : 'ALL';
+  activeMatrixParams.cardinalSign = selectedCardinal !== 'ALL' ? selectedCardinal : null;
+
+  // Active traits count
+  const activeKeys = Object.keys(activeMatrixParams).filter(k => activeMatrixParams[k] !== null);
+
+  if (activeKeys.length === 0) {
+    document.getElementById('matchScoreText').innerText = 'लक्षण चुनें ➔ सर्वाधिक संभावित रोग स्वतः ऊपर आएंगे';
+    document.getElementById('matchCountBadge').innerText = `${CLINICAL_DATABASE.length} रोग`;
+    renderDiseaseList(CLINICAL_DATABASE, false);
+    return;
+  }
+
+  // Score each disease based on matched traits
+  const scoredList = CLINICAL_DATABASE.map(d => {
+    let score = 0;
+    activeKeys.forEach(k => {
+      if (k === 'cardinalSign') {
+        if (d.traits.cardinalSign === activeMatrixParams[k]) score += 3; // Cardinal sign gets highest weight
+      } else if (d.traits[k] === activeMatrixParams[k]) {
+        score += 1;
+      }
+    });
+    return { ...d, matchScore: score };
+  });
+
+  // Filter only those with at least 1 match, sorted descending
+  const matchedList = scoredList.filter(d => d.matchScore > 0).sort((a, b) => b.matchScore - a.matchScore);
+
+  document.getElementById('matchScoreText').innerText = `🎯 ${activeKeys.length} लक्षण सक्रिय: ${matchedList.length} संभावित रोग पाए गए`;
+  document.getElementById('matchCountBadge').innerText = `${matchedList.length} मैच`;
+
+  renderDiseaseList(matchedList, true);
+}
+
+// ==================== MODE 2: HYBRID SEARCH ====================
+function handleOmniSearch() {
+  const q = document.getElementById('omniSearch').value.toLowerCase().trim();
+  document.getElementById('clearSearchBtn').classList.toggle('hidden', q.length === 0);
+
+  const filtered = CLINICAL_DATABASE.filter(d => {
+    const matchesQ = !q ||
+      d.name.toLowerCase().includes(q) ||
+      d.cardinal.toLowerCase().includes(q) ||
+      d.symptoms.toLowerCase().includes(q) ||
+      d.rx.toLowerCase().includes(q) ||
+      d.etiologyName.toLowerCase().includes(q);
+    const matchesTemp = currentHybridTempFilter === 'ALL' || d.category === currentHybridTempFilter;
+    return matchesQ && matchesTemp;
+  });
+
+  renderDiseaseList(filtered, false);
+}
+
+function clearOmniSearch() {
+  document.getElementById('omniSearch').value = '';
+  handleOmniSearch();
+}
+
+function applyTempFilter(cat, btn) {
+  currentHybridTempFilter = cat;
+  document.querySelectorAll('.temp-chip').forEach(c => c.classList.remove('chip-active'));
+  if (btn) btn.classList.add('chip-active');
+  handleOmniSearch();
+}
+
+// ==================== MODE 3: DISEASE DIRECTORY BY NAME/ETIOLOGY ====================
+function filterByEtiology(etio, btn) {
+  currentEtiologyFilter = etio;
+  if (btn) {
+    document.querySelectorAll('.etio-chip').forEach(c => c.classList.remove('chip-active'));
+    btn.classList.add('chip-active');
+  }
+  const filtered = etio === 'ALL' ? CLINICAL_DATABASE : CLINICAL_DATABASE.filter(d => d.etiologyType === etio);
+  renderDiseaseList(filtered, false);
+}
+
+// ==================== RENDER DISEASE CARDS ====================
+function renderDiseaseList(list, showMatchBadge) {
   const container = document.getElementById('diseaseContainer');
   if (!container) return;
 
   if (list.length === 0) {
-    container.innerHTML = `<div class="p-8 text-center text-slate-400 bg-slate-800/60 rounded-2xl border border-slate-700/80">कोई बीमारी या लक्षण नहीं मिला।</div>`;
+    container.innerHTML = `
+      <div class="p-8 text-center text-slate-400 bg-slate-800/60 rounded-2xl border border-slate-700">
+        <div class="text-2xl mb-1">🔍</div>
+        <p class="font-semibold text-slate-300">कोई बीमारी या लक्षण मेल नहीं खाया</p>
+        <p class="text-xs text-slate-400 mt-1">कृपया लक्षण बदलें या फ़िल्टर रीसेट करें।</p>
+      </div>`;
     return;
   }
 
@@ -37,8 +172,14 @@ function renderDiseases(list) {
     return `
       <div class="bg-slate-800/90 border border-slate-700 rounded-2xl p-4 shadow-md space-y-3 transition hover:border-emerald-600/60">
         <div class="flex items-start justify-between gap-2">
-          <h3 class="text-sm font-bold text-emerald-300 leading-snug">${d.id}. ${d.name}</h3>
-          <span class="text-[11px] font-mono font-semibold px-2.5 py-0.5 rounded-full border ${badgeStyle} shrink-0">${d.temp}</span>
+          <div>
+            <h3 class="text-sm font-bold text-emerald-300 leading-snug">${d.id}. ${d.name}</h3>
+            <span class="text-[10px] text-slate-400 font-mono">मूल कारण: ${d.etiologyName}</span>
+          </div>
+          <div class="flex flex-col items-end gap-1">
+            <span class="text-[11px] font-mono font-semibold px-2 py-0.5 rounded-full border ${badgeStyle} shrink-0">${d.temp}</span>
+            ${showMatchBadge && d.matchScore ? `<span class="text-[10px] bg-emerald-500/20 text-emerald-300 font-bold px-2 py-0.5 rounded-full border border-emerald-500/40">★ ${d.matchScore} लक्षण मैच</span>` : ''}
+          </div>
         </div>
 
         <div class="bg-rose-950/30 border border-rose-900/40 rounded-xl p-2.5 text-xs">
@@ -63,37 +204,6 @@ function renderDiseases(list) {
       </div>
     `;
   }).join('');
-}
-
-// Omni Search Handler
-function handleOmniSearch() {
-  const q = document.getElementById('omniSearch').value.toLowerCase().trim();
-  document.getElementById('clearSearchBtn').classList.toggle('hidden', q.length === 0);
-
-  const filtered = CLINICAL_DATABASE.filter(d => {
-    const matchesQuery = !q || 
-      d.name.toLowerCase().includes(q) || 
-      d.cardinal.toLowerCase().includes(q) || 
-      d.symptoms.toLowerCase().includes(q) || 
-      d.rx.toLowerCase().includes(q);
-    const matchesFilter = currentFilter === 'ALL' || d.category === currentFilter;
-    return matchesQuery && matchesFilter;
-  });
-
-  renderDiseases(filtered);
-}
-
-function clearOmniSearch() {
-  document.getElementById('omniSearch').value = '';
-  handleOmniSearch();
-}
-
-// Temperature Chip Filter
-function applyTempFilter(category, btnElement) {
-  currentFilter = category;
-  document.querySelectorAll('.temp-chip').forEach(c => c.classList.remove('chip-active'));
-  btnElement.classList.add('chip-active');
-  handleOmniSearch();
 }
 
 // Transfer Disease into Prescription OPD
