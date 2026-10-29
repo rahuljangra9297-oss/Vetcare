@@ -1,11 +1,11 @@
 {
-  "name": "Pashu Seva Pro",
+  "name": "Pashu Seva Pro | Clinical Assistant",
   "short_name": "Vetcare",
-  "description": "22+ पशु रोग निदान, तापमान फ़िल्टर व डिजिटल ओपीडी पर्ची",
+  "description": "3-Way पशु रोग निदान, डिजिटल ओपीडी पर्ची व वित्तीय खाता बही",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#0f172a",
-  "theme_color": "#059669",
+  "background_color": "#0b0f19",
+  "theme_color": "#0b0f19",
   "orientation": "portrait-primary",
   "icons": [
     {
