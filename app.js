@@ -1,15 +1,15 @@
-// ==================== ROLE-BASED ACCESS CONTROL (RBAC) ====================
-let userRole = localStorage.getItem('vetcare_active_role') || 'FARMER';
+// ==================== GLOBAL APP CONTROLLER ====================
+let userRole = localStorage.getItem('vetcare_active_role') || null;
 let currentTagFilter = 'ALL';
-
-// Master Admin Security PIN (Only you know this to approve practitioners)
 const ADMIN_MASTER_PIN = "VETCARE99";
 
 window.addEventListener('DOMContentLoaded', () => {
-  applySecurityUI();
-  handleAppSearch();
+  if (userRole) {
+    showMainApp();
+  } else {
+    showGateway();
+  }
   initBreedingModule();
-  updateFinanceAnalytics();
   initPWA();
 });
 
@@ -19,43 +19,59 @@ function initPWA() {
   }
 }
 
-// ==================== AUTHENTICATION & APPROVAL GATE ====================
+// ==================== GATEWAY & ROLE CONTROL ====================
+function showGateway() {
+  document.getElementById('screenGateway').classList.remove('hidden');
+  document.getElementById('screenMainApp').classList.add('hidden');
+}
+
+function showMainApp() {
+  document.getElementById('screenGateway').classList.add('hidden');
+  document.getElementById('screenMainApp').classList.remove('hidden');
+  applyRoleUI();
+  handleAppSearch();
+  updateFinanceAnalytics();
+}
+
+function selectRole(role) {
+  userRole = role;
+  localStorage.setItem('vetcare_active_role', role);
+  showMainApp();
+}
+
+function returnToGateway() {
+  if (confirm('क्या आप प्रवेश द्वार पर लौटकर अपना रोल बदलना चाहते हैं?')) {
+    localStorage.removeItem('vetcare_active_role');
+    userRole = null;
+    showGateway();
+  }
+}
+
+// ==================== DOCTOR AUTH MODAL (CLICK-SAFE) ====================
 function openDoctorAuthModal() {
   const modal = document.getElementById('modalDoctorAuth');
-  if (modal) modal.classList.remove('hidden');
+  if (modal) modal.style.display = 'flex';
 }
 
 function closeDoctorAuthModal() {
   const modal = document.getElementById('modalDoctorAuth');
-  if (modal) modal.classList.add('hidden');
+  if (modal) modal.style.display = 'none';
 }
 
 function verifyDoctorPasscode() {
   const enteredPin = document.getElementById('inputAdminPasscode').value.trim();
   if (enteredPin === ADMIN_MASTER_PIN) {
-    userRole = 'DOCTOR';
-    localStorage.setItem('vetcare_active_role', 'DOCTOR');
-    alert('✅ डॉक्टर सत्यापन सफल! क्लिनिकल इंजेक्शन तालिका व ओपीडी अनलॉक हो गई है।');
     closeDoctorAuthModal();
-    applySecurityUI();
-    handleAppSearch();
+    selectRole('DOCTOR');
+    alert('✅ डॉक्टर सत्यापन सफल! क्लिनिकल इंजेक्शन तालिका व ओपीडी पर्ची अनलॉक हो गई है।');
   } else {
-    alert('❌ अमान्य अप्रूवल कोड! आप केवल किसान मोड में ही ऐप का उपयोग कर सकते हैं।');
+    alert('❌ अमान्य अप्रूवल कोड! आप केवल किसान मोड में ही प्रवेश कर सकते हैं।');
   }
 }
 
-function lockBackToFarmer() {
-  if (confirm('क्या आप डॉक्टर मोड से बाहर आकर किसान मोड में लौटना चाहते हैं?')) {
-    userRole = 'FARMER';
-    localStorage.setItem('vetcare_active_role', 'FARMER');
-    applySecurityUI();
-    handleAppSearch();
-  }
-}
-
-function applySecurityUI() {
+// ==================== UI ROLE ADAPTATION ====================
+function applyRoleUI() {
   const badge = document.getElementById('currentUserRoleBadge');
-  const actionSlot = document.getElementById('practitionerActionSlot');
   const navRx = document.getElementById('navRx');
   const navBreeding = document.getElementById('navBreeding');
   const navFeed = document.getElementById('navFeed');
@@ -65,13 +81,8 @@ function applySecurityUI() {
   const finDebitLabel = document.getElementById('finDebitLabel');
 
   if (userRole === 'DOCTOR') {
-    badge.innerText = '🩺 अधिकृत पशु चिकित्सक (Doctor)';
+    badge.innerText = '🩺 अधिकृत पशु चिकित्सक';
     badge.className = 'text-[10px] text-blue-600 font-bold';
-    actionSlot.innerHTML = `
-      <button onclick="lockBackToFarmer()" class="text-[10px] bg-rose-50 text-rose-700 border border-rose-200 px-2.5 py-1 rounded-xl font-bold hover:bg-rose-100">
-        🔒 लॉगआउट
-      </button>
-    `;
     if (navRx) navRx.classList.remove('hidden');
     if (navBreeding) navBreeding.classList.add('hidden');
     if (navFeed) navFeed.classList.add('hidden');
@@ -79,14 +90,10 @@ function applySecurityUI() {
     if (finTitle) finTitle.innerText = '📊 क्लिनिकल ओपीडी खाता बही';
     if (finCreditLabel) finCreditLabel.innerText = 'कुल क्लिनिक आय';
     if (finDebitLabel) finDebitLabel.innerText = 'क्लिनिक खर्च';
+    switchTab('diagnosis');
   } else {
-    badge.innerText = '👨‍🌾 स्मार्ट पशुपालक (Farmer)';
+    badge.innerText = '👨‍🌾 स्मार्ट पशुपालक';
     badge.className = 'text-[10px] text-emerald-600 font-bold';
-    actionSlot.innerHTML = `
-      <button onclick="openDoctorAuthModal()" class="text-[11px] px-2.5 py-1.5 rounded-xl bg-blue-50 text-blue-700 border border-blue-200 font-bold hover:bg-blue-100 transition flex items-center gap-1 shadow-xs">
-        <span>🩺</span> डॉक्टर लॉगिन
-      </button>
-    `;
     if (navRx) navRx.classList.add('hidden');
     if (navBreeding) navBreeding.classList.remove('hidden');
     if (navFeed) navFeed.classList.remove('hidden');
@@ -94,6 +101,7 @@ function applySecurityUI() {
     if (finTitle) finTitle.innerText = '🥛 डेयरी दूध व पशु खर्च खाता';
     if (finCreditLabel) finCreditLabel.innerText = 'दूध बिक्री आय';
     if (finDebitLabel) finDebitLabel.innerText = 'चारा व दाना खर्च';
+    switchTab('diagnosis');
   }
 }
 
@@ -138,9 +146,8 @@ function handleAppSearch() {
         ${d.cardinal}
       </div>
 
-      <!-- MEDICINE SECTION: DOCTOR (TABLE) vs FARMER (LOCKED) -->
+      <!-- MEDICINE SECTION: DOCTOR TABLE vs FARMER SHIELD -->
       ${userRole === 'DOCTOR' ? `
-        <!-- PRACTITIONER VIEW: INJECTIONS TABLE -->
         <div class="space-y-1.5 pt-1">
           <div class="flex justify-between items-center">
             <span class="text-xs font-bold text-blue-900 flex items-center gap-1">💉 एलोपैथिक इंजेक्शन तालिका:</span>
@@ -173,7 +180,6 @@ function handleAppSearch() {
           </div>
         </div>
       ` : `
-        <!-- FARMER VIEW: FRIENDLY SAFETY SHIELD -->
         <div class="bg-emerald-50/70 border border-emerald-200 rounded-2xl p-3 text-xs text-emerald-950 flex items-center gap-2.5">
           <span class="text-xl">🛡️</span>
           <div>
@@ -183,7 +189,7 @@ function handleAppSearch() {
         </div>
       `}
 
-      <!-- 2. ORAL SUPPLEMENTS -->
+      <!-- ORAL SUPPLEMENTS -->
       <div class="bg-slate-50 border border-slate-200 rounded-2xl p-2.5 space-y-1.5 text-xs">
         <strong class="text-slate-800 block text-[11px]">🍼 ओरल सप्लीमेंट्स व टॉनिक:</strong>
         ${d.oralSupplements.map(sup => `
@@ -194,7 +200,7 @@ function handleAppSearch() {
         `).join('')}
       </div>
 
-      <!-- 3. HOMEOPATHY -->
+      <!-- HOMEOPATHY -->
       <div class="bg-emerald-50/60 border border-emerald-200 rounded-2xl p-2.5 space-y-1 text-xs">
         <strong class="text-emerald-900 block text-[11px]">🌿 होम्योपैथिक औषधियां:</strong>
         ${d.homeopathy.map(hom => `
@@ -204,7 +210,7 @@ function handleAppSearch() {
         `).join('')}
       </div>
 
-      <!-- 4. HOME REMEDIES -->
+      <!-- HOME REMEDIES -->
       <div class="bg-amber-50/50 border border-amber-200 rounded-2xl p-2.5 space-y-1 text-xs">
         <strong class="text-amber-900 block text-[11px]">🥣 सिद्ध देहाती घरेलू नुस्खे:</strong>
         ${d.homeRemedies.map(rem => `
@@ -232,7 +238,7 @@ function loadToRx(name) {
   switchTab('rx');
 }
 
-// ==================== BREEDING & HEAT MODULE ====================
+// ==================== BREEDING & FEED ====================
 function initBreedingModule() {
   const heatDiv = document.getElementById('heatSignsContainer');
   const disDiv = document.getElementById('dischargeContainer');
@@ -262,7 +268,6 @@ function initBreedingModule() {
   }
 }
 
-// ==================== FEED CALCULATOR ====================
 function calculateDailyRation() {
   const wt = parseFloat(document.getElementById('feedWeight').value) || 400;
   const milk = parseFloat(document.getElementById('feedMilk').value) || 0;
@@ -299,7 +304,7 @@ function switchTab(tabId) {
   }
 }
 
-// ==================== OPD & FINANCE HELPERS ====================
+// ==================== OPD & FINANCE ====================
 function calculateDue() {
   const tot = parseFloat(document.getElementById('opdTotalFee').value) || 0;
   const paid = parseFloat(document.getElementById('opdPaidFee').value) || 0;
