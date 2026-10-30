@@ -1,20 +1,21 @@
 /**
  * Vetcare Clinical Assistant & Smart Dairy Engine
- * Production-Ready Core Logic (app.js)
+ * Production-Ready Application Logic (app.js)
  * 
- * Includes:
- * 1. Smart Navigation & Back Stack Engine (Hardware/Browser Back Button & Modal Interceptor)
- * 2. Role-Based Screen Logic (Doctor vs Farmer Dashboard Separation)
- * 3. Mobile Viewport & Dynamic Whitespace Fix
- * 4. 3-Way Clinical Diagnosis Decision Engine (Weighted 5-Factor Scoring, Rx Auto-Fill, Pregnancy Alert)
- * 5. Digital OPD Prescription Generator & 1-Click WhatsApp Dispatch
- * 6. Financial Dashboard & Khata Ledger Engine (Live Totals & 1-Click WhatsApp Tagada)
- * 7. Premium Payment Gateway Engine (Dual-Bank SBI/PNB, Dynamic QR, Direct UPI Deep Link)
- * 8. Live Gemini AI Clinical Consultation Engine
+ * CRITICAL FIXES & MODULES:
+ * 1. Immediate Global Window Bindings for selectRole & Gateway Transition
+ * 2. Event Listener Fallbacks for Role Selection
+ * 3. Role-Based Screen Initialization (Doctor Workspace vs Farmer Dashboard)
+ * 4. Smart Navigation & Back Stack Engine (Hardware/Browser Back Button Interception)
+ * 5. 3-Way Clinical Diagnosis Engine (Weighted 5-Factor Scoring, Rx Auto-Fill, Pregnancy Alert)
+ * 6. Digital OPD Prescription Generator & 1-Click WhatsApp Dispatch
+ * 7. Financial Dashboard & Khata Ledger (Live Totals, WhatsApp Tagada Dispatch)
+ * 8. Premium Payment Gateway Engine (Dual-Bank SBI/PNB, Dynamic QR, Direct UPI Deep Link)
+ * 9. Live Gemini AI Clinical Consultation Engine
  */
 
 // ==========================================
-// 1. CONFIGURATION & GLOBAL STATE
+// 1. CONFIGURATION & STATE
 // ==========================================
 const APP_CONFIG = {
   sbiUPI: 'vetcare.sbi@upi',
@@ -32,7 +33,6 @@ const APP_CONFIG = {
   }
 };
 
-// Normalize role helper: returns 'doctor' or 'farmer'
 function normalizeRole(r) {
   if (!r) return 'farmer';
   const str = String(r).toLowerCase().trim();
@@ -41,28 +41,24 @@ function normalizeRole(r) {
 
 let appState = {
   role: normalizeRole(localStorage.getItem(APP_CONFIG.storageKeys.role)),
-  currentTab: 'farmerHome',
+  currentTab: 'diagnosis',
   diagMode: 'SYMPTOMS',
   activeBank: 'SBI',
   activePlan: 'MONTHLY',
   khataFilter: 'ALL',
   matrix: {
-    temp: null,        // 'HIGH', 'NORMAL', 'SUB'
-    eyes: null,        // 'CONGESTED', 'PALE', 'JAUNDICED', 'NORMAL'
-    urine: null,       // 'RED_COFFEE', 'YELLOW', 'NORMAL'
-    dung: null,        // 'DIARRHEA', 'BLOODY', 'CONSTIPATED', 'NORMAL'
+    temp: null,
+    eyes: null,
+    urine: null,
+    dung: null,
     cardinalSign: 'ALL'
   }
 };
 
-// Navigation History Stack
 let activeTabHistory = [];
-
-// Ledger Records & Saved Cases
 let khataRecords = [];
 let opdCases = [];
 
-// Cloud Firestore reference
 let firestoreDb = null;
 try {
   if (typeof firebase !== 'undefined' && firebase.firestore) {
@@ -99,6 +95,7 @@ function showElement(id, displayClass = 'block') {
   const el = $(id);
   if (!el) return;
   el.classList.remove('hidden');
+  el.style.removeProperty('display');
   if (displayClass === 'flex') el.classList.add('flex');
   else if (displayClass === 'grid') el.classList.add('grid');
   else if (displayClass === 'inline-flex') el.classList.add('inline-flex');
@@ -120,7 +117,6 @@ function getTodayISODate() {
   return new Date().toISOString().split('T')[0];
 }
 
-// Modal inspection helper: detects if any modal is currently visible
 function getActiveModal() {
   const modals = [
     'modalAddKhataBill',
@@ -130,14 +126,13 @@ function getActiveModal() {
   ];
   for (const mId of modals) {
     const el = $(mId);
-    if (el && (el.style.display === 'flex' || el.style.display === 'block' || !el.classList.contains('hidden') && el.style.display !== 'none')) {
+    if (el && (el.style.display === 'flex' || el.style.display === 'block' || (!el.classList.contains('hidden') && el.style.display !== 'none' && el.style.display !== ''))) {
       return el;
     }
   }
   return null;
 }
 
-// Close any open modal
 function closeAllModals() {
   let closed = false;
   const modals = [
@@ -156,9 +151,6 @@ function closeAllModals() {
   return closed;
 }
 
-// ==========================================
-// 3. MOBILE VIEWPORT & WHITESPACE ENGINE
-// ==========================================
 function fixMobileViewport() {
   const vh = window.innerHeight * 0.01;
   document.documentElement.style.setProperty('--vh', `${vh}px`);
@@ -181,25 +173,141 @@ window.addEventListener('orientationchange', () => {
 });
 
 // ==========================================
+// 3. UNIVERSAL ROLE SELECTION & TRANSITION (IMMEDIATE ATTACHMENT)
+// ==========================================
+window.selectRole = function(rawRole) {
+  try {
+    const normalized = normalizeRole(rawRole);
+    appState.role = normalized;
+    localStorage.setItem(APP_CONFIG.storageKeys.role, normalized);
+
+    const screenGateway = $('screenGateway');
+    const screenMain = $('screenMainApp');
+
+    if (screenGateway) {
+      screenGateway.classList.add('hidden');
+      screenGateway.classList.remove('flex');
+      screenGateway.style.setProperty('display', 'none', 'important');
+    }
+
+    if (screenMain) {
+      screenMain.classList.remove('hidden');
+      screenMain.style.setProperty('display', 'flex', 'important');
+    }
+
+    showMainApp();
+
+    if (normalized === 'doctor') {
+      activeTabHistory = ['diagnosis'];
+      window.switchTab('diagnosis', false);
+    } else {
+      const hasFarmerHome = $('viewFarmerHome');
+      const startTab = hasFarmerHome ? 'farmerHome' : 'diagnosis';
+      activeTabHistory = [startTab];
+      window.switchTab(startTab, false);
+    }
+
+    renderKhataLedger();
+    evaluateDiagnosis();
+    fixMobileViewport();
+  } catch (err) {
+    console.error('Error executing selectRole:', err);
+  }
+};
+
+window.returnToGateway = function() {
+  closeAllModals();
+  activeTabHistory = [];
+  const screenMain = $('screenMainApp');
+  const screenGateway = $('screenGateway');
+
+  if (screenMain) {
+    screenMain.classList.add('hidden');
+    screenMain.style.setProperty('display', 'none', 'important');
+  }
+
+  if (screenGateway) {
+    screenGateway.classList.remove('hidden');
+    screenGateway.style.setProperty('display', 'flex', 'important');
+  }
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+
+window.openDoctorDeclarationModal = function() {
+  const modal = $('modalDoctorDeclaration');
+  if (modal) {
+    modal.classList.remove('hidden');
+    modal.style.setProperty('display', 'flex', 'important');
+  } else {
+    window.selectRole('doctor');
+  }
+};
+
+window.closeDoctorDeclarationModal = function() {
+  const modal = $('modalDoctorDeclaration');
+  if (modal) {
+    modal.classList.add('hidden');
+    modal.style.setProperty('display', 'none', 'important');
+  }
+};
+
+window.acceptDoctorDeclaration = function() {
+  window.closeDoctorDeclarationModal();
+  window.selectRole('doctor');
+};
+
+function showMainApp() {
+  const isDoctor = appState.role === 'doctor';
+  const roleBadge = $('currentUserRoleBadge');
+
+  if (roleBadge) {
+    if (isDoctor) {
+      roleBadge.textContent = '🩺 अधिकृत पशु चिकित्सक (Doctor Mode)';
+      roleBadge.className = 'text-[10px] sm:text-[11px] font-bold text-blue-700';
+    } else {
+      roleBadge.textContent = '👨‍🌾 स्मार्ट पशुपालक (Farmer Mode)';
+      roleBadge.className = 'text-[10px] sm:text-[11px] font-bold text-emerald-700';
+    }
+  }
+
+  const doctorNavIds = ['navDiagnosis', 'navRx', 'navRecords', 'navAI'];
+  doctorNavIds.forEach(id => {
+    if (isDoctor) showElement(id, 'flex');
+    else hideElement(id);
+  });
+
+  const farmerNavIds = ['navFarmerHome', 'navRemedies'];
+  farmerNavIds.forEach(id => {
+    if (isDoctor) hideElement(id);
+    else showElement(id, 'flex');
+  });
+
+  showElement('navBreeding', 'flex');
+  showElement('navFeed', 'flex');
+  showElement('navFinance', 'flex');
+
+  const finLabel = $('navFinanceLabel');
+  if (finLabel) {
+    finLabel.textContent = isDoctor ? 'खाता बही' : 'दूध / बही';
+  }
+
+  fixMobileViewport();
+}
+
+// ==========================================
 // 4. SMART NAVIGATION & BACK STACK ENGINE
 // ==========================================
-/**
- * Universal Switch Tab Controller
- * @param {string} tabKey target tab key
- * @param {boolean} pushHistory whether to push to history stack
- */
 window.switchTab = function(tabKey, pushHistory = true) {
-  // If tabKey doesn't exist, route to default home
   const targetView = $('view' + tabKey.charAt(0).toUpperCase() + tabKey.slice(1));
   if (!targetView) {
-    tabKey = appState.role === 'doctor' ? 'diagnosis' : 'farmerHome';
+    tabKey = appState.role === 'doctor' ? 'diagnosis' : ($('viewFarmerHome') ? 'farmerHome' : 'diagnosis');
   }
 
   if (pushHistory) {
     if (activeTabHistory.length === 0 || activeTabHistory[activeTabHistory.length - 1] !== tabKey) {
       activeTabHistory.push(tabKey);
     }
-    // Sync with HTML5 browser history state
     try {
       history.pushState({ tab: tabKey, role: appState.role }, '', `#${tabKey}`);
     } catch (e) {}
@@ -241,7 +349,6 @@ window.switchTab = function(tabKey, pushHistory = true) {
 
   window.scrollTo({ top: 0, behavior: 'smooth' });
 
-  // Tab specific refreshes
   if (tabKey === 'finance') {
     renderKhataLedger();
   } else if (tabKey === 'diagnosis') {
@@ -251,44 +358,31 @@ window.switchTab = function(tabKey, pushHistory = true) {
   fixMobileViewport();
 };
 
-/**
- * Universal Go Back Screen
- * Pops the current view or closes open modals first
- */
 window.goBackScreen = window.navigateBack = function() {
-  // 1. If any modal is active, close the modal first
   if (getActiveModal()) {
     closeAllModals();
     return;
   }
 
-  // 2. If stack has history, pop current and transition to previous
   if (activeTabHistory.length > 1) {
-    activeTabHistory.pop(); // Remove current view
+    activeTabHistory.pop();
     const previousTab = activeTabHistory[activeTabHistory.length - 1];
     window.switchTab(previousTab, false);
   } else {
-    // 3. If at root, return to role default home
     window.goToHome();
   }
 };
 
-/**
- * Universal Go To Home
- */
 window.goToHome = window.navigateToHome = function() {
   closeAllModals();
-  const rootHome = appState.role === 'doctor' ? 'diagnosis' : 'farmerHome';
+  const rootHome = appState.role === 'doctor' ? 'diagnosis' : ($('viewFarmerHome') ? 'farmerHome' : 'diagnosis');
   activeTabHistory = [rootHome];
   window.switchTab(rootHome, false);
 };
 
-// HTML5 Browser History (Popstate) Interceptor for Hardware Back Button
 window.addEventListener('popstate', (event) => {
-  // Check modal first
   if (getActiveModal()) {
     closeAllModals();
-    // Keep URL state aligned
     history.pushState({ tab: appState.currentTab }, '', `#${appState.currentTab}`);
     return;
   }
@@ -304,79 +398,7 @@ window.addEventListener('popstate', (event) => {
 });
 
 // ==========================================
-// 5. ROLE-BASED SCREEN SEPARATION LOGIC
-// ==========================================
-window.selectRole = function(rawRole) {
-  const normalized = normalizeRole(rawRole);
-  appState.role = normalized;
-  localStorage.setItem(APP_CONFIG.storageKeys.role, normalized);
-
-  const screenGateway = $('screenGateway');
-  const screenMain = $('screenMainApp');
-
-  if (screenGateway) screenGateway.classList.add('hidden');
-  if (screenMain) screenMain.classList.remove('hidden');
-
-  showMainApp();
-  window.goToHome();
-  renderKhataLedger();
-};
-
-window.returnToGateway = function() {
-  closeAllModals();
-  activeTabHistory = [];
-  const screenMain = $('screenMainApp');
-  const screenGateway = $('screenGateway');
-
-  if (screenMain) screenMain.classList.add('hidden');
-  if (screenGateway) screenGateway.classList.remove('hidden');
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-};
-
-function showMainApp() {
-  const isDoctor = appState.role === 'doctor';
-  const roleBadge = $('currentUserRoleBadge');
-
-  if (roleBadge) {
-    if (isDoctor) {
-      roleBadge.textContent = '🩺 अधिकृत पशु चिकित्सक (Doctor Mode)';
-      roleBadge.className = 'text-[10px] sm:text-[11px] font-bold text-blue-700';
-    } else {
-      roleBadge.textContent = '👨‍🌾 स्मार्ट पशुपालक (Farmer Mode)';
-      roleBadge.className = 'text-[10px] sm:text-[11px] font-bold text-emerald-700';
-    }
-  }
-
-  // Doctor Navigation Items
-  const doctorNavIds = ['navDiagnosis', 'navRx', 'navRecords', 'navAI'];
-  doctorNavIds.forEach(id => {
-    if (isDoctor) showElement(id, 'flex');
-    else hideElement(id);
-  });
-
-  // Farmer Navigation Items
-  const farmerNavIds = ['navFarmerHome', 'navRemedies'];
-  farmerNavIds.forEach(id => {
-    if (isDoctor) hideElement(id);
-    else showElement(id, 'flex');
-  });
-
-  // Common Navigation Items
-  showElement('navBreeding', 'flex');
-  showElement('navFeed', 'flex');
-  showElement('navFinance', 'flex');
-
-  // Dynamic Finance Label
-  const finLabel = $('navFinanceLabel');
-  if (finLabel) {
-    finLabel.textContent = isDoctor ? 'खाता बही' : 'दूध / बही';
-  }
-
-  fixMobileViewport();
-}
-
-// ==========================================
-// 6. CLINICAL KNOWLEDGE ENGINE (UNLIMITED DB)
+// 5. CLINICAL KNOWLEDGE ENGINE (UNLIMITED DB)
 // ==========================================
 const CLINICAL_DISEASES_DB = [
   {
@@ -509,7 +531,7 @@ const CLINICAL_DISEASES_DB = [
   },
   {
     id: 'THEILERIOSIS',
-    name: 'Theileriosis (थायलेरियासिस / देशी टिक फीवर)',
+    name: 'Theileriosis (थायलेरियासिस / टिक फीवर)',
     category: 'PROTOZOAL',
     cardinalSign: 'LYMPH_SWELLING',
     temp: 'HIGH',
@@ -745,7 +767,6 @@ const CLINICAL_DISEASES_DB = [
   }
 ];
 
-// 3-Way Diagnostic Operational Modes
 window.setDiagnosisMode = function(mode) {
   appState.diagMode = mode;
   const p1 = $('panelDiagMatrix');
@@ -838,31 +859,26 @@ function evaluateDiagnosis(directoryFilterTag = 'ALL') {
     let score = 0;
     let maxPossible = 0;
 
-    // 1. Cardinal Sign Weight = 40%
     if (cardinal && cardinal !== 'ALL') {
       maxPossible += 40;
       if (disease.cardinalSign === cardinal) score += 40;
     }
 
-    // 2. Body Temp Weight = 20%
     if (temp) {
       maxPossible += 20;
       if (disease.temp === temp) score += 20;
     }
 
-    // 3. Eyes / Mucous Membrane Weight = 15%
     if (eyes) {
       maxPossible += 15;
       if (disease.eyes === eyes) score += 15;
     }
 
-    // 4. Urine Appearance Weight = 15%
     if (urine) {
       maxPossible += 15;
       if (disease.urine === urine) score += 15;
     }
 
-    // 5. Dung / Feces Weight = 10%
     if (dung) {
       maxPossible += 10;
       if (disease.dung === dung) score += 10;
@@ -872,7 +888,7 @@ function evaluateDiagnosis(directoryFilterTag = 'ALL') {
     if (maxPossible > 0) {
       matchPercentage = Math.round((score / maxPossible) * 100);
     } else {
-      matchPercentage = 60; // neutral directory preview
+      matchPercentage = 60;
     }
 
     return { ...disease, matchPercentage };
@@ -970,7 +986,7 @@ window.autoFillRxToOPD = function(encodedName, encodedDrugs) {
 };
 
 // ==========================================
-// 7. DIGITAL OPD PRESCRIPTION & WHATSAPP
+// 6. DIGITAL OPD PRESCRIPTION & WHATSAPP
 // ==========================================
 window.calculateDue = function() {
   const total = parseFloat(safeGetValue('opdTotalFee', 0)) || 0;
@@ -1124,7 +1140,7 @@ window.saveOfflineCaseDirectly = function() {
 };
 
 // ==========================================
-// 8. FINANCIAL DASHBOARD & KHATA ENGINE
+// 7. FINANCIAL DASHBOARD & KHATA ENGINE
 // ==========================================
 function loadLocalKhataRecords() {
   try {
@@ -1336,7 +1352,6 @@ function renderKhataLedger() {
   }).join('');
 }
 
-// 1-Click WhatsApp Tagada Dispatch
 window.sendWhatsAppTagada = function(farmerName, phone, due) {
   const cleanPhone = String(phone).replace(/[^0-9]/g, '');
   if (!cleanPhone || cleanPhone.length < 10) {
@@ -1467,7 +1482,7 @@ window.saveKhataBillEntry = function() {
 };
 
 // ==========================================
-// 9. PREMIUM PAYMENT & DUAL-BANK ENGINE
+// 8. PREMIUM PAYMENT & DUAL-BANK ENGINE
 // ==========================================
 window.openPaymentModal = window.openPremiumModal = function() {
   const modal = $('modalPremium');
@@ -1506,7 +1521,7 @@ window.submitPaymentVerification = window.submitPremiumUTR = function() {
 };
 
 // ==========================================
-// 10. LIVE GEMINI AI CONSULTANT ENGINE
+// 9. LIVE GEMINI AI CONSULTANT ENGINE
 // ==========================================
 window.openAIKeyModal = function() {
   const modal = $('modalAIKey');
@@ -1552,7 +1567,7 @@ window.runAIConsultant = async function() {
   if (!key) {
     setTimeout(() => {
       if (out) {
-        out.innerHTML = `⚠️ <strong>Gemini API Key नहीं मिली!</strong><br/>ऊपर "⚙️ AI Key" बटन से अपनी गूगल AI स्टूडियो Key सेव करें।\n\nतत्काल क्लिनिकल संदर्भ:\n• बुखार नियंत्रण: Meloxicam 0.5 mg/kg\n• एंटीबायोटिक कवरेज: Ceftriaxone या Enrofloxacin\n• डिहाइड्रेशन में DNS / RL ड्रिप दें।`;
+        out.innerHTML = `⚠️ <strong>Gemini API Key नहीं मिली!</strong><br/>ऊपर "⚙️ AI Key" बटन से अपनी गूगल AI स्टूडियो Key सेव करें।\n\nतत्काल क्लिनिक संदर्भ:\n• बुखार नियंत्रण: Meloxicam 0.5 mg/kg\n• एंटीबायोटिक कवरेज: Ceftriaxone या Enrofloxacin\n• डिहाइड्रेशन में DNS / RL ड्रिप दें।`;
       }
     }, 600);
     return;
@@ -1581,7 +1596,7 @@ window.runAIConsultant = async function() {
 };
 
 // ==========================================
-// 11. FEED & BREEDING ENGINES
+// 10. FEED & BREEDING ENGINES
 // ==========================================
 window.calculateDailyRation = function() {
   const wt = parseFloat(safeGetValue('feedWeight', 400)) || 400;
@@ -1600,23 +1615,56 @@ window.calculateDailyRation = function() {
 };
 
 // ==========================================
-// 12. BOOTSTRAPPING & INITIALIZATION
+// 11. EVENT LISTENER FALLBACKS & BOOTSTRAP
 // ==========================================
-document.addEventListener('DOMContentLoaded', () => {
+function bindRoleSelectionFallbacks() {
+  const gateway = $('screenGateway');
+  if (!gateway) return;
+
+  const allClickables = gateway.querySelectorAll('div, button, a');
+  allClickables.forEach(el => {
+    const text = (el.textContent || '').trim();
+    if (text.includes('पशुपालक के रूप में प्रवेश करें') || text.includes('स्मार्ट पशुपालक')) {
+      el.addEventListener('click', (e) => {
+        e.stopPropagation();
+        window.selectRole('farmer');
+      });
+    } else if (text.includes('चिकित्सक के रूप में प्रवेश करें') || text.includes('पशु चिकित्सक')) {
+      el.addEventListener('click', (e) => {
+        e.stopPropagation();
+        window.openDoctorDeclarationModal();
+      });
+    }
+  });
+}
+
+function initApp() {
   loadLocalKhataRecords();
+  bindRoleSelectionFallbacks();
   fixMobileViewport();
 
   const savedRole = localStorage.getItem(APP_CONFIG.storageKeys.role);
   if (savedRole) {
     window.selectRole(savedRole);
   } else {
-    // Show role selection gateway if first visit
     const screenGateway = $('screenGateway');
     const screenMain = $('screenMainApp');
-    if (screenGateway) screenGateway.classList.remove('hidden');
-    if (screenMain) screenMain.classList.add('hidden');
+    if (screenGateway) {
+      screenGateway.classList.remove('hidden');
+      screenGateway.style.setProperty('display', 'flex', 'important');
+    }
+    if (screenMain) {
+      screenMain.classList.add('hidden');
+      screenMain.style.setProperty('display', 'none', 'important');
+    }
   }
 
   renderKhataLedger();
   evaluateDiagnosis();
-});
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initApp);
+} else {
+  initApp();
+}
