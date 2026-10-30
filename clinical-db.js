@@ -1,4 +1,4 @@
-// ==================== VETCARE MASTER CLINICAL & KNOWLEDGE DATABASE ====================
+// ==================== VETCARE MASTER CLINICAL DATABASE ====================
 const CLINICAL_DATABASE = [
   {
     id: 1,
@@ -13,9 +13,9 @@ const CLINICAL_DATABASE = [
     onSiteConfirm: "गले की सूजन छूने पर तीव्र वेदना, घर्र-घर्र श्वसन और अचानक 105°F+ बुखार से तुरंत पुष्टि करें।",
     
     injections: [
-      { sno: 1, category: "एंटीबायोटिक (1st Line)", generic: "Ceftiofur Sodium (1g)", ethical: "Xyrofur (Intas, ₹450) / Excenel", dose: "1.1-2.2 mg/kg", route: "IM (मांसपेशी)", pregSafe: "✅ सुरक्षित (Safe)" },
+      { sno: 1, category: "एंटीबायोटिक (1st Line)", generic: "Ceftiofur Sodium (1g)", ethical: "Xyrofur (Intas, ₹450) / Excenel", dose: "1.1-2.2 mg/kg", route: "IM", pregSafe: "✅ सुरक्षित (Safe)" },
       { sno: 2, category: "एंटीबायोटिक (वैकल्पिक)", generic: "Marbofloxacin 10%", ethical: "Forocid (₹380) / Marbomet", dose: "2 mg/kg", route: "IM / SC", pregSafe: "✅ सुरक्षित (Safe)" },
-      { sno: 3, category: "NSAID (सूजन व दर्द)", generic: "Meloxicam + Paracetamol", ethical: "Melonex Plus (Intas, ₹110)", dose: "15-20 ml", route: "IM", pregSafe: "✅ सुरक्षित (Safe)" },
+      { sno: 3, category: "NSAID", generic: "Meloxicam + Paracetamol", ethical: "Melonex Plus (Intas, ₹110)", dose: "15-20 ml", route: "IM", pregSafe: "✅ सुरक्षित (Safe)" },
       { sno: 4, category: "एंटीहिस्टामिनिक", generic: "Pheniramine Maleate", ethical: "Avil (Sanofi, ₹85)", dose: "10 ml", route: "IM", pregSafe: "✅ सुरक्षित (Safe)" }
     ],
 
@@ -26,7 +26,7 @@ const CLINICAL_DATABASE = [
 
     homeopathy: [
       { drug: "Aconitum Napellus 200C", indication: "प्रारंभिक अवस्था में अचानक तेज़ बुखार व बेचैनी", dose: "10-15 बूंदें जीभ पर हर 2 घंटे में" },
-      { drug: "Belladonna 200C", indication: "गले में लालिमा, गर्म सूजन व सांस लेने में अत्यधिक कष्ट", dose: "10-15 बूंदें दिन में 4 बार" },
+      { drug: "Belladonna 200C", indication: "गले में लालिमा, गर्म सूजन व सांस कष्ट", dose: "10-15 बूंदें दिन में 4 बार" },
       { drug: "Arsenicum Album 200C", indication: "गले से घर्र-घर्र आवाज व अत्यधिक दुर्बलता", dose: "10-15 बूंदें दिन में 3 बार" }
     ],
 
@@ -57,12 +57,12 @@ const CLINICAL_DATABASE = [
     ],
 
     oralSupplements: [
-      { name: "एंटीऑक्सीडेंट व विटामिन बोलस", formulation: "Vitamin E + Selenium Bolus (Evat-H)", dose: "1 बोलस प्रतिदिन 5 दिन तक", note: "मांसपेशियों के उत्तकों को सड़न से बचाने हेतु।" }
+      { name: "एंटीऑक्सीडेंट बोलस", formulation: "Vitamin E + Selenium Bolus (Evat-H)", dose: "1 बोलस प्रतिदिन 5 दिन तक", note: "मांसपेशियों के उत्तकों को सड़न से बचाने हेतु।" }
     ],
 
     homeopathy: [
       { drug: "Anthracinum 200C", indication: "काले जहरबाद व मांसपेशियों की सड़न में", dose: "10 बूंदें दिन में 3 बार" },
-      { drug: "Rhus Toxicodendron 200C", indication: "गंभीर लंगड़ापन व मांसपेशियों की अकड़न में", dose: "10 बूंदें दिन में 4 बार" }
+      { drug: "Rhus Toxicodendron 200C", indication: "गंभीर लंगड़ापन व अकड़न में", dose: "10 बूंदें दिन में 4 बार" }
     ],
 
     homeRemedies: [
@@ -85,8 +85,8 @@ const CLINICAL_DATABASE = [
     onSiteConfirm: "जीभ पर फटे हुए छाले, खुरों के मध्य मवाद/घाव और लार का लगातार टपकना।",
 
     injections: [
-      { sno: 1, category: "एंटीबायोटिक (सैकेंडरी इन्फेक्शन)", generic: "Ceftriaxone Sodium (3-4g)", ethical: "Intacef (Intas, ₹220)", dose: "10 mg/kg", route: "IM / IV", pregSafe: "✅ सुरक्षित (Safe)" },
-      { sno: 2, category: "NSAID (तीव्र दर्द निवारक)", generic: "Flunixin Meglumine", ethical: "Finadyne (MSD, ₹380)", dose: "1.1-2.2 mg/kg", route: "IV / IM", pregSafe: "⚠️ सावधानी (Caution)" },
+      { sno: 1, category: "एंटीबायोटिक", generic: "Ceftriaxone Sodium (3-4g)", ethical: "Intacef (Intas, ₹220)", dose: "10 mg/kg", route: "IM / IV", pregSafe: "✅ सुरक्षित (Safe)" },
+      { sno: 2, category: "NSAID", generic: "Flunixin Meglumine", ethical: "Finadyne (MSD, ₹380)", dose: "1.1-2.2 mg/kg", route: "IV / IM", pregSafe: "⚠️ सावधानी (Caution)" },
       { sno: 3, category: "विटामिन सप्लीमेंट", generic: "Vitamin B-Complex + Liver Extract", ethical: "Belamyl (Zydus, ₹95)", dose: "10 ml", route: "IM", pregSafe: "✅ सुरक्षित (Safe)" }
     ],
 
@@ -100,8 +100,8 @@ const CLINICAL_DATABASE = [
     ],
 
     homeRemedies: [
-      { remedy: "लाल दवा से खुर प्रक्षालन", method: "1 लीटर हल्के गुनगुने पानी में चुटकी भर पोटैशियम परमैंगनेट (लाल दवा 1:1000) घोलें और खुरों के घाव धोएं।" },
-      { remedy: "शहद व देशी घी का मुंह लेप", method: "बराबर मात्रा में शहद और देशी गाय का घी मिलाकर मुंह के छालों पर लगाएं। छाले 48 घंटे में सूखते हैं।" }
+      { remedy: "लाल दवा से खुर प्रक्षालन", method: "1 लीटर हल्के गुनगुने पानी में चुटकी भर लाल दवा (1:1000) घोलें और खुरों के घाव धोएं।" },
+      { remedy: "शहद व देशी घी का मुंह लेप", method: "बराबर मात्रा में शहद और देशी गाय का घी मिलाकर मुंह के छालों पर लगाएं।" }
     ],
 
     pregnancy: "✅ एंटीबायोटिक व स्थानीय उपचार पूर्ण सुरक्षित।"
@@ -120,22 +120,22 @@ const CLINICAL_DATABASE = [
     onSiteConfirm: "स्ट्रिप कप टेस्ट में दूध में थक्के/छिछड़े और थन छूने पर पशु द्वारा लात मारना।",
 
     injections: [
-      { sno: 1, category: "इंट्रा-मेमरी ट्यूब (सीधे थन में)", generic: "Cefoperazone / Cloxacillin Infusion", ethical: "Pendistrin-SH / Mastilep (₹90)", dose: "1 ट्यूब प्रति प्रभावित थन", route: "Intramammary", pregSafe: "✅ सुरक्षित (Safe)" },
+      { sno: 1, category: "इंट्रा-मेमरी ट्यूब", generic: "Cefoperazone / Cloxacillin Infusion", ethical: "Pendistrin-SH / Mastilep (₹90)", dose: "1 ट्यूब प्रति प्रभावित थन", route: "Intramammary", pregSafe: "✅ सुरक्षित (Safe)" },
       { sno: 2, category: "एंटीबायोटिक (सिस्टेमिक)", generic: "Ceftiofur / Enrofloxacin", ethical: "Xyrofur (Intas, ₹450)", dose: "1 mg/kg", route: "IM", pregSafe: "✅ सुरक्षित (Safe)" },
-      { sno: 3, category: "फाइब्रिनोलायटिक एंजाइम", generic: "Serratiopeptidase + Meloxicam", ethical: "Melonex Plus / Serakind", dose: "15 ml", route: "IM", pregSafe: "✅ सुरक्षित (Safe)" }
+      { sno: 3, category: "एंजाइम", generic: "Serratiopeptidase + Meloxicam", ethical: "Melonex Plus / Serakind", dose: "15 ml", route: "IM", pregSafe: "✅ सुरक्षित (Safe)" }
     ],
 
     oralSupplements: [
-      { name: "मेस्टाइटिस बफर पाउडर", formulation: "Trisodium Citrate + Vitamins (MastiKit / Mastitis Bolus)", dose: "1 पाउच प्रतिदिन 4 दिन तक", note: "दूध का pH सामान्य करने व अयन की सूजन सुखाने हेतु।" }
+      { name: "मेस्टाइटिस बफर पाउडर", formulation: "Trisodium Citrate + Vitamins (MastiKit)", dose: "1 पाउच प्रतिदिन 4 दिन तक", note: "दूध का pH सामान्य करने व सूजन सुखाने हेतु।" }
     ],
 
     homeopathy: [
-      { drug: "Phytolacca Decandra 200C", indication: "थन में पत्थर जैसा कड़ापन व दूध में गांठे आने पर", dose: "15 बूंदें हर 3 घंटे में" },
+      { drug: "Phytolacca Decandra 200C", indication: "थन में पत्थर जैसा कड़ापन व गांठें", dose: "15 बूंदें हर 3 घंटे में" },
       { drug: "Silicea 200C", indication: "दूध में मवाद व पुराने थनैल में", dose: "15 बूंदें दिन में दो बार" }
     ],
 
     homeRemedies: [
-      { remedy: "एलोवेरा, हल्दी व चूना लेप (सिद्ध नुस्खा)", method: "200 ग्राम घृतकुमारी (Aloe Vera) गूदा, 50 ग्राम हल्दी पाउडर और 10 ग्राम बुझा हुआ चूना मिलाकर पेस्ट बनाएं। अयन पर दिन में 3 बार लगाएं।" }
+      { remedy: "एलोवेरा, हल्दी व चूना लेप", method: "200 ग्राम एलोवेरा गूदा, 50 ग्राम हल्दी पाउडर और 10 ग्राम बुझा हुआ चूना मिलाकर पेस्ट बनाएं। अयन पर लगाएं।" }
     ],
 
     pregnancy: "✅ स्थानीय थन ट्यूब व सेफ्टियोफ़र पूर्ण सुरक्षित।"
@@ -151,29 +151,29 @@ const CLINICAL_DATABASE = [
     temp: "<100°F (अल्प तापमान)",
     traits: { temp: "SUB", eyes: "NORMAL", urine: "NORMAL", dung: "NORMAL", cardinalSign: "STERNAL_RECUMBENCY" },
     cardinal: "ब्याने के 24-48 घंटे बाद पशु का गर्दन मोड़कर बैठना, कान व पैर ठंडे पड़ना और उठने में असमर्थता।",
-    onSiteConfirm: "कम शारीरिक तापमान (<100°F), पुतलियों का फैलना और सीने के बल 'S' आकार में गर्दन मोड़कर लेटना।",
+    onSiteConfirm: "कम शारीरिक तापमान (<100°F), पुतलियों का फैलना और सीने के बल लेटना।",
 
     injections: [
-      { sno: 1, category: "जीवनरक्षक कैल्शियम (I/V)", generic: "Calcium Borogluconate 25% + Mg + P", ethical: "Mifex / Calborol (₹320)", dose: "450 ml (आधा धीमे IV + आधा SC)", route: "IV + SC", pregSafe: "✅ ब्याने बाद जीवनरक्षक" }
+      { sno: 1, category: "कैल्शियम (I/V)", generic: "Calcium Borogluconate 25% + Mg + P", ethical: "Mifex / Calborol (₹320)", dose: "450 ml (आधा धीमे IV + आधा SC)", route: "IV + SC", pregSafe: "✅ ब्याने बाद जीवनरक्षक" }
     ],
 
     oralSupplements: [
-      { name: "ओरल कैल्शियम जेल", formulation: "Ionic Calcium Gel (Cal-Up / Ostovet Gel)", dose: "1 बॉटल (300g) तुरंत व 12 घंटे बाद", note: "आई/वी ड्रिप के बाद दोबारा कैल्शियम गिरने से रोकने हेतु।" }
+      { name: "ओरल कैल्शियम जेल", formulation: "Ionic Calcium Gel (Cal-Up / Ostovet Gel)", dose: "1 बॉटल तुरंत व 12 घंटे बाद", note: "दोबारा कैल्शियम गिरने से रोकने हेतु।" }
     ],
 
     homeopathy: [
-      { drug: "Calcarea Phosphorica 200C", indication: "कैल्शियम मेटाबॉलिज्म सुधारने हेतु", dose: "15 बूंदें दिन में 3 बार" }
+      { drug: "Calcarea Phosphorica 200C", indication: "कैल्शियम संतुलन सुधारने हेतु", dose: "15 बूंदें दिन में 3 बार" }
     ],
 
     homeRemedies: [
-      { remedy: "गर्म कंबल व सरसों तेल मालिश", method: "पशु के कान व खुरों पर गर्म सरसों तेल की मालिश करें और शरीर को तुरंत बोरी/कंबल से ढककर रखें।" }
+      { remedy: "गर्म कंबल व सरसों तेल मालिश", method: "पशु के कान व खुरों पर गर्म सरसों तेल की मालिश करें और शरीर को कंबल से ढककर रखें।" }
     ],
 
     pregnancy: "✅ ब्याने के तुरंत बाद आपातकालीन सुरक्षित।"
   }
 ];
 
-// ==================== SMART FARMER BREEDING & FEED DATA ====================
+// ==================== BREEDING & FEED DATA ====================
 const BREEDING_GUIDE_DATA = {
   heatSigns: [
     { stage: "प्रारंभिक मद (Early Heat)", signs: "बेचैनी, बार-बार रंभाना, अन्य पशुओं पर चढ़ने का प्रयास, दूध में अचानक गिरावट।", action: "निगरानी रखें, अभी सीमन न डलवाएं।" },
@@ -182,13 +182,13 @@ const BREEDING_GUIDE_DATA = {
   ],
   dischargeTypes: [
     { type: "कांच जैसा साफ़ पारदर्शी तार", meaning: "गर्भाशय पूर्ण स्वस्थ है। गर्भ ठहरने की 95% संभावना।", safe: true },
-    { type: "सफेद मटमैला या मवाद जैसा डिस्चार्ज", meaning: "गर्भाशय में संक्रमण (Metritis / Endometritis)। पहले डॉक्टर से गर्भाशय धुलवाएं (IU Infusion), सीमन न डालें।", safe: false },
+    { type: "सफेद मटमैला या मवाद जैसा डिस्चार्ज", meaning: "गर्भाशय में संक्रमण (Metritis)। पहले डॉक्टर से गर्भाशय धुलवाएं (IU Infusion), सीमन न डालें।", safe: false },
     { type: "पीला या दुर्गंधयुक्त स्राव", meaning: "गंभीर बच्चेदानी का इंफेक्शन। तुरंत डॉक्टर से इलाज कराएं।", safe: false }
   ],
   repeatBreederSolutions: [
     "1. हमेशा कांच जैसा साफ़ तार डिस्चार्ज आने पर ही A.I. करवाएं।",
     "2. सीमन डलवाने के बाद पशु को 2 घंटे तक बैठने न दें और छायादार शांत स्थान पर रखें।",
-    "3. आहार में प्रतिदिन 50 ग्राम अच्छी कंपनी का कीलेटेड मिनरल मिक्सचर (Chelated Mineral Mixture) अनिवार्य रूप से दें।",
+    "3. आहार में प्रतिदिन 50 ग्राम अच्छी कंपनी का कीलेटेड मिनरल मिक्सचर अनिवार्य रूप से दें।",
     "4. कृमिनाशक (डीवर्मिंग) दवा हर 3 महीने में बदलते हुए साल्ट से दें।"
   ]
 };
