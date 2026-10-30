@@ -1,8 +1,10 @@
 /**
  * Vetcare AI OS - Production Engine (app.js)
- * Architecture:
+ * Fully Patched: Comprehensive Null Safety & Global Scope Binding
+ * 
+ * Features:
  * 1. Dual-Bank Payment Gateway (SBI Primary + PNB Backup) with Dynamic QR & UPI Intent
- * 2. Unlimited Open-Ended Disease Codex & Dynamic Custom Disease Registry
+ * 2. Unlimited Open-Ended Disease Codex & Custom Disease Registry
  * 3. 3-Way Diagnostic Decision Support Engine (Species + Vitals + Multi-Symptom Matching)
  * 4. OPD Prescription Slip Generator with Live Preview & Print Engine
  * 5. 1-Click Formatted WhatsApp Dispatcher
@@ -369,11 +371,94 @@ let appDiseases = [];
 let appKhataLedger = [];
 let appMedicationRows = [];
 
-// ==========================================
-// 3. INITIALIZATION & DUAL STORAGE SYNC
-// ==========================================
+// ===============================================================
+// 3. DEFENSIVE RUNTIME UI TOGGLE (showMainApp with Null Checks)
+// ===============================================================
+
+function showMainApp() {
+    try {
+        const authScreen = document.getElementById("authScreen");
+        if (authScreen && authScreen.classList) {
+            authScreen.classList.add("hidden");
+            authScreen.style.display = "none";
+        }
+
+        const splashScreen = document.getElementById("splashScreen");
+        if (splashScreen && splashScreen.classList) {
+            splashScreen.classList.add("hidden");
+            splashScreen.style.display = "none";
+        }
+
+        const loginModal = document.getElementById("loginModal");
+        if (loginModal && loginModal.classList) {
+            loginModal.classList.add("hidden");
+            loginModal.style.display = "none";
+        }
+
+        const mainApp = document.getElementById("mainApp");
+        if (mainApp && mainApp.classList) {
+            mainApp.classList.remove("hidden");
+            mainApp.style.display = "block";
+        }
+
+        const appContainer = document.getElementById("appContainer");
+        if (appContainer && appContainer.classList) {
+            appContainer.classList.remove("hidden");
+            appContainer.style.display = "block";
+        }
+    } catch (err) {
+        console.warn("showMainApp handled safely:", err);
+    }
+}
+window.showMainApp = showMainApp;
+
+// ===============================================================
+// 4. GLOBAL PAYMENT MODAL CONTROLLERS (Direct Window Binding)
+// ===============================================================
+
+window.openPaymentModal = function() {
+    try {
+        const modal = document.getElementById("paymentModal");
+        if (modal) {
+            modal.style.display = "flex";
+            if (modal.classList) {
+                modal.classList.remove("hidden");
+            }
+        }
+        if (document.body && document.body.classList) {
+            document.body.classList.add("modal-active");
+        }
+        updatePaymentGatewayUI();
+    } catch (err) {
+        console.error("Error opening payment modal:", err);
+    }
+};
+
+window.closePaymentModal = function() {
+    try {
+        const modal = document.getElementById("paymentModal");
+        if (modal) {
+            modal.style.display = "none";
+            if (modal.classList) {
+                modal.classList.add("hidden");
+            }
+        }
+        if (document.body && document.body.classList) {
+            document.body.classList.remove("modal-active");
+        }
+    } catch (err) {
+        console.error("Error closing payment modal:", err);
+    }
+};
+
+// ===============================================================
+// 5. INITIALIZATION & DUAL STORAGE SYNC
+// ===============================================================
 
 document.addEventListener("DOMContentLoaded", () => {
+    // Invoke screen switch safely
+    showMainApp();
+
     initDualSyncStorage();
     initClock();
     setupDefaultPrescriptionMedicines();
@@ -385,13 +470,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Global Key Listener for Modal Closing
     window.addEventListener("keydown", (e) => {
-        if (e.key === "Escape") closePaymentModal();
+        if (e.key === "Escape") window.closePaymentModal();
     });
 
     // Modal Trigger Binding
     const openBtn = document.getElementById("openPaymentModalBtn");
     if (openBtn) {
-        openBtn.addEventListener("click", openPaymentModal);
+        openBtn.addEventListener("click", window.openPaymentModal);
     }
 });
 
@@ -400,11 +485,11 @@ function initClock() {
     const update = () => {
         if (clockEl) {
             const now = new Date();
-            clockEl.textContent = now.toLocaleDateString('hi-IN', {
-                month: 'short',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
+            clockEl.textContent = now.toLocaleDateString("hi-IN", {
+                month: "short",
+                day: "numeric",
+                hour: "2-digit",
+                minute: "2-digit"
             });
         }
     };
@@ -437,14 +522,13 @@ function initDualSyncStorage() {
             appKhataLedger = [];
         }
     } else {
-        // Seed standard Khata ledger records
         appKhataLedger = [
             {
                 id: "kht_101",
                 name: "सुरेश पटेल",
                 phone: "9829012345",
                 village: "रामपुरा",
-                date: new Date().toISOString().split('T')[0],
+                date: new Date().toISOString().split("T")[0],
                 bill: 1500,
                 paid: 1000,
                 due: 500,
@@ -455,7 +539,7 @@ function initDualSyncStorage() {
                 name: "बलविंदर सिंह",
                 phone: "9414098765",
                 village: "किशनगढ़",
-                date: new Date().toISOString().split('T')[0],
+                date: new Date().toISOString().split("T")[0],
                 bill: 850,
                 paid: 300,
                 due: 550,
@@ -467,14 +551,14 @@ function initDualSyncStorage() {
 
     // Network connectivity listener for Dual Cloud/Local Mode
     window.addEventListener("online", () => {
-        if (syncBadge && syncText) {
+        if (syncBadge && syncText && syncBadge.classList) {
             syncBadge.className = "hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200";
             syncText.textContent = "लोकल + क्लाउड लाइव सिंक";
         }
     });
 
     window.addEventListener("offline", () => {
-        if (syncBadge && syncText) {
+        if (syncBadge && syncText && syncBadge.classList) {
             syncBadge.className = "hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200";
             syncText.textContent = "ऑफलाइन मोड (सुरक्षित स्टोरेज)";
         }
@@ -482,44 +566,37 @@ function initDualSyncStorage() {
 }
 
 function saveKhataLedgerToStorage() {
-    localStorage.setItem("vetcare_khata_ledger", JSON.stringify(appKhataLedger));
+    try {
+        localStorage.setItem("vetcare_khata_ledger", JSON.stringify(appKhataLedger));
+    } catch (e) {
+        console.error("Khata save error:", e);
+    }
 }
 
 function saveCustomDiseasesToStorage(newDisease) {
-    const stored = localStorage.getItem("vetcare_custom_diseases");
-    let current = [];
-    if (stored) {
-        try {
-            current = JSON.parse(stored);
-        } catch (e) {
-            current = [];
+    try {
+        const stored = localStorage.getItem("vetcare_custom_diseases");
+        let current = [];
+        if (stored) {
+            try {
+                current = JSON.parse(stored);
+            } catch (e) {
+                current = [];
+            }
         }
+        current.push(newDisease);
+        localStorage.setItem("vetcare_custom_diseases", JSON.stringify(current));
+        appDiseases.push(newDisease);
+    } catch (e) {
+        console.error("Custom disease save error:", e);
     }
-    current.push(newDisease);
-    localStorage.setItem("vetcare_custom_diseases", JSON.stringify(current));
-    appDiseases.push(newDisease);
 }
 
 // ===============================================================
-// 4. DUAL-BANK PAYMENT GATEWAY CONTROLLER (SBI + PNB)
+// 6. DUAL-BANK PAYMENT GATEWAY LOGIC (SBI & PNB)
 // ===============================================================
 
-function openPaymentModal() {
-    const modal = document.getElementById("paymentModal");
-    if (!modal) return;
-    modal.classList.remove("hidden");
-    document.body.classList.add("modal-active");
-    updatePaymentGatewayUI();
-}
-
-function closePaymentModal() {
-    const modal = document.getElementById("paymentModal");
-    if (!modal) return;
-    modal.classList.add("hidden");
-    document.body.classList.remove("modal-active");
-}
-
-function selectBankTab(bankKey) {
+window.selectBankTab = function(bankKey) {
     if (bankKey !== "sbi" && bankKey !== "pnb") return;
     currentActiveBank = bankKey;
 
@@ -537,9 +614,9 @@ function selectBankTab(bankKey) {
     }
 
     updatePaymentGatewayUI();
-}
+};
 
-function handlePlanChange(amount, label) {
+window.handlePlanChange = function(amount, label) {
     currentSelectedPlan.amount = Number(amount);
     currentSelectedPlan.label = label;
 
@@ -555,10 +632,10 @@ function handlePlanChange(amount, label) {
     }
 
     updatePaymentGatewayUI();
-}
+};
 
 function updatePaymentGatewayUI() {
-    const bank = VETCARE_PAYMENT_CONFIG[currentActiveBank];
+    const bank = VETCARE_PAYMENT_CONFIG[currentActiveBank] || VETCARE_PAYMENT_CONFIG.sbi;
     const amount = currentSelectedPlan.amount;
 
     const upiIdEl = document.getElementById("gatewayUpiIdText");
@@ -574,7 +651,7 @@ function updatePaymentGatewayUI() {
     if (ifscEl) ifscEl.textContent = bank.ifsc;
     if (branchEl) branchEl.textContent = bank.branch;
 
-    // Standard RFC-Compliant UPI Intent URI
+    // Standard RFC-Compliant UPI URI
     const upiPayload = `upi://pay?pa=${encodeURIComponent(bank.upiId)}&pn=${encodeURIComponent(VETCARE_PAYMENT_CONFIG.payeeName)}&am=${amount}&cu=INR&tn=${encodeURIComponent('Vetcare Pro ' + currentSelectedPlan.label)}`;
 
     // High Density Production QR Code
@@ -582,7 +659,7 @@ function updatePaymentGatewayUI() {
         qrImageEl.src = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=4&data=${encodeURIComponent(upiPayload)}`;
     }
 
-    // Mobile Direct Intent Link
+    // Direct Intent Link
     if (intentLink) {
         intentLink.href = upiPayload;
     }
@@ -592,7 +669,7 @@ function updatePaymentGatewayUI() {
     }
 }
 
-function copyGatewayDetail(elementId, labelName) {
+window.copyGatewayDetail = function(elementId, labelName) {
     const el = document.getElementById(elementId);
     if (!el) return;
     const textToCopy = el.textContent.trim();
@@ -606,7 +683,7 @@ function copyGatewayDetail(elementId, labelName) {
     } else {
         fallbackCopy(textToCopy, labelName);
     }
-}
+};
 
 function fallbackCopy(text, labelName) {
     const textArea = document.createElement("textarea");
@@ -618,7 +695,7 @@ function fallbackCopy(text, labelName) {
     textArea.focus();
     textArea.select();
     try {
-        document.execCommand('copy');
+        document.execCommand("copy");
         showToast(`${labelName} कॉपी हो गया!`, "success");
     } catch (err) {
         showToast("कॉपी नहीं हो सका, कृपया मैन्युअल नोट करें।", "error");
@@ -626,7 +703,7 @@ function fallbackCopy(text, labelName) {
     document.body.removeChild(textArea);
 }
 
-function submitUtrVerification() {
+window.submitUtrVerification = function() {
     const utrInput = document.getElementById("utrRefInput");
     const utrVal = utrInput ? utrInput.value.trim() : "";
 
@@ -648,32 +725,36 @@ function submitUtrVerification() {
     showToast("धन्यवाद! UTR सत्यापित हुआ। आपकी प्रो सदस्यता सक्रिय हो चुकी है।", "success");
 
     if (utrInput) utrInput.value = "";
-    setTimeout(closePaymentModal, 1500);
-}
+    setTimeout(window.closePaymentModal, 1500);
+};
 
 // ==========================================
-// 5. APPLICATION TAB CONTROLLER
+// 7. APPLICATION TAB CONTROLLER
 // ==========================================
 
-function switchAppTab(tabId) {
+window.switchAppTab = function(tabId) {
     const tabContents = document.querySelectorAll(".tab-content");
-    tabContents.forEach(el => el.classList.add("hidden"));
+    tabContents.forEach(el => {
+        if (el && el.classList) el.classList.add("hidden");
+    });
 
     const target = document.getElementById(tabId);
-    if (target) target.classList.remove("hidden");
+    if (target && target.classList) target.classList.remove("hidden");
 
     const tabNavs = document.querySelectorAll(".tab-btn");
-    tabNavs.forEach(btn => btn.classList.remove("active"));
+    tabNavs.forEach(btn => {
+        if (btn && btn.classList) btn.classList.remove("active");
+    });
 
     const activeBtn = document.getElementById(`tabNav-${tabId}`);
-    if (activeBtn) activeBtn.classList.add("active");
+    if (activeBtn && activeBtn.classList) activeBtn.classList.add("active");
 
     if (tabId === "libTab") renderDiseaseDirectory();
     if (tabId === "khataTab") renderKhataLedger();
-}
+};
 
 // ==========================================
-// 6. OPD PRESCRIPTION & WHATSAPP DISPATCH
+// 8. OPD PRESCRIPTION & WHATSAPP DISPATCH
 // ==========================================
 
 function setupDefaultPrescriptionMedicines() {
@@ -710,26 +791,26 @@ function renderMedicationRowsInput() {
         div.className = "grid grid-cols-12 gap-1.5 items-center bg-slate-50 p-2 rounded-lg border border-slate-200 text-xs";
         div.innerHTML = `
             <div class="col-span-5">
-                <input type="text" value="${escapeHtml(row.drugName)}" placeholder="दवा का नाम" class="w-full px-2 py-1.5 border rounded bg-white font-medium" oninput="updateMedRow(${index}, 'drugName', this.value)">
+                <input type="text" value="${escapeHtml(row.drugName)}" placeholder="दवा का नाम" class="w-full px-2 py-1.5 border rounded bg-white font-medium" oninput="window.updateMedRow(${index}, 'drugName', this.value)">
             </div>
             <div class="col-span-2">
-                <input type="text" value="${escapeHtml(row.dose)}" placeholder="मात्रा" class="w-full px-2 py-1.5 border rounded bg-white text-center" oninput="updateMedRow(${index}, 'dose', this.value)">
+                <input type="text" value="${escapeHtml(row.dose)}" placeholder="मात्रा" class="w-full px-2 py-1.5 border rounded bg-white text-center" oninput="window.updateMedRow(${index}, 'dose', this.value)">
             </div>
             <div class="col-span-3">
-                <select class="w-full px-1.5 py-1.5 border rounded bg-white text-[11px]" onchange="updateMedRow(${index}, 'route', this.value)">
-                    <option value="IM" ${row.route.includes('IM') ? 'selected' : ''}>IM (मांसपेशी)</option>
-                    <option value="IV" ${row.route.includes('IV') ? 'selected' : ''}>IV (नस में)</option>
-                    <option value="SC" ${row.route.includes('SC') ? 'selected' : ''}>SC (चमड़ी में)</option>
-                    <option value="Oral" ${row.route.includes('Oral') ? 'selected' : ''}>Oral (मुख से)</option>
-                    <option value="Intramammary" ${row.route.includes('Intramammary') ? 'selected' : ''}>थन में (Intramammary)</option>
-                    <option value="Topical" ${row.route.includes('Topical') ? 'selected' : ''}>बाहरी लेप (Topical)</option>
+                <select class="w-full px-1.5 py-1.5 border rounded bg-white text-[11px]" onchange="window.updateMedRow(${index}, 'route', this.value)">
+                    <option value="IM" ${row.route.includes("IM") ? "selected" : ""}>IM (मांसपेशी)</option>
+                    <option value="IV" ${row.route.includes("IV") ? "selected" : ""}>IV (नस में)</option>
+                    <option value="SC" ${row.route.includes("SC") ? "selected" : ""}>SC (चमड़ी में)</option>
+                    <option value="Oral" ${row.route.includes("Oral") ? "selected" : ""}>Oral (मुख से)</option>
+                    <option value="Intramammary" ${row.route.includes("Intramammary") ? "selected" : ""}>थन में (Intramammary)</option>
+                    <option value="Topical" ${row.route.includes("Topical") ? "selected" : ""}>बाहरी लेप (Topical)</option>
                 </select>
             </div>
             <div class="col-span-1">
-                <input type="text" value="${escapeHtml(row.duration)}" placeholder="दिन" class="w-full px-1 py-1.5 border rounded bg-white text-center text-[10px]" oninput="updateMedRow(${index}, 'duration', this.value)">
+                <input type="text" value="${escapeHtml(row.duration)}" placeholder="दिन" class="w-full px-1 py-1.5 border rounded bg-white text-center text-[10px]" oninput="window.updateMedRow(${index}, 'duration', this.value)">
             </div>
             <div class="col-span-1 text-center">
-                <button type="button" onclick="removeMedicationRow(${index})" class="text-rose-500 hover:text-rose-700 p-1" title="हटाएं">
+                <button type="button" onclick="window.removeMedicationRow(${index})" class="text-rose-500 hover:text-rose-700 p-1" title="हटाएं">
                     <i class="fa-solid fa-trash-can"></i>
                 </button>
             </div>
@@ -738,7 +819,7 @@ function renderMedicationRowsInput() {
     });
 }
 
-function addMedicationRow(defaultName = "", defaultDose = "", defaultRoute = "IM", defaultDuration = "3 दिन") {
+window.addMedicationRow = function(defaultName = "", defaultDose = "", defaultRoute = "IM", defaultDuration = "3 दिन") {
     appMedicationRows.push({
         drugName: defaultName,
         dose: defaultDose,
@@ -747,9 +828,9 @@ function addMedicationRow(defaultName = "", defaultDose = "", defaultRoute = "IM
     });
     renderMedicationRowsInput();
     updateLivePrescription();
-}
+};
 
-function removeMedicationRow(index) {
+window.removeMedicationRow = function(index) {
     if (appMedicationRows.length <= 1) {
         showToast("पर्ची में कम से कम एक दवा पंक्ति होना आवश्यक है!", "error");
         return;
@@ -757,16 +838,16 @@ function removeMedicationRow(index) {
     appMedicationRows.splice(index, 1);
     renderMedicationRowsInput();
     updateLivePrescription();
-}
+};
 
-function updateMedRow(index, field, value) {
+window.updateMedRow = function(index, field, value) {
     if (appMedicationRows[index]) {
         appMedicationRows[index][field] = value;
         updateLivePrescription();
     }
-}
+};
 
-function clearOpdForm() {
+window.clearOpdForm = function() {
     const fields = [
         "ownerName", "ownerPhone", "ownerAddress",
         "animalBreedSex", "animalAgeWeight",
@@ -781,7 +862,7 @@ function clearOpdForm() {
     setupDefaultPrescriptionMedicines();
     updateLivePrescription();
     showToast("OPD फॉर्म खाली कर दिया गया है।", "info");
-}
+};
 
 function updateLivePrescription() {
     const owner = document.getElementById("ownerName")?.value.trim() || "रमेश कुमार";
@@ -802,7 +883,7 @@ function updateLivePrescription() {
     const paidFee = parseFloat(document.getElementById("opdPaidFee")?.value || 0);
     const dueFee = Math.max(0, totalFee - paidFee);
 
-    // Update Live DOM Nodes
+    // Update Live Preview DOM
     setText("slipOwner", owner);
     setText("slipPhone", phone);
     setText("slipAddress", address);
@@ -818,9 +899,8 @@ function updateLivePrescription() {
     setText("slipDueFee", `₹${dueFee.toLocaleString('en-IN')}`);
 
     const now = new Date();
-    setText("slipDate", `दिनांक: ${now.toLocaleDateString('en-GB')}`);
+    setText("slipDate", `दिनांक: ${now.toLocaleDateString("en-GB")}`);
 
-    // Update Medicines Table on Printable Slip
     const tableBody = document.getElementById("slipMedicinesTable");
     if (tableBody) {
         tableBody.innerHTML = "";
@@ -828,17 +908,18 @@ function updateLivePrescription() {
             const tr = document.createElement("tr");
             tr.innerHTML = `
                 <td class="py-1 px-1.5 text-slate-400 font-mono">${i + 1}</td>
-                <td class="py-1 px-1.5 font-bold text-slate-800">${escapeHtml(row.drugName || '-')}</td>
-                <td class="py-1 px-1.5 font-semibold text-brand-800">${escapeHtml(row.dose || '-')}</td>
-                <td class="py-1 px-1.5 text-slate-600">${escapeHtml(row.route || '-')}</td>
-                <td class="py-1 px-1.5 text-slate-600">${escapeHtml(row.duration || '-')}</td>
+                <td class="py-1 px-1.5 font-bold text-slate-800">${escapeHtml(row.drugName || "-")}</td>
+                <td class="py-1 px-1.5 font-semibold text-brand-800">${escapeHtml(row.dose || "-")}</td>
+                <td class="py-1 px-1.5 text-slate-600">${escapeHtml(row.route || "-")}</td>
+                <td class="py-1 px-1.5 text-slate-600">${escapeHtml(row.duration || "-")}</td>
             `;
             tableBody.appendChild(tr);
         });
     }
 }
+window.updateLivePrescription = updateLivePrescription;
 
-function dispatchToWhatsApp() {
+window.dispatchToWhatsApp = function() {
     const owner = document.getElementById("ownerName")?.value.trim() || "पशुपालक";
     const rawPhone = document.getElementById("ownerPhone")?.value || "";
     const phone = rawPhone.replace(/\D/g, "");
@@ -880,10 +961,10 @@ function dispatchToWhatsApp() {
     const waUrl = `https://wa.me/91${phone}?text=${encodeURIComponent(msg)}`;
     window.open(waUrl, "_blank");
     showToast("WhatsApp डिस्पैच तैयार!", "success");
-}
+};
 
 // ===============================================================
-// 7. 3-WAY DIAGNOSIS ENGINE (SPECIES + VITALS + MULTI-SYMPTOMS)
+// 9. 3-WAY DIAGNOSIS ENGINE (SPECIES + VITALS + MULTI-SYMPTOMS)
 // ===============================================================
 
 function populateSymptomsChecklist() {
@@ -904,23 +985,24 @@ function populateSymptomsChecklist() {
         const label = document.createElement("label");
         label.className = "symptom-item flex items-center gap-2 p-1.5 hover:bg-slate-100 rounded text-xs cursor-pointer select-none";
         label.innerHTML = `
-            <input type="checkbox" value="${escapeHtml(symptom)}" class="diag-symptom-cb rounded text-brand-600 focus:ring-brand-500" onchange="runDiagnostics()">
+            <input type="checkbox" value="${escapeHtml(symptom)}" class="diag-symptom-cb rounded text-brand-600 focus:ring-brand-500" onchange="window.runDiagnostics()">
             <span class="text-slate-700 font-devanagari">${escapeHtml(symptom)}</span>
         `;
         container.appendChild(label);
     });
 }
 
-function filterSymptomCheckboxes() {
+window.filterSymptomCheckboxes = function() {
     const q = (document.getElementById("symptomSearch")?.value || "").toLowerCase();
     const items = document.querySelectorAll(".symptom-item");
     items.forEach(item => {
+        if (!item) return;
         const txt = item.textContent.toLowerCase();
         item.style.display = txt.includes(q) ? "flex" : "none";
     });
-}
+};
 
-function runDiagnostics() {
+window.runDiagnostics = function() {
     const selectedSpecies = document.getElementById("diagSpecies")?.value || "Bovine";
     const tempInput = parseFloat(document.getElementById("diagTemp")?.value);
     const mucousVal = document.getElementById("diagMucous")?.value || "normal";
@@ -1068,16 +1150,16 @@ function runDiagnostics() {
 
             <div class="flex items-center justify-between pt-1">
                 <span class="text-[10px] text-slate-400 font-devanagari">श्रेणी: ${d.category}</span>
-                <button type="button" onclick="applyDiagnosisToPrescription('${d.id}')" class="px-2.5 py-1 bg-brand-600 hover:bg-brand-700 text-white rounded text-[11px] font-bold font-devanagari flex items-center gap-1 shadow-sm">
+                <button type="button" onclick="window.applyDiagnosisToPrescription('${d.id}')" class="px-2.5 py-1 bg-brand-600 hover:bg-brand-700 text-white rounded text-[11px] font-bold font-devanagari flex items-center gap-1 shadow-sm">
                     <i class="fa-solid fa-file-circle-check"></i> पर्ची में दर्ज करें
                 </button>
             </div>
         `;
         resultsContainer.appendChild(div);
     });
-}
+};
 
-function applyDiagnosisToPrescription(diseaseId) {
+window.applyDiagnosisToPrescription = function(diseaseId) {
     const dis = appDiseases.find(d => d.id === diseaseId);
     if (!dis) return;
 
@@ -1087,16 +1169,15 @@ function applyDiagnosisToPrescription(diseaseId) {
     const adviceInput = document.getElementById("opdAdvice");
     if (adviceInput) adviceInput.value = `${dis.primaryRx}. ${dis.supportiveRx}`;
 
-    // Add row to medication slip
-    addMedicationRow(dis.primaryRx.substring(0, 48) + "...", "यथासंभव", "IM", "3-5 दिन");
+    window.addMedicationRow(dis.primaryRx.substring(0, 48) + "...", "यथासंभव", "IM", "3-5 दिन");
 
-    switchAppTab("opdTab");
+    window.switchAppTab("opdTab");
     updateLivePrescription();
-    showToast(`'${dis.localName}' पर्ची में सफलतापूर्वक दर्ज किया गया!`, "success");
-}
+    showToast(`'${dis.localName}' पर्ची में दर्ज किया गया!`, "success");
+};
 
 // ==========================================
-// 8. UNLIMITED DISEASE CODEX DIRECTORY
+// 10. UNLIMITED DISEASE CODEX DIRECTORY
 // ==========================================
 
 function renderDiseaseDirectory() {
@@ -1145,7 +1226,7 @@ function renderDiseaseDirectory() {
                 <div class="text-xs space-y-1.5 mt-2">
                     <div>
                         <strong class="text-slate-700 font-devanagari text-[11px]">प्रमुख लक्षण:</strong>
-                        <p class="text-slate-600 text-[11px] line-clamp-2">${escapeHtml(d.symptoms.join(', '))}</p>
+                        <p class="text-slate-600 text-[11px] line-clamp-2">${escapeHtml(d.symptoms.join(", "))}</p>
                     </div>
 
                     <div class="bg-brand-50 p-2 rounded-lg border border-brand-100">
@@ -1157,13 +1238,13 @@ function renderDiseaseDirectory() {
                         <div class="text-[10px] text-amber-800 font-semibold bg-amber-50 px-2 py-1 rounded border border-amber-200">
                             ⚠️ विथड्रॉल अवधि: ${escapeHtml(d.withdrawalNotice)}
                         </div>
-                    ` : ''}
+                    ` : ""}
                 </div>
             </div>
 
             <div class="pt-2 border-t border-slate-100 flex items-center justify-between">
-                <span class="text-[10px] text-slate-400 font-sans">${d.species.join(', ')}</span>
-                <button type="button" onclick="applyDiagnosisToPrescription('${d.id}')" class="text-xs text-brand-600 hover:text-brand-800 font-bold font-devanagari flex items-center gap-1">
+                <span class="text-[10px] text-slate-400 font-sans">${d.species.join(", ")}</span>
+                <button type="button" onclick="window.applyDiagnosisToPrescription('${d.id}')" class="text-xs text-brand-600 hover:text-brand-800 font-bold font-devanagari flex items-center gap-1">
                     <i class="fa-solid fa-notes-medical"></i> पर्ची बनाएं
                 </button>
             </div>
@@ -1171,8 +1252,9 @@ function renderDiseaseDirectory() {
         container.appendChild(card);
     });
 }
+window.renderDiseaseDirectory = renderDiseaseDirectory;
 
-function handleCustomDiseaseSubmit(event) {
+window.handleCustomDiseaseSubmit = function(event) {
     event.preventDefault();
 
     const name = document.getElementById("custDisName")?.value.trim();
@@ -1190,7 +1272,7 @@ function handleCustomDiseaseSubmit(event) {
         return;
     }
 
-    const symptomsArray = rawSymptoms.split(',').map(s => s.trim()).filter(Boolean);
+    const symptomsArray = rawSymptoms.split(",").map(s => s.trim()).filter(Boolean);
 
     const newDisease = {
         id: `dis_cust_${Date.now()}`,
@@ -1212,22 +1294,22 @@ function handleCustomDiseaseSubmit(event) {
 
     showToast(`'${localName}' रोग डेटाबेस में पंजीकृत हो गया!`, "success");
     document.getElementById("newDiseaseForm")?.reset();
-    switchAppTab("libTab");
-}
+    window.switchAppTab("libTab");
+};
 
 // ==========================================
-// 9. KHATA FINANCIAL LEDGER CONTROLLER
+// 11. KHATA FINANCIAL LEDGER CONTROLLER
 // ==========================================
 
-function calcKhataDue() {
+window.calcKhataDue = function() {
     const bill = parseFloat(document.getElementById("khataBill")?.value || 0);
     const paid = parseFloat(document.getElementById("khataPaid")?.value || 0);
     const due = Math.max(0, bill - paid);
     const dueInput = document.getElementById("khataDue");
     if (dueInput) dueInput.value = due;
-}
+};
 
-function handleKhataSubmit(e) {
+window.handleKhataSubmit = function(e) {
     e.preventDefault();
 
     const name = document.getElementById("khataName")?.value.trim();
@@ -1244,7 +1326,7 @@ function handleKhataSubmit(e) {
         name: name,
         phone: phone,
         village: village || "अज्ञात",
-        date: new Date().toISOString().split('T')[0],
+        date: new Date().toISOString().split("T")[0],
         bill: bill,
         paid: paid,
         due: due,
@@ -1257,8 +1339,9 @@ function handleKhataSubmit(e) {
 
     showToast(`खाता प्रविष्टि जोड़ी गई: ${name} (बकाया: ₹${due})`, "success");
     document.getElementById("khataEntryForm")?.reset();
-    document.getElementById("khataDue").value = "";
-}
+    const dueInput = document.getElementById("khataDue");
+    if (dueInput) dueInput.value = "";
+};
 
 function renderKhataLedger() {
     const tableBody = document.getElementById("khataLedgerTableBody");
@@ -1281,9 +1364,9 @@ function renderKhataLedger() {
         totalDue += (Number(k.due) || 0);
     });
 
-    setText("statTotalBilled", `₹${totalBilled.toLocaleString('en-IN')}`);
-    setText("statTotalReceived", `₹${totalReceived.toLocaleString('en-IN')}`);
-    setText("statTotalDue", `₹${totalDue.toLocaleString('en-IN')}`);
+    setText("statTotalBilled", `₹${totalBilled.toLocaleString("en-IN")}`);
+    setText("statTotalReceived", `₹${totalReceived.toLocaleString("en-IN")}`);
+    setText("statTotalDue", `₹${totalDue.toLocaleString("en-IN")}`);
 
     if (filtered.length === 0) {
         tableBody.innerHTML = `
@@ -1306,17 +1389,17 @@ function renderKhataLedger() {
             </td>
             <td class="py-2.5 px-2.5 text-slate-600 font-devanagari">${escapeHtml(k.village)}</td>
             <td class="py-2.5 px-2.5 text-slate-500 font-mono text-[11px]">${escapeHtml(k.date)}</td>
-            <td class="py-2.5 px-2.5 font-bold text-slate-900 font-sans">₹${k.bill.toLocaleString('en-IN')}</td>
-            <td class="py-2.5 px-2.5 font-bold text-emerald-700 font-sans">₹${k.paid.toLocaleString('en-IN')}</td>
-            <td class="py-2.5 px-2.5 font-bold font-sans ${k.due > 0 ? 'text-rose-600' : 'text-slate-400'}">₹${k.due.toLocaleString('en-IN')}</td>
+            <td class="py-2.5 px-2.5 font-bold text-slate-900 font-sans">₹${k.bill.toLocaleString("en-IN")}</td>
+            <td class="py-2.5 px-2.5 font-bold text-emerald-700 font-sans">₹${k.paid.toLocaleString("en-IN")}</td>
+            <td class="py-2.5 px-2.5 font-bold font-sans ${k.due > 0 ? 'text-rose-600' : 'text-slate-400'}">₹${k.due.toLocaleString("en-IN")}</td>
             <td class="py-2.5 px-2.5 text-center">
                 <div class="flex items-center justify-center gap-1.5">
                     ${k.due > 0 ? `
-                        <button type="button" onclick="sendKhataWhatsAppReminder('${k.id}')" title="WhatsApp पर तकादा संदेश भेजें" class="p-1.5 bg-emerald-100 hover:bg-emerald-200 text-emerald-800 rounded-lg text-xs transition">
+                        <button type="button" onclick="window.sendKhataWhatsAppReminder('${k.id}')" title="WhatsApp पर तकादा संदेश भेजें" class="p-1.5 bg-emerald-100 hover:bg-emerald-200 text-emerald-800 rounded-lg text-xs transition">
                             <i class="fa-brands fa-whatsapp"></i>
                         </button>
-                    ` : ''}
-                    <button type="button" onclick="deleteKhataEntry('${k.id}')" title="हटाएं" class="p-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg text-xs transition">
+                    ` : ""}
+                    <button type="button" onclick="window.deleteKhataEntry('${k.id}')" title="हटाएं" class="p-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg text-xs transition">
                         <i class="fa-solid fa-trash"></i>
                     </button>
                 </div>
@@ -1325,8 +1408,9 @@ function renderKhataLedger() {
         tableBody.appendChild(tr);
     });
 }
+window.renderKhataLedger = renderKhataLedger;
 
-function sendKhataWhatsAppReminder(khataId) {
+window.sendKhataWhatsAppReminder = function(khataId) {
     const record = appKhataLedger.find(k => k.id === khataId);
     if (!record) return;
 
@@ -1347,18 +1431,18 @@ function sendKhataWhatsAppReminder(khataId) {
 
     window.open(`https://wa.me/91${phone}?text=${encodeURIComponent(msg)}`, "_blank");
     showToast("तकादा संदेश WhatsApp पर भेजा जा रहा है...", "info");
-}
+};
 
-function deleteKhataEntry(khataId) {
+window.deleteKhataEntry = function(khataId) {
     if (!confirm("क्या आप वाकई इस खाता प्रविष्टि को हटाना चाहते हैं?")) return;
     appKhataLedger = appKhataLedger.filter(k => k.id !== khataId);
     saveKhataLedgerToStorage();
     renderKhataLedger();
     showToast("खाता प्रविष्टि हटाई गई।", "info");
-}
+};
 
 // ==========================================
-// 10. UTILITY & TOAST HELPER FUNCTIONS
+// 12. UTILITY & TOAST NOTIFICATION HELPERS
 // ==========================================
 
 function setText(elementId, text) {
@@ -1387,7 +1471,7 @@ function showToast(message, type = "info") {
 
     toast.className = `${bgClass} px-4 py-3 rounded-xl shadow-xl text-xs font-devanagari flex items-center gap-2 transform transition-all duration-300 translate-y-2 opacity-0 pointer-events-auto`;
     toast.innerHTML = `
-        <span class="text-sm">${type === 'success' ? '✓' : (type === 'error' ? '⚠️' : 'ℹ️')}</span>
+        <span class="text-sm">${type === "success" ? "✓" : (type === "error" ? "⚠️" : "ℹ️")}</span>
         <span>${escapeHtml(message)}</span>
     `;
 
@@ -1400,7 +1484,7 @@ function showToast(message, type = "info") {
     setTimeout(() => {
         toast.classList.add("opacity-0", "translate-y-2");
         setTimeout(() => {
-            if (toast.parentNode) toast.parentNode.removeChild(toast);
+            if (toast && toast.parentNode) toast.parentNode.removeChild(toast);
         }, 300);
     }, 3500);
 }
