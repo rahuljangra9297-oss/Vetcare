@@ -1,1297 +1,1898 @@
 /**
- * Vetcare - Clinical Decision Support, Smart Dairy & Digital OPD
- * Production Application Core (app.js)
- * Fully featured with:
- *  - Interactive Support Chatbot & WhatsApp Escalation
- *  - 3-Way Weighted Diagnosis Engine (with Pregnancy Alert & Auto-Fill Rx)
- *  - Digital OPD Prescription Generator (WhatsApp 1-Click + Print Slip)
- *  - Khata Ledger (Dual Credit/Debit, WhatsApp Tagada)
- *  - Real-Time Stock Inventory (Low-Stock Badges & Counters)
- *  - Daily Scientific Feed & Breeding Calculator
- *  - Gemini AI Second Opinion Consultant
+ * Vetcare | Clinical & Smart Dairy Assistant
+ * Production Core Application Logic (app.js)
+ * Includes Super Admin Panel State Management & Configuration Persistence
  */
 
-// =============================================================================
-// GLOBAL CONFIGURATION & APP STATE
-// =============================================================================
-const VETCARE_CONFIG = {
-  ADMIN_SUPPORT_PHONE: "919297000000", // Default Admin WhatsApp support number
-  APP_VERSION: "4.8.0-PRO",
-  DEFAULT_CURRENCY: "₹",
-  STORAGE_KEYS: {
-    ROLE: "vc_user_role",
-    RECORDS: "vc_saved_cases",
-    FINANCE: "vc_finance_ledger",
-    STOCK: "vc_stock_inventory",
-    GEMINI_KEY: "vc_gemini_api_key",
-    PREMIUM_STATUS: "vc_premium_active"
-  }
-};
+(function () {
+  "use strict";
 
-let appState = {
-  currentRole: "FARMER", // 'FARMER' | 'DOCTOR'
-  activeTab: "diagnosis",
-  diagnosisMode: "SYMPTOMS", // 'SYMPTOMS' | 'HYBRID' | 'DIRECTORY'
-  matrixState: {
-    temp: null,      // 'HIGH' | 'NORMAL' | 'SUB'
-    cardinal: "ALL", // Selected Cardinal Sign
-    urine: "NORMAL", // 'NORMAL' | 'RED_COFFEE' | 'YELLOW'
-    eyes: "NORMAL",  // 'NORMAL' | 'PALE_WHITE' | 'JAUNDICE_YELLOW' | 'CONGESTED_RED'
-    dung: "NORMAL"   // 'NORMAL' | 'WATERY_DIARRHEA' | 'BLOODY_FETID' | 'CONSTIPATED'
-  },
-  selectedTag: "ALL",
-  navigationHistory: []
-};
-
-// =============================================================================
-// 1. HELP DESK SUPPORT ENGINE & WHATSAPP ESCALATION
-// =============================================================================
-const HELPDESK_KNOWLEDGE_BASE = {
-  PAYMENT: {
-    title: "💳 पेमेंट व 12-अंकों का UTR नंबर सहायता",
-    points: [
-      "<strong>SBI vs PNB खाता:</strong> यदि एक बैंक के सर्वर में देरी हो, तो दूसरे बैंक UPI आईडी (उदा. vetcare@sbi अथवा vetcare@pnb) पर भुगतान करें।",
-      "<strong>12-अंकों का UTR कैसे खोजें?</strong>",
-      "• <em>PhonePe:</em> हिस्ट्री खोलें ➔ पेमेंट पर टैप करें ➔ <strong>'UTR / Bank Reference No.'</strong> (12 अंक) कॉपी करें।",
-      "• <em>Google Pay:</em> लेन-देन खोलें ➔ नीचे स्क्रॉल करें ➔ <strong>'UPI transaction ID'</strong> खोजें।",
-      "• <em>Paytm:</em> पासबुक ➔ पेमेंट डिटेल ➔ <strong>'UPI Ref No.'</strong> (12 डिजिट)।",
-      "<strong>सक्रियता समय:</strong> UTR सबमिट करने के बाद 15 मिनट से कम समय में बैकएंड द्वारा आपका प्रो सब्सक्रिप्शन एक्टिव कर दिया जाता है।"
-    ]
-  },
-  OPD: {
-    title: "📋 ओपीडी पर्ची व WhatsApp प्रेषण सहायता",
-    points: [
-      "<strong>पॉपअप ब्लॉकर रीसेट:</strong> यदि WhatsApp स्वतः नहीं खुलता, तो ब्राउज़र में 'Popups Allowed' अनुमति दें।",
-      "<strong>मोबाइल नंबर फॉर्मेट:</strong> किसान का केवल 10 अंकों का मोबाइल नंबर दर्ज करें (शुरुआत में +91 या 0 लगाने की आवश्यकता नहीं है)।",
-      "<strong>पर्ची प्रिंट:</strong> सीधे वायरलेस प्रिंटर से 58mm/80mm थर्मल या A4 साइज़ पर्ची निकालने हेतु '🖨️ पर्ची प्रिंट' बटन दबाएं।"
-    ]
-  },
-  KHATA: {
-    title: "💰 खाता बही, उधारी व 1-क्लिक तकादा",
-    points: [
-      "<strong>ऑटोमैटिक कैलकुलेशन:</strong> जब आप ओपीडी पर्ची में कुल फीस व जमा फीस भरते हैं, शेष उधारी स्वतः किसान के बहीखाते में दर्ज हो जाती है।",
-      "<strong>1-क्लिक तकादा:</strong> उधारी लिस्ट में किसान के नाम के आगे <strong>'📲 तकादा'</strong> दबाते ही एक विनम्र एवं पेशेवर भुगतान तकादा WhatsApp पर प्रेषित हो जाता है।",
-      "<strong>एंट्री सुधारें:</strong> '+ नया खर्च/एंट्री' द्वारा आप कभी भी मैनुअल डेबिट/क्रेडिट जोड़ सकते हैं।"
-    ]
-  },
-  SYNC: {
-    title: "🔄 ऑफलाइन मोड, PWA व क्लाउड बैकअप",
-    points: [
-      "<strong>100% ऑफलाइन कार्यक्षमता:</strong> Vetcare बिना इंटरनेट के भी सभी केस, गणना व नुस्खे आपके मोबाइल स्टोरेज में सुरक्षित रखता है।",
-      "<strong>क्लाउड ऑटो-सिंक:</strong> जैसे ही आपके फोन को नेटवर्क मिलता है, हेडर का <strong>'☁️ SYNC'</strong> बैज स्वतः डेटाबेस को सुरक्षित रिमोट सर्वर पर भेज देता है।",
-      "<strong>डेटा सुरक्षा:</strong> फोन बदलने से पूर्व अपने केस रिकॉर्ड्स का बैकअप 'केस रिकॉर्ड' टैब से सुरक्षित कर लें।"
-    ]
-  }
-};
-
-window.openHelpdeskModal = function () {
-  const modal = document.getElementById("modalHelpdesk");
-  if (modal) {
-    modal.style.display = "flex";
-  }
-};
-
-window.closeHelpdeskModal = function () {
-  const modal = document.getElementById("modalHelpdesk");
-  if (modal) {
-    modal.style.display = "none";
-  }
-};
-
-window.handleHelpdeskTopic = function (topicKey) {
-  const data = HELPDESK_KNOWLEDGE_BASE[topicKey];
-  const chatBody = document.getElementById("helpdeskChatBody");
-  if (!chatBody) return;
-
-  if (!data) {
-    renderHelpdeskMessage("assistant", "कृपया नीचे अपनी समस्या लिखें ताकि हमारी टीम तुरंत सहायता कर सके।");
-    return;
-  }
-
-  // Render User Selection
-  renderHelpdeskMessage("user", data.title);
-
-  // Render Bot Response
-  setTimeout(() => {
-    let html = `<div class="font-bold text-blue-900 border-b border-blue-100 pb-1 mb-1.5">${data.title}</div>`;
-    html += `<ul class="space-y-1 text-slate-700">`;
-    data.points.forEach((pt) => {
-      html += `<li>${pt}</li>`;
-    });
-    html += `</ul>`;
-    renderHelpdeskMessage("assistant", html);
-  }, 220);
-};
-
-function renderHelpdeskMessage(sender, htmlContent) {
-  const chatBody = document.getElementById("helpdeskChatBody");
-  if (!chatBody) return;
-
-  const wrapper = document.createElement("div");
-  if (sender === "user") {
-    wrapper.className = "flex justify-end";
-    wrapper.innerHTML = `
-      <div class="bg-blue-600 text-white rounded-2xl rounded-br-xs p-2.5 max-w-[85%] text-xs shadow-xs">
-        ${htmlContent}
-      </div>
-    `;
-  } else {
-    wrapper.className = "flex items-start gap-2";
-    wrapper.innerHTML = `
-      <div class="w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center text-[10px] font-black shrink-0">VC</div>
-      <div class="bg-white border border-slate-200 rounded-2xl rounded-tl-xs p-3 max-w-[85%] text-slate-800 leading-relaxed text-xs shadow-xs">
-        ${htmlContent}
-      </div>
-    `;
-  }
-  chatBody.appendChild(wrapper);
-  chatBody.scrollTop = chatBody.scrollHeight;
-}
-
-window.escalateToWhatsAppSupport = function (optionalIssue) {
-  const inputEl = document.getElementById("helpdeskCustomQuery");
-  const typedIssue = inputEl ? inputEl.value.trim() : "";
-  const finalIssue = optionalIssue || typedIssue || "मुझे पेमेंट एक्टिवेशन अथवा तकनीकी सहायता की आवश्यकता है।";
-
-  const userTypeStr = appState.currentRole === "DOCTOR" ? "अधिकृत पशु चिकित्सक (Doctor Mode)" : "स्मार्ट पशुपालक (Farmer Mode)";
-  const now = new Date();
-  const timeStr = `${now.toLocaleDateString("hi-IN")} | ${now.toLocaleTimeString("hi-IN", { hour: "2-digit", minute: "2-digit" })}`;
-
-  const message =
-`🚨 *Vetcare तकनीकी सहायता अनुरोध*
-----------------------------------------
-👤 *उपयोगकर्ता प्रकार:* ${userTypeStr}
-🕒 *समय:* ${timeStr}
-📌 *समस्या विवरण:* ${finalIssue}
-----------------------------------------
-कृपया इस संबंध में तुरंत सहायता मार्गदर्शन प्रदान करें।`;
-
-  const encodedUrl = `https://wa.me/${VETCARE_CONFIG.ADMIN_SUPPORT_PHONE}?text=${encodeURIComponent(message)}`;
-  window.open(encodedUrl, "_blank");
-
-  if (inputEl) inputEl.value = "";
-  closeHelpdeskModal();
-};
-
-// =============================================================================
-// 2. ROLE SELECTION, NAVIGATION & SECURITY DECLARATION
-// =============================================================================
-window.selectRole = function (role) {
-  const sanitized = String(role).toUpperCase();
-  appState.currentRole = (sanitized === "DOCTOR" || sanitized === "PRACTITIONER") ? "DOCTOR" : "FARMER";
-  localStorage.setItem(VETCARE_CONFIG.STORAGE_KEYS.ROLE, appState.currentRole);
-
-  const screenGateway = document.getElementById("screenGateway");
-  const screenMainApp = document.getElementById("screenMainApp");
-  const roleBadge = document.getElementById("currentUserRoleBadge");
-
-  if (screenGateway) screenGateway.classList.add("hidden");
-  if (screenMainApp) screenMainApp.classList.remove("hidden");
-
-  if (roleBadge) {
-    if (appState.currentRole === "DOCTOR") {
-      roleBadge.innerHTML = "🩺 अधिकृत पशु चिकित्सक (Doctor)";
-      roleBadge.className = "text-[9px] sm:text-[11px] font-bold text-blue-700";
-    } else {
-      roleBadge.innerHTML = "👨‍🌾 स्मार्ट पशुपालक (Smart Farmer)";
-      roleBadge.className = "text-[9px] sm:text-[11px] font-bold text-emerald-700";
-    }
-  }
-
-  applyRoleUIVisibility();
-  switchTab("diagnosis");
-};
-
-function applyRoleUIVisibility() {
-  const isDoc = appState.currentRole === "DOCTOR";
-
-  const doctorNavElements = ["navRx", "navStock", "navRecords"];
-  doctorNavElements.forEach((id) => {
-    const el = document.getElementById(id);
-    if (el) {
-      if (isDoc) {
-        el.classList.remove("hidden");
-        el.classList.add("flex");
-      } else {
-        el.classList.add("hidden");
-        el.classList.remove("flex");
-      }
-    }
-  });
-
-  const financeLabel = document.getElementById("navFinanceLabel");
-  if (financeLabel) {
-    financeLabel.innerText = isDoc ? "क्लिनिक खाता" : "दूध बहीखाता";
-  }
-
-  // Refresh UI data for role
-  refreshDiagnosisList();
-  renderFinanceLedger();
-}
-
-window.openDoctorDeclarationModal = function () {
-  const modal = document.getElementById("modalDoctorDeclaration");
-  if (modal) modal.style.display = "flex";
-};
-
-window.closeDoctorDeclarationModal = function () {
-  const modal = document.getElementById("modalDoctorDeclaration");
-  if (modal) modal.style.display = "none";
-};
-
-window.acceptDoctorDeclaration = function () {
-  closeDoctorDeclarationModal();
-  selectRole("DOCTOR");
-};
-
-window.returnToGateway = function () {
-  const screenGateway = document.getElementById("screenGateway");
-  const screenMainApp = document.getElementById("screenMainApp");
-  if (screenGateway) screenGateway.classList.remove("hidden");
-  if (screenMainApp) screenMainApp.classList.add("hidden");
-};
-
-window.goBackScreen = function () {
-  if (appState.navigationHistory.length > 1) {
-    appState.navigationHistory.pop();
-    const prev = appState.navigationHistory.pop();
-    switchTab(prev);
-  } else {
-    returnToGateway();
-  }
-};
-
-window.goToHome = function () {
-  returnToGateway();
-};
-
-window.switchTab = function (tabKey) {
-  const tabs = [
-    { key: "diagnosis", viewId: "viewDiagnosis", navId: "navDiagnosis" },
-    { key: "rx", viewId: "viewRx", navId: "navRx" },
-    { key: "finance", viewId: "viewFinance", navId: "navFinance" },
-    { key: "stock", viewId: "viewStock", navId: "navStock" },
-    { key: "breeding", viewId: "viewBreeding", navId: "navBreeding" },
-    { key: "feed", viewId: "viewFeed", navId: "navFeed" },
-    { key: "records", viewId: "viewRecords", navId: "navRecords" },
-    { key: "ai", viewId: "viewAI", navId: "navAI" }
-  ];
-
-  tabs.forEach((t) => {
-    const vEl = document.getElementById(t.viewId);
-    const nEl = document.getElementById(t.navId);
-    if (vEl) {
-      if (t.key === tabKey) {
-        vEl.classList.remove("hidden");
-      } else {
-        vEl.classList.add("hidden");
-      }
-    }
-    if (nEl) {
-      if (t.key === tabKey) {
-        nEl.classList.add("active-nav-tab");
-        nEl.classList.remove("text-slate-400");
-      } else {
-        nEl.classList.remove("active-nav-tab");
-        nEl.classList.add("text-slate-400");
-      }
-    }
-  });
-
-  appState.activeTab = tabKey;
-  appState.navigationHistory.push(tabKey);
-  window.scrollTo({ top: 0, behavior: "smooth" });
-};
-
-// =============================================================================
-// 3. CLINICAL 3-WAY DIAGNOSIS ENGINE (WEIGHTED SCORING + AUTO-FILL RX)
-// =============================================================================
-/**
- * Clinical weightage formula:
- * 1. Cardinal / Pathognomonic Sign = 40%
- * 2. Temperature Correlation      = 20%
- * 3. Eye / Mucous Membrane Sign   = 15%
- * 4. Urine Consistency / Color    = 15%
- * 5. Dung / Fecal Pattern         = 10%
- * Total Potential Score           = 100%
- */
-
-window.setDiagnosisMode = function (mode) {
-  appState.diagnosisMode = mode;
-  const p1 = document.getElementById("panelDiagMatrix");
-  const p2 = document.getElementById("panelDiagHybrid");
-  const p3 = document.getElementById("panelDiagDirectory");
-
-  const b1 = document.getElementById("btnDiagMode1");
-  const b2 = document.getElementById("btnDiagMode2");
-  const b3 = document.getElementById("btnDiagMode3");
-
-  const modeButtons = [b1, b2, b3];
-  modeButtons.forEach((b) => {
-    if (b) {
-      b.className = "py-2 px-1 rounded-xl text-slate-600 font-medium transition text-center flex flex-col items-center";
-    }
-  });
-
-  if (p1) p1.classList.add("hidden");
-  if (p2) p2.classList.add("hidden");
-  if (p3) p3.classList.add("hidden");
-
-  if (mode === "SYMPTOMS") {
-    if (p1) p1.classList.remove("hidden");
-    if (b1) b1.className = "py-2 px-1 rounded-xl bg-blue-600 text-white font-bold transition text-center flex flex-col items-center";
-  } else if (mode === "HYBRID") {
-    if (p2) p2.classList.remove("hidden");
-    if (b2) b2.className = "py-2 px-1 rounded-xl bg-blue-600 text-white font-bold transition text-center flex flex-col items-center";
-    const inp = document.getElementById("unifiedSearchInput");
-    if (inp) inp.focus();
-  } else {
-    if (p3) p3.classList.remove("hidden");
-    if (b3) b3.className = "py-2 px-1 rounded-xl bg-blue-600 text-white font-bold transition text-center flex flex-col items-center";
-  }
-
-  refreshDiagnosisList();
-};
-
-window.toggleMatrixParam = function (param, val, btnEl) {
-  if (appState.matrixState[param] === val) {
-    appState.matrixState[param] = null;
-    if (btnEl) btnEl.classList.remove("matrix-chip-active");
-  } else {
-    appState.matrixState[param] = val;
-    const parent = btnEl.parentElement;
-    if (parent) {
-      Array.from(parent.children).forEach((c) => c.classList.remove("matrix-chip-active"));
-    }
-    if (btnEl) btnEl.classList.add("matrix-chip-active");
-  }
-  applyMatrixFilters();
-};
-
-window.applyMatrixFilters = function () {
-  const selCard = document.getElementById("selCardinalSign");
-  if (selCard) {
-    appState.matrixState.cardinal = selCard.value;
-  }
-  refreshDiagnosisList();
-};
-
-window.resetSymptomMatrix = function () {
-  appState.matrixState = {
-    temp: null,
-    cardinal: "ALL",
-    urine: "NORMAL",
-    eyes: "NORMAL",
-    dung: "NORMAL"
+  /* =========================================================================
+     1. GLOBAL CONFIGURATION, STATE & STORAGE KEYS
+     ========================================================================= */
+  const STORAGE_KEYS = {
+    CONFIG: "vetcare_master_config",
+    KHATA: "vetcare_khata_records",
+    INVENTORY: "vetcare_inventory_records",
+    OPD: "vetcare_opd_cases",
+    GEMINI_KEY: "vetcare_gemini_key",
+    CURRENT_ROLE: "vetcare_user_role"
   };
 
-  document.querySelectorAll(".m-chip").forEach((btn) => btn.classList.remove("matrix-chip-active"));
-  const sel = document.getElementById("selCardinalSign");
-  if (sel) sel.value = "ALL";
+  // Master Default Settings (Default PIN: 9297)
+  const DEFAULT_CONFIG = {
+    adminPin: "9297",
+    payeeName: "VETCARE CLINICAL SOLUTIONS",
+    monthlyPrice: 199,
+    yearlyPrice: 1499,
+    sbi: {
+      upiId: "vetcare@sbi",
+      acc: "405901000123",
+      ifsc: "SBIN0001234"
+    },
+    pnb: {
+      upiId: "vetcare@pnb",
+      acc: "01230001009876",
+      ifsc: "PUNB0123400"
+    },
+    appTitle: "Vetcare",
+    appLogoUrl: "",
+    appTagline: "पशु स्वास्थ्य निदान, 3-स्तरीय क्लिनिकल डिसीजन इंजन एवं संपूर्ण स्मार्ट डेयरी समाधान",
+    adminWhatsApp: "9876543210"
+  };
 
-  refreshDiagnosisList();
-};
+  // Live Application Config State
+  let AppConfig = { ...DEFAULT_CONFIG };
 
-function calculateDiseaseProbability(disease) {
-  let score = 0;
-  const m = appState.matrixState;
-
-  // 1. Cardinal Match (40 pts)
-  if (m.cardinal && m.cardinal !== "ALL") {
-    if (disease.cardinalSignKey === m.cardinal || (disease.symptoms && disease.symptoms.includes(m.cardinal))) {
-      score += 40;
+  // Runtime Application State
+  const AppState = {
+    currentRole: "FARMER", // 'FARMER' or 'DOCTOR'
+    activeBank: "SBI",     // 'SBI' or 'PNB'
+    selectedPlan: "MONTHLY", // 'MONTHLY' or 'ANNUAL'
+    activeDiagnosisMode: "SYMPTOMS",
+    navigationStack: ["screenGateway"],
+    matrixState: {
+      temp: null,
+      eyes: null,
+      urine: null,
+      dung: null,
+      cardinal: "ALL",
+      secondary: []
     }
-  } else {
-    score += 15; // Baseline prior
-  }
+  };
 
-  // 2. Temperature Match (20 pts)
-  if (m.temp) {
-    if (m.temp === "HIGH" && disease.expectedTemp === "HIGH") score += 20;
-    else if (m.temp === "NORMAL" && disease.expectedTemp === "NORMAL") score += 20;
-    else if (m.temp === "SUB" && disease.expectedTemp === "SUB") score += 20;
-    else score += 2; // minor mismatch penalty
-  } else {
-    score += 10;
-  }
+  // Safe DOM Helper
+  const $ = (id) => document.getElementById(id);
 
-  // 3. Eye Sign Match (15 pts)
-  if (m.eyes && m.eyes !== "NORMAL") {
-    if (disease.eyeSign === m.eyes) score += 15;
-  } else {
-    score += 8;
-  }
-
-  // 4. Urine Sign Match (15 pts)
-  if (m.urine && m.urine !== "NORMAL") {
-    if (disease.urineSign === m.urine) score += 15;
-  } else {
-    score += 8;
-  }
-
-  // 5. Dung Sign Match (10 pts)
-  if (m.dung && m.dung !== "NORMAL") {
-    if (disease.dungSign === m.dung) score += 10;
-  } else {
-    score += 5;
-  }
-
-  return Math.min(score, 99);
-}
-
-function getDatabaseDiseases() {
-  if (typeof CLINICAL_DISEASE_DB !== "undefined" && Array.isArray(CLINICAL_DISEASE_DB)) {
-    return CLINICAL_DISEASE_DB;
-  }
-  // Robust Fallback Database in case external script has network latency
-  return [
+  /* =========================================================================
+     2. MASTER CLINICAL DISEASE DATABASE (UNLIMITED EXTENSIBLE ARCHITECTURE)
+     ========================================================================= */
+  const CLINICAL_DISEASES = [
     {
       id: "HS",
-      name: "गलाघोंटू (Hemorrhagic Septicemia - HS)",
-      type: "BACTERIAL",
-      expectedTemp: "HIGH",
-      cardinalSignKey: "NECK_SWELLING",
-      symptoms: "गले में गर्म दर्दनाक सूजन, घर्र-घर्र की आवाज, 105-107°F तेज बुखार, जीभ बाहर लटकना।",
-      isPregnantSafeRx: false,
-      doctorRx: "1. Inj. Cefquinome (1 mg/kg) or Inj. Oxytetracycline 200mg/ml @ 10mg/kg IV\n2. Inj. Flunixin Meglumine 2.2mg/kg IV\n3. Inj. Dexamethasone 10ml IM (Non-pregnant only!)",
-      farmerDesiRx: "तत्काल नजदीकी डॉक्टर को बुलाएं। सहायता हेतु गले पर गुनगुने पानी की सिकाई व सरसों तेल में कपूर घिसकर लगाएं।"
+      nameHindi: "गलघोंटू (Hemorrhagic Septicemia - HS)",
+      category: "BACTERIAL",
+      cardinal: "NECK_SWELLING",
+      temp: "HIGH",
+      eyes: "NORMAL",
+      urine: "NORMAL",
+      dung: "NORMAL",
+      contraindicatedInPregnancy: ["Dexamethasone"],
+      safeAlternative: "Isoflupredone acetate (गाभिन में सुरक्षित)",
+      keywords: ["गलघोंटू", "hs", "गले में सूजन", "घुर-घुर", "तेज बुखार"],
+      desc: "पाश्चुरेला मल्टोसीडा जीवाणु जनित अति-घातक रोग। जबड़े व गले के नीचे अत्यधिक गर्म दर्दनाक सूजन, जीभ बाहर व घुर-घुर सांस।",
+      farmerRemedy: "देसी प्राथमिक उपचार: 100 ग्राम सरसों का तेल + 10 ग्राम कपूर + 20 ग्राम हल्दी पकाकर गुनगुना लेप गले पर लगाएं। पशु को ठंडी हवा से बचाएं व तुरंत डॉक्टर बुलाएं।",
+      doctorRx: "1. Inj. Ceftiofur Sodium (1 gm/50kg) I/M अथवा Inj. Enrofloxacin (5 mg/kg) I/M\n2. Inj. Flunixin Meglumine (2.2 mg/kg) I/V अथवा Melonex Plus 15-20ml I/M\n3. Inj. Dexamethasone 5-10ml I/M (चेतावनी: यदि पशु गाभिन है तो केवल Isoflupredone 10ml दें)\n4. Inj. Avil 10ml I/M\n5. Dextrose Saline 5% I/V निर्जलीकरण होने पर।"
     },
     {
       id: "BQ",
-      name: "लंगड़ा बुखार / जहरबाद (Black Quarter - BQ)",
-      type: "BACTERIAL",
-      expectedTemp: "HIGH",
-      cardinalSignKey: "GAS_SWELLING",
-      symptoms: "कंधे या पुट्ठे पर गर्म सूजन जिसे दबाने पर चर्र-चर्र (Crepitation) की आवाज आती है। लंगड़ा कर चलना।",
-      isPregnantSafeRx: true,
-      doctorRx: "1. Inj. Penicillin 40 Lakh IU IM twice daily\n2. Inj. Meloxicam with Paracetamol 15-20ml IM\n3. H2O2 से सूजन की चीरा लगाकर ड्रेसिंग (Early stage)",
-      farmerDesiRx: "सूजन वाले स्थान को ठंडे पानी से धोएं, पशु को अन्य स्वस्थ पशुओं से तुरंत पृथक बांधें।"
+      nameHindi: "लंगड़ा बुखार / चरचरा (Black Quarter - BQ)",
+      category: "BACTERIAL",
+      cardinal: "GAS_SWELLING",
+      temp: "HIGH",
+      eyes: "NORMAL",
+      urine: "NORMAL",
+      dung: "CONSTIPATION",
+      contraindicatedInPregnancy: [],
+      keywords: ["bq", "लंगड़ा", "चर्र-चर्र", "पुट्ठे में सूजन", "गैस सूजन"],
+      desc: "क्लॉस्ट्रिडियम शोवेई जनित रोग। पुट्ठे अथवा कंधे की मांसपेशियों में गैसयुक्त सूजन, दबाने पर चर्र-चर्र की आवाज व तीव्र लंगड़ापन।",
+      farmerRemedy: "देसी उपचार: नीम के पानी से सिकाई करें। पशु को चलने न दें। किसी भी स्थिति में सूजन पर अनधिकृत चीरा न लगाएं।",
+      doctorRx: "1. Inj. Procaine Penicillin 40 लाख IU अथवा Inj. Amoxicillin + Sulbactam (4.5g) I/M 3-5 दिन\n2. Inj. Melonex Plus 15-20ml I/M\n3. Inj. Belamyl / Tribivet (B-Complex) 10ml I/M\n4. आपातकालीन स्थिति में हाइड्रोजन पेरोक्साइड (3% H2O2) से एंटीसेप्टिक फ्लशिंग।"
     },
     {
       id: "FMD",
-      name: "खुरपका-मुंहपका (Foot & Mouth Disease - FMD)",
-      type: "VIRAL",
-      expectedTemp: "HIGH",
-      cardinalSignKey: "MOUTH_BLISTERS",
-      symptoms: "मुंह व खुरों के बीच छाले, मुंह से लार टपकना, पशु लंगड़ाता है, चारा खाना बंद।",
-      isPregnantSafeRx: true,
-      doctorRx: "1. Inj. Ceftriaxone 3g/4g IM for 3-5 days (Secondary infection)\n2. Inj. Meloxicam 15ml IM\n3. Mouth wash: 1% Potassium Permanganate (KMNO4)",
-      farmerDesiRx: "मुंह के छालों को फिटकरी के पानी (1%) अथवा सुहागा शहद में मिलाकर लगाएं। खुरों को फिनाइल के पानी से साफ रखें।"
-    },
-    {
-      id: "MILK_FEVER",
-      name: "मिल्क फीवर (Hypocalcemia / Milk Fever)",
-      type: "METABOLIC",
-      expectedTemp: "SUB",
-      cardinalSignKey: "STERNAL_RECUMBENCY",
-      symptoms: "ब्याने के 24-48 घंटे बाद पशु बैठ जाता है, गर्दन मोड़कर पुट्ठे पर रखता है। शरीर और कान ठंडे हो जाते हैं (Sub-normal temp)।",
-      isPregnantSafeRx: true,
-      doctorRx: "1. Infusion Calcium Borogluconate (CBG 450ml): 1/2 IV slowly, 1/2 Sub-Cutaneous\n2. Inj. Mifex / Calup 450ml IV over 20-30 mins\n⚠️ Heart auscultation is mandatory during IV!",
-      farmerDesiRx: "पशु को बैठने पर पेट के बल रखें (Sternal position)। तुरंत डॉक्टर से कैल्शियम बोतल नस में लगवाएं, मुंह से कुछ न पिलाएं।"
-    },
-    {
-      id: "KETOSIS",
-      name: "कीटोसिस / एसीटोनेमिया (Ketosis)",
-      type: "METABOLIC",
-      expectedTemp: "NORMAL",
-      cardinalSignKey: "SWEET_BREATH",
-      symptoms: "सांस व दूध से मीठी गंध (Acetone smell), दाना-खली छोड़ केवल सूखा भूसा खाना, दूध अचानक घट जाना।",
-      isPregnantSafeRx: true,
-      doctorRx: "1. Dextrose 20% or 25% 1000ml IV\n2. Inj. Isoflupredone Acetate 10mg IM\n3. Oral Propylene Glycol 200ml twice daily for 3 days",
-      farmerDesiRx: "पशु को मीठा दलिया, गुड़ 250 ग्राम प्रतिदिन दें व निकोटिनिक एसिड युक्त ओरल एनर्जी बूस्टर पिलाएं।"
+      nameHindi: "खुरपका-मुंहपका (Foot and Mouth Disease - FMD)",
+      category: "VIRAL",
+      cardinal: "MOUTH_BLISTERS",
+      temp: "HIGH",
+      eyes: "LACRIMATION",
+      urine: "NORMAL",
+      dung: "NORMAL",
+      contraindicatedInPregnancy: [],
+      keywords: ["fmd", "खुरपका", "मुंहपका", "छाले", "तारदार लार", "लंगड़ाना"],
+      desc: "पिकोर्ना वायरस जनित अत्यंत संक्रामक रोग। मुंह, मसूड़ों, जीभ व खुरों के बीच छाले, घाव, चिपचिपी तारदार लार व लंगड़ापन।",
+      farmerRemedy: "देसी उपचार: मुंह को 1% फिटकरी अथवा लाल दवा (पोटाश) के पानी से धोएं। शहद में पिसा हुआ सुहागा मिलाकर छालों पर लगाएं। खुरों को फिनाइल पानी से साफ रखें।",
+      doctorRx: "1. द्वितीयक जीवाणु संक्रमण रोकने हेतु: Inj. Ceftriaxone (Intacef 3g) I/M 3 दिन\n2. Inj. Melonex Plus 15ml I/M\n3. Inj. Avil 10ml I/M\n4. Masticare sachet / Vit-A & H टॉनिक\n5. खुरों पर Topicure / D-Mag स्प्रे दिन में दो बार।"
     },
     {
       id: "MASTITIS",
-      name: "थनैल / मस्टाइटिस (Clinical Mastitis)",
-      type: "BACTERIAL",
-      expectedTemp: "NORMAL",
-      cardinalSignKey: "UDDER_HARD",
-      symptoms: "अयन/थन में सूजन, कड़ापन, थन गर्म, दूध में खून, पीले छिछड़े या मवाद आना।",
-      isPregnantSafeRx: true,
-      doctorRx: "1. Inj. Cefoperazone + Sulbactam 4.5g IV/IM\n2. Inj. Serratiopeptidase + Meloxicam 15ml IM\n3. Intramammary infusion: Pendistrin-SH / Tilmicosin",
-      farmerDesiRx: "नींबू का रस (100ml) और मीठा सोडा (50g) मिलाकर दिन में दो बार दें। थन को पोटाश पानी से धोकर एलोवेरा व हल्दी लेप लगाएं।"
+      nameHindi: "थनैल रोग (Mastitis)",
+      category: "BACTERIAL",
+      cardinal: "UDDER_HARD",
+      temp: "NORMAL",
+      eyes: "NORMAL",
+      urine: "NORMAL",
+      dung: "NORMAL",
+      contraindicatedInPregnancy: [],
+      keywords: ["थनैल", "mastitis", "अयन सूजन", "दूध में खून", "छिछड़े", "थन कड़ा"],
+      desc: "अयन एवं थनों की सूजन। दूध में गाढ़े छिछड़े, रक्त अथवा पीला पानी आना, थन में जलन, दर्द व कठोरता।",
+      farmerRemedy: "देसी उपचार: 250 ग्राम ग्वारपाठा (एलोवेरा) गूदा + 50 ग्राम हल्दी + 15 ग्राम खाने का चूना बारीक पीसकर थन पर दिन में 3 बार लेप करें। पूरा दूध निकाल लें।",
+      doctorRx: "1. Inj. Intacef Tazo (3375mg) अथवा Inj. Cobiotic (Penicillin group) I/M\n2. Intramammary Infusion: Pendistrin SH अथवा Cefoperazone (उदा. Mastilep) थन खाली कर चढ़ाएं\n3. Inj. Melonex Plus 15ml I/M\n4. Inj. Serratiopeptidase 10ml I/M\n5. Trisodium Citrate पाउडर (30-50 ग्राम दैनिक ओरल)।"
+    },
+    {
+      id: "MILK_FEVER",
+      nameHindi: "मिल्क फीवर / हाइपोकैल्सीमिया (Milk Fever)",
+      category: "METABOLIC",
+      cardinal: "STERNAL_RECUMBENCY",
+      temp: "SUB",
+      eyes: "DULL",
+      urine: "NORMAL",
+      dung: "CONSTIPATION",
+      contraindicatedInPregnancy: [],
+      keywords: ["मिल्क फीवर", "hypocalcemia", "गर्दन मोड़कर बैठना", "ठंडा शरीर", "कैल्शियम कमी"],
+      desc: "ब्याने के 24-72 घंटे में रक्त कैल्शियम की भारी गिरावट। पशु का गर्दन मोड़कर बैठना (S-Shape), शरीर व सींग ठंडे पड़ना, पुतलियां फैलना।",
+      farmerRemedy: "चेतावनी: पशु को मुंह से जबरन कोई तरल (नाल) न पिलाएं, यह फेफड़ों में जाकर ड्रेंचिंग निमोनिया से मृत्यु कर सकता है। पशु को बोरी से ढकें व तुरंत कैल्शियम ड्रिप लगवाएं।",
+      doctorRx: "1. Calcium Borogluconate 25% (CBG / Mifex) 450ml (300ml धीमी गति से I/V + 150ml S/C)\n2. I/V देते समय हृदय गति व नब्ज की लगातार निगरानी करें\n3. Inj. Tonophosphan 10ml I/M\n4. Inj. Tribivet 10ml I/M\n5. पशु के उठने पर Cal-Up / Ostovet जेल 300g ओरल।"
+    },
+    {
+      id: "KETOSIS",
+      nameHindi: "कीटोसिस / एसीटोनेमिया (Ketosis)",
+      category: "METABOLIC",
+      cardinal: "SWEET_BREATH",
+      temp: "NORMAL",
+      eyes: "NORMAL",
+      urine: "SWEET_SMELL",
+      dung: "CONSTIPATION",
+      contraindicatedInPregnancy: [],
+      keywords: ["कीटोसिस", "ketosis", "मीठी गंध", "सूखा भूसा", "दूध घटना"],
+      desc: "ऊर्जा व ग्लूकोज की कमी से रक्त में कीटोन बॉडीज का बढ़ना। सांस व दूध से मीठी गंध, दाना छोड़कर केवल सूखा भूसा खाना, दूध में भारी गिरावट।",
+      farmerRemedy: "देसी उपचार: 250 ग्राम पुराना गुड़ + 50 मिली सरसों का तेल + 50 ग्राम मीठा सोडा गुनगुने पानी में मिलाकर 4-5 दिन दें।",
+      doctorRx: "1. Dextrose 20% अथवा 25% 1000ml I/V फास्ट\n2. Inj. Isoflupredone acetate 10ml I/M (गाभिन व गैर-गाभिन दोनों में सुरक्षित)\n3. Propylene Glycol 200ml ओरल दिन में 2 बार 4 दिन तक\n4. Inj. Tribivet 10ml I/M\n5. Bolus Niacinamide 2-2 गोली सुबह/शाम।"
     },
     {
       id: "BLOAT",
-      name: "आफरा / गैस भरना (Tympanitis / Bloat)",
-      type: "METABOLIC",
-      expectedTemp: "NORMAL",
-      cardinalSignKey: "LEFT_FLANK_DRUM",
-      symptoms: "बायाँ पेट ढोलक की तरह फूल जाना, सांस लेने में अत्यधिक तकलीफ, मुंह खोलकर हांफना।",
-      isPregnantSafeRx: true,
-      doctorRx: "1. Stomach tube / Trocar & Canula in Left paralumbar fossa (Emergency)\n2. Inj. Atropine Sulphate / Simethicone\n3. Oral Blotasil / Tympol 100ml in warm oil",
-      farmerDesiRx: "तारपीन का तेल (30ml) + सरसों का तेल (250ml) मिलाकर नाल द्वारा पिलाएं। पशु को लगातार चलाएं, बैठने न दें।"
+      nameHindi: "अफारा / टिम्पनी (Bloat / Tympany)",
+      category: "METABOLIC",
+      cardinal: "LEFT_FLANK_DRUM",
+      temp: "NORMAL",
+      eyes: "NORMAL",
+      urine: "NORMAL",
+      dung: "CONSTIPATION",
+      contraindicatedInPregnancy: [],
+      keywords: ["अफारा", "bloat", "पेट फूलना", "ढोलक", "गैस"],
+      desc: "रूमेन में गैस या झाग का अत्यधिक संचय। बायाँ पेट ढोलक जैसा तन जाना, सांस लेने में अत्यधिक कष्ट, जीभ बाहर निकलना।",
+      farmerRemedy: "देसी उपचार: 50 मिली तारपीन का तेल + 300 मिली सरसों का तेल + 20 ग्राम हींग मिलाकर धीरे-धीरे पिलाएं। मुंह में लकड़ी की खपच्ची बांधें ताकि जुगाली व लार बने।",
+      doctorRx: "1. Trocar & Cannula द्वारा बाएं फ्लैंक (Paralumbar Fossa) से आपातकालीन गैस निकासी\n2. Bloatosil / Tympol liquid 100ml ओरल नाल से\n3. Inj. Spasmo-vet (Dicyclomine) 15ml I/M\n4. Inj. Belamyl 10ml I/M\n5. Rumen Buffers & Probiotic Cultures (Bioboost Bolus)।"
+    },
+    {
+      id: "THEILERIOSIS",
+      nameHindi: "थायलेरियासिस (Theileriosis / Tick Fever)",
+      category: "PROTOZOAL",
+      cardinal: "LYMPH_SWELLING",
+      temp: "HIGH",
+      eyes: "PALE",
+      urine: "NORMAL",
+      dung: "NORMAL",
+      contraindicatedInPregnancy: [],
+      keywords: ["theileria", "थायलेरिया", "लिम्फ नोड सूजन", "चिचड़ी बुखार"],
+      desc: "चिचड़ी जनित रक्त परजीवी रोग। कंधे या कान के पास लिम्फ नोड्स में भारी सूजन, 105-107°F बुखार, एनीमिया व कमजोरी।",
+      farmerRemedy: "देसी उपचार: चिचड़ियों को हाथ से न तोड़ें। नीम के पत्तों का काढ़ा बनाकर पशु के शरीर पर लगाएं। तुरंत डॉक्टर से Butalex इंजेक्शन लगवाएं।",
+      doctorRx: "1. Inj. Buparvaquone (Butalex / Zubion) 2.5mg/kg (1ml/20kg) Deep I/M सिंगल डोज़\n2. Inj. Oxytetracycline LA (20mg/kg) I/M\n3. Inj. Melonex Plus 15ml I/M\n4. Inj. Feritas (Iron) 10ml I/M\n5. बाह्य परजीवी नियंत्रण: Flumethrin / Amitraz pour-on."
     },
     {
       id: "BABESIOSIS",
-      name: "बबेशियोसिस / लाल पेशाब (Red Water / Babesiosis)",
-      type: "PROTOZOAL",
-      expectedTemp: "HIGH",
-      cardinalSignKey: "RED_URINE",
-      symptoms: "गहरे लाल या कॉफी के रंग का पेशाब, 105°F+ तेज बुखार, चीचड़ों (Ticks) का प्रकोप, अत्यधिक कमजोरी।",
-      isPregnantSafeRx: true,
-      doctorRx: "1. Inj. Diminazene Aceturate (Berenil) @ 3.5-5 mg/kg deep IM\n2. Inj. Imidocarb Diproprionate @ 1.2 mg/kg SC\n3. Supportive: Liver extract with B-complex + Iron tonics",
-      farmerDesiRx: "पशु को तुरंत छायादार व ठंडी जगह बांधें। चीचड़ नाशक दवा लगाएं व डॉक्टर से इंजेक्शन लगवाएं।"
+      nameHindi: "बबेशियोसिस / लाल पेशाब (Babesiosis / Red Water)",
+      category: "PROTOZOAL",
+      cardinal: "RED_URINE",
+      temp: "HIGH",
+      eyes: "PALE",
+      urine: "RED_COFFEE",
+      dung: "NORMAL",
+      contraindicatedInPregnancy: [],
+      keywords: ["बबेशिया", "लाल पेशाब", "कॉफी पेशाब", "चिचड़ी", "red water"],
+      desc: "बबेशिया बाइगेमिना जनित लाल रक्त कोशिकाओं का टूटना। पेशाब गहरा लाल या कॉफी जैसा होना, तेज बुखार व पीलिया।",
+      farmerRemedy: "देसी उपचार: पशु को छायादार शांत स्थान पर रखें, ठंडा पानी व गुड़ का शरबत दें। कोई भी देसी नुस्खा एंटी-प्रोटोजोअल इंजेक्शन का विकल्प नहीं है।",
+      doctorRx: "1. Inj. Diminazene Aceturate (Berenil) 3.5-5 mg/kg Deep I/M\n2. Inj. Melonex Plus 15ml I/M\n3. Dextrose Saline 5% 1-2 लीटर I/V\n4. Inj. Feritas (आयरन डेक्सट्रान) 10ml I/M\n5. Inj. Tribivet 10ml I/M।"
+    },
+    {
+      id: "ANAPLASMOSIS",
+      nameHindi: "एनाप्लास्मोसिस / पीलिया बुखार (Anaplasmosis)",
+      category: "PROTOZOAL",
+      cardinal: "SEVERE_JAUNDICE",
+      temp: "HIGH",
+      eyes: "YELLOW_JAUNDICE",
+      urine: "YELLOW",
+      dung: "CONSTIPATION",
+      contraindicatedInPregnancy: [],
+      keywords: ["anaplasma", "पीलिया", "आंखें पीली", "रक्तहीनता"],
+      desc: "एनाप्लाज्मा जीवाणु/परजीवी जनित रोग। अत्यधिक पीलिया (म्यूकस झिल्लियां पीली), तेज बुखार, बिना लाल पेशाब के गंभीर रक्तहीनता।",
+      farmerRemedy: "देसी उपचार: 50 ग्राम गिलोय का रस + 100 ग्राम गन्ने का सिरका या पुराना गुड़ दें। लीवर को मजबूत करने हेतु आहार में चोकर दें।",
+      doctorRx: "1. Inj. Oxytetracycline LA (Terramycin LA) 20mg/kg I/M\n2. Inj. Melonex Plus 15ml I/M\n3. Liv-52 Inj. 10ml अथवा Liver Tonics Oral\n4. Inj. Feritas 10ml I/M\n5. Dextrose 5% I/V।"
+    },
+    {
+      id: "PPR",
+      nameHindi: "पीपीआर / बकरी प्लेग (PPR - Peste des Petits Ruminants)",
+      category: "VIRAL",
+      cardinal: "MOUTH_EROSION_DIARRHEA",
+      temp: "HIGH",
+      eyes: "LACRIMATION",
+      urine: "NORMAL",
+      dung: "WATERY_DIARRHEA",
+      contraindicatedInPregnancy: [],
+      keywords: ["ppr", "बकरी प्लेग", "मुंह में छाले", "दस्त", "बदबूदार दस्त"],
+      desc: "भेड़-बकरियों का जानलेवा विषाणु रोग। मुंह में छाले, अत्यधिक बदबूदार दस्त, आंखों से कीचड़, निमोनिया व तेज बुखार।",
+      farmerRemedy: "देसी उपचार: ओआरएस (ORS) या नमक-चीनी-नींबू पानी लगातार पिलाएं। छाले पर सुहागा व ग्लिसरीन लगाएं। बीमार बकरियों को तुरंत स्वस्थ बकरियों से अलग करें।",
+      doctorRx: "1. Inj. Enrofloxacin 10% (1ml/10kg) I/M 3 दिन\n2. Inj. Melonex Plus (2-3ml) I/M\n3. Inj. Avil 2ml I/M\n4. Belamyl 2ml I/M\n5. गंभीर स्थिति में Metronidazole ड्रिप + Ringer Lactate I/V।"
+    },
+    {
+      id: "ET",
+      nameHindi: "फिड़किया / आंत्रविषक्तता (Enterotoxemia - ET)",
+      category: "BACTERIAL",
+      cardinal: "OPISTHOTONOS",
+      temp: "NORMAL",
+      eyes: "NORMAL",
+      urine: "NORMAL",
+      dung: "WATERY_DIARRHEA",
+      contraindicatedInPregnancy: [],
+      keywords: ["et", "फिड़किया", "आंत्रविषक्तता", "सिर पीछे खींचना", "दाना खाने बाद"],
+      desc: "क्लॉस्ट्रिडियम परफ्रिंजेंस टाइप डी का विष। अचानक अधिक हरा चारा या दाना खाने के बाद बकरियों में मरोड़, सिर पीछे खींचना व अचानक मौत।",
+      farmerRemedy: "देसी उपचार: दाना तुरंत बंद करें। मीठा सोडा 15-20 ग्राम गुनगुने पानी में घोलकर पिलाएं।",
+      doctorRx: "1. Inj. Penicillin भारी खुराक में I/M\n2. Inj. Dexamethasone अथवा Isoflupredone (टॉक्सिक शॉक रोकने हेतु)\n3. Rumen Buffer: सोडियम बाइकार्बोनेट ओरल\n4. Inj. Spasmo-vet I/M मरोड़ रोकने हेतु\n5. समय पर ET टीकाकरण अनिवार्य।"
+    },
+    {
+      id: "ANTHRAX",
+      nameHindi: "एंथ्रेक्स / गिल्टी रोग (Anthrax - Zoonotic ⚠️)",
+      category: "BACTERIAL",
+      cardinal: "TAR_BLOOD",
+      temp: "HIGH",
+      eyes: "PALE",
+      urine: "RED_COFFEE",
+      dung: "NORMAL",
+      contraindicatedInPregnancy: [],
+      keywords: ["anthrax", "एंथ्रेक्स", "काला खून", "अचानक मौत", "गिल्टी"],
+      desc: "बैसिलस एंथ्रेसिस जनित अति-घातक रोग (मानव में फैलने योग्य)। प्राकृतिक छेदों (नाक, गुदा) से काला बिना जमा हुआ तारकोल जैसा खून रिसना।",
+      farmerRemedy: "⚠️ सख्त चेतावनी: मृत पशु का शव कभी न चीरें! शव को चूने के साथ 6-8 फीट गहरे गड्ढे में दबाएं। कोई घरेलू इलाज संभव नहीं।",
+      doctorRx: "1. प्रारंभिक अवस्था में: Inj. Procaine Penicillin 60-80 लाख IU I/M अथवा Oxytetracycline भारी मात्रा में\n2. संक्रमित स्थान को 5% फॉर्मेलिन से विसंक्रमित करें\n3. सरकारी पशु चिकित्सा अधिकारी को तत्काल सूचित करें।"
+    },
+    {
+      id: "SURRA",
+      nameHindi: "सर्रा रोग (Trypanosomiasis / Surra)",
+      category: "PROTOZOAL",
+      cardinal: "CIRCLING_HEAD_PRESSING",
+      temp: "HIGH",
+      eyes: "LACRIMATION",
+      urine: "NORMAL",
+      dung: "NORMAL",
+      contraindicatedInPregnancy: [],
+      keywords: ["surra", "सर्रा", "गोल चक्कर", "सिर टकराना", "तीव्र बुखार"],
+      desc: "ट्रिपैनोसोमा इवान्साई परजीवी जनित रोग। पशु का पागलों की तरह गोल चक्कर काटना, दीवार से सिर टकराना, आंखों में मोतियाबिंद व रुक-रुक कर बुखार।",
+      farmerRemedy: "देसी उपचार: पशु को चोट लगने से बचाएं। डंक मारने वाली मक्खियों से पशु बाड़े को मुक्त रखें।",
+      doctorRx: "1. Inj. Quinapyramine Sulfate & Chloride (Triquin) 1ml/40kg S/C\n2. Inj. Melonex Plus 15ml I/M\n3. Mannitol 20% I/V मस्तिष्क सूजन घटाने हेतु\n4. Inj. Tribivet 10ml I/M\n5. Neurobion Forte / B-Complex इंजेक्शन।"
+    },
+    {
+      id: "RABIES",
+      nameHindi: "रेबीज / बावलापन (Rabies - Zoonotic ⚠️)",
+      category: "VIRAL",
+      cardinal: "HYDROPHOBIA_BELL",
+      temp: "NORMAL",
+      eyes: "WILD",
+      urine: "NORMAL",
+      dung: "CONSTIPATION",
+      contraindicatedInPregnancy: [],
+      keywords: ["rabies", "रेबीज", "बावलापन", "कुत्ते का काटना", "रंभाना"],
+      desc: "रेबीज वायरस जनित 100% घातक न्यूरोलॉजिकल रोग। पागल कुत्ते या सियार के काटने से होता है। पशु लगातार रंभाता है, लार टपकाता है व आक्रामक होता है।",
+      farmerRemedy: "देसी उपचार: कोई इलाज नहीं। कुत्ते के काटने पर घाव को 15 मिनट बहते पानी व कपड़े धोने वाले साबुन से धोएं और तुरंत एंटी-रेबीज वैक्सीन लगवाएं।",
+      doctorRx: "1. लक्षण प्रकट होने के बाद कोई उपचार संभव नहीं है।\n2. पोस्ट-बाइट प्रोफिलैक्सिस: Rabivax-Vet (0, 3, 7, 14, 28वें दिन) S/C अथवा I/M।"
+    },
+    {
+      id: "COLIC",
+      nameHindi: "पेट दर्द / शूल (Colic / Abdominal Pain)",
+      category: "METABOLIC",
+      cardinal: "ROLLING_PAWING",
+      temp: "NORMAL",
+      eyes: "ANXIOUS",
+      urine: "NORMAL",
+      dung: "CONSTIPATION",
+      contraindicatedInPregnancy: [],
+      keywords: ["colic", "पेट दर्द", "लात मारना", "लोटना"],
+      desc: "आंतों में ऐंठन, गैस अथवा सूखा गोबर अटकना। पशु बार-बार पेट की तरफ देखता है, लात मारता है, बेचैन होकर जमीन पर लोटता है।",
+      farmerRemedy: "देसी उपचार: 50 ग्राम अजवाइन + 25 ग्राम काला नमक + 10 ग्राम हींग पीसकर गुनगुने पानी में नाल से दें।",
+      doctorRx: "1. Inj. Spasmo-vet (Dicyclomine) 15-20ml I/M\n2. Inj. Melonex Plus 15ml I/M\n3. Liquid Paraffin 500ml ओरल (यदि कब्ज/गोबर रुका हो)\n4. Inj. Belamyl 10ml I/M।"
+    },
+    {
+      id: "ROP",
+      nameHindi: "जेर का रुकना (Retention of Placenta - ROP)",
+      category: "METABOLIC",
+      cardinal: "HANGING_PLACENTA",
+      temp: "NORMAL",
+      eyes: "NORMAL",
+      urine: "NORMAL",
+      dung: "NORMAL",
+      contraindicatedInPregnancy: ["Oxytocin", "Dinoprost"],
+      keywords: ["rop", "जेर रुकना", "जेर अटकना", "ब्यांत"],
+      desc: "प्रसव के 8 से 12 घंटे बीत जाने के बाद भी गर्भाशय से जेर का प्राकृतिक रूप से बाहर न आना।",
+      farmerRemedy: "देसी उपचार: 250 ग्राम पुराना गुड़ + 50 ग्राम सोंठ + 25 ग्राम अजवाइन + 15 ग्राम बांस के पत्तों का काढ़ा पिलाएं। जेर पर भारी ईंट या पत्थर न बांधें।",
+      doctorRx: "1. Inj. Oxytocin 30-50 IU (प्रसव के तुरंत 6-8 घंटे में) I/M अथवा Inj. Dinoprost (PG F2 alpha - Lutalyse / Pragma 2ml)\n2. Uterine Bolus: Cleanex / Utrovet pessaries गर्भाशय में रखें\n3. Inj. Ceftriaxone 3g I/M संक्रमण रोकने हेतु\n4. Utrovet / Replanta liquid 100ml दिन में दो बार।"
+    },
+    {
+      id: "PROLAPSE",
+      nameHindi: "फूल/पाछा दिखाना / प्रोलैप्स (Uterine/Vaginal Prolapse)",
+      category: "METABOLIC",
+      cardinal: "PROTRUDING_MASS",
+      temp: "NORMAL",
+      eyes: "STRAINING",
+      urine: "NORMAL",
+      dung: "NORMAL",
+      contraindicatedInPregnancy: [],
+      keywords: ["prolapse", "फूल दिखाना", "पाछा", "गर्भाशय बाहर"],
+      desc: "ब्याने से पूर्व अथवा बाद में योनि या संपूर्ण गर्भाशय का मांसल भाग बाहर उलट जाना।",
+      farmerRemedy: "देसी उपचार: बाहर निकले अंग को लाल दवा (पोटाश) के ठंडे पानी से धोएं, बर्फ से सेकें, ऊपर उठाकर साफ कपड़े से ढकें व तुरंत डॉक्टर बुलाएं।",
+      doctorRx: "1. Epidural Anesthesia: 2% Lignocaine HCl 5-8ml intercoccygeal space में\n2. अंग को एंटीसेप्टिक से धोकर वापस अंदर व्यवस्थित बैठाएं\n3. Buhner's suture अथवा Vulvar rope truss लगाएं\n4. Inj. Melonex Plus 15ml I/M\n5. Inj. Hydroxyprogesterone 750mg I/M (Proluton Depot)।"
+    },
+    {
+      id: "PNEUMONIA",
+      nameHindi: "निमोनिया / फेफड़ों की सूजन (Pneumonia)",
+      category: "BACTERIAL",
+      cardinal: "DYSPNEA_WHEEZING",
+      temp: "HIGH",
+      eyes: "NORMAL",
+      urine: "NORMAL",
+      dung: "NORMAL",
+      contraindicatedInPregnancy: [],
+      keywords: ["pneumonia", "निमोनिया", "खांसी", "छाती सायं सायं", "सांस फूलना"],
+      desc: "फेफड़ों का तीव्र संक्रमण। तेज बुखार, सांस लेते समय छाती से घुरघुर/सायं-सायं की आवाज, बलगमयुक्त खांसी व नाक से मवाद जैसा स्राव।",
+      farmerRemedy: "देसी उपचार: पशु को सूखी गर्म जगह बांधें। गर्म पानी में नीलगिरी का तेल या विक्स डालकर भाप दें।",
+      doctorRx: "1. Inj. Marbofloxacin (Marbocyl) अथवा Inj. Ceftiofur Sodium 1g I/M 3-5 दिन\n2. Inj. Melonex Plus 15ml I/M\n3. Inj. Deriphyllin 10ml I/M (ब्रोंकोडाइलेटर)\n4. Inj. Avil 10ml I/M\n5. Mucolite / Bromhexine bolus।"
+    },
+    {
+      id: "FOOT_ROT",
+      nameHindi: "खुर सड़न / दुर्गंधयुक्त सड़ांध (Foot Rot)",
+      category: "BACTERIAL",
+      cardinal: "FOOT_ROT_SMELL",
+      temp: "NORMAL",
+      eyes: "NORMAL",
+      urine: "NORMAL",
+      dung: "NORMAL",
+      contraindicatedInPregnancy: [],
+      keywords: ["foot rot", "खुर सड़न", "दुर्गंध", "खुर में मवाद"],
+      desc: "खुरों के मध्य त्वचा में जीवाणु जनित सड़न, असहनीय तीखी दुर्गंध, पीला मवाद व गंभीर लंगड़ापन।",
+      farmerRemedy: "देसी उपचार: खुरों को 5% नीला थोथा (तूतिया / कॉपर सल्फेट) के पानी से धोएं। घाव में तारपीन का तेल व कपूर मिलाकर लगाएं।",
+      doctorRx: "1. Inj. Oxytetracycline LA 20mg/kg Deep I/M\n2. खुर का सड़ा हुआ भाग काटकर साफ करें\n3. Topical Povidone Iodine 10% ड्रेसिंग\n4. Inj. Melonex Plus 15ml I/M\n5. Zinc sulphate powder ओरल सप्लीमेंट।"
+    },
+    {
+      id: "ENTERITIS",
+      nameHindi: "गंभीर आंत्रशोथ / पेचिश (Acute Enteritis / Diarrhea)",
+      category: "BACTERIAL",
+      cardinal: "ALL",
+      temp: "HIGH",
+      eyes: "SUNKEN",
+      urine: "REDUCED",
+      dung: "WATERY_DIARRHEA",
+      contraindicatedInPregnancy: [],
+      keywords: ["दस्त", "पेचिश", "आंत्रशोथ", "enteritis", "खून का दस्त"],
+      desc: "ई-कोलाई अथवा साल्मोनेला जनित आंतों का गंभीर संक्रमण। पानी जैसा पतला या खूनी बदबूदार दस्त, आंखें धंसना व डिहाइड्रेशन।",
+      farmerRemedy: "देसी उपचार: बेल का गूदा या ईसबगोल की भूसी ताजा छाछ में मिलाकर दें। चावल का मांड और नमक-चीनी पानी दिन में कई बार पिलाएं।",
+      doctorRx: "1. Inj. Amikacin (Amika-Vet) 10mg/kg अथवा Inj. Enrofloxacin I/M\n2. Inj. Spasmo-vet 15ml I/M\n3. Inj. Melonex Plus 15ml I/M\n4. Dextrose Normal Saline (DNS) 2-3 लीटर I/V\n5. Bolus Neblon / Bolus Diaroak 2-2 गोली सुबह/शाम।"
     }
   ];
-}
 
-function refreshDiagnosisList() {
-  const container = document.getElementById("diseaseSearchResults");
-  const countBadge = document.getElementById("matchCountBadge");
-  const scoreText = document.getElementById("matchScoreText");
-  if (!container) return;
+  /* =========================================================================
+     3. MASTER ADMIN CONFIGURATION & PERSISTENCE ENGINE
+     ========================================================================= */
 
-  const allDiseases = getDatabaseDiseases();
-  let filtered = [];
+  /**
+   * Load master configuration from localStorage with safe fallback
+   */
+  function loadAdminConfiguration() {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEYS.CONFIG);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        // Deep merge with defaults to preserve nested structures
+        AppConfig = {
+          ...DEFAULT_CONFIG,
+          ...parsed,
+          sbi: { ...DEFAULT_CONFIG.sbi, ...(parsed.sbi || {}) },
+          pnb: { ...DEFAULT_CONFIG.pnb, ...(parsed.pnb || {}) }
+        };
+      } else {
+        AppConfig = { ...DEFAULT_CONFIG };
+      }
+    } catch (e) {
+      console.warn("Using fallback configuration:", e);
+      AppConfig = { ...DEFAULT_CONFIG };
+    }
+    applyConfigToDOM();
+  }
 
-  if (appState.diagnosisMode === "SYMPTOMS") {
-    // Weighted scoring
-    filtered = allDiseases.map((d) => {
-      const prob = calculateDiseaseProbability(d);
-      return { ...d, probability: prob };
+  /**
+   * Immediately updates live UI components across all modules
+   */
+  function applyConfigToDOM() {
+    // 1. Branding: Titles & Taglines
+    const pageTitle = $("pageTitleTag");
+    if (pageTitle) pageTitle.innerText = `${AppConfig.appTitle} | Clinical & Smart Dairy Assistant`;
+
+    const gatewayTitle = $("gatewayAppTitle");
+    if (gatewayTitle) gatewayTitle.innerText = AppConfig.appTitle;
+
+    const headerTitle = $("appHeaderTitle");
+    if (headerTitle) headerTitle.innerText = AppConfig.appTitle;
+
+    const gatewayTagline = $("gatewayTagline");
+    if (gatewayTagline) gatewayTagline.innerText = AppConfig.appTagline;
+
+    const footerBranding = $("footerAppBranding");
+    if (footerBranding) footerBranding.innerText = `${AppConfig.appTitle} Clinical Assistant • सुरक्षित और सत्यापित प्रणाली`;
+
+    // 2. Branding: Logo rendering
+    const gatewayLogoBox = $("gatewayLogoBox");
+    const headerLogoBox = $("headerLogoBox");
+    const initials = (AppConfig.appTitle || "VC").substring(0, 2).toUpperCase();
+
+    if (AppConfig.appLogoUrl && AppConfig.appLogoUrl.trim().length > 5) {
+      const imgHtml = `<img src="${AppConfig.appLogoUrl}" class="w-full h-full object-cover" alt="Logo" onerror="this.parentElement.innerHTML='<span class=\\'font-black text-white\\'>${initials}</span>';" />`;
+      if (gatewayLogoBox) gatewayLogoBox.innerHTML = imgHtml;
+      if (headerLogoBox) headerLogoBox.innerHTML = imgHtml;
+    } else {
+      if (gatewayLogoBox) gatewayLogoBox.innerHTML = `<span class="font-black text-white text-3xl">${initials}</span>`;
+      if (headerLogoBox) headerLogoBox.innerHTML = `<span class="font-black text-white text-sm">${initials}</span>`;
+    }
+
+    // 3. Payment Modal Displays
+    const dispPayee = $("dispPayeeName");
+    if (dispPayee) dispPayee.innerText = AppConfig.payeeName;
+
+    const dispMon = $("dispPlanMonthlyPrice");
+    if (dispMon) dispMon.innerText = `₹${AppConfig.monthlyPrice} / माह`;
+
+    const dispAnn = $("dispPlanAnnualPrice");
+    if (dispAnn) dispAnn.innerText = `₹${AppConfig.yearlyPrice} / वर्ष`;
+
+    // Re-render active bank details, QR, and direct UPI deep-link
+    updateBankModalDisplay();
+  }
+
+  /**
+   * Verify entered 4-digit Master Admin PIN
+   * @param {string} [enteredPin] - Optional parameter, otherwise reads from DOM
+   */
+  window.verifyAdminPin = function (enteredPin) {
+    const input = $("inputAdminPIN");
+    const pin = (enteredPin || (input ? input.value : "")).trim();
+    const targetPin = AppConfig.adminPin || DEFAULT_CONFIG.adminPin;
+    const errBox = $("pinErrorMessage");
+
+    if (pin === targetPin) {
+      if (errBox) errBox.classList.add("hidden");
+      window.closeAdminPinModal();
+      window.openAdminDashboard();
+    } else {
+      if (errBox) {
+        errBox.innerText = "गलत PIN! कृपया पुनः प्रयास करें।";
+        errBox.classList.remove("hidden");
+      }
+      if (input) {
+        input.value = "";
+        input.focus();
+      }
+    }
+  };
+
+  /**
+   * Saves updated settings to localStorage and updates UI immediately
+   * @param {Object} [formData] - Optional settings payload
+   */
+  window.saveAdminSettings = function (formData) {
+    const data = formData || {
+      payeeName: $("cfgPayeeName") ? $("cfgPayeeName").value.trim() : AppConfig.payeeName,
+      monthlyPrice: $("cfgMonthlyPrice") ? parseFloat($("cfgMonthlyPrice").value) || AppConfig.monthlyPrice : AppConfig.monthlyPrice,
+      yearlyPrice: $("cfgAnnualPrice") ? parseFloat($("cfgAnnualPrice").value) || AppConfig.yearlyPrice : AppConfig.yearlyPrice,
+      sbi: {
+        upiId: $("cfgSbiUpi") ? $("cfgSbiUpi").value.trim() : AppConfig.sbi.upiId,
+        acc: $("cfgSbiAccount") ? $("cfgSbiAccount").value.trim() : AppConfig.sbi.acc,
+        ifsc: $("cfgSbiIfsc") ? $("cfgSbiIfsc").value.trim().toUpperCase() : AppConfig.sbi.ifsc
+      },
+      pnb: {
+        upiId: $("cfgPnbUpi") ? $("cfgPnbUpi").value.trim() : AppConfig.pnb.upiId,
+        acc: $("cfgPnbAccount") ? $("cfgPnbAccount").value.trim() : AppConfig.pnb.acc,
+        ifsc: $("cfgPnbIfsc") ? $("cfgPnbIfsc").value.trim().toUpperCase() : AppConfig.pnb.ifsc
+      },
+      appTitle: $("cfgAppTitle") ? $("cfgAppTitle").value.trim() || AppConfig.appTitle : AppConfig.appTitle,
+      appLogoUrl: $("cfgLogoUrl") ? $("cfgLogoUrl").value.trim() : AppConfig.appLogoUrl,
+      appTagline: $("cfgAppTagline") ? $("cfgAppTagline").value.trim() || AppConfig.appTagline : AppConfig.appTagline,
+      adminWhatsApp: $("cfgAdminWhatsApp") ? $("cfgAdminWhatsApp").value.trim() : AppConfig.adminWhatsApp,
+      adminPin: $("cfgAdminPIN") ? $("cfgAdminPIN").value.trim() || AppConfig.adminPin : AppConfig.adminPin
+    };
+
+    if (data.adminPin && data.adminPin.length !== 4) {
+      alert("मास्टर एडमिन PIN ठीक 4 अंकों का होना चाहिए!");
+      return;
+    }
+
+    AppConfig = {
+      ...AppConfig,
+      ...data,
+      sbi: { ...AppConfig.sbi, ...data.sbi },
+      pnb: { ...AppConfig.pnb, ...data.pnb }
+    };
+
+    // Save locally
+    try {
+      localStorage.setItem(STORAGE_KEYS.CONFIG, JSON.stringify(AppConfig));
+    } catch (e) {
+      console.error("Local storage save error:", e);
+    }
+
+    // Optional Firebase sync if initialized
+    if (typeof firebase !== "undefined" && firebase.apps && firebase.apps.length > 0) {
+      try {
+        firebase.firestore().collection("settings").doc("masterConfig").set(AppConfig, { merge: true })
+          .then(() => console.log("Firebase Master Config synced."))
+          .catch((err) => console.warn("Firebase sync error:", err));
+      } catch (err) {
+        console.warn("Firestore not available:", err);
+      }
+    }
+
+    // Live update DOM without page reload
+    applyConfigToDOM();
+    window.closeAdminDashboard();
+    alert("✅ सभी एडमिन सेटिंग्स सफलतापूर्वक सुरक्षित कर दी गई हैं!");
+  };
+
+  // Alias for index.html compatibility
+  window.saveAllAdminSettings = () => window.saveAdminSettings();
+
+  /* =========================================================================
+     4. SUPER ADMIN UI MODAL CONTROLLERS & REAL-TIME METRICS
+     ========================================================================= */
+  window.openAdminPinModal = function () {
+    const modal = $("modalAdminPIN");
+    const input = $("inputAdminPIN");
+    const err = $("pinErrorMessage");
+    if (err) err.classList.add("hidden");
+    if (input) input.value = "";
+    if (modal) modal.style.display = "flex";
+    setTimeout(() => { if (input) input.focus(); }, 150);
+  };
+
+  window.closeAdminPinModal = function () {
+    const modal = $("modalAdminPIN");
+    if (modal) modal.style.display = "none";
+  };
+
+  window.openAdminDashboard = function () {
+    // Populate form inputs
+    if ($("cfgPayeeName")) $("cfgPayeeName").value = AppConfig.payeeName;
+    if ($("cfgMonthlyPrice")) $("cfgMonthlyPrice").value = AppConfig.monthlyPrice;
+    if ($("cfgAnnualPrice")) $("cfgAnnualPrice").value = AppConfig.yearlyPrice;
+
+    if ($("cfgSbiUpi")) $("cfgSbiUpi").value = AppConfig.sbi.upiId;
+    if ($("cfgSbiAccount")) $("cfgSbiAccount").value = AppConfig.sbi.acc;
+    if ($("cfgSbiIfsc")) $("cfgSbiIfsc").value = AppConfig.sbi.ifsc;
+
+    if ($("cfgPnbUpi")) $("cfgPnbUpi").value = AppConfig.pnb.upiId;
+    if ($("cfgPnbAccount")) $("cfgPnbAccount").value = AppConfig.pnb.acc;
+    if ($("cfgPnbIfsc")) $("cfgPnbIfsc").value = AppConfig.pnb.ifsc;
+
+    if ($("cfgAppTitle")) $("cfgAppTitle").value = AppConfig.appTitle;
+    if ($("cfgLogoUrl")) $("cfgLogoUrl").value = AppConfig.appLogoUrl || "";
+    if ($("cfgAppTagline")) $("cfgAppTagline").value = AppConfig.appTagline;
+
+    if ($("cfgAdminWhatsApp")) $("cfgAdminWhatsApp").value = AppConfig.adminWhatsApp;
+    if ($("cfgAdminPIN")) $("cfgAdminPIN").value = AppConfig.adminPin;
+
+    // Real-time Data Metrics Update
+    const savedOpd = getSavedOPDCases();
+    const khata = getSavedKhata();
+    const inventory = getSavedInventory();
+
+    if ($("metricTotalOPD")) $("metricTotalOPD").innerText = savedOpd.length;
+
+    let totalDues = 0;
+    khata.forEach((k) => { if (k.type === "DUE") totalDues += Number(k.amount) || 0; });
+    if ($("metricTotalDues")) $("metricTotalDues").innerText = `₹${totalDues.toLocaleString("en-IN")}`;
+
+    let lowStockCount = 0;
+    inventory.forEach((i) => { if (Number(i.stock) <= Number(i.minAlert)) lowStockCount++; });
+    if ($("metricLowStock")) $("metricLowStock").innerText = lowStockCount;
+
+    window.switchAdminTab("PAYMENT");
+    const dash = $("modalAdminDashboard");
+    if (dash) dash.style.display = "flex";
+  };
+
+  window.closeAdminDashboard = function () {
+    const dash = $("modalAdminDashboard");
+    if (dash) dash.style.display = "none";
+  };
+
+  window.switchAdminTab = function (tabKey) {
+    const panels = {
+      PAYMENT: $("adminPanelPayment"),
+      BRANDING: $("adminPanelBranding"),
+      SUPPORT: $("adminPanelSupport"),
+      METRICS: $("adminPanelMetrics")
+    };
+    const buttons = {
+      PAYMENT: $("tabBtnAdminPay"),
+      BRANDING: $("tabBtnAdminBrand"),
+      SUPPORT: $("tabBtnAdminSupport"),
+      METRICS: $("tabBtnAdminMetrics")
+    };
+
+    Object.values(panels).forEach((p) => { if (p) p.classList.add("hidden"); });
+    Object.values(buttons).forEach((b) => {
+      if (b) b.className = "px-4 py-2 border-b-2 border-transparent hover:text-slate-900 shrink-0";
     });
-    filtered.sort((a, b) => b.probability - a.probability);
 
+    if (panels[tabKey]) panels[tabKey].classList.remove("hidden");
+    if (buttons[tabKey]) {
+      buttons[tabKey].className = "px-4 py-2 border-b-2 border-blue-600 text-blue-600 shrink-0";
+    }
+  };
+
+  /* =========================================================================
+     5. ROLE-BASED ACCESS & NAVIGATION CONTROLLER
+     ========================================================================= */
+
+  /**
+   * Handles role selection ('doctor' | 'farmer') with zero regressions
+   */
+  window.selectRole = function (role) {
+    const normalized = (role || "").toUpperCase();
+    AppState.currentRole = normalized === "DOCTOR" ? "DOCTOR" : "FARMER";
+    localStorage.setItem(STORAGE_KEYS.CURRENT_ROLE, AppState.currentRole);
+
+    const gate = $("screenGateway");
+    const main = $("screenMainApp");
+    if (gate) gate.classList.add("hidden");
+    if (main) main.classList.remove("hidden");
+
+    AppState.navigationStack = ["screenGateway", "screenMainApp"];
+
+    const badge = $("currentUserRoleBadge");
+    const navRx = $("navRx");
+    const navRecords = $("navRecords");
+    const navInventory = $("navInventory");
+    const navAI = $("navAI");
+    const finTitle = $("financeTitle");
+    const finCreditLabel = $("finCreditLabel");
+    const finDebitLabel = $("finDebitLabel");
+
+    if (AppState.currentRole === "DOCTOR") {
+      if (badge) {
+        badge.innerHTML = "🩺 अधिकृत पशु चिकित्सक (Clinical Mode)";
+        badge.className = "text-[10px] sm:text-[11px] font-bold text-blue-700";
+      }
+      [navRx, navRecords, navInventory, navAI].forEach((el) => {
+        if (el) { el.classList.remove("hidden"); el.classList.add("flex"); }
+      });
+      if (finTitle) finTitle.innerHTML = "<span>📊</span> क्लिनिक एवं किसान खाता बही";
+      if (finCreditLabel) finCreditLabel.innerText = "जमा फीस (Income)";
+      if (finDebitLabel) finDebitLabel.innerText = "किसानों पर उधारी (Due)";
+      window.switchTab("rx");
+    } else {
+      if (badge) {
+        badge.innerHTML = "👨‍🌾 स्मार्ट पशुपालक (Dairy Farmer Mode)";
+        badge.className = "text-[10px] sm:text-[11px] font-bold text-emerald-700";
+      }
+      [navRx, navRecords, navInventory, navAI].forEach((el) => {
+        if (el) { el.classList.add("hidden"); el.classList.remove("flex"); }
+      });
+      if (finTitle) finTitle.innerHTML = "<span>📊</span> पशुपालन दूध व खर्च खाता";
+      if (finCreditLabel) finCreditLabel.innerText = "दूध बिक्री आय (Credit)";
+      if (finDebitLabel) finDebitLabel.innerText = "चारा व दवाई खर्च (Debit)";
+      window.switchTab("diagnosis");
+    }
+
+    renderDiseaseResults(CLINICAL_DISEASES);
+    window.renderKhataList();
+  };
+
+  window.goBackScreen = function () {
+    if (AppState.navigationStack.length > 1) {
+      AppState.navigationStack.pop();
+      const prev = AppState.navigationStack[AppState.navigationStack.length - 1];
+      if (prev === "screenGateway") {
+        window.returnToGateway();
+      }
+    } else {
+      window.returnToGateway();
+    }
+  };
+
+  window.goToHome = function () {
+    window.returnToGateway();
+  };
+
+  window.returnToGateway = function () {
+    const main = $("screenMainApp");
+    const gate = $("screenGateway");
+    if (main) main.classList.add("hidden");
+    if (gate) gate.classList.remove("hidden");
+    AppState.navigationStack = ["screenGateway"];
+  };
+
+  window.openDoctorDeclarationModal = function () {
+    const modal = $("modalDoctorDeclaration");
+    if (modal) modal.style.display = "flex";
+  };
+
+  window.closeDoctorDeclarationModal = function () {
+    const modal = $("modalDoctorDeclaration");
+    if (modal) modal.style.display = "none";
+  };
+
+  window.acceptDoctorDeclaration = function () {
+    window.closeDoctorDeclarationModal();
+    window.selectRole("DOCTOR");
+  };
+
+  window.switchTab = function (tabKey) {
+    const sectionMap = {
+      diagnosis: $("viewDiagnosis"),
+      rx: $("viewRx"),
+      records: $("viewRecords"),
+      inventory: $("viewInventory"),
+      ai: $("viewAI"),
+      breeding: $("viewBreeding"),
+      feed: $("viewFeed"),
+      finance: $("viewFinance"),
+      helpdesk: $("viewHelpdesk")
+    };
+
+    const btnMap = {
+      diagnosis: $("navDiagnosis"),
+      rx: $("navRx"),
+      records: $("navRecords"),
+      inventory: $("navInventory"),
+      ai: $("navAI"),
+      breeding: $("navBreeding"),
+      feed: $("navFeed"),
+      finance: $("navFinance"),
+      helpdesk: $("navHelpdesk")
+    };
+
+    Object.values(sectionMap).forEach((s) => { if (s) s.classList.add("hidden"); });
+    Object.values(btnMap).forEach((b) => { if (b) b.classList.remove("active-nav-tab"); });
+
+    if (sectionMap[tabKey]) sectionMap[tabKey].classList.remove("hidden");
+    if (btnMap[tabKey]) btnMap[tabKey].classList.add("active-nav-tab");
+
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  /* =========================================================================
+     6. 3-WAY CLINICAL DIAGNOSIS ENGINE (SCORING & AUTO-FILL)
+     ========================================================================= */
+
+  window.setDiagnosisMode = function (mode) {
+    AppState.activeDiagnosisMode = mode;
+    const b1 = $("btnDiagMode1");
+    const b2 = $("btnDiagMode2");
+    const b3 = $("btnDiagMode3");
+
+    const p1 = $("panelDiagMatrix");
+    const p2 = $("panelDiagHybrid");
+    const p3 = $("panelDiagDirectory");
+
+    [b1, b2, b3].forEach((b) => {
+      if (b) b.className = "py-2 px-1 rounded-xl text-slate-600 font-medium transition text-center flex flex-col items-center";
+    });
+    [p1, p2, p3].forEach((p) => { if (p) p.classList.add("hidden"); });
+
+    if (mode === "SYMPTOMS") {
+      if (b1) b1.className = "py-2 px-1 rounded-xl bg-blue-600 text-white font-bold transition text-center flex flex-col items-center shadow-xs";
+      if (p1) p1.classList.remove("hidden");
+      window.applyMatrixFilters();
+    } else if (mode === "HYBRID") {
+      if (b2) b2.className = "py-2 px-1 rounded-xl bg-blue-600 text-white font-bold transition text-center flex flex-col items-center shadow-xs";
+      if (p2) p2.classList.remove("hidden");
+      window.handleAppSearch();
+    } else if (mode === "DIRECTORY") {
+      if (b3) b3.className = "py-2 px-1 rounded-xl bg-blue-600 text-white font-bold transition text-center flex flex-col items-center shadow-xs";
+      if (p3) p3.classList.remove("hidden");
+      renderDiseaseResults(CLINICAL_DISEASES);
+    }
+  };
+
+  window.toggleMatrixParam = function (type, val, btn) {
+    if (type === "temp") {
+      if (AppState.matrixState.temp === val) {
+        AppState.matrixState.temp = null;
+        if (btn) btn.classList.remove("chip-active");
+      } else {
+        AppState.matrixState.temp = val;
+        document.querySelectorAll("#panelDiagMatrix .m-chip").forEach((c) => c.classList.remove("chip-active"));
+        if (btn) btn.classList.add("chip-active");
+      }
+    }
+    window.applyMatrixFilters();
+  };
+
+  window.toggleSecSymptom = function (sympKey, btn) {
+    const list = AppState.matrixState.secondary;
+    const idx = list.indexOf(sympKey);
+    if (idx > -1) {
+      list.splice(idx, 1);
+      if (btn) btn.classList.remove("chip-active");
+    } else {
+      list.push(sympKey);
+      if (btn) btn.classList.add("chip-active");
+    }
+    window.applyMatrixFilters();
+  };
+
+  window.resetSymptomMatrix = function () {
+    AppState.matrixState.temp = null;
+    AppState.matrixState.eyes = null;
+    AppState.matrixState.urine = null;
+    AppState.matrixState.dung = null;
+    AppState.matrixState.cardinal = "ALL";
+    AppState.matrixState.secondary = [];
+
+    const sel = $("selCardinalSign");
+    if (sel) sel.value = "ALL";
+    document.querySelectorAll("#panelDiagMatrix .m-chip, #secSymptomChips .s-chip").forEach((c) => {
+      c.classList.remove("chip-active");
+    });
+    window.applyMatrixFilters();
+  };
+
+  /**
+   * 3-Way Weighted Diagnosis Scoring Algorithm:
+   * Cardinal Sign: 40%
+   * Temperature: 20%
+   * Eyes / Mucous Membrane: 15%
+   * Urine Sign: 15%
+   * Dung / Feces: 10%
+   */
+  window.applyMatrixFilters = function () {
+    const sel = $("selCardinalSign");
+    AppState.matrixState.cardinal = sel ? sel.value : "ALL";
+
+    const scored = CLINICAL_DISEASES.map((dis) => {
+      let probability = 10; // Baseline clinical probability
+
+      // 1. Cardinal Symptom (40% Weight)
+      if (AppState.matrixState.cardinal !== "ALL") {
+        if (dis.cardinal === AppState.matrixState.cardinal) {
+          probability += 40;
+        } else {
+          probability -= 15;
+        }
+      }
+
+      // 2. Temperature (20% Weight)
+      if (AppState.matrixState.temp) {
+        if (dis.temp === AppState.matrixState.temp) {
+          probability += 20;
+        } else {
+          probability -= 10;
+        }
+      }
+
+      // 3. Eyes / Mucosa (15% Weight)
+      if (AppState.matrixState.eyes && dis.eyes) {
+        if (dis.eyes === AppState.matrixState.eyes) probability += 15;
+      }
+
+      // 4. Urine (15% Weight)
+      if (AppState.matrixState.urine && dis.urine) {
+        if (dis.urine === AppState.matrixState.urine) probability += 15;
+      }
+
+      // 5. Dung / Feces (10% Weight)
+      if (AppState.matrixState.dung && dis.dung) {
+        if (dis.dung === AppState.matrixState.dung) probability += 10;
+      }
+
+      // Secondary symptom chips contribution
+      if (AppState.matrixState.secondary.length > 0) {
+        probability += Math.min(20, AppState.matrixState.secondary.length * 4);
+      }
+
+      // Clamping limits
+      if (probability > 98) probability = 98;
+      if (probability < 5) probability = 5;
+
+      return { ...dis, probability: Math.round(probability) };
+    });
+
+    scored.sort((a, b) => b.probability - a.probability);
+
+    const countBadge = $("matchCountBadge");
+    if (countBadge) countBadge.innerText = `${scored.length} रोग विश्लेषित`;
+
+    const scoreText = $("matchScoreText");
     if (scoreText) {
-      scoreText.innerHTML = `लक्षण विश्लेषण पूर्ण ➔ <strong>${filtered[0]?.name || "रोग"}</strong> की सर्वाधिक संभावना`;
+      if (AppState.matrixState.cardinal !== "ALL" || AppState.matrixState.temp !== null) {
+        scoreText.innerHTML = `शीर्ष संभावना: <strong class="text-blue-700">${scored[0].nameHindi.split("(")[0]} (${scored[0].probability}%)</strong>`;
+      } else {
+        scoreText.innerText = "लक्षण चुनें ➔ वेटेड क्लिनिकल संभावना (%) स्वतः गणना होगी";
+      }
     }
-  } else if (appState.diagnosisMode === "DIRECTORY") {
-    if (appState.selectedTag === "ALL") {
-      filtered = allDiseases;
-    } else {
-      filtered = allDiseases.filter((d) => d.type === appState.selectedTag);
-    }
-  } else {
-    // Hybrid Search Mode
-    const query = (document.getElementById("unifiedSearchInput")?.value || "").toLowerCase().trim();
+
+    renderDiseaseResults(scored);
+  };
+
+  window.handleAppSearch = function () {
+    const input = $("unifiedSearchInput");
+    const query = (input ? input.value : "").trim().toLowerCase();
     if (!query) {
-      filtered = allDiseases;
+      renderDiseaseResults(CLINICAL_DISEASES);
+      return;
+    }
+    const filtered = CLINICAL_DISEASES.filter((d) => {
+      return (
+        d.nameHindi.toLowerCase().includes(query) ||
+        d.desc.toLowerCase().includes(query) ||
+        d.keywords.some((k) => k.toLowerCase().includes(query))
+      );
+    });
+    renderDiseaseResults(filtered);
+  };
+
+  window.filterByTag = function (tag, btn) {
+    document.querySelectorAll("#panelDiagDirectory .q-chip").forEach((c) => {
+      c.className = "q-chip px-3.5 py-1.5 rounded-xl bg-slate-100 text-slate-700 font-medium shrink-0";
+    });
+    if (btn) btn.className = "q-chip px-3.5 py-1.5 rounded-xl bg-blue-600 text-white font-bold shrink-0";
+
+    if (tag === "ALL") {
+      renderDiseaseResults(CLINICAL_DISEASES);
     } else {
-      filtered = allDiseases.filter((d) => {
-        return (
-          d.name.toLowerCase().includes(query) ||
-          d.symptoms.toLowerCase().includes(query) ||
-          (d.doctorRx && d.doctorRx.toLowerCase().includes(query)) ||
-          (d.farmerDesiRx && d.farmerDesiRx.toLowerCase().includes(query))
-        );
+      renderDiseaseResults(CLINICAL_DISEASES.filter((d) => d.category === tag));
+    }
+  };
+
+  function renderDiseaseResults(diseases) {
+    const container = $("diseaseSearchResults");
+    if (!container) return;
+
+    if (!diseases || diseases.length === 0) {
+      container.innerHTML = `
+        <div class="bg-white border border-slate-200 rounded-3xl p-8 text-center text-slate-500 space-y-2">
+          <span class="text-3xl block">🔍</span>
+          <p class="font-bold">कोई रोग मेल नहीं खाया</p>
+          <p class="text-xs">कृपया अन्य लक्षण चुनें या त्वरित खोज में अन्य शब्द लिखें।</p>
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = diseases.map((d) => {
+      const prob = d.probability || null;
+      const probBar = prob ? `
+        <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden mt-1.5 border border-slate-200">
+          <div class="bg-gradient-to-r from-blue-500 to-indigo-600 h-2.5 rounded-full" style="width: ${prob}%"></div>
+        </div>
+      ` : "";
+
+      const treatmentContent = (AppState.currentRole === "DOCTOR") ? `
+        <div class="bg-blue-50/70 border border-blue-200 rounded-2xl p-3.5 space-y-2 text-xs">
+          <div class="flex items-center justify-between">
+            <span class="font-black text-blue-900 flex items-center gap-1">
+              <span>💉</span> 5-स्तरीय एलोपैथिक Rx (Doctor Only):
+            </span>
+            <button onclick="window.autoFillOPD('${d.id}')" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-2.5 py-1 rounded-xl text-[11px] shadow-xs transition">
+              ⚡ Auto-Fill Rx
+            </button>
+          </div>
+          <pre class="whitespace-pre-wrap font-mono text-[11px] text-slate-800 leading-relaxed">${d.doctorRx}</pre>
+        </div>
+      ` : `
+        <div class="bg-emerald-50/70 border border-emerald-200 rounded-2xl p-3.5 space-y-1.5 text-xs text-emerald-950">
+          <span class="font-black text-emerald-900 flex items-center gap-1">
+            <span>🌿</span> पशुपालक के लिए तुरंत देसी व घरेलू उपचार:
+          </span>
+          <p class="leading-relaxed text-slate-700">${d.farmerRemedy}</p>
+        </div>
+      `;
+
+      return `
+        <div class="bg-white border border-slate-200 rounded-3xl p-4 sm:p-5 shadow-xs space-y-3 transition hover:border-slate-300">
+          <div class="flex items-start justify-between gap-2">
+            <div>
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded-md ${
+                d.category === 'BACTERIAL' ? 'bg-amber-100 text-amber-800' :
+                d.category === 'VIRAL' ? 'bg-rose-100 text-rose-800' :
+                d.category === 'PROTOZOAL' ? 'bg-purple-100 text-purple-800' : 'bg-emerald-100 text-emerald-800'
+              }">
+                ${d.category}
+              </span>
+              <h3 class="text-sm sm:text-base font-black text-slate-900 mt-1">${d.nameHindi}</h3>
+            </div>
+            ${prob ? `<span class="text-xs font-black px-2.5 py-1 rounded-xl bg-blue-50 text-blue-700 border border-blue-200 shrink-0">${prob}% संभावना</span>` : ''}
+          </div>
+
+          <p class="text-xs text-slate-600 leading-relaxed">${d.desc}</p>
+          ${probBar}
+          ${treatmentContent}
+        </div>
+      `;
+    }).join("");
+  }
+
+  /**
+   * Auto-Fills Diagnosis & Rx into OPD Slip with Pregnancy Red Alert validation
+   */
+  window.autoFillOPD = function (diseaseId) {
+    const disease = CLINICAL_DISEASES.find((d) => d.id === diseaseId);
+    if (!disease) return;
+
+    const pregInput = $("opdPregnancy");
+    const isPregnant = pregInput && pregInput.value.includes("गाभिन");
+
+    if ($("opdDiagnosis")) $("opdDiagnosis").value = disease.nameHindi.split("(")[0].trim();
+    if ($("opdMedicine")) $("opdMedicine").value = disease.doctorRx;
+
+    window.switchTab("rx");
+
+    // Pregnancy Red Alert Check
+    if (isPregnant && disease.contraindicatedInPregnancy && disease.contraindicatedInPregnancy.length > 0) {
+      alert(`🚨 PREGNANCY RED ALERT (गाभिन पशु चेतावनी):\nइस रोग के उपचार में प्रयुक्त दवा (${disease.contraindicatedInPregnancy.join(", ")}) गाभिन पशु के लिए असुरक्षित है और गर्भपात (Abortion) करा सकती है!\n\nसुरक्षित विकल्प: ${disease.safeAlternative || "Isoflupredone / सुरक्षित एंटीबायोटिक का चुनाव करें।"}`);
+    } else {
+      alert(`'${disease.nameHindi.split("(")[0].trim()}' की Rx ओपीडी पर्ची में भर दी गई है!`);
+    }
+  };
+
+  /* =========================================================================
+     7. DIGITAL OPD PRESCRIPTIONS, PRINTING & GPS
+     ========================================================================= */
+
+  function getSavedOPDCases() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEYS.OPD);
+      return raw ? JSON.parse(raw) : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  window.calculateDue = function () {
+    const total = parseFloat($("opdTotalFee") ? $("opdTotalFee").value : 0) || 0;
+    const paid = parseFloat($("opdPaidFee") ? $("opdPaidFee").value : 0) || 0;
+    const due = Math.max(0, total - paid);
+    if ($("opdDueFee")) $("opdDueFee").value = due;
+  };
+
+  window.captureGPSLocation = function () {
+    const gpsInput = $("opdGPS");
+    const btn = $("btnGPS");
+    if ("geolocation" in navigator) {
+      if (btn) btn.innerText = "⏳...";
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          if (gpsInput) gpsInput.value = `${pos.coords.latitude.toFixed(5)}, ${pos.coords.longitude.toFixed(5)}`;
+          if (btn) btn.innerText = "✅ GPS";
+        },
+        () => {
+          if (gpsInput) gpsInput.value = "GPS अनुमति नहीं";
+          if (btn) btn.innerText = "📍 GPS";
+        },
+        { timeout: 8000 }
+      );
+    } else {
+      if (gpsInput) gpsInput.value = "GPS असमर्थ";
+    }
+  };
+
+  window.clearRxField = function () {
+    if ($("opdMedicine")) $("opdMedicine").value = "";
+  };
+
+  window.dispatchWhatsAppRx = function () {
+    const farmerName = $("opdFarmerName") ? $("opdFarmerName").value.trim() : "";
+    const phone = $("opdFarmerPhone") ? $("opdFarmerPhone").value.trim() : "";
+    const village = $("opdVillage") ? $("opdVillage").value.trim() || "-" : "-";
+    const animal = $("opdAnimal") ? $("opdAnimal").value : "-";
+    const tag = $("opdTag") ? $("opdTag").value.trim() || "-" : "-";
+    const pregnancy = $("opdPregnancy") ? $("opdPregnancy").value : "-";
+    const diag = $("opdDiagnosis") ? $("opdDiagnosis").value.trim() : "";
+    const med = $("opdMedicine") ? $("opdMedicine").value.trim() : "";
+    const total = $("opdTotalFee") ? $("opdTotalFee").value || "0" : "0";
+    const paid = $("opdPaidFee") ? $("opdPaidFee").value || "0" : "0";
+    const due = $("opdDueFee") ? $("opdDueFee").value || "0" : "0";
+
+    if (!farmerName || !phone || !diag) {
+      alert("कृपया अनिवार्य जानकारी भरें: किसान का नाम, मोबाइल नंबर और निदान!");
+      return;
+    }
+    if (phone.length < 10) {
+      alert("कृपया वैध 10 अंकों का मोबाइल नंबर दर्ज करें!");
+      return;
+    }
+
+    // Pregnancy check on Rx dispatch
+    if (pregnancy.includes("गाभिन") && med.toLowerCase().includes("dexa")) {
+      if (!confirm("⚠️ चेतावनी: Rx में Dexamethasone सम्मिलित है जो गाभिन पशु के लिए घातक हो सकता है। क्या आप फिर भी पर्ची भेजना चाहते हैं?")) {
+        return;
+      }
+    }
+
+    window.saveOfflineCaseDirectly();
+
+    const msg =
+`🩺 *वेटरनरी डिजिटल ओपीडी पर्ची (OPD Slip)*
+━━━━━━━━━━━━━━━━━━━━
+👨‍🌾 *किसान:* ${farmerName}
+📱 *मोबाइल:* ${phone}
+🏡 *गाँव:* ${village}
+🐄 *पशु:* ${animal} (टैग: ${tag})
+🧬 *स्थिति:* ${pregnancy}
+━━━━━━━━━━━━━━━━━━━━
+🔬 *रोग निदान (Diagnosis):*
+👉 *${diag}*
+
+💊 *उपचार व सुझाई गई दवाएं (Rx):*
+${med}
+━━━━━━━━━━━━━━━━━━━━
+💰 *फीस विवरण:*
+• कुल फीस: ₹${total}
+• जमा राशि: ₹${paid}
+• बकाया राशि: ₹${due}
+━━━━━━━━━━━━━━━━━━━━
+👨‍⚕️ *जारीकर्ता:* अधिकृत पशु चिकित्सक
+⚠️ *निर्देश:* दवाएं केवल अधिकृत डॉक्टर के परामर्श पर ही दें।
+_Generated via ${AppConfig.appTitle}_`;
+
+    const cleanPhone = phone.startsWith("91") ? phone : `91${phone}`;
+    window.open(`https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(msg)}`, "_blank");
+  };
+
+  window.saveOfflineCaseDirectly = function () {
+    const farmerName = $("opdFarmerName") ? $("opdFarmerName").value.trim() : "";
+    const phone = $("opdFarmerPhone") ? $("opdFarmerPhone").value.trim() : "";
+    const diag = $("opdDiagnosis") ? $("opdDiagnosis").value.trim() : "";
+
+    if (!farmerName) {
+      alert("कृपया कम से कम किसान का नाम दर्ज करें!");
+      return;
+    }
+
+    const cases = getSavedOPDCases();
+    const newCase = {
+      id: Date.now(),
+      date: new Date().toLocaleDateString("hi-IN"),
+      farmer: farmerName,
+      phone: phone,
+      animal: $("opdAnimal") ? $("opdAnimal").value : "",
+      diagnosis: diag,
+      due: parseFloat($("opdDueFee") ? $("opdDueFee").value : 0) || 0,
+      paid: parseFloat($("opdPaidFee") ? $("opdPaidFee").value : 0) || 0
+    };
+
+    cases.unshift(newCase);
+    localStorage.setItem(STORAGE_KEYS.OPD, JSON.stringify(cases));
+
+    // Auto-update Khata if due exists
+    if (newCase.due > 0) {
+      const khata = getSavedKhata();
+      khata.unshift({
+        id: Date.now() + 1,
+        farmer: farmerName,
+        phone: phone,
+        amount: newCase.due,
+        type: "DUE",
+        note: `OPD उधारी: ${diag}`,
+        date: new Date().toISOString().split("T")[0]
+      });
+      localStorage.setItem(STORAGE_KEYS.KHATA, JSON.stringify(khata));
+      window.renderKhataList();
+    }
+
+    renderSavedOPDList();
+  };
+
+  function renderSavedOPDList() {
+    const container = $("recordsList");
+    const badge = $("recordTotalBadge");
+    const cases = getSavedOPDCases();
+
+    if (badge) badge.innerText = `${cases.length} केस सुरक्षित`;
+    if (!container) return;
+
+    if (cases.length === 0) {
+      container.innerHTML = `<p class="text-xs text-slate-400 text-center py-4">कोई केस रिकॉर्ड सुरक्षित नहीं है।</p>`;
+      return;
+    }
+
+    container.innerHTML = cases.map((r) => `
+      <div class="bg-white border border-slate-200 rounded-2xl p-3 flex items-center justify-between text-xs">
+        <div>
+          <strong class="text-slate-900 block">${r.farmer} (${r.phone || "बिना नंबर"})</strong>
+          <span class="text-slate-500">${r.date} • ${r.animal} • ${r.diagnosis}</span>
+        </div>
+        <div class="text-right">
+          ${r.due > 0 ? `<span class="text-rose-600 font-bold block">बकाया: ₹${r.due}</span>` : `<span class="text-emerald-600 font-bold block">पूर्ण चुकता</span>`}
+          <button onclick="window.deleteOPDCase(${r.id})" class="text-[10px] text-slate-400 hover:text-rose-600 underline">हटाएं</button>
+        </div>
+      </div>
+    `).join("");
+  }
+
+  window.deleteOPDCase = function (id) {
+    if (confirm("क्या आप यह केस रिकॉर्ड हटाना चाहते हैं?")) {
+      let cases = getSavedOPDCases();
+      cases = cases.filter((r) => r.id !== id);
+      localStorage.setItem(STORAGE_KEYS.OPD, JSON.stringify(cases));
+      renderSavedOPDList();
+    }
+  };
+
+  window.handleRecordSearch = function () {
+    const input = $("searchRecordsInput");
+    const query = (input ? input.value : "").toLowerCase();
+    const cases = getSavedOPDCases();
+    const filtered = cases.filter((r) =>
+      r.farmer.toLowerCase().includes(query) ||
+      (r.phone && r.phone.includes(query)) ||
+      r.diagnosis.toLowerCase().includes(query)
+    );
+    const container = $("recordsList");
+    if (!container) return;
+
+    if (filtered.length === 0) {
+      container.innerHTML = `<p class="text-xs text-slate-400 text-center py-4">खोज अनुसार कोई केस नहीं मिला।</p>`;
+      return;
+    }
+
+    container.innerHTML = filtered.map((r) => `
+      <div class="bg-white border border-slate-200 rounded-2xl p-3 flex items-center justify-between text-xs">
+        <div>
+          <strong class="text-slate-900 block">${r.farmer} (${r.phone || "बिना नंबर"})</strong>
+          <span class="text-slate-500">${r.date} • ${r.animal} • ${r.diagnosis}</span>
+        </div>
+        <div class="text-right">
+          ${r.due > 0 ? `<span class="text-rose-600 font-bold block">बकाया: ₹${r.due}</span>` : `<span class="text-emerald-600 font-bold block">पूर्ण चुकता</span>`}
+        </div>
+      </div>
+    `).join("");
+  };
+
+  window.printCurrentOPDSlip = function () {
+    const farmerName = $("opdFarmerName") ? $("opdFarmerName").value || "-" : "-";
+    const phone = $("opdFarmerPhone") ? $("opdFarmerPhone").value || "-" : "-";
+    const village = $("opdVillage") ? $("opdVillage").value || "-" : "-";
+    const animal = $("opdAnimal") ? $("opdAnimal").value || "-" : "-";
+    const diag = $("opdDiagnosis") ? $("opdDiagnosis").value || "-" : "-";
+    const med = $("opdMedicine") ? $("opdMedicine").value || "-" : "-";
+    const total = $("opdTotalFee") ? $("opdTotalFee").value || "0" : "0";
+    const paid = $("opdPaidFee") ? $("opdPaidFee").value || "0" : "0";
+    const due = $("opdDueFee") ? $("opdDueFee").value || "0" : "0";
+
+    const printArea = $("printableSlipArea");
+    if (!printArea) return;
+
+    printArea.innerHTML = `
+      <div style="border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 12px; text-align: center;">
+        <h2 style="font-size: 18px; font-weight: bold; margin: 0;">${AppConfig.appTitle.toUpperCase()} VETERINARY CLINICAL PRESCRIPTION</h2>
+        <p style="font-size: 11px; margin: 2px 0;">${AppConfig.appTagline}</p>
+        <p style="font-size: 10px; margin: 0;">दिनांक: ${new Date().toLocaleString("hi-IN")}</p>
+      </div>
+      <table style="width: 100%; font-size: 12px; margin-bottom: 12px; border-collapse: collapse;">
+        <tr>
+          <td><strong>किसान:</strong> ${farmerName}</td>
+          <td><strong>मोबाइल:</strong> ${phone}</td>
+        </tr>
+        <tr>
+          <td><strong>गाँव:</strong> ${village}</td>
+          <td><strong>पशु:</strong> ${animal}</td>
+        </tr>
+      </table>
+      <div style="border-top: 1px dashed #666; border-bottom: 1px dashed #666; padding: 8px 0; margin-bottom: 12px;">
+        <strong style="font-size: 13px;">निदान (Diagnosis):</strong> ${diag}
+      </div>
+      <div style="margin-bottom: 15px;">
+        <strong style="font-size: 13px;">Rx - सुझाई गई दवाएं व इंजेक्शन:</strong>
+        <pre style="font-family: monospace; font-size: 11px; white-space: pre-wrap; margin-top: 5px;">${med}</pre>
+      </div>
+      <table style="width: 100%; font-size: 12px; border-top: 1px solid #000; padding-top: 8px;">
+        <tr>
+          <td>कुल फीस: ₹${total}</td>
+          <td>जमा: ₹${paid}</td>
+          <td><strong>बकाया: ₹${due}</strong></td>
+        </tr>
+      </table>
+      <div style="margin-top: 30px; text-align: right;">
+        <p style="margin: 0; font-size: 11px;">हस्ताक्षर पशु चिकित्सक</p>
+      </div>
+    `;
+    window.print();
+  };
+
+  /* =========================================================================
+     8. PASHUPALAK KHATA BAHI (LEDGER) & WHATSAPP TAGADA
+     ========================================================================= */
+
+  function getSavedKhata() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEYS.KHATA);
+      return raw ? JSON.parse(raw) : [
+        { id: 101, farmer: "रामपाल शर्मा", phone: "9876501234", amount: 450, type: "DUE", note: "गलघोंटू उपचार व इंजेक्शन", date: "2025-05-10" },
+        { id: 102, farmer: "सुरेश जांगड़ा", phone: "9812345678", amount: 800, type: "PAID", note: "मिल्क फीवर ड्रिप + फीस", date: "2025-05-12" }
+      ];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  window.renderKhataList = function () {
+    const container = $("finDueList");
+    const input = $("searchKhataInput");
+    const search = (input ? input.value : "").toLowerCase();
+    const khata = getSavedKhata();
+
+    let totalCredit = 0;
+    let totalDue = 0;
+
+    khata.forEach((k) => {
+      const amt = Number(k.amount) || 0;
+      if (k.type === "PAID") totalCredit += amt;
+      if (k.type === "DUE") totalDue += amt;
+    });
+
+    if ($("finCredit")) $("finCredit").innerText = `₹${totalCredit.toLocaleString("en-IN")}`;
+    if ($("finDebit")) $("finDebit").innerText = `₹${totalDue.toLocaleString("en-IN")}`;
+
+    if (!container) return;
+
+    const filtered = khata.filter((k) =>
+      k.farmer.toLowerCase().includes(search) ||
+      k.phone.includes(search) ||
+      k.note.toLowerCase().includes(search)
+    );
+
+    if (filtered.length === 0) {
+      container.innerHTML = `<p class="text-xs text-slate-400 text-center py-4">खाता बही में कोई रिकॉर्ड नहीं मिला।</p>`;
+      return;
+    }
+
+    container.innerHTML = filtered.map((k) => {
+      const isDue = k.type === "DUE";
+      return `
+        <div class="bg-white border border-slate-200 rounded-2xl p-3 flex items-center justify-between text-xs hover:border-slate-300 transition">
+          <div class="space-y-0.5">
+            <strong class="text-slate-900 block">${k.farmer} (${k.phone})</strong>
+            <p class="text-slate-500 text-[11px]">${k.note} • ${k.date}</p>
+          </div>
+          <div class="text-right space-y-1">
+            <span class="font-black text-sm block ${isDue ? 'text-rose-600' : 'text-emerald-600'}">
+              ${isDue ? 'बकाया: ₹' : 'जमा: ₹'}${k.amount}
+            </span>
+            ${isDue ? `
+              <button onclick="window.dispatchTagadaWhatsApp('${k.farmer}', '${k.phone}', ${k.amount})" class="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-300 font-bold px-2 py-0.5 rounded-lg text-[10px] flex items-center gap-1 transition">
+                <span>💬 तगादा</span>
+              </button>
+            ` : ""}
+          </div>
+        </div>
+      `;
+    }).join("");
+  };
+
+  window.dispatchTagadaWhatsApp = function (name, phone, amount) {
+    if (!phone || phone.length < 10) {
+      alert("वैध फोन नंबर उपलब्ध नहीं है!");
+      return;
+    }
+    const adminPhone = AppConfig.adminWhatsApp || DEFAULT_CONFIG.adminWhatsApp;
+    const msg = `नमस्ते श्री ${name} जी! ${AppConfig.appTitle} के खाते के अनुसार आपकी कुल बकाया राशि ₹${amount} है। कृपया यथाशीघ्र भुगतान करें। संपर्क/सहायता नंबर: ${adminPhone}। धन्यवाद!`;
+    const clean = phone.startsWith("91") ? phone : `91${phone}`;
+    window.open(`https://api.whatsapp.com/send?phone=${clean}&text=${encodeURIComponent(msg)}`, "_blank");
+  };
+
+  window.openNewKhataModal = function () {
+    const modal = $("modalNewKhata");
+    if (modal) modal.style.display = "flex";
+  };
+
+  window.closeNewKhataModal = function () {
+    const modal = $("modalNewKhata");
+    if (modal) modal.style.display = "none";
+  };
+
+  window.saveNewKhataRecord = function () {
+    const farmer = $("khataFarmerName") ? $("khataFarmerName").value.trim() : "";
+    const phone = $("khataFarmerPhone") ? $("khataFarmerPhone").value.trim() : "";
+    const amount = parseFloat($("khataAmount") ? $("khataAmount").value : 0) || 0;
+    const type = $("khataType") ? $("khataType").value : "DUE";
+    const note = $("khataNote") ? $("khataNote").value.trim() || "-" : "-";
+
+    if (!farmer || !phone || amount <= 0) {
+      alert("कृपया किसान का नाम, फोन और वैध राशि दर्ज करें!");
+      return;
+    }
+
+    const khata = getSavedKhata();
+    khata.unshift({
+      id: Date.now(),
+      farmer,
+      phone,
+      amount,
+      type,
+      note,
+      date: new Date().toISOString().split("T")[0]
+    });
+
+    localStorage.setItem(STORAGE_KEYS.KHATA, JSON.stringify(khata));
+    window.closeNewKhataModal();
+    window.renderKhataList();
+  };
+
+  /* =========================================================================
+     9. DRUG & SEMEN STRAW STOCK INVENTORY ENGINE
+     ========================================================================= */
+
+  function getSavedInventory() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEYS.INVENTORY);
+      return raw ? JSON.parse(raw) : [
+        { id: "INV-1", name: "Inj. Intacef Tazo (3375mg)", category: "INJECTION", stock: 8, minAlert: 3, unit: "vials" },
+        { id: "INV-2", name: "Inj. Melonex Plus (100ml)", category: "INJECTION", stock: 2, minAlert: 3, unit: "bottles" },
+        { id: "INV-3", name: "Murrah Bull Semen Straw (A-Grade)", category: "SEMEN", stock: 24, minAlert: 5, unit: "straws" },
+        { id: "INV-4", name: "HF Cross Cow Semen Straw", category: "SEMEN", stock: 3, minAlert: 5, unit: "straws" },
+        { id: "INV-5", name: "Bolus Anistamin", category: "BOLUS", stock: 12, minAlert: 4, unit: "strips" },
+        { id: "INV-6", name: "Utrovet Liquid (1 Litre)", category: "TONIC", stock: 1, minAlert: 2, unit: "bottles" }
+      ];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  let activeInventoryCategory = "ALL";
+
+  window.filterInventoryCategory = function (cat, btn) {
+    activeInventoryCategory = cat;
+    document.querySelectorAll("#viewInventory .inv-chip").forEach((c) => {
+      c.className = "inv-chip px-3 py-1 rounded-xl bg-slate-100 text-slate-700 font-medium shrink-0";
+    });
+    if (btn) btn.className = "inv-chip px-3 py-1 rounded-xl bg-blue-600 text-white font-bold shrink-0";
+    window.renderInventoryList();
+  };
+
+  window.renderInventoryList = function () {
+    const container = $("inventoryItemsContainer");
+    const badge = $("lowStockAlertBadge");
+    const inventory = getSavedInventory();
+
+    let lowCount = 0;
+    const filtered = (activeInventoryCategory === "ALL")
+      ? inventory
+      : inventory.filter((i) => i.category === activeInventoryCategory);
+
+    inventory.forEach((i) => {
+      if (Number(i.stock) <= Number(i.minAlert)) lowCount++;
+    });
+
+    if (badge) {
+      if (lowCount > 0) {
+        badge.classList.remove("hidden");
+        badge.innerText = `⚠️ ${lowCount} दवाएं/स्ट्रॉ न्यूनतम स्टॉक से कम!`;
+      } else {
+        badge.classList.add("hidden");
+      }
+    }
+
+    if (!container) return;
+
+    if (filtered.length === 0) {
+      container.innerHTML = `<p class="text-xs text-slate-400 text-center py-4">इस श्रेणी में कोई स्टॉक आइटम नहीं है।</p>`;
+      return;
+    }
+
+    container.innerHTML = filtered.map((item) => {
+      const isLow = Number(item.stock) <= Number(item.minAlert);
+      return `
+        <div class="bg-white border ${isLow ? 'border-rose-300 bg-rose-50/20' : 'border-slate-200'} rounded-2xl p-3 flex items-center justify-between text-xs transition">
+          <div>
+            <span class="text-[10px] font-bold px-2 py-0.2 rounded-md bg-slate-100 text-slate-700">${item.category}</span>
+            <strong class="text-slate-900 block mt-0.5 text-xs sm:text-sm">${item.name}</strong>
+            <span class="text-[11px] ${isLow ? 'text-rose-600 font-bold' : 'text-slate-500'}">
+              अलर्ट सीमा: ${item.minAlert} ${item.unit} ${isLow ? '• ⚠️ स्टॉक कम है!' : ''}
+            </span>
+          </div>
+          <div class="flex items-center gap-2">
+            <button onclick="window.decreaseStock('${item.id}')" class="w-7 h-7 bg-slate-100 hover:bg-slate-200 rounded-lg font-black text-slate-700 text-sm flex items-center justify-center transition">
+              -
+            </button>
+            <span class="font-mono font-black text-sm sm:text-base w-8 text-center ${isLow ? 'text-rose-600' : 'text-slate-800'}">
+              ${item.stock}
+            </span>
+            <button onclick="window.increaseStock('${item.id}')" class="w-7 h-7 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg font-black text-sm flex items-center justify-center transition">
+              +
+            </button>
+          </div>
+        </div>
+      `;
+    }).join("");
+  };
+
+  window.increaseStock = function (itemId) {
+    window.updateStock(itemId, 1);
+  };
+
+  window.decreaseStock = function (itemId) {
+    window.updateStock(itemId, -1);
+  };
+
+  window.updateStock = function (itemId, delta) {
+    const inventory = getSavedInventory();
+    const itm = inventory.find((i) => i.id === itemId);
+    if (itm) {
+      itm.stock = Math.max(0, Number(itm.stock) + delta);
+      localStorage.setItem(STORAGE_KEYS.INVENTORY, JSON.stringify(inventory));
+      window.renderInventoryList();
+    }
+  };
+
+  window.openNewInventoryItemModal = function () {
+    const modal = $("modalNewInventory");
+    if (modal) modal.style.display = "flex";
+  };
+
+  window.closeNewInventoryModal = function () {
+    const modal = $("modalNewInventory");
+    if (modal) modal.style.display = "none";
+  };
+
+  window.saveNewInventoryItem = function () {
+    const name = $("invItemName") ? $("invItemName").value.trim() : "";
+    const cat = $("invItemCategory") ? $("invItemCategory").value : "INJECTION";
+    const stock = parseInt($("invItemStock") ? $("invItemStock").value : 0, 10) || 0;
+    const minAlert = parseInt($("invItemMinAlert") ? $("invItemMinAlert").value : 3, 10) || 3;
+    const unit = $("invItemUnit") ? $("invItemUnit").value.trim() || "vials" : "vials";
+
+    if (!name) {
+      alert("कृपया दवा अथवा सीमन का नाम दर्ज करें!");
+      return;
+    }
+
+    const inventory = getSavedInventory();
+    inventory.push({
+      id: "INV-" + Date.now(),
+      name,
+      category: cat,
+      stock,
+      minAlert,
+      unit
+    });
+
+    localStorage.setItem(STORAGE_KEYS.INVENTORY, JSON.stringify(inventory));
+    window.closeNewInventoryModal();
+    window.renderInventoryList();
+  };
+
+  /* =========================================================================
+     10. DUAL-BANK PAYMENT GATEWAY & DYNAMIC QR ENGINE
+     ========================================================================= */
+
+  window.openPaymentModal = function () {
+    const modal = $("modalPremiumPayment");
+    if (modal) modal.style.display = "flex";
+    updateBankModalDisplay();
+  };
+  window.openPremiumPaymentModal = () => window.openPaymentModal();
+
+  window.closePaymentModal = function () {
+    const modal = $("modalPremiumPayment");
+    if (modal) modal.style.display = "none";
+  };
+  window.closePremiumPaymentModal = () => window.closePaymentModal();
+
+  window.selectPaymentPlan = function (plan) {
+    AppState.selectedPlan = plan;
+    const bMon = $("btnPlanMonthly");
+    const bAnn = $("btnPlanAnnual");
+
+    if (plan === "MONTHLY") {
+      if (bMon) bMon.className = "py-2 rounded-xl bg-blue-600 text-white font-bold text-center transition";
+      if (bAnn) bAnn.className = "py-2 rounded-xl text-slate-700 font-medium text-center transition";
+    } else {
+      if (bAnn) bAnn.className = "py-2 rounded-xl bg-blue-600 text-white font-bold text-center transition";
+      if (bMon) bMon.className = "py-2 rounded-xl text-slate-700 font-medium text-center transition";
+    }
+    updateBankModalDisplay();
+  };
+
+  window.switchBankTab = function (bank) {
+    AppState.activeBank = bank;
+    const bSbi = $("btnTabSBI");
+    const bPnb = $("btnTabPNB");
+
+    if (bank === "SBI") {
+      if (bSbi) bSbi.className = "flex-1 py-2 font-bold bg-blue-50 text-blue-700 text-center transition";
+      if (bPnb) bPnb.className = "flex-1 py-2 font-medium bg-slate-50 text-slate-600 text-center transition";
+    } else {
+      if (bPnb) bPnb.className = "flex-1 py-2 font-bold bg-amber-50 text-amber-800 text-center transition";
+      if (bSbi) bSbi.className = "flex-1 py-2 font-medium bg-slate-50 text-slate-600 text-center transition";
+    }
+    updateBankModalDisplay();
+  };
+
+  function updateBankModalDisplay() {
+    const isSbi = AppState.activeBank === "SBI";
+    const bankData = isSbi ? AppConfig.sbi : AppConfig.pnb;
+    const upiId = bankData.upiId || (isSbi ? DEFAULT_CONFIG.sbi.upiId : DEFAULT_CONFIG.pnb.upiId);
+    const acct = bankData.acc || (isSbi ? DEFAULT_CONFIG.sbi.acc : DEFAULT_CONFIG.pnb.acc);
+    const ifsc = bankData.ifsc || (isSbi ? DEFAULT_CONFIG.sbi.ifsc : DEFAULT_CONFIG.pnb.ifsc);
+    const amount = AppState.selectedPlan === "MONTHLY" ? AppConfig.monthlyPrice : AppConfig.yearlyPrice;
+
+    if ($("dispUPIId")) $("dispUPIId").innerText = upiId;
+    if ($("dispAccountNumber")) $("dispAccountNumber").innerText = acct;
+    if ($("dispIFSC")) $("dispIFSC").innerText = ifsc;
+    if ($("directUPIAmount")) $("directUPIAmount").innerText = amount;
+
+    // NPCI compliant URI
+    const payeeClean = encodeURIComponent(AppConfig.payeeName);
+    const noteClean = encodeURIComponent(`Vetcare_${AppState.selectedPlan}`);
+    const upiUri = `upi://pay?pa=${upiId}&pn=${payeeClean}&am=${amount}&cu=INR&tn=${noteClean}`;
+
+    const upiLink = $("btnDirectUPILink");
+    if (upiLink) upiLink.href = upiUri;
+
+    const qrImg = $("dynamicQRImage");
+    if (qrImg) {
+      qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(upiUri)}`;
+    }
+  }
+
+  window.sendPaymentProofWhatsApp = function () {
+    const amount = AppState.selectedPlan === "MONTHLY" ? AppConfig.monthlyPrice : AppConfig.yearlyPrice;
+    const targetNumber = AppConfig.adminWhatsApp || DEFAULT_CONFIG.adminWhatsApp;
+    const msg = `नमस्ते एडमिन, मैंने Vetcare ${AppState.selectedPlan} प्लान (₹${amount}) का भुगतान बैंक (${AppState.activeBank}) द्वारा कर दिया है। कृपया संलग्न स्क्रीनशॉट देखकर प्रीमियम सक्रिय करें।`;
+    const clean = targetNumber.startsWith("91") ? targetNumber : `91${targetNumber}`;
+    window.open(`https://api.whatsapp.com/send?phone=${clean}&text=${encodeURIComponent(msg)}`, "_blank");
+  };
+
+  window.escalateToAdminWhatsApp = function () {
+    const targetNumber = AppConfig.adminWhatsApp || DEFAULT_CONFIG.adminWhatsApp;
+    const msg = `नमस्ते एडमिन, मुझे ${AppConfig.appTitle} ऐप में तकनीकी सहायता/मार्गदर्शन चाहिए।`;
+    const clean = targetNumber.startsWith("91") ? targetNumber : `91${targetNumber}`;
+    window.open(`https://api.whatsapp.com/send?phone=${clean}&text=${encodeURIComponent(msg)}`, "_blank");
+  };
+
+  /* =========================================================================
+     11. GEMINI AI VET CONSULTANT
+     ========================================================================= */
+
+  window.openAIKeyModal = function () {
+    const modal = $("modalAIKey");
+    const input = $("inputGeminiKey");
+    if (input) input.value = localStorage.getItem(STORAGE_KEYS.GEMINI_KEY) || "";
+    if (modal) modal.style.display = "flex";
+  };
+
+  window.closeAIKeyModal = function () {
+    const modal = $("modalAIKey");
+    if (modal) modal.style.display = "none";
+  };
+
+  window.saveGeminiKey = function () {
+    const input = $("inputGeminiKey");
+    const key = (input ? input.value : "").trim();
+    localStorage.setItem(STORAGE_KEYS.GEMINI_KEY, key);
+    window.closeAIKeyModal();
+    alert("Gemini AI API Key सुरक्षित कर ली गई है!");
+  };
+
+  window.sendCaseToAIConsultant = function () {
+    const diag = $("opdDiagnosis") ? $("opdDiagnosis").value : "";
+    const animal = $("opdAnimal") ? $("opdAnimal").value : "";
+    const preg = $("opdPregnancy") ? $("opdPregnancy").value : "";
+    const prompt = `पशु: ${animal}, प्रजनन स्थिति: ${preg}, क्लिनिकल निदान: ${diag}। कृपया इसके लिए मानक वेटरनरी उपचार प्रोटोकॉल, ड्रग इंटरेक्शन एवं सावधानियां हिंदी में विस्तार से बताएं।`;
+
+    if ($("aiInputPrompt")) $("aiInputPrompt").value = prompt;
+    window.switchTab("ai");
+    window.runAIConsultant();
+  };
+
+  window.runAIConsultant = async function () {
+    const input = $("aiInputPrompt");
+    const prompt = (input ? input.value : "").trim();
+    const out = $("aiOutputArea");
+    const btn = $("btnRunAI");
+    const key = localStorage.getItem(STORAGE_KEYS.GEMINI_KEY);
+
+    if (!prompt) {
+      alert("कृपया पशु के लक्षण व केस विवरण दर्ज करें!");
+      return;
+    }
+
+    if (out) {
+      out.classList.remove("hidden");
+      out.innerText = "⏳ AI वेटरनरी सर्जन विश्लेषण कर रहा है, कृपया प्रतीक्षा करें...";
+    }
+    if (btn) btn.disabled = true;
+
+    if (!key) {
+      setTimeout(() => {
+        if (out) {
+          out.innerHTML = `⚠️ <strong>Gemini API Key सेट नहीं है!</strong>\nकृपया 'AI Key' बटन पर क्लिक करके अपनी Google AI Studio API Key दर्ज करें।\n\n📌 <em>ऑफ़लाइन क्लिनिकल दिशानिर्देश:</em>\n1. डिहाइड्रेशन में तुरंत DNS/RL ड्रिप 2-3 लीटर दें।\n2. तापमान 104°F+ होने पर Melonex Plus और उपयुक्त एंटीबायोटिक दें।\n3. गाभिन पशुओं में कभी भी स्टेरॉयड (Dexamethasone) न लगाएं।`;
+        }
+        if (btn) btn.disabled = false;
+      }, 600);
+      return;
+    }
+
+    try {
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{
+            parts: [{
+              text: `You are an expert Veterinary Clinical Specialist. Provide concise, professional, evidence-based veterinary advice in Hindi:\n${prompt}`
+            }]
+          }]
+        })
+      });
+
+      const data = await response.json();
+      if (data.candidates && data.candidates[0].content && data.candidates[0].content.parts[0].text) {
+        if (out) out.innerText = data.candidates[0].content.parts[0].text;
+      } else {
+        if (out) out.innerText = "त्रुटि: AI से अपेक्षित उत्तर नहीं मिला। कृपया अपनी API Key जांचें।";
+      }
+    } catch (err) {
+      if (out) out.innerText = "कनेक्शन त्रुटि: " + err.message;
+    } finally {
+      if (btn) btn.disabled = false;
+    }
+  };
+
+  /* =========================================================================
+     12. BREEDING & FEED CALCULATOR MODULES
+     ========================================================================= */
+
+  function renderBreedingModule() {
+    const heatDiv = $("heatSignsContainer");
+    const disDiv = $("dischargeContainer");
+    const repList = $("repeatBreederList");
+
+    const heatSigns = [
+      { time: "0 से 6 घंटे (प्रारंभिक मद)", action: "पशु रंभाता है, बेचैन रहता है, दूध घटता है। (सीमन न करवाएं, बहुत जल्दी है)" },
+      { time: "6 से 18 घंटे (मध्यम मद - सर्वोत्तम समय ⭐)", action: "पशु खड़ा रहता है जब अन्य पशु चढ़े (Standing Heat)। कांच जैसा पारदर्शी तार। ➔ इस समय A.I. करवाने पर 90% गर्भधारण!" },
+      { time: "18 से 24 घंटे (अंतिम मद)", action: "मद शांत होने लगती है। यदि पहले A.I. नहीं हुई तो तुरंत डॉक्टर से करवाएं।" },
+      { time: "24 से 48 घंटे बाद", action: "योनि से हल्का रक्त स्राव। यह संकेत है कि मद चक्र समाप्त हो गया है।" }
+    ];
+
+    const discharge = [
+      { type: "शीशे जैसा पारदर्शी व खिंचने वाला तार", meaning: "उत्कृष्ट उर्वरता (Peak Heat)। तुरंत A.I. करवाएं।" },
+      { type: "सफेद, मटमैला या मवादयुक्त डिस्चार्ज", meaning: "गर्भाशय संक्रमण (Endometritis)। सीमन न करवाएं, पहले गर्भाशय की सफाई (I/U) करवाएं।" },
+      { type: "पतला पानी जैसा बिना तार का स्राव", meaning: "कमजोर मद (Weak Heat)। मिनरल मिक्सचर शुरू करें।" }
+    ];
+
+    const repeatBreeder = [
+      "सीमन डलवाने के 15-20 मिनट पहले 2.5 ml Inj. Receptal / Gynerich (Buserelin) I/M अवश्य लगवाएं।",
+      "लगातार 20 दिन तक 50 ग्राम Chelated Mineral Mixture (उदा. Agrimin Forte) दाने में दें।",
+      "गर्भाशय में मैला होने पर मद के समय 3 दिन तक Lixen / Metricare I/U डलवाएं।",
+      "प्राकृतिक गर्भाधान की जगह हमेशा प्रमाणित फ्रोजन वीर्य स्ट्रॉ (A.I.) का ही चुनाव करें।"
+    ];
+
+    if (heatDiv) {
+      heatDiv.innerHTML = heatSigns.map((h) => `
+        <div class="p-2.5 bg-slate-50 border border-slate-100 rounded-xl">
+          <strong class="text-rose-700 block">${h.time}</strong>
+          <span class="text-slate-600 text-[11px] leading-relaxed">${h.action}</span>
+        </div>
+      `).join("");
+    }
+
+    if (disDiv) {
+      disDiv.innerHTML = discharge.map((d) => `
+        <div class="p-2.5 bg-slate-50 border border-slate-100 rounded-xl">
+          <strong class="text-blue-700 block">${d.type}</strong>
+          <span class="text-slate-600 text-[11px] leading-relaxed">${d.meaning}</span>
+        </div>
+      `).join("");
+    }
+
+    if (repList) {
+      repList.innerHTML = repeatBreeder.map((r) => `<li class="leading-relaxed">${r}</li>`).join("");
+    }
+  }
+
+  window.calculateDailyRation = function () {
+    const weight = parseFloat($("feedWeight") ? $("feedWeight").value : 400) || 400;
+    const milk = parseFloat($("feedMilk") ? $("feedMilk").value : 10) || 0;
+
+    // Scientific Dairy Nutrition Formula:
+    const grain = (1.5 + milk * 0.4).toFixed(1);
+    const green = (weight * 0.05).toFixed(0);
+    const dry = (weight * 0.012).toFixed(1);
+
+    if ($("resFeedGrain")) $("resFeedGrain").innerText = `${grain} kg`;
+    if ($("resFeedGreen")) $("resFeedGreen").innerText = `${green} kg`;
+    if ($("resFeedDry")) $("resFeedDry").innerText = `${dry} kg`;
+
+    const card = $("rationResultCard");
+    if (card) card.classList.remove("hidden");
+  };
+
+  /* =========================================================================
+     13. BACKUP, RESTORE & DATA EXPORT ENGINE
+     ========================================================================= */
+
+  window.exportDataBackupJSON = function () {
+    const payload = {
+      config: AppConfig,
+      khata: getSavedKhata(),
+      inventory: getSavedInventory(),
+      opd: getSavedOPDCases(),
+      exportDate: new Date().toISOString()
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `Vetcare_Backup_${new Date().toISOString().split("T")[0]}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  window.clearDemoDataOnly = function () {
+    if (confirm("चेतावनी: क्या आप केवल टेस्ट खाता, ओपीडी व इन्वेंट्री डेटा हटाना चाहते हैं? मास्टर एडमिन सेटिंग्स सुरक्षित रहेंगी।")) {
+      localStorage.removeItem(STORAGE_KEYS.KHATA);
+      localStorage.removeItem(STORAGE_KEYS.INVENTORY);
+      localStorage.removeItem(STORAGE_KEYS.OPD);
+      window.renderKhataList();
+      window.renderInventoryList();
+      renderSavedOPDList();
+      alert("टेस्ट डेटा रीसेट कर दिया गया है!");
+    }
+  };
+
+  /* =========================================================================
+     14. PWA SERVICE WORKER REGISTRATION
+     ========================================================================= */
+  function registerServiceWorker() {
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("./sw.js")
+          .then((reg) => console.log("Vetcare PWA ServiceWorker Active:", reg.scope))
+          .catch((err) => console.log("Vetcare PWA ServiceWorker registration fallback:", err));
       });
     }
   }
 
-  if (countBadge) countBadge.innerText = `${filtered.length} रोग उपलब्ध`;
-  renderDiseaseCards(filtered, container);
-}
-
-function renderDiseaseCards(diseases, container) {
-  container.innerHTML = "";
-  const isDoctor = appState.currentRole === "DOCTOR";
-
-  if (diseases.length === 0) {
-    container.innerHTML = `
-      <div class="bg-white border border-slate-200 rounded-2xl p-6 text-center text-slate-500 text-xs">
-        कोई रोग रिकॉर्ड नहीं मिला। कृपया अन्य लक्षण या खोज शब्द दर्ज करें।
-      </div>
-    `;
-    return;
-  }
-
-  diseases.forEach((dis) => {
-    const card = document.createElement("div");
-    card.className = "bg-white border border-slate-200 rounded-3xl p-4 sm:p-5 shadow-xs space-y-3";
-
-    const probVal = dis.probability !== undefined ? dis.probability : 75;
-    let probColor = "bg-blue-600";
-    if (probVal >= 70) probColor = "bg-rose-600";
-    else if (probVal >= 45) probColor = "bg-amber-500";
-
-    const encodedDisease = encodeURIComponent(JSON.stringify(dis));
-
-    card.innerHTML = `
-      <div class="flex items-start justify-between gap-2 border-b border-slate-100 pb-2.5">
-        <div>
-          <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${
-            dis.type === "BACTERIAL" ? "bg-amber-100 text-amber-800" :
-            dis.type === "VIRAL" ? "bg-indigo-100 text-indigo-800" :
-            dis.type === "PROTOZOAL" ? "bg-rose-100 text-rose-800" : "bg-emerald-100 text-emerald-800"
-          }">${dis.type}</span>
-          <h3 class="text-xs sm:text-sm font-bold text-slate-900 mt-1">${dis.name}</h3>
-        </div>
-        ${
-          appState.diagnosisMode === "SYMPTOMS"
-            ? `
-          <div class="text-right">
-            <span class="text-[10px] font-bold text-slate-400 block">क्लिनिकल संभावना</span>
-            <span class="text-sm font-black ${probVal >= 70 ? "text-rose-600" : "text-blue-700"}">${probVal}%</span>
-          </div>`
-            : ""
-        }
-      </div>
-
-      <!-- Probability Bar -->
-      ${
-        appState.diagnosisMode === "SYMPTOMS"
-          ? `
-        <div class="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
-          <div class="${probColor} h-1.5 rounded-full transition-all duration-500" style="width: ${probVal}%"></div>
-        </div>`
-          : ""
-      }
-
-      <!-- Symptoms & Signs -->
-      <div class="p-3 bg-slate-50 border border-slate-100 rounded-2xl text-xs space-y-1">
-        <strong class="text-slate-800 text-[11px] block">🔍 पहचान के लक्षण:</strong>
-        <p class="text-slate-600 leading-relaxed">${dis.symptoms}</p>
-      </div>
-
-      <!-- Role-Based Clinical Treatment Protocol -->
-      ${
-        isDoctor
-          ? `
-        <div class="p-3 bg-blue-50/60 border border-blue-200 rounded-2xl text-xs space-y-2">
-          <div class="flex items-center justify-between">
-            <strong class="text-blue-900 flex items-center gap-1 font-bold">
-              <span>🩺</span> एलोपैथिक इंजेक्शन व डोज़ (Doctor Only)
-            </strong>
-            ${
-              dis.isPregnantSafeRx === false
-                ? `<span class="text-[9px] bg-rose-600 text-white font-bold px-2 py-0.5 rounded-full animate-pulse-subtle">⚠️ गाभिन पशु को सावधानी (Abortion Risk)</span>`
-                : `<span class="text-[9px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">✓ गाभिन-सुरक्षित Rx</span>`
-            }
-          </div>
-          <pre class="font-mono text-[11px] text-blue-950 whitespace-pre-wrap leading-relaxed">${dis.doctorRx}</pre>
-          
-          <div class="pt-1 flex gap-2">
-            <button onclick="autoFillPrescription('${encodedDisease}')" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-3 rounded-xl text-xs shadow-xs transition active:scale-98">
-              📝 ओपीडी पर्चे में स्वतः भरें (Auto-Fill Rx)
-            </button>
-          </div>
-        </div>`
-          : `
-        <div class="p-3 bg-emerald-50/70 border border-emerald-200 rounded-2xl text-xs space-y-1.5">
-          <strong class="text-emerald-900 flex items-center gap-1 font-bold">
-            <span>🌿</span> देसी घरेलू उपचार व प्राथमिक देखभाल (Farmer Guide)
-          </strong>
-          <p class="text-emerald-950 leading-relaxed">${dis.farmerDesiRx || "पशु को तुरंत नजदीकी डॉक्टर से जांच करवाएं।"}</p>
-        </div>`
-      }
-    `;
-
-    container.appendChild(card);
-  });
-}
-
-window.handleAppSearch = function () {
-  refreshDiagnosisList();
-};
-
-window.filterByTag = function (tag, btnEl) {
-  appState.selectedTag = tag;
-  const parent = btnEl ? btnEl.parentElement : null;
-  if (parent) {
-    Array.from(parent.children).forEach((c) => {
-      c.className = "q-chip px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 font-medium shrink-0";
-    });
-    btnEl.className = "q-chip px-3 py-1.5 rounded-xl bg-blue-600 text-white font-bold shrink-0";
-  }
-  refreshDiagnosisList();
-};
-
-// =============================================================================
-// 4. AUTO-FILL RX & DIGITAL OPD PRESCRIPTION ENGINE
-// =============================================================================
-window.autoFillPrescription = function (encodedDisease) {
-  try {
-    const dis = JSON.parse(decodeURIComponent(encodedDisease));
-    switchTab("rx");
-
-    const diagInput = document.getElementById("opdDiagnosis");
-    const medInput = document.getElementById("opdMedicine");
-
-    if (diagInput) diagInput.value = dis.name;
-    if (medInput) medInput.value = dis.doctorRx || "";
-
-    // Pregnancy check
-    const pregSelect = document.getElementById("opdPregnancy");
-    if (pregSelect && pregSelect.value.includes("Pregnant") && dis.isPregnantSafeRx === false) {
-      alert("⚠️ ध्यान दें: इस रोग की कुछ दवाएं गाभिन पशु के लिए प्रतिबंधित हैं। कृपया कॉर्टिकोस्टेरॉइड्स व संबंधित दवाओं का उपयोग न करें!");
-    }
-  } catch (err) {
-    console.error("Auto-Fill Error:", err);
-  }
-};
-
-window.calculateDue = function () {
-  const tot = parseFloat(document.getElementById("opdTotalFee")?.value || 0);
-  const paid = parseFloat(document.getElementById("opdPaidFee")?.value || 0);
-  const due = Math.max(0, tot - paid);
-  const dueInput = document.getElementById("opdDueFee");
-  if (dueInput) dueInput.value = due.toFixed(0);
-};
-
-window.captureGPSLocation = function () {
-  const gpsInput = document.getElementById("opdGPS");
-  const btn = document.getElementById("btnGPS");
-
-  if (!navigator.geolocation) {
-    alert("आपके ब्राउज़र में GPS उपलब्ध नहीं है।");
-    return;
-  }
-
-  if (btn) btn.innerText = "खोज रहे हैं...";
-  navigator.geolocation.getCurrentPosition(
-    (pos) => {
-      const coords = `${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}`;
-      if (gpsInput) gpsInput.value = coords;
-      if (btn) btn.innerText = "✓ GPS सेट";
-    },
-    (err) => {
-      alert("GPS लोकेशन प्राप्त करने में असमर्थ। कृपया लोकेशन अनुमति दें।");
-      if (btn) btn.innerText = "📍 GPS";
-    },
-    { enableHighAccuracy: true, timeout: 8000 }
-  );
-};
-
-window.dispatchWhatsAppRx = function () {
-  const farmerName = document.getElementById("opdFarmerName")?.value.trim();
-  const phone = document.getElementById("opdFarmerPhone")?.value.trim();
-  const village = document.getElementById("opdVillage")?.value.trim() || "-";
-  const animal = document.getElementById("opdAnimal")?.value || "गाय/भैंस";
-  const tag = document.getElementById("opdTag")?.value.trim() || "N/A";
-  const preg = document.getElementById("opdPregnancy")?.value || "-";
-  const diagnosis = document.getElementById("opdDiagnosis")?.value.trim();
-  const medicine = document.getElementById("opdMedicine")?.value.trim();
-  const total = document.getElementById("opdTotalFee")?.value || "0";
-  const paid = document.getElementById("opdPaidFee")?.value || "0";
-  const due = document.getElementById("opdDueFee")?.value || "0";
-
-  if (!farmerName) {
-    alert("कृपया किसान का नाम दर्ज करें।");
-    return;
-  }
-  if (!phone || phone.length < 10) {
-    alert("कृपया 10-अंकों का वैध व्हाट्सएप मोबाइल नंबर दर्ज करें।");
-    return;
-  }
-  if (!diagnosis) {
-    alert("कृपया रोग का नाम दर्ज करें।");
-    return;
-  }
-
-  const dateStr = new Date().toLocaleDateString("hi-IN");
-
-  const message =
-`📋 *डिजिटल पशु चिकित्सा पर्ची (Vetcare OPD)*
-----------------------------------------
-👨‍🌾 *पशुपालक:* ${farmerName} | 🏡 *गाँव:* ${village}
-📞 *मोबाइल:* ${phone}
-🐄 *पशु:* ${animal} (टैग: ${tag}) | *स्थिति:* ${preg}
-📅 *दिनांक:* ${dateStr}
-----------------------------------------
-🩺 *जांच उपरांत रोग (Diagnosis):*
-👉 *${diagnosis}*
-
-💊 *उपचार व दी गई दवाइयां (Rx):*
-${medicine || "क्लिनिकल परीक्षण अनुसार"}
-----------------------------------------
-💰 *फीस विवरण:*
-• कुल फीस: ₹${total}
-• जमा राशि: ₹${paid}
-• बकाया (Due): *₹${due}*
-----------------------------------------
-⚠️ *निर्देश:* दवा का कोर्स पूरा करें। कोई समस्या होने पर तुरंत डॉक्टर से संपर्क करें।`;
-
-  // Clean phone number
-  const cleanPhone = phone.replace(/\D/g, "");
-  const targetPhone = cleanPhone.length === 10 ? `91${cleanPhone}` : cleanPhone;
-  const whatsappUrl = `https://api.whatsapp.com/send?phone=${targetPhone}&text=${encodeURIComponent(message)}`;
-
-  window.open(whatsappUrl, "_blank");
-
-  // Save Record automatically
-  saveRecordLocally({
-    farmerName,
-    phone,
-    village,
-    animal,
-    tag,
-    diagnosis,
-    total: parseFloat(total),
-    paid: parseFloat(paid),
-    due: parseFloat(due),
-    date: new Date().toISOString()
-  });
-};
-
-function saveRecordLocally(record) {
-  try {
-    const raw = localStorage.getItem(VETCARE_CONFIG.STORAGE_KEYS.RECORDS);
-    const list = raw ? JSON.parse(raw) : [];
-    list.unshift(record);
-    localStorage.setItem(VETCARE_CONFIG.STORAGE_KEYS.RECORDS, JSON.stringify(list));
-    renderSavedRecordsList();
-    renderFinanceLedger();
-  } catch (err) {
-    console.error("Local save error:", err);
-  }
-}
-
-window.saveOfflineCaseDirectly = function () {
-  const farmerName = document.getElementById("opdFarmerName")?.value.trim();
-  const phone = document.getElementById("opdFarmerPhone")?.value.trim() || "-";
-  const diagnosis = document.getElementById("opdDiagnosis")?.value.trim() || "सामान्य परीक्षण";
-  const total = parseFloat(document.getElementById("opdTotalFee")?.value || 0);
-  const paid = parseFloat(document.getElementById("opdPaidFee")?.value || 0);
-  const due = parseFloat(document.getElementById("opdDueFee")?.value || 0);
-
-  if (!farmerName) {
-    alert("कृपया कम से कम किसान का नाम दर्ज करें।");
-    return;
-  }
-
-  saveRecordLocally({
-    farmerName,
-    phone,
-    village: document.getElementById("opdVillage")?.value || "",
-    animal: document.getElementById("opdAnimal")?.value || "",
-    tag: document.getElementById("opdTag")?.value || "",
-    diagnosis,
-    total,
-    paid,
-    due,
-    date: new Date().toISOString()
-  });
-
-  alert("केस सफलतापूर्वक स्थानीय स्टोरेज में सुरक्षित कर लिया गया है!");
-};
-
-window.printCurrentOPDSlip = function () {
-  const area = document.getElementById("printableSlipArea");
-  if (!area) return;
-
-  const fName = document.getElementById("opdFarmerName")?.value || "पशुपालक";
-  const fPhone = document.getElementById("opdFarmerPhone")?.value || "-";
-  const animal = document.getElementById("opdAnimal")?.value || "-";
-  const diag = document.getElementById("opdDiagnosis")?.value || "-";
-  const med = document.getElementById("opdMedicine")?.value || "-";
-  const total = document.getElementById("opdTotalFee")?.value || "0";
-  const paid = document.getElementById("opdPaidFee")?.value || "0";
-  const due = document.getElementById("opdDueFee")?.value || "0";
-
-  area.innerHTML = `
-    <div style="border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 12px; text-align: center;">
-      <h2 style="font-size: 18px; font-weight: bold; margin: 0;">पशु चिकित्सालय / OPD पर्ची</h2>
-      <p style="font-size: 11px; margin: 2px 0;">Vetcare Clinical Assistant • दिनांक: ${new Date().toLocaleDateString("hi-IN")}</p>
-    </div>
-    <div style="font-size: 12px; margin-bottom: 8px;">
-      <p><strong>किसान का नाम:</strong> ${fName} | <strong>मोबाइल:</strong> ${fPhone}</p>
-      <p><strong>पशु:</strong> ${animal} | <strong>निदान (Diagnosis):</strong> ${diag}</p>
-    </div>
-    <div style="font-size: 12px; border-top: 1px dashed #666; border-bottom: 1px dashed #666; padding: 8px 0; margin-bottom: 8px;">
-      <strong>उपचार विवरण (Rx):</strong>
-      <pre style="font-family: inherit; margin: 4px 0; white-space: pre-wrap;">${med}</pre>
-    </div>
-    <div style="font-size: 12px;">
-      <p>कुल फीस: ₹${total} | जमा: ₹${paid} | <strong>बकाया: ₹${due}</strong></p>
-    </div>
-  `;
-  window.print();
-};
-
-// =============================================================================
-// 5. KHATA LEDGER, REAL-TIME MATH & 1-CLICK WHATSAPP TAGADA
-// =============================================================================
-function renderFinanceLedger(filterOnlyDue = false, searchQuery = "") {
-  const creditEl = document.getElementById("finCredit");
-  const debitEl = document.getElementById("finDebit");
-  const listContainer = document.getElementById("finDueList");
-
-  const raw = localStorage.getItem(VETCARE_CONFIG.STORAGE_KEYS.RECORDS);
-  const records = raw ? JSON.parse(raw) : [];
-
-  let totalCredit = 0;
-  let totalDebit = 0;
-
-  records.forEach((r) => {
-    totalCredit += Number(r.paid || 0);
-    totalDebit += Number(r.due || 0);
-  });
-
-  if (creditEl) creditEl.innerText = `₹${totalCredit.toLocaleString("en-IN")}`;
-  if (debitEl) debitEl.innerText = `₹${totalDebit.toLocaleString("en-IN")}`;
-
-  if (!listContainer) return;
-  listContainer.innerHTML = "";
-
-  let displayRecords = records;
-
-  if (filterOnlyDue) {
-    displayRecords = displayRecords.filter((r) => Number(r.due || 0) > 0);
-  }
-
-  if (searchQuery) {
-    const q = searchQuery.toLowerCase();
-    displayRecords = displayRecords.filter((r) => {
-      return (r.farmerName && r.farmerName.toLowerCase().includes(q)) || (r.phone && r.phone.includes(q));
-    });
-  }
-
-  if (displayRecords.length === 0) {
-    listContainer.innerHTML = `
-      <div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl text-center text-slate-400 text-xs">
-        कोई रिकॉर्ड उपलब्ध नहीं है।
-      </div>
-    `;
-    return;
-  }
-
-  displayRecords.forEach((rec, idx) => {
-    const item = document.createElement("div");
-    item.className = "p-3 bg-slate-50 border border-slate-200 rounded-2xl flex items-center justify-between text-xs";
-
-    const hasDue = Number(rec.due || 0) > 0;
-
-    item.innerHTML = `
-      <div class="space-y-0.5">
-        <div class="flex items-center gap-2">
-          <strong class="text-slate-800">${rec.farmerName}</strong>
-          ${
-            hasDue
-              ? `<span class="text-[9px] bg-rose-100 text-rose-700 font-bold px-2 py-0.2 rounded-full">बकाया: ₹${rec.due}</span>`
-              : `<span class="text-[9px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.2 rounded-full">पूर्ण चुकता</span>`
-          }
-        </div>
-        <p class="text-[10px] text-slate-500">${rec.phone} • ${rec.diagnosis || "केस"}</p>
-      </div>
-
-      <div class="flex items-center gap-1.5">
-        ${
-          hasDue
-            ? `
-          <button onclick="sendWhatsAppTagada('${rec.farmerName}', '${rec.phone}', ${rec.due})" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-1.5 px-3 rounded-xl text-[11px] shadow-xs active:scale-95 transition flex items-center gap-1">
-            <span>📲</span> तकादा
-          </button>`
-            : ""
-        }
-      </div>
-    `;
-    listContainer.appendChild(item);
-  });
-}
-
-window.sendWhatsAppTagada = function (farmerName, phone, dueAmount) {
-  if (!phone || phone.length < 10) {
-    alert("किसान का मोबाइल नंबर अनुपलब्ध है।");
-    return;
-  }
-
-  const message =
-`आदरणीय ${farmerName} जी,
-नमस्कार! 
-
-आपके पशु के इलाज/दवाइयों की बकाया राशि *₹${dueAmount}* शेष है। 
-कृपया सुविधानुसार यह राशि चुकाने की कृपा करें ताकि आपकी सेवा अनवरत जारी रहे।
-
-धन्यवाद!
-_Vetcare पशु स्वास्थ्य सेवा_`;
-
-  const cleanPhone = phone.replace(/\D/g, "");
-  const targetPhone = cleanPhone.length === 10 ? `91${cleanPhone}` : cleanPhone;
-  const url = `https://api.whatsapp.com/send?phone=${targetPhone}&text=${encodeURIComponent(message)}`;
-  window.open(url, "_blank");
-};
-
-window.handleFinanceSearch = function () {
-  const query = document.getElementById("finSearchInput")?.value || "";
-  renderFinanceLedger(false, query);
-};
-
-window.filterOnlyDueLedger = function () {
-  renderFinanceLedger(true);
-};
-
-window.addExpensePrompt = function () {
-  const desc = prompt("खर्च अथवा लेन-देन का विवरण लिखें (उदा. दवा खरीद, पेट्रोल, आदि):");
-  if (!desc) return;
-  const amt = parseFloat(prompt("रकम (₹) दर्ज करें:") || "0");
-  if (isNaN(amt) || amt <= 0) return;
-
-  saveRecordLocally({
-    farmerName: `[खर्च] ${desc}`,
-    phone: "-",
-    diagnosis: "क्लिनिक/फार्म व्यय",
-    total: amt,
-    paid: 0,
-    due: amt,
-    date: new Date().toISOString()
-  });
-};
-
-// =============================================================================
-// 6. SAVED CASE RECORDS RENDERER
-// =============================================================================
-function renderSavedRecordsList(query = "") {
-  const container = document.getElementById("recordsList");
-  const badge = document.getElementById("recordTotalBadge");
-  if (!container) return;
-
-  const raw = localStorage.getItem(VETCARE_CONFIG.STORAGE_KEYS.RECORDS);
-  const records = raw ? JSON.parse(raw) : [];
-
-  if (badge) badge.innerText = `${records.length} केस सुरक्षित`;
-
-  let filtered = records;
-  if (query) {
-    const q = query.toLowerCase();
-    filtered = filtered.filter((r) => {
-      return (r.farmerName && r.farmerName.toLowerCase().includes(q)) || (r.phone && r.phone.includes(q));
-    });
-  }
-
-  container.innerHTML = "";
-
-  if (filtered.length === 0) {
-    container.innerHTML = `
-      <div class="p-6 bg-white border border-slate-200 rounded-2xl text-center text-slate-400 text-xs">
-        कोई केस रिकॉर्ड सुरक्षित नहीं है।
-      </div>
-    `;
-    return;
-  }
-
-  filtered.forEach((r) => {
-    const card = document.createElement("div");
-    card.className = "bg-white border border-slate-200 rounded-2xl p-3 shadow-xs space-y-1 text-xs";
-    card.innerHTML = `
-      <div class="flex justify-between items-center">
-        <strong class="text-slate-900">${r.farmerName}</strong>
-        <span class="text-[10px] text-slate-400">${new Date(r.date).toLocaleDateString("hi-IN")}</span>
-      </div>
-      <p class="text-slate-600 text-[11px]">${r.animal || "पशु"} • रोग: <strong>${r.diagnosis}</strong></p>
-      <div class="flex justify-between items-center text-[11px] pt-1 border-t border-slate-100">
-        <span>फीस: ₹${r.total} (जमा: ₹${r.paid})</span>
-        <span class="text-rose-600 font-bold">बकाया: ₹${r.due}</span>
-      </div>
-    `;
-    container.appendChild(card);
-  });
-}
-
-window.handleRecordSearch = function () {
-  const q = document.getElementById("searchRecordsInput")?.value || "";
-  renderSavedRecordsList(q);
-};
-
-// =============================================================================
-// 7. STOCK INVENTORY CONTROLLERS
-// =============================================================================
-window.filterStockCategory = function (category, btnEl) {
-  const parent = btnEl ? btnEl.parentElement : null;
-  if (parent) {
-    Array.from(parent.children).forEach((c) => {
-      c.className = "stock-chip px-3 py-1 rounded-xl bg-slate-100 text-slate-700 font-medium shrink-0";
-    });
-    btnEl.className = "stock-chip px-3 py-1 rounded-xl bg-blue-600 text-white font-bold shrink-0";
-  }
-
-  const container = document.getElementById("stockListContainer");
-  if (!container) return;
-
-  const items = container.querySelectorAll(".p-3");
-  items.forEach((it) => {
-    if (category === "ALL") {
-      it.style.display = "flex";
-    } else {
-      const txt = it.innerText.toUpperCase();
-      if (
-        (category === "ANTIBIOTIC" && txt.includes("एंटीबायोटिक")) ||
-        (category === "SEMEN" && txt.includes("सीमन")) ||
-        (category === "TONIC" && txt.includes("टॉनिक")) ||
-        (category === "DISPOSABLE" && (txt.includes("सुई") || txt.includes("सिरिंज")))
-      ) {
-        it.style.display = "flex";
-      } else {
-        it.style.display = "none";
-      }
-    }
-  });
-};
-
-window.increaseStock = function (btn) {
-  updateStockCount(btn, 1);
-};
-
-window.decreaseStock = function (btn) {
-  updateStockCount(btn, -1);
-};
-
-// =============================================================================
-// 8. DAILY FEED RATION & SMART BREEDING ENGINE
-// =============================================================================
-window.calculateDailyRation = function () {
-  const weight = parseFloat(document.getElementById("feedWeight")?.value || "400");
-  const milk = parseFloat(document.getElementById("feedMilk")?.value || "10");
-  const card = document.getElementById("rationResultCard");
-
-  if (isNaN(weight) || weight <= 0) {
-    alert("कृपया पशु का सही वजन दर्ज करें।");
-    return;
-  }
-
-  // ICAR Standard: Dry Matter (DM) = 2.5 - 3.0 kg per 100 kg body weight
-  const maintenanceDM = (weight / 100) * 2.5;
-  const productionGrain = milk * 0.4; // 400g concentrate per litre milk
-  const maintenanceGrain = 1.2;       // 1.2 kg maintenance concentrate
-
-  const totalGrain = (maintenanceGrain + productionGrain).toFixed(1);
-  const greenFodder = Math.round((weight * 0.05) + (milk * 0.5)); // ~5-6% body weight in greens
-  const dryStraw = ((maintenanceDM * 0.4)).toFixed(1);           // ~40% of DM from dry straw
-
-  const gEl = document.getElementById("resFeedGrain");
-  const grEl = document.getElementById("resFeedGreen");
-  const dEl = document.getElementById("resFeedDry");
-
-  if (gEl) gEl.innerText = `${totalGrain} kg`;
-  if (grEl) grEl.innerText = `${greenFodder} kg`;
-  if (dEl) dEl.innerText = `${dryStraw} kg`;
-
-  if (card) card.classList.remove("hidden");
-};
-
-// =============================================================================
-// 9. GEMINI AI SECOND OPINION CONSULTANT
-// =============================================================================
-window.openAIKeyModal = function () {
-  const m = document.getElementById("modalAIKey");
-  const input = document.getElementById("inputGeminiKey");
-  if (input) {
-    input.value = localStorage.getItem(VETCARE_CONFIG.STORAGE_KEYS.GEMINI_KEY) || "";
-  }
-  if (m) m.style.display = "flex";
-};
-
-window.closeAIKeyModal = function () {
-  const m = document.getElementById("modalAIKey");
-  if (m) m.style.display = "none";
-};
-
-window.saveGeminiKey = function () {
-  const key = document.getElementById("inputGeminiKey")?.value.trim();
-  if (!key) {
-    alert("कृपया API Key दर्ज करें।");
-    return;
-  }
-  localStorage.setItem(VETCARE_CONFIG.STORAGE_KEYS.GEMINI_KEY, key);
-  closeAIKeyModal();
-  alert("Gemini AI API Key सुरक्षित कर ली गई है!");
-};
-
-window.sendCaseToAIConsultant = function () {
-  const diag = document.getElementById("opdDiagnosis")?.value || "";
-  const animal = document.getElementById("opdAnimal")?.value || "पशु";
-  const med = document.getElementById("opdMedicine")?.value || "";
-  const promptInput = document.getElementById("aiInputPrompt");
-
-  switchTab("ai");
-  if (promptInput) {
-    promptInput.value = `मरीज: ${animal}\nलक्षण/रोग: ${diag}\nवर्तमान उपचार: ${med}\n\nकृपया इस केस पर अपना डिफरेंशियल डायग्नोसिस (Second Opinion) व सटीक एंटीबायोटिक सुझाव हिंदी में प्रदान करें।`;
-  }
-};
-
-window.runAIConsultant = async function () {
-  const prompt = document.getElementById("aiInputPrompt")?.value.trim();
-  const out = document.getElementById("aiOutputArea");
-  const btn = document.getElementById("btnRunAI");
-  const apiKey = localStorage.getItem(VETCARE_CONFIG.STORAGE_KEYS.GEMINI_KEY);
-
-  if (!prompt) {
-    alert("कृपया पशु के लक्षण व केस विवरण लिखें।");
-    return;
-  }
-
-  if (!apiKey) {
-    alert("कृपया पहले अपनी Gemini API Key कॉन्फ़िगर करें।");
-    openAIKeyModal();
-    return;
-  }
-
-  if (btn) {
-    btn.disabled = true;
-    btn.innerText = "⏳ AI सर्जन विश्लेषण कर रहा है...";
-  }
-
-  if (out) {
-    out.classList.remove("hidden");
-    out.innerText = "AI क्लिनिकल विश्लेषण जारी है, कृपया प्रतीक्षा करें...";
-  }
-
-  try {
-    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
-    const response = await fetch(endpoint, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [
-          {
-            parts: [
-              {
-                text: `You are an expert veterinary surgeon and clinical consultant. Respond in practical, easy-to-understand Hindi for livestock field veterinarians in India.\n\nCase: ${prompt}`
-              }
-            ]
-          }
-        ]
-      })
-    });
-
-    const data = await response.json();
-    const reply = data?.candidates?.[0]?.content?.parts?.[0]?.text || "AI से उत्तर प्राप्त करने में असमर्थ।";
-
-    if (out) {
-      out.innerText = reply;
-    }
-  } catch (err) {
-    if (out) {
-      out.innerText = "⚠️ कनेक्शन त्रुटि: API Key की पुष्टि करें अथवा इंटरनेट जांचें।";
-    }
-    console.error("AI Consultant Error:", err);
-  } finally {
-    if (btn) {
-      btn.disabled = false;
-      btn.innerText = "✨ AI से क्लिनिकल रिपोर्ट मांगें";
+  /* =========================================================================
+     15. INITIALIZATION DISPATCHER
+     ========================================================================= */
+  function initApp() {
+    loadAdminConfiguration();
+    renderBreedingModule();
+    renderDiseaseResults(CLINICAL_DISEASES);
+    window.renderKhataList();
+    window.renderInventoryList();
+    renderSavedOPDList();
+    registerServiceWorker();
+
+    // Check if role was persisted
+    const savedRole = localStorage.getItem(STORAGE_KEYS.CURRENT_ROLE);
+    if (savedRole) {
+      // Keep on gateway initially or restore state seamlessly
+      console.log(`Vetcare initialized. Stored role: ${savedRole}`);
     }
   }
-};
 
-// =============================================================================
-// 10. SYSTEM INITIALIZATION & EVENT LISTENERS
-// =============================================================================
-document.addEventListener("DOMContentLoaded", () => {
-  // Check stored role
-  const savedRole = localStorage.getItem(VETCARE_CONFIG.STORAGE_KEYS.ROLE);
-  if (savedRole) {
-    selectRole(savedRole);
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initApp);
+  } else {
+    initApp();
   }
 
-  // Populate Saved Records & Finance
-  renderSavedRecordsList();
-  renderFinanceLedger();
-
-  // Initialize offline sync detector
-  const syncBadge = document.getElementById("cloudSyncStatusBadge");
-  window.addEventListener("online", () => {
-    if (syncBadge) {
-      syncBadge.innerText = "☁️ LIVE SYNC";
-      syncBadge.className = "text-[9px] bg-emerald-50 text-emerald-700 font-mono font-bold px-1.5 py-0.2 rounded border border-emerald-300";
-    }
-  });
-
-  window.addEventListener("offline", () => {
-    if (syncBadge) {
-      syncBadge.innerText = "⚡ OFFLINE";
-      syncBadge.className = "text-[9px] bg-amber-50 text-amber-700 font-mono font-bold px-1.5 py-0.2 rounded border border-amber-300";
-    }
-  });
-
-  console.info(`Vetcare Clinical Core Engine initialized [v${VETCARE_CONFIG.APP_VERSION}]`);
-});
+})();
