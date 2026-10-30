@@ -1,15 +1,17 @@
 /**
  * Vetcare AI OS - Production Engine (app.js)
- * Fully Patched: Comprehensive Null Safety & Global Scope Binding
+ * Fully Integrated Clinical Release
  * 
- * Features:
- * 1. Dual-Bank Payment Gateway (SBI Primary + PNB Backup) with Dynamic QR & UPI Intent
- * 2. Unlimited Open-Ended Disease Codex & Custom Disease Registry
- * 3. 3-Way Diagnostic Decision Support Engine (Species + Vitals + Multi-Symptom Matching)
- * 4. OPD Prescription Slip Generator with Live Preview & Print Engine
- * 5. 1-Click Formatted WhatsApp Dispatcher
- * 6. Farmer Khata Financial Ledger with Automated Payment Reminder Dispatch
- * 7. Offline-First Dual Storage & Sync Controller (LocalStorage + Firebase Graceful Fallback)
+ * CORE MODULES:
+ * 1. 3-Way Diagnostic Inference Engine with 5-Vector Weighted Clinical Matrix
+ *    - Cardinal Signs (40%) + Temperature (20%) + Mucous Membrane (15%) + Urine (15%) + Dung (10%)
+ *    - Color-Coded Match Probability Bars (>85% Emerald, 60-84% Amber, <60% Slate)
+ *    - Weight-Adjusted 1-Click "Auto-Fill Rx" with Pregnancy Red Alert System
+ * 2. Live Gemini AI Diagnostic Assistant (LocalStorage API Key Management & Live Second Opinion)
+ * 3. Dual-Bank Payment Gateway (State Bank of India & Punjab National Bank) with Dynamic UPI/QR
+ * 4. OPD Clinical Slip Generator with WhatsApp Dispatch & Real-Time Sync
+ * 5. Farmer Financial Khata Ledger with Automated Payment Reminder Dispatch
+ * 6. Bulletproof Zero-Crash Runtime Architecture with Global Window Bindings & Strict Null-Safety
  */
 
 // ==========================================
@@ -41,35 +43,13 @@ let currentSelectedPlan = {
     label: "मासिक (Monthly)"
 };
 
-let currentActiveBank = "sbi"; // Default Primary: 'sbi', Backup: 'pnb'
+let currentActiveBank = "sbi"; // Primary: 'sbi' | Backup: 'pnb'
 
-// ==========================================
-// 2. UNLIMITED VETERINARY DISEASE CODEX
-// ==========================================
+// ===============================================================
+// 2. UNLIMITED CLINICAL DISEASE DATABASE WITH WEIGHTED VECTORS
+// ===============================================================
 
 const DEFAULT_DISEASE_CODEX = [
-    {
-        id: "dis_fmd",
-        name: "Foot and Mouth Disease (FMD)",
-        localName: "खुरपका-मुँहपका रोग",
-        species: ["Bovine", "Caprine"],
-        category: "Viral",
-        tempRange: "104.0 - 106.0 °F",
-        symptoms: [
-            "तेज बुखार (104-106°F)",
-            "मुंह से तारदार लार गिरना (Ropy Salivation)",
-            "जीभ, मसूड़ों और तालु पर छाले (Vesicles)",
-            "खुरों के बीच छाले व घाव (Interdigital Ulcers)",
-            "लंगड़ा कर चलना",
-            "दूध उत्पादन में भारी गिरावट"
-        ],
-        vitalsRule: { tempMin: 104.0, mucous: "congested", rumen: "hypomotile" },
-        primaryRx: "मुंह के छालों हेतु पोटैशियम परमैंगनेट (KMnO4 1:1000) या 2% बोरिक एसिड से धुलाई। Flunixin Meglumine @ 2.2 mg/kg IV/IM।",
-        supportiveRx: "Secondary bacterial infection रोकने हेतु Inj. Ceftiofur Sodium @ 1.1-2.2 mg/kg IM। B-Complex + Liver extract 10ml IM।",
-        fluidTherapy: "Dextrose Normal Saline (DNS 5%) 2-3 लीटर IV यदि निर्जलीकरण हो।",
-        withdrawalNotice: "दूध: 72 घंटे, मांस: 7 दिन (एंटीबायोटिक दिए जाने पर)।",
-        differentials: "Vesicular Stomatitis, Rinderpest, Bovine Viral Diarrhea"
-    },
     {
         id: "dis_hs",
         name: "Hemorrhagic Septicemia (HS)",
@@ -77,6 +57,11 @@ const DEFAULT_DISEASE_CODEX = [
         species: ["Bovine"],
         category: "Bacterial",
         tempRange: "105.0 - 107.0 °F",
+        cardinalKey: "HS_EDEMA",
+        tempProfile: "HIGH",
+        mucousProfile: "CONGESTED",
+        urineProfile: "DARK_YELLOW",
+        dungProfile: "NORMAL",
         symptoms: [
             "अत्यधिक तेज बुखार (105-107°F)",
             "गले और गर्दन के निचले हिस्से में दर्दनाक सूजन (Submandibular Edema)",
@@ -84,12 +69,16 @@ const DEFAULT_DISEASE_CODEX = [
             "जीभ बाहर निकलना एवं मुंह से झागदार लार",
             "आंखें लाल व कंजस्टेड"
         ],
-        vitalsRule: { tempMin: 104.8, mucous: "congested", rumen: "atony" },
-        primaryRx: "Inj. Sulfamethazine (33.3%) @ 100-150 mg/kg IV या Inj. Oxytetracycline @ 10 mg/kg Slow IV।",
-        supportiveRx: "Inj. Dexamethasone @ 0.05-0.1 mg/kg IV/IM (सूजन घटाने हेतु) + Inj. Meloxicam @ 0.5 mg/kg IM।",
-        fluidTherapy: "Normal Saline (0.9% NaCl) 2-3 लीटर IV। शॉक की स्थिति में Corticosteroids।",
+        primaryRx: "Inj. Sulfamethazine (33.3%) @ 100 mg/kg IV अथवा Inj. Ceftiofur Sodium @ 2.2 mg/kg IM।",
+        supportiveRx: "Inj. Flunixin Meglumine @ 2.2 mg/kg IV। शॉक नियंत्रण हेतु Corticosteroids (केवल गैर-गर्भवती में)।",
+        fluidTherapy: "Normal Saline (0.9% NaCl) 2-3 लीटर IV।",
         withdrawalNotice: "दूध: 5 दिन, मांस: 14 दिन।",
-        differentials: "Black Quarter (BQ), Anthrax, Acute Pharyngitis"
+        differentials: "Black Quarter (BQ), Anthrax, Acute Pharyngitis",
+        structuredRx: [
+            { drug: "Inj. Ceftiofur Sodium (Intraceft)", baseDoseMgPerKg: 2.2, concentrationMgPerMl: 50, route: "IM", duration: "3 दिन", abortifacient: false },
+            { drug: "Inj. Flunixin Meglumine (Megludyne)", baseDoseMgPerKg: 2.2, concentrationMgPerMl: 50, route: "IV", duration: "3 दिन", abortifacient: false },
+            { drug: "Inj. Dexamethasone", baseDoseMgPerKg: 0.1, concentrationMgPerMl: 4, route: "IV/IM", duration: "1 दिन", abortifacient: true }
+        ]
     },
     {
         id: "dis_bq",
@@ -98,6 +87,11 @@ const DEFAULT_DISEASE_CODEX = [
         species: ["Bovine", "Caprine"],
         category: "Bacterial",
         tempRange: "104.0 - 106.0 °F",
+        cardinalKey: "BQ_CREPITATION",
+        tempProfile: "HIGH",
+        mucousProfile: "CONGESTED",
+        urineProfile: "DARK_YELLOW",
+        dungProfile: "HARD_DRY",
         symptoms: [
             "पुट्ठों, कंधों या गर्दन की भारी मांसपेशियों में सूजन",
             "सूजन वाले स्थान को दबाने पर चरचराहट की आवाज (Crepitation Sound)",
@@ -105,12 +99,46 @@ const DEFAULT_DISEASE_CODEX = [
             "गंभीर लंगड़ापन",
             "अचानक तेज बुखार व सुस्ती"
         ],
-        vitalsRule: { tempMin: 104.0, mucous: "congested", rumen: "atony" },
-        primaryRx: "Inj. Crystalline Penicillin @ 20,000-40,000 IU/kg IV/IM प्रत्येक 6-8 घंटे पर, सूजन के चारों ओर Penicillin का स्थानीय इन्फिल्ट्रेशन।",
-        supportiveRx: "Inj. Flunixin Meglumine @ 2.2 mg/kg IV दर्द और टॉक्सेमिया नियंत्रण हेतु।",
-        fluidTherapy: "RL (Ringer's Lactate) 3-4 लीटर IV।",
+        primaryRx: "Inj. Penicillin G Crystalline @ 20,000-40,000 IU/kg IV/IM प्रत्येक 8 घंटे पर।",
+        supportiveRx: "Inj. Meloxicam @ 0.5 mg/kg IM। स्थानीय रूप से पेनिसिलिन इन्फिल्ट्रेशन।",
+        fluidTherapy: "Ringer's Lactate (RL) 3 लीटर IV।",
         withdrawalNotice: "दूध: 72 घंटे, मांस: 10 दिन।",
-        differentials: "Malignant Edema, Anthrax, Fracture/Trauma"
+        differentials: "Malignant Edema, Anthrax, Fracture/Trauma",
+        structuredRx: [
+            { drug: "Inj. Crystalline Penicillin 40 Lac", baseDoseMgPerKg: 20000, concentrationMgPerMl: 400000, route: "IM", duration: "4 दिन", abortifacient: false },
+            { drug: "Inj. Meloxicam + Paracetamol", baseDoseMgPerKg: 0.5, concentrationMgPerMl: 5, route: "IM", duration: "3 दिन", abortifacient: false }
+        ]
+    },
+    {
+        id: "dis_fmd",
+        name: "Foot and Mouth Disease (FMD)",
+        localName: "खुरपका-मुँहपका रोग",
+        species: ["Bovine", "Caprine"],
+        category: "Viral",
+        tempRange: "104.0 - 106.0 °F",
+        cardinalKey: "FMD_VESICLES",
+        tempProfile: "HIGH",
+        mucousProfile: "CONGESTED",
+        urineProfile: "NORMAL",
+        dungProfile: "NORMAL",
+        symptoms: [
+            "तेज बुखार (104-106°F)",
+            "मुंह से तारदार लार गिरना (Ropy Salivation)",
+            "जीभ, मसूड़ों और तालु पर छाले (Vesicles)",
+            "खुरों के बीच छाले व घाव (Interdigital Ulcers)",
+            "लंगड़ा कर चलना",
+            "दूध उत्पादन में भारी गिरावट"
+        ],
+        primaryRx: "मुंह की धुलाई 1:1000 पोटैशियम परमैंगनेट से। Inj. Flunixin Meglumine @ 2.2 mg/kg IM।",
+        supportiveRx: "Secondary infection रोकने हेतु Inj. Enrofloxacin @ 5 mg/kg IM। B-Complex 10ml IM।",
+        fluidTherapy: "DNS 2-3 लीटर IV यदि खाना-पीना बंद हो।",
+        withdrawalNotice: "दूध: 72 घंटे, मांस: 7 दिन।",
+        differentials: "Vesicular Stomatitis, Bovine Viral Diarrhea",
+        structuredRx: [
+            { drug: "Inj. Enrofloxacin 10%", baseDoseMgPerKg: 5, concentrationMgPerMl: 100, route: "IM", duration: "3 दिन", abortifacient: false },
+            { drug: "Inj. Flunixin Meglumine", baseDoseMgPerKg: 2.2, concentrationMgPerMl: 50, route: "IM", duration: "3 दिन", abortifacient: false },
+            { drug: "Inj. Belamyl (B-Complex + Liver)", baseDoseMgPerKg: 0.03, concentrationMgPerMl: 1, route: "IM", duration: "3 दिन", abortifacient: false }
+        ]
     },
     {
         id: "dis_mastitis",
@@ -118,7 +146,12 @@ const DEFAULT_DISEASE_CODEX = [
         localName: "थनैला रोग / अयन शोथ",
         species: ["Bovine", "Caprine"],
         category: "Bacterial",
-        tempRange: "101.5 - 103.5 °F",
+        tempRange: "102.0 - 103.5 °F",
+        cardinalKey: "MASTITIS_UDDER",
+        tempProfile: "NORMAL",
+        mucousProfile: "PINK",
+        urineProfile: "NORMAL",
+        dungProfile: "NORMAL",
         symptoms: [
             "थन व लेवे में सूजन, लाली एवं अत्यधिक गर्मी",
             "दूध का रंग बदलना (पीला, लाल, पानी जैसा या दही के थक्के)",
@@ -126,20 +159,29 @@ const DEFAULT_DISEASE_CODEX = [
             "दूध में खून व मवाद की उपस्थिति",
             "गंभीर मामलों में रुमेन बंद और सुस्ती"
         ],
-        vitalsRule: { tempMin: 102.0, mucous: "normal", rumen: "hypomotile" },
-        primaryRx: "Intramammary Infusion (Cloxacillin/Ceftiofur) प्रभावित थन में प्रत्येक 12 घंटे पर। Systemic Inj. Intraceft / Ceftriaxone @ 10 mg/kg IM।",
-        supportiveRx: "Inj. Meloxicam + Paracetamol 15-20 ml IM। Trisodium Citrate 30-50 ग्राम मौखिक 5 दिन।",
-        fluidTherapy: "गंभीर टॉक्सिक मैस्टाइटिस में Hypertonic Saline (7.2% NaCl) 1-2 Litres IV।",
-        withdrawalNotice: "दूध: 7 दिन (एंटीबायोटिक समाप्ति के बाद ही उपयोग करें)।",
-        differentials: "Udder Hematoma, Physiological Edema, Teat Stenosis"
+        primaryRx: "Intramammary Infusion प्रत्येक 12 घंटे पर। Inj. Ceftriaxone + Tazobactam @ 10 mg/kg IM/IV।",
+        supportiveRx: "Inj. Meloxicam + Paracetamol 15ml IM। Trisodium Citrate 30-50 ग्राम मौखिक 5 दिन।",
+        fluidTherapy: "Hypertonic Saline (7.2% NaCl) 1-2 लीटर IV यदि टॉक्सेमिया हो।",
+        withdrawalNotice: "दूध: 7 दिन, मांस: 14 दिन।",
+        differentials: "Udder Hematoma, Physiological Edema",
+        structuredRx: [
+            { drug: "Inj. Intraceft (Ceftiofur 1g)", baseDoseMgPerKg: 2.2, concentrationMgPerMl: 50, route: "IM", duration: "3 दिन", abortifacient: false },
+            { drug: "Inj. Melonex Plus", baseDoseMgPerKg: 0.5, concentrationMgPerMl: 5, route: "IM", duration: "3 दिन", abortifacient: false },
+            { drug: "Intramammary Tube (Cloxacillin)", baseDoseMgPerKg: 0, concentrationMgPerMl: 1, route: "Intramammary", duration: "3 दिन", abortifacient: false }
+        ]
     },
     {
         id: "dis_babesiosis",
-        name: "Babesiosis (Tick Fever)",
-        localName: "बबेसिओसिस / बथुआ / लाल पेशाब",
+        name: "Babesiosis (Redwater Fever)",
+        localName: "बबेसिओसिस / लाल पेशाब",
         species: ["Bovine", "Canine", "Equine"],
         category: "Protozoal",
-        tempRange: "104.5 - 107.0 °F",
+        tempRange: "105.0 - 107.0 °F",
+        cardinalKey: "BABESIA_REDWATER",
+        tempProfile: "HIGH",
+        mucousProfile: "PALE",
+        urineProfile: "RED_COFFEE",
+        dungProfile: "HARD_DRY",
         symptoms: [
             "कॉफी रंग या गहरा लाल पेशाब (Hemoglobinuria)",
             "अत्यधिक तेज बुखार (105-107°F)",
@@ -147,12 +189,16 @@ const DEFAULT_DISEASE_CODEX = [
             "हृदय की धड़कन तेज (Water Hammer Pulse)",
             "शरीर पर किलनी / चिंचड़ी (Ticks) की मौजूदगी"
         ],
-        vitalsRule: { tempMin: 104.5, mucous: "pale", rumen: "atony" },
-        primaryRx: "Inj. Diminazene Aceturate (Berenil) @ 3.5 - 5 mg/kg Deep IM एकल खुराक, अथवा Inj. Imidocarb Diproprionate @ 1.2 mg/kg SC।",
-        supportiveRx: "Inj. Iron Dextran 10ml IM, Vitamin B12 + Folic Acid, Liver extract with Vitamin B-Complex।",
-        fluidTherapy: "Dextrose 5% + Normal Saline (DNS) 3-4 लीटर IV। (रक्त चढ़ाने की आवश्यकता यदि PCV < 12%)।",
+        primaryRx: "Inj. Diminazene Aceturate (Berenil) @ 3.5 - 5 mg/kg Deep IM एकल खुराक।",
+        supportiveRx: "Inj. Iron Dextran 10ml IM, Vitamin B12 + Liver Extract।",
+        fluidTherapy: "Dextrose Normal Saline (DNS 5%) 3 लीटर IV।",
         withdrawalNotice: "दूध: 3 दिन, मांस: 21 दिन।",
-        differentials: "Theileriosis, Leptospirosis, Post-Parturient Hemoglobinuria (PPH)"
+        differentials: "Theileriosis, Leptospirosis, Post-Parturient Hemoglobinuria",
+        structuredRx: [
+            { drug: "Inj. Berenil (Diminazene 7%)", baseDoseMgPerKg: 3.5, concentrationMgPerMl: 70, route: "IM", duration: "1 दिन (Single Dose)", abortifacient: false },
+            { drug: "Inj. Ferritas (Iron Dextran)", baseDoseMgPerKg: 0.03, concentrationMgPerMl: 1, route: "IM", duration: "2 दिन", abortifacient: false },
+            { drug: "Inj. Tribivet (B1, B6, B12)", baseDoseMgPerKg: 0.03, concentrationMgPerMl: 1, route: "IM", duration: "3 दिन", abortifacient: false }
+        ]
     },
     {
         id: "dis_theileriosis",
@@ -161,6 +207,11 @@ const DEFAULT_DISEASE_CODEX = [
         species: ["Bovine"],
         category: "Protozoal",
         tempRange: "104.0 - 106.5 °F",
+        cardinalKey: "THEILERIA_NODES",
+        tempProfile: "HIGH",
+        mucousProfile: "JAUNDICED",
+        urineProfile: "DARK_YELLOW",
+        dungProfile: "NORMAL",
         symptoms: [
             "सुपरफिशियल लिंफ नोड्स में भारी सूजन (Pre-scapular / Pre-crural)",
             "लगातार तेज बुखार जो एंटीपायरेटिक से नहीं उतरता",
@@ -168,41 +219,28 @@ const DEFAULT_DISEASE_CODEX = [
             "पीलिया (म्यूकस झिल्ली का पीला पड़ना)",
             "अत्यधिक कमजोरी व वजन में भारी कमी"
         ],
-        vitalsRule: { tempMin: 104.2, mucous: "jaundiced", rumen: "hypomotile" },
-        primaryRx: "Inj. Buparvaquone (Butalex) @ 2.5 mg/kg IM एकल खुराक (गर्दन की मांसपेशियों में)।",
-        supportiveRx: "Inj. Oxytetracycline Long Acting @ 20 mg/kg IM। हेमेटिनिक्स, Liver Injection व Vitamin C।",
+        primaryRx: "Inj. Buparvaquone (Butalex) @ 2.5 mg/kg IM एकल खुराक (गर्दन में)।",
+        supportiveRx: "Inj. Oxytetracycline LA @ 20 mg/kg IM। Liver Injection + B-Complex।",
         fluidTherapy: "Ringer's Lactate (RL) 2-3 लीटर IV।",
         withdrawalNotice: "दूध: 48 घंटे, मांस: 42 दिन।",
-        differentials: "Trypanosomiasis (Surra), Anaplasmosis, Malignant Catarrhal Fever"
-    },
-    {
-        id: "dis_lsd",
-        name: "Lumpy Skin Disease (LSD)",
-        localName: "गांठदार त्वचा रोग (लम्पी)",
-        species: ["Bovine"],
-        category: "Viral",
-        tempRange: "103.5 - 105.5 °F",
-        symptoms: [
-            "त्वचा पर 2-5 सेमी आकार की सख्त उभरी हुई गांठें (Nodules)",
-            "पैरों, छाती और अंडकोष/लेवे में सूजन (Ventral Edema)",
-            "आंख और नाक से पानी/स्राव बहना",
-            "गांठों का पकना और घाव बन जाना",
-            "लंगड़ाना और दूध उत्पादन में कमी"
-        ],
-        vitalsRule: { tempMin: 103.5, mucous: "congested", rumen: "hypomotile" },
-        primaryRx: "सेकेंडरी इन्फेक्शन रोकने हेतु: Inj. Ceftiofur Sodium 1 gm IM अथवा Enrofloxacin @ 5 mg/kg IM। घावों पर नीम तेल + आईवरमेक्टिन स्प्रे।",
-        supportiveRx: "Inj. Flunixin Meglumine 15ml IM। Ivermectin 1% @ 1ml/50kg SC। Multivitamin + Zinc supplementation।",
-        fluidTherapy: "DNS 2-3 लीटर IV यदि खाना-पीना पूर्णतः बंद हो।",
-        withdrawalNotice: "दूध: 5 दिन, मांस: 14 दिन।",
-        differentials: "Pseudo-Lumpy Skin Disease (Herpesvirus), Demodicosis, Dermatophilosis"
+        differentials: "Trypanosomiasis (Surra), Anaplasmosis",
+        structuredRx: [
+            { drug: "Inj. Butalex (Buparvaquone 50mg/ml)", baseDoseMgPerKg: 2.5, concentrationMgPerMl: 50, route: "IM", duration: "1 दिन (Single Dose)", abortifacient: false },
+            { drug: "Inj. Oxytetracycline LA", baseDoseMgPerKg: 20, concentrationMgPerMl: 200, route: "IM", duration: "1 दिन", abortifacient: false }
+        ]
     },
     {
         id: "dis_milkfever",
         name: "Milk Fever (Hypocalcemia)",
-        localName: "दुग्ध ज्वर / कैल्शियम की कमी",
+        localName: "दुग्ध ज्वर / कैल्शियम कमी",
         species: ["Bovine", "Caprine"],
         category: "Metabolic",
         tempRange: "96.0 - 100.0 °F",
+        cardinalKey: "MILKFEVER_KINK",
+        tempProfile: "SUBNORMAL",
+        mucousProfile: "PINK",
+        urineProfile: "RETENTION",
+        dungProfile: "STOPPED",
         symptoms: [
             "ब्याने के 24-72 घंटे के भीतर पशु का बैठ जाना और उठ न पाना",
             "शरीर और कान बर्फ जैसे ठंडे होना (Hypothermia)",
@@ -210,12 +248,15 @@ const DEFAULT_DISEASE_CODEX = [
             "पुतलियों का फैल जाना (Dilated Pupils)",
             "गोबर और पेशाब रुक जाना, रुमेन गतिशीलता शून्य"
         ],
-        vitalsRule: { tempMax: 100.0, mucous: "normal", rumen: "atony" },
-        primaryRx: "Inj. Calcium Borogluconate (CBG 25% या 45%) 450 ml (आधा धीमे IV तथा आधा SC) हृदय गति मॉनिटर करते हुए।",
-        supportiveRx: "Inj. Tonophosphan (Sodium Acid Phosphate) 10-15 ml IM/IV। Oral Ionic Calcium Gel (Cal-Up) 300g बोतल।",
-        fluidTherapy: "Normal Saline केवल जरूरत पड़ने पर। (चेतावनी: अधिक तेजी से IV देने पर Cardiac Arrest संभव)।",
-        withdrawalNotice: "विथड्रॉल अवधि शून्य (Nutritional therapy)।",
-        differentials: "Downer Cow Syndrome, Ketosis, Maternal Nerve Paralysis, Toxic Mastitis"
+        primaryRx: "Inj. Calcium Borogluconate (CBG 45%) 450 ml (आधा IV धीमे + आधा SC)।",
+        supportiveRx: "Inj. Tonophosphan 15ml IM/IV। Oral Ionic Calcium Gel (300g)।",
+        fluidTherapy: "ग्लूकोज या सेलाइन केवल जरूरत पर।",
+        withdrawalNotice: "शून्य (Nutritional therapy)।",
+        differentials: "Downer Cow Syndrome, Ketosis, Maternal Nerve Paralysis",
+        structuredRx: [
+            { drug: "Inj. Mifex / CBG 45%", baseDoseMgPerKg: 1.3, concentrationMgPerMl: 1, route: "IV (Slow) & SC", duration: "1 दिन", abortifacient: false },
+            { drug: "Inj. Tonophosphan (Sodium Acid Phosphate)", baseDoseMgPerKg: 0.04, concentrationMgPerMl: 1, route: "IM", duration: "2 दिन", abortifacient: false }
+        ]
     },
     {
         id: "dis_ketosis",
@@ -224,19 +265,28 @@ const DEFAULT_DISEASE_CODEX = [
         species: ["Bovine"],
         category: "Metabolic",
         tempRange: "101.0 - 102.5 °F",
+        cardinalKey: "KETOSIS_ACETONE",
+        tempProfile: "NORMAL",
+        mucousProfile: "PINK",
+        urineProfile: "DARK_YELLOW",
+        dungProfile: "HARD_DRY",
         symptoms: [
-            "सांस, दूध और पेशाब से मीठी फल जैसी गंध (Sweet Chloroform/Acetone Odor)",
+            "सांस, दूध और पेशाब से मीठी फल जैसी गंध (Sweet Acetone Breath)",
             "दाना/बांटा खाने से मना करना, केवल सूखा चारा खाना",
             "दूध उत्पादन में अचानक तीव्र गिरावट",
             "अत्यधिक तेजी से वजन घटना",
-            "नर्वस रूप में: गोल-गोल घूमना, दीवारों को चाटना, अंधापन"
+            "नर्वस रूप में: गोल-गोल घूमना, अंधापन"
         ],
-        vitalsRule: { tempMin: 101.0, tempMax: 102.5, mucous: "normal", rumen: "hypomotile" },
-        primaryRx: "Inj. Dextrose 25% या 50% 500-1000 ml IV तेजी से। Propylene Glycol 200-300 ml मौखिक रूप से दिन में दो बार 3-5 दिन।",
-        supportiveRx: "Inj. Isoflupredone Acetate 10-20 mg IM अथवा Dexamethasone 20 mg IM (Gluconeogenesis हेतु)। B-Complex Inj 15ml।",
-        fluidTherapy: "Dextrose Solutions IV।",
-        withdrawalNotice: "दूध: 48 घंटे (यदि स्टेरॉयड दिए गए हों)।",
-        differentials: "Left Displaced Abomasum (LDA), Traumatic Reticuloperitonitis (TRP)"
+        primaryRx: "Inj. Dextrose 25% 500-1000 ml IV तेजी से। Propylene Glycol 200 ml BD मौखिक 4 दिन।",
+        supportiveRx: "Inj. Isoflupredone Acetate 10-20 mg IM (गर्भपातकारी - गर्भवती में वर्जित)। B-Complex Inj 15ml।",
+        fluidTherapy: "Dextrose 20% या 25% IV।",
+        withdrawalNotice: "दूध: 48 घंटे।",
+        differentials: "Left Displaced Abomasum (LDA), TRP",
+        structuredRx: [
+            { drug: "Inj. Dextrose 25% (IV Rapid)", baseDoseMgPerKg: 2.0, concentrationMgPerMl: 1, route: "IV", duration: "2 दिन", abortifacient: false },
+            { drug: "Inj. Isoflupredone Acetate (Predef 2X)", baseDoseMgPerKg: 0.03, concentrationMgPerMl: 2, route: "IM", duration: "1 दिन", abortifacient: true },
+            { drug: "Propylene Glycol Oral", baseDoseMgPerKg: 0.6, concentrationMgPerMl: 1, route: "Oral", duration: "4 दिन", abortifacient: false }
+        ]
     },
     {
         id: "dis_bloat",
@@ -244,7 +294,12 @@ const DEFAULT_DISEASE_CODEX = [
         localName: "अफरा / पेट फूलना",
         species: ["Bovine", "Caprine"],
         category: "Metabolic",
-        tempRange: "101.0 - 103.0 °F",
+        tempRange: "101.0 - 102.5 °F",
+        cardinalKey: "BLOAT_TYMPANY",
+        tempProfile: "NORMAL",
+        mucousProfile: "CYANOTIC",
+        urineProfile: "NORMAL",
+        dungProfile: "STOPPED",
         symptoms: [
             "बाईं कोख (Left Paralumbar Fossa) का ढोल की तरह फूल जाना",
             "सांस लेने में भारी कष्ट, जीभ बाहर निकालना",
@@ -252,12 +307,45 @@ const DEFAULT_DISEASE_CODEX = [
             "मुंह से झागदार लार आना",
             "गंभीर स्थिति में दम घुटने से अचानक गिरना"
         ],
-        vitalsRule: { tempMin: 101.0, mucous: "cyanotic", rumen: "atony" },
-        primaryRx: "Frothy Bloat: Simethicone Suspension (Tympanil/Bloatosil) 100 ml मौखिक या रुमेन में सीधे। Trocar & Cannula द्वारा गैस निकालना (आपातकाल में)।",
-        supportiveRx: "सरसों या अलसी का तेल 500 ml + हींग 20 ग्राम + तारपीन का तेल 30 ml मौखिक।",
-        fluidTherapy: "आमतौर पर द्रव की आवश्यकता नहीं। अधिक तनाव पर Inj. Spasmo-Vet 15ml IM।",
-        withdrawalNotice: "विथड्रॉल अवधि शून्य।",
-        differentials: "Choke (Esophageal Obstruction), Vagus Indigestion, Abomasal Torsion"
+        primaryRx: "Simethicone Suspension (Tympanil/Bloatosil) 100 ml मौखिक या रुमेन में सीधे। Trocar Cannula द्वारा आपात निकासी।",
+        supportiveRx: "सरसों का तेल 500 ml + हींग 20 ग्राम + तारपीन का तेल 30 ml मौखिक।",
+        fluidTherapy: "आवश्यकता नहीं। दर्द में Inj. Spasmo-Vet 15ml IM।",
+        withdrawalNotice: "शून्य।",
+        differentials: "Choke, Vagus Indigestion",
+        structuredRx: [
+            { drug: "Simethicone Suspension (Bloatosil)", baseDoseMgPerKg: 0.3, concentrationMgPerMl: 1, route: "Oral / Intra-ruminal", duration: "1 दिन", abortifacient: false },
+            { drug: "Inj. Spasmo-Vet (Dicyclomine)", baseDoseMgPerKg: 0.04, concentrationMgPerMl: 1, route: "IM", duration: "1 दिन", abortifacient: false }
+        ]
+    },
+    {
+        id: "dis_lsd",
+        name: "Lumpy Skin Disease (LSD)",
+        localName: "गांठदार त्वचा रोग (लम्पी)",
+        species: ["Bovine"],
+        category: "Viral",
+        tempRange: "103.5 - 105.5 °F",
+        cardinalKey: "LSD_NODULES",
+        tempProfile: "HIGH",
+        mucousProfile: "CONGESTED",
+        urineProfile: "NORMAL",
+        dungProfile: "NORMAL",
+        symptoms: [
+            "त्वचा पर 2-5 सेमी आकार की सख्त उभरी हुई गांठें (Nodules)",
+            "पैरों, छाती और अंडकोष/लेवे में सूजन (Ventral Edema)",
+            "आंख और नाक से पानी/स्राव बहना",
+            "गांठों का पकना और घाव बन जाना",
+            "लंगड़ाना और दूध उत्पादन में कमी"
+        ],
+        primaryRx: "Inj. Ceftiofur Sodium 1 gm IM अथवा Enrofloxacin @ 5 mg/kg IM।",
+        supportiveRx: "Inj. Flunixin Meglumine 15ml IM। Ivermectin 1% @ 1ml/50kg SC। Zinc Supplementation।",
+        fluidTherapy: "DNS 2-3 लीटर IV।",
+        withdrawalNotice: "दूध: 5 दिन, मांस: 14 दिन।",
+        differentials: "Pseudo-LSD, Demodicosis",
+        structuredRx: [
+            { drug: "Inj. Ceftiofur Sodium 1g", baseDoseMgPerKg: 2.2, concentrationMgPerMl: 50, route: "IM", duration: "4 दिन", abortifacient: false },
+            { drug: "Inj. Flunixin Meglumine", baseDoseMgPerKg: 2.2, concentrationMgPerMl: 50, route: "IM", duration: "3 दिन", abortifacient: false },
+            { drug: "Inj. Ivermectin 1%", baseDoseMgPerKg: 0.2, concentrationMgPerMl: 10, route: "SC", duration: "1 दिन (Single Dose)", abortifacient: false }
+        ]
     },
     {
         id: "dis_parvo",
@@ -266,6 +354,11 @@ const DEFAULT_DISEASE_CODEX = [
         species: ["Canine"],
         category: "Viral",
         tempRange: "103.0 - 105.0 °F",
+        cardinalKey: "PARVO_BLOODY",
+        tempProfile: "HIGH",
+        mucousProfile: "PALE",
+        urineProfile: "DARK_YELLOW",
+        dungProfile: "WATERY_FOUL",
         symptoms: [
             "अत्यधिक बदबूदार खूनी दस्त (Foul-smelling Bloody Diarrhea)",
             "लगातार गंभीर उल्टियां (Persistent Vomiting)",
@@ -273,12 +366,16 @@ const DEFAULT_DISEASE_CODEX = [
             "अत्यधिक सुस्ती व कुछ भी खाने-पीने में असमर्थ",
             "शरीर का तापमान शुरुआत में तेज, बाद में सब-नॉर्मल"
         ],
-        vitalsRule: { tempMin: 103.0, mucous: "pale", rumen: "normal" },
-        primaryRx: "Inj. Maropitant (Cerenia) 1 mg/kg SC अथवा Ondansetron @ 0.2-0.5 mg/kg IV। Inj. Ceftriaxone @ 25 mg/kg IV।",
-        supportiveRx: "Inj. Pantoprazole @ 1 mg/kg IV, Inj. Ethamsylate @ 10 mg/kg IV (रक्तस्राव रोकने हेतु)।",
+        primaryRx: "Inj. Maropitant (Cerenia) 1 mg/kg SC अथवा Ondansetron @ 0.5 mg/kg IV। Inj. Ceftriaxone @ 25 mg/kg IV।",
+        supportiveRx: "Inj. Pantoprazole @ 1 mg/kg IV, Inj. Ethamsylate @ 10 mg/kg IV।",
         fluidTherapy: "Ringer's Lactate (RL) + 5% Dextrose @ 60-90 ml/kg/day IV (जीवन रक्षक)।",
-        withdrawalNotice: "गैर-खाद्य पशु (लागू नहीं)।",
-        differentials: "Canine Coronavirus, Intestinal Foreign Body, Hookworm Ancylostomiasis"
+        withdrawalNotice: "गैर-खाद्य पशु।",
+        differentials: "Canine Coronavirus, Intestinal Foreign Body",
+        structuredRx: [
+            { drug: "Inj. Ceftriaxone (Monocef)", baseDoseMgPerKg: 25, concentrationMgPerMl: 100, route: "IV", duration: "4 दिन", abortifacient: false },
+            { drug: "Inj. Ondansetron (Emeset)", baseDoseMgPerKg: 0.3, concentrationMgPerMl: 2, route: "IV", duration: "3 दिन", abortifacient: false },
+            { drug: "Inj. Pantoprazole (Pan)", baseDoseMgPerKg: 1.0, concentrationMgPerMl: 40, route: "IV", duration: "3 दिन", abortifacient: false }
+        ]
     },
     {
         id: "dis_ppr",
@@ -287,6 +384,11 @@ const DEFAULT_DISEASE_CODEX = [
         species: ["Caprine"],
         category: "Viral",
         tempRange: "104.0 - 106.0 °F",
+        cardinalKey: "PPR_SORES",
+        tempProfile: "HIGH",
+        mucousProfile: "CONGESTED",
+        urineProfile: "NORMAL",
+        dungProfile: "WATERY_FOUL",
         symptoms: [
             "तेज बुखार (104-106°F) और उदासी",
             "मुंह में घाव, मसूड़ों पर सफेद परत व बदबूदार सांस",
@@ -294,12 +396,15 @@ const DEFAULT_DISEASE_CODEX = [
             "आंखों व नाक से गाढ़ा मवाद जैसा स्राव",
             "निमोनिया के लक्षण और सांस फूलना"
         ],
-        vitalsRule: { tempMin: 104.0, mucous: "congested", rumen: "hypomotile" },
-        primaryRx: "विशिष्ट एंटीवायरल नहीं। द्वितीयक संक्रमण हेतु: Inj. Enrofloxacin @ 5 mg/kg IM अथवा Oxytetracycline @ 10 mg/kg IM 3-5 दिन।",
-        supportiveRx: "Inj. Meloxicam 2-3 ml IM। B-Complex + Belamyl 2 ml IM। दस्त हेतु ORS एवं काओलिन पेक्टिन।",
-        fluidTherapy: "Dextrose Normal Saline (DNS) 300-500 ml SC/Slow IV।",
+        primaryRx: "Inj. Enrofloxacin @ 5 mg/kg IM अथवा Oxytetracycline @ 10 mg/kg IM 4 दिन।",
+        supportiveRx: "Inj. Meloxicam 2ml IM। B-Complex 2ml IM। ORS पानी में प्रचुर मात्रा में दें।",
+        fluidTherapy: "DNS 300-500 ml SC/Slow IV।",
         withdrawalNotice: "मांस: 14 दिन।",
-        differentials: "Contagious Caprine Pleuropneumonia (CCPP), Coccidiosis, Goat Pox"
+        differentials: "CCPP, Coccidiosis, Goat Pox",
+        structuredRx: [
+            { drug: "Inj. Enrofloxacin 10%", baseDoseMgPerKg: 5, concentrationMgPerMl: 100, route: "IM", duration: "4 दिन", abortifacient: false },
+            { drug: "Inj. Meloxicam", baseDoseMgPerKg: 0.5, concentrationMgPerMl: 5, route: "IM", duration: "3 दिन", abortifacient: false }
+        ]
     },
     {
         id: "dis_colic",
@@ -308,6 +413,11 @@ const DEFAULT_DISEASE_CODEX = [
         species: ["Equine"],
         category: "Metabolic",
         tempRange: "99.5 - 101.5 °F",
+        cardinalKey: "COLIC_ROLLING",
+        tempProfile: "NORMAL",
+        mucousProfile: "CONGESTED",
+        urineProfile: "SCANTY_PAIN",
+        dungProfile: "STOPPED",
         symptoms: [
             "घोड़े का बार-बार जमीन पर लोटना (Rolling)",
             "पेट की ओर मुड़कर देखना और लात मारना",
@@ -315,12 +425,15 @@ const DEFAULT_DISEASE_CODEX = [
             "गोबर रुकना (Impaction) या बार-बार पेशाब की मुद्रा बनाना",
             "हृदय गति 60 से अधिक प्रति मिनट"
         ],
-        vitalsRule: { tempMin: 100.0, mucous: "congested", rumen: "atony" },
-        primaryRx: "Inj. Flunixin Meglumine @ 1.1 mg/kg IV। Inj. Buscopan Compositum (Hyoscine + Dipyrone) 20-30 ml IV।",
-        supportiveRx: "Liquid Paraffin (Mineral Oil) 2-4 लीटर Nasogastric Tube द्वारा (यदि Impaction हो)।",
-        fluidTherapy: "Normal Saline (0.9% NaCl) 10-20 लीटर IV तीव्र निर्जलीकरण में।",
+        primaryRx: "Inj. Flunixin Meglumine @ 1.1 mg/kg IV। Inj. Buscopan Compositum 25 ml IV।",
+        supportiveRx: "Liquid Paraffin (Mineral Oil) 2-4 लीटर Nasogastric Tube द्वारा।",
+        fluidTherapy: "Normal Saline 10-15 लीटर IV।",
         withdrawalNotice: "गैर-खाद्य पशु।",
-        differentials: "Gastric Rupture, Strangulating Lipoma, Enterolithiasis"
+        differentials: "Gastric Rupture, Strangulating Lipoma",
+        structuredRx: [
+            { drug: "Inj. Flunixin Meglumine", baseDoseMgPerKg: 1.1, concentrationMgPerMl: 50, route: "IV", duration: "1 दिन", abortifacient: false },
+            { drug: "Inj. Buscopan Compositum", baseDoseMgPerKg: 0.05, concentrationMgPerMl: 1, route: "IV", duration: "1 दिन", abortifacient: false }
+        ]
     },
     {
         id: "dis_enterotoxemia",
@@ -329,6 +442,11 @@ const DEFAULT_DISEASE_CODEX = [
         species: ["Caprine"],
         category: "Bacterial",
         tempRange: "103.5 - 105.0 °F",
+        cardinalKey: "ENTEROTOX_OPISTHO",
+        tempProfile: "HIGH",
+        mucousProfile: "CYANOTIC",
+        urineProfile: "NORMAL",
+        dungProfile: "WATERY_FOUL",
         symptoms: [
             "अचानक बिना किसी पूर्व लक्षण के पशु का गिरना व तड़पना",
             "दांत पीसना, मुंह से झाग और गर्दन पीछे खींचना (Opisthotonos)",
@@ -336,12 +454,15 @@ const DEFAULT_DISEASE_CODEX = [
             "पेशाब में ग्लूकोज की प्रचुरता (Glycosuria)",
             "मृत्यु के तुरंत बाद गुर्दे का दलिया जैसा गल जाना"
         ],
-        vitalsRule: { tempMin: 103.0, mucous: "cyanotic", rumen: "atony" },
-        primaryRx: "तीव्र मामलों में उपचार का समय कम। Clostridium Antitoxin 20-50 ml SC यदि उपलब्ध हो। Penicillin G 20,000 IU/kg IM।",
-        supportiveRx: "दाना तुरंत बंद करें। सूखी घास दें। B-Complex + Thiamine 5ml IM।",
+        primaryRx: "Clostridium Antitoxin 25 ml SC यदि उपलब्ध हो। Penicillin G 20,000 IU/kg IM।",
+        supportiveRx: "दाना तुरंत बंद करें। B-Complex + Thiamine 5ml IM।",
         fluidTherapy: "RL 500 ml Slow IV।",
         withdrawalNotice: "मांस: 14 दिन।",
-        differentials: "Polioencephalomalacia (PEM), Tetanus, Lead Poisoning"
+        differentials: "Polioencephalomalacia (PEM), Tetanus",
+        structuredRx: [
+            { drug: "Inj. Procaine Penicillin", baseDoseMgPerKg: 20000, concentrationMgPerMl: 300000, route: "IM", duration: "3 दिन", abortifacient: false },
+            { drug: "Inj. Tribivet (Thiamine B1)", baseDoseMgPerKg: 0.05, concentrationMgPerMl: 1, route: "IM", duration: "3 दिन", abortifacient: false }
+        ]
     },
     {
         id: "dis_coccidiosis",
@@ -350,6 +471,11 @@ const DEFAULT_DISEASE_CODEX = [
         species: ["Bovine", "Caprine", "Poultry"],
         category: "Parasitic",
         tempRange: "102.0 - 104.0 °F",
+        cardinalKey: "COCCIDIA_TENESMUS",
+        tempProfile: "HIGH",
+        mucousProfile: "PALE",
+        urineProfile: "NORMAL",
+        dungProfile: "MUCUS_BLOOD",
         symptoms: [
             "काले या लाल रंग का खूनी बदबूदार दस्त",
             "मल त्यागते समय अत्यधिक जोर लगाना (Tenesmus)",
@@ -357,12 +483,15 @@ const DEFAULT_DISEASE_CODEX = [
             "वजन में तेज गिरावट और पंख/बाल रूखे होना",
             "छोटे मेमनों व बछड़ों में अधिक प्रकोप"
         ],
-        vitalsRule: { tempMin: 102.5, mucous: "pale", rumen: "hypomotile" },
-        primaryRx: "Amprolium Powder (20%) @ 10 mg/kg शारीरिक भार के अनुसार पीने के पानी में 5-7 दिन, अथवा Toltrazuril @ 20 mg/kg मौखिक एकल खुराक।",
+        primaryRx: "Amprolium 20% Powder @ 10 mg/kg पानी में 5 दिन, अथवा Toltrazuril @ 20 mg/kg मौखिक एकल खुराक।",
         supportiveRx: "Sulfadimethoxine 50 mg/kg मौखिक 3 दिन। Belamyl 3ml IM।",
         fluidTherapy: "Electrolyte ORS पानी में प्रचुर मात्रा में दें।",
-        withdrawalNotice: "मांस: 10 दिन, दूध/अंडा: 5 दिन।",
-        differentials: "Salmonellosis, Helminthiasis, Giardiasis"
+        withdrawalNotice: "मांस: 10 दिन, दूध: 5 दिन।",
+        differentials: "Salmonellosis, Helminthiasis",
+        structuredRx: [
+            { drug: "Toltrazuril 5% Oral Susp.", baseDoseMgPerKg: 20, concentrationMgPerMl: 50, route: "Oral", duration: "1 दिन (Single Dose)", abortifacient: false },
+            { drug: "Inj. Belamyl (Liver + B-Complex)", baseDoseMgPerKg: 0.03, concentrationMgPerMl: 1, route: "IM", duration: "3 दिन", abortifacient: false }
+        ]
     }
 ];
 
@@ -372,7 +501,7 @@ let appKhataLedger = [];
 let appMedicationRows = [];
 
 // ===============================================================
-// 3. DEFENSIVE RUNTIME UI TOGGLE (showMainApp with Null Checks)
+// 3. DEFENSIVE RUNTIME UI TOGGLE & SAFETY INITIALIZATION
 // ===============================================================
 
 function showMainApp() {
@@ -382,85 +511,32 @@ function showMainApp() {
             authScreen.classList.add("hidden");
             authScreen.style.display = "none";
         }
-
         const splashScreen = document.getElementById("splashScreen");
         if (splashScreen && splashScreen.classList) {
             splashScreen.classList.add("hidden");
             splashScreen.style.display = "none";
         }
-
-        const loginModal = document.getElementById("loginModal");
-        if (loginModal && loginModal.classList) {
-            loginModal.classList.add("hidden");
-            loginModal.style.display = "none";
-        }
-
         const mainApp = document.getElementById("mainApp");
         if (mainApp && mainApp.classList) {
             mainApp.classList.remove("hidden");
             mainApp.style.display = "block";
         }
-
         const appContainer = document.getElementById("appContainer");
         if (appContainer && appContainer.classList) {
             appContainer.classList.remove("hidden");
             appContainer.style.display = "block";
         }
     } catch (err) {
-        console.warn("showMainApp handled safely:", err);
+        console.warn("showMainApp guarded successfully:", err);
     }
 }
 window.showMainApp = showMainApp;
 
-// ===============================================================
-// 4. GLOBAL PAYMENT MODAL CONTROLLERS (Direct Window Binding)
-// ===============================================================
-
-window.openPaymentModal = function() {
-    try {
-        const modal = document.getElementById("paymentModal");
-        if (modal) {
-            modal.style.display = "flex";
-            if (modal.classList) {
-                modal.classList.remove("hidden");
-            }
-        }
-        if (document.body && document.body.classList) {
-            document.body.classList.add("modal-active");
-        }
-        updatePaymentGatewayUI();
-    } catch (err) {
-        console.error("Error opening payment modal:", err);
-    }
-};
-
-window.closePaymentModal = function() {
-    try {
-        const modal = document.getElementById("paymentModal");
-        if (modal) {
-            modal.style.display = "none";
-            if (modal.classList) {
-                modal.classList.add("hidden");
-            }
-        }
-        if (document.body && document.body.classList) {
-            document.body.classList.remove("modal-active");
-        }
-    } catch (err) {
-        console.error("Error closing payment modal:", err);
-    }
-};
-
-// ===============================================================
-// 5. INITIALIZATION & DUAL STORAGE SYNC
-// ===============================================================
-
 document.addEventListener("DOMContentLoaded", () => {
-    // Invoke screen switch safely
-    showMainApp();
-
+    window.showMainApp();
     initDualSyncStorage();
     initClock();
+    checkStoredApiKey();
     setupDefaultPrescriptionMedicines();
     populateSymptomsChecklist();
     renderDiseaseDirectory();
@@ -468,15 +544,16 @@ document.addEventListener("DOMContentLoaded", () => {
     updatePaymentGatewayUI();
     updateLivePrescription();
 
-    // Global Key Listener for Modal Closing
     window.addEventListener("keydown", (e) => {
-        if (e.key === "Escape") window.closePaymentModal();
+        if (e.key === "Escape") {
+            window.closePaymentModal();
+            window.closeApiKeyModal();
+        }
     });
 
-    // Modal Trigger Binding
-    const openBtn = document.getElementById("openPaymentModalBtn");
-    if (openBtn) {
-        openBtn.addEventListener("click", window.openPaymentModal);
+    const openPayBtn = document.getElementById("openPaymentModalBtn");
+    if (openPayBtn) {
+        openPayBtn.addEventListener("click", window.openPaymentModal);
     }
 });
 
@@ -501,19 +578,17 @@ function initDualSyncStorage() {
     const syncBadge = document.getElementById("syncBadge");
     const syncText = document.getElementById("syncText");
 
-    // Load Unlimited Diseases (Codex + Custom Stored)
     const storedCustom = localStorage.getItem("vetcare_custom_diseases");
     let custom = [];
     if (storedCustom) {
         try {
             custom = JSON.parse(storedCustom);
         } catch (e) {
-            console.error("Custom disease parse failure:", e);
+            console.error("Custom disease parse error:", e);
         }
     }
     appDiseases = [...DEFAULT_DISEASE_CODEX, ...custom];
 
-    // Load Khata Ledger Records
     const storedKhata = localStorage.getItem("vetcare_khata_ledger");
     if (storedKhata) {
         try {
@@ -549,7 +624,6 @@ function initDualSyncStorage() {
         saveKhataLedgerToStorage();
     }
 
-    // Network connectivity listener for Dual Cloud/Local Mode
     window.addEventListener("online", () => {
         if (syncBadge && syncText && syncBadge.classList) {
             syncBadge.className = "hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200";
@@ -588,13 +662,580 @@ function saveCustomDiseasesToStorage(newDisease) {
         localStorage.setItem("vetcare_custom_diseases", JSON.stringify(current));
         appDiseases.push(newDisease);
     } catch (e) {
-        console.error("Custom disease save error:", e);
+        console.error("Custom disease storage error:", e);
     }
 }
 
 // ===============================================================
-// 6. DUAL-BANK PAYMENT GATEWAY LOGIC (SBI & PNB)
+// 4. WEIGHTED SYMPTOM MATRIX DIAGNOSTIC INFERENCE ENGINE
 // ===============================================================
+
+window.syncTempSelection = function() {
+    const tempInput = parseFloat(document.getElementById("diagTemp")?.value);
+    const tempClass = document.getElementById("diagTempClass");
+    if (!tempClass || isNaN(tempInput)) return;
+
+    if (tempInput > 103.5) {
+        tempClass.value = "HIGH";
+    } else if (tempInput < 100.0) {
+        tempClass.value = "SUBNORMAL";
+    } else {
+        tempClass.value = "NORMAL";
+    }
+};
+
+window.syncTempInput = function() {
+    const tempClass = document.getElementById("diagTempClass")?.value;
+    const tempInput = document.getElementById("diagTemp");
+    if (!tempInput || !tempClass) return;
+
+    if (tempClass === "HIGH") {
+        tempInput.value = "105.2";
+    } else if (tempClass === "SUBNORMAL") {
+        tempInput.value = "98.4";
+    } else {
+        tempInput.value = "101.5";
+    }
+};
+
+window.resetDiagnosticMatrix = function() {
+    const cardEl = document.getElementById("diagCardinalSign");
+    if (cardEl) cardEl.value = "NONE";
+    const tempIn = document.getElementById("diagTemp");
+    if (tempIn) tempIn.value = "";
+    const tempCl = document.getElementById("diagTempClass");
+    if (tempCl) tempCl.value = "NORMAL";
+    const mucEl = document.getElementById("diagMucous");
+    if (mucEl) mucEl.value = "PINK";
+    const uriEl = document.getElementById("diagUrine");
+    if (uriEl) uriEl.value = "NORMAL";
+    const dngEl = document.getElementById("diagDung");
+    if (dngEl) dngEl.value = "NORMAL";
+
+    const cbs = document.querySelectorAll(".diag-symptom-cb");
+    cbs.forEach(cb => { cb.checked = false; });
+    const countBadge = document.getElementById("selectedSymptomCount");
+    if (countBadge) countBadge.textContent = "0 चयनित";
+
+    window.runDiagnostics();
+    showToast("नैदानिक मैट्रिक्स रीसेट किया गया।", "info");
+};
+
+function populateSymptomsChecklist() {
+    const container = document.getElementById("symptomsChecklist");
+    if (!container) return;
+
+    const symptomSet = new Set();
+    appDiseases.forEach(d => {
+        if (Array.isArray(d.symptoms)) {
+            d.symptoms.forEach(s => symptomSet.add(s.trim()));
+        }
+    });
+
+    const sorted = Array.from(symptomSet).sort();
+    container.innerHTML = "";
+
+    sorted.forEach((sym) => {
+        const label = document.createElement("label");
+        label.className = "symptom-item flex items-center gap-2 p-1.5 hover:bg-slate-100 rounded text-xs cursor-pointer select-none";
+        label.innerHTML = `
+            <input type="checkbox" value="${escapeHtml(sym)}" class="diag-symptom-cb rounded text-brand-600 focus:ring-brand-500" onchange="window.handleSymptomCheckChange()">
+            <span class="text-slate-700 font-devanagari">${escapeHtml(sym)}</span>
+        `;
+        container.appendChild(label);
+    });
+}
+
+window.handleSymptomCheckChange = function() {
+    const checked = document.querySelectorAll(".diag-symptom-cb:checked");
+    const countBadge = document.getElementById("selectedSymptomCount");
+    if (countBadge) countBadge.textContent = `${checked.length} चयनित`;
+    window.runDiagnostics();
+};
+
+window.filterSymptomCheckboxes = function() {
+    const q = (document.getElementById("symptomSearch")?.value || "").toLowerCase();
+    const items = document.querySelectorAll(".symptom-item");
+    items.forEach(item => {
+        if (!item) return;
+        const txt = item.textContent.toLowerCase();
+        item.style.display = txt.includes(q) ? "flex" : "none";
+    });
+};
+
+/**
+ * Weighted Clinical Inference Algorithm:
+ * - Cardinal Sign: 40%
+ * - Body Temperature: 20%
+ * - Mucous Membrane: 15%
+ * - Urine Status: 15%
+ * - Dung/Stool Status: 10%
+ */
+window.runDiagnostics = function() {
+    const species = document.getElementById("diagSpecies")?.value || "Bovine";
+    const cardinalSign = document.getElementById("diagCardinalSign")?.value || "NONE";
+    const tempClass = document.getElementById("diagTempClass")?.value || "NORMAL";
+    const mucous = document.getElementById("diagMucous")?.value || "PINK";
+    const urine = document.getElementById("diagUrine")?.value || "NORMAL";
+    const dung = document.getElementById("diagDung")?.value || "NORMAL";
+
+    const checkedBoxes = document.querySelectorAll(".diag-symptom-cb:checked");
+    const checkedSymptoms = Array.from(checkedBoxes).map(cb => cb.value.toLowerCase());
+
+    const resultsContainer = document.getElementById("diagnosticResultsList");
+    const matchCountBadge = document.getElementById("matchCountBadge");
+
+    const isMatrixPristine = (cardinalSign === "NONE" && tempClass === "NORMAL" && mucous === "PINK" && urine === "NORMAL" && dung === "NORMAL" && checkedSymptoms.length === 0);
+
+    if (isMatrixPristine) {
+        if (resultsContainer) {
+            resultsContainer.innerHTML = `
+                <div class="text-center py-16 text-slate-400 text-xs font-devanagari">
+                    <i class="fa-solid fa-stethoscope text-4xl mb-3 text-slate-300"></i>
+                    <p>सटीक नैदानिक विश्लेषण हेतु बाईं ओर से कार्डिनल लक्षण अथवा वाइटल्स का चयन करें।</p>
+                </div>
+            `;
+        }
+        if (matchCountBadge) matchCountBadge.textContent = "0 रोग मिले";
+        return;
+    }
+
+    const scoredList = [];
+
+    appDiseases.forEach(d => {
+        let score = 0;
+        const breakdown = [];
+
+        // Species Filter Guard
+        const speciesMatch = (d.species.includes(species) || d.species.includes("ALL"));
+        if (!speciesMatch) {
+            score -= 35; // Heavy cross-species penalty
+        }
+
+        // Vector 1: Cardinal Sign (40%)
+        if (cardinalSign !== "NONE") {
+            if (d.cardinalKey === cardinalSign) {
+                score += 40;
+                breakdown.push("कार्डिनल पैथोग्नोमोनिक लक्षण मेल (+40%)");
+            }
+        }
+
+        // Vector 2: Body Temperature (20%)
+        if (d.tempProfile === tempClass) {
+            score += 20;
+            breakdown.push(`तापमान स्थिति मेल (${tempClass}) (+20%)`);
+        } else if (tempClass !== "NORMAL" && d.tempProfile === "HIGH" && tempClass === "HIGH") {
+            score += 20;
+        }
+
+        // Vector 3: Mucous Membrane (15%)
+        if (d.mucousProfile === mucous) {
+            score += 15;
+            breakdown.push(`श्लेष्मा झिल्ली मेल (${mucous}) (+15%)`);
+        }
+
+        // Vector 4: Urine Status (15%)
+        if (d.urineProfile === urine) {
+            score += 15;
+            breakdown.push(`मूत्र परीक्षण लक्षण मेल (${urine}) (+15%)`);
+        }
+
+        // Vector 5: Dung / Stool (10%)
+        if (d.dungProfile === dung) {
+            score += 10;
+            breakdown.push(`गोबर/मल स्थिति मेल (${dung}) (+10%)`);
+        }
+
+        // Granular Symptom Bonus (Up to +15% normalized)
+        if (checkedSymptoms.length > 0 && Array.isArray(d.symptoms)) {
+            let matchedSymCount = 0;
+            d.symptoms.forEach(ds => {
+                const lowerDs = ds.toLowerCase();
+                checkedSymptoms.forEach(cs => {
+                    if (lowerDs.includes(cs) || cs.includes(lowerDs)) {
+                        matchedSymCount++;
+                    }
+                });
+            });
+            const bonus = Math.min(15, Math.round((matchedSymCount / checkedSymptoms.length) * 15));
+            if (bonus > 0) {
+                score += bonus;
+                breakdown.push(`अतिरिक्त लक्षण पुष्टि (+${bonus}%)`);
+            }
+        }
+
+        if (score > 15) {
+            const finalPercentage = Math.min(99, Math.max(10, score));
+            scoredList.push({
+                disease: d,
+                confidence: finalPercentage,
+                reasons: breakdown
+            });
+        }
+    });
+
+    scoredList.sort((a, b) => b.confidence - a.confidence);
+
+    if (matchCountBadge) {
+        matchCountBadge.textContent = `${scoredList.length} रोग मिले`;
+    }
+
+    if (!resultsContainer) return;
+    resultsContainer.innerHTML = "";
+
+    if (scoredList.length === 0) {
+        resultsContainer.innerHTML = `
+            <div class="p-4 bg-amber-50 rounded-xl border border-amber-200 text-amber-900 text-xs text-center font-devanagari">
+                वर्तमान इनपुट से कोई सटीक नैदानिक मेल नहीं मिला। कृपया लक्षण पुनः जांचें या "Gemini AI" की मदद लें।
+            </div>
+        `;
+        return;
+    }
+
+    scoredList.forEach(item => {
+        const d = item.disease;
+        const conf = item.confidence;
+
+        // Color Coding: >85% Emerald, 60-84% Amber, <60% Slate
+        let badgeBg = "bg-slate-100 text-slate-700 border-slate-300";
+        let barColor = "bg-slate-400";
+        let matchText = "संभावित";
+
+        if (conf >= 85) {
+            badgeBg = "bg-emerald-100 text-emerald-800 border-emerald-300";
+            barColor = "bg-emerald-600";
+            matchText = "अत्यधिक संभावित (High Match)";
+        } else if (conf >= 60) {
+            badgeBg = "bg-amber-100 text-amber-800 border-amber-300";
+            barColor = "bg-amber-500";
+            matchText = "मध्यम संभावना (Moderate)";
+        }
+
+        const div = document.createElement("div");
+        div.className = "bg-white p-4 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition space-y-3";
+        div.innerHTML = `
+            <div class="flex items-start justify-between gap-2">
+                <div>
+                    <h4 class="font-bold text-slate-900 font-devanagari text-sm">${escapeHtml(d.localName)}</h4>
+                    <span class="text-[11px] text-slate-500 font-sans italic">${escapeHtml(d.name)}</span>
+                </div>
+                <div class="text-right">
+                    <span class="inline-block px-2.5 py-0.5 rounded-full text-xs font-black border ${badgeBg} font-mono">
+                        ${conf}%
+                    </span>
+                    <span class="block text-[9px] text-slate-400 mt-0.5 font-devanagari">${matchText}</span>
+                </div>
+            </div>
+
+            <!-- Dynamic Confidence Bar -->
+            <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                <div class="${barColor} h-2 rounded-full transition-all duration-500" style="width: ${conf}%"></div>
+            </div>
+
+            <!-- Match Breakdown List -->
+            <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-100 text-[11px] text-slate-600 space-y-1 font-devanagari">
+                <strong class="text-slate-800 block text-[10px] uppercase tracking-wide">क्लिनिकल पुष्टि कारक:</strong>
+                ${item.reasons.map(r => `<div class="flex items-center gap-1.5"><span class="text-brand-600">✓</span><span>${escapeHtml(r)}</span></div>`).join('')}
+            </div>
+
+            <!-- Rx Preview & 1-Click Auto-Fill -->
+            <div class="pt-2 border-t border-slate-100 flex items-center justify-between gap-2">
+                <span class="text-[10px] text-slate-400 font-mono">${d.category}</span>
+                <button type="button" onclick="window.autoFillPrescription('${d.id}')" class="px-3 py-1.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-bold font-devanagari flex items-center gap-1.5 shadow-sm active:scale-95 transition">
+                    <i class="fa-solid fa-notes-medical"></i> 📋 पर्ची में दवाइयाँ जोड़ें (Auto-Fill Rx)
+                </button>
+            </div>
+        `;
+        resultsContainer.appendChild(div);
+    });
+};
+
+// ===============================================================
+// 5. 1-CLICK AUTO-FILL RX & PREGNANCY RED ALERT SYSTEM
+// ===============================================================
+
+window.handlePregnancyStatusChange = function() {
+    const pregSelect = document.getElementById("animalPregnancyStatus");
+    const isPregnant = (pregSelect?.value === "pregnant");
+    const formBanner = document.getElementById("formPregnancyAlert");
+    const slipBanner = document.getElementById("slipPregnancyWarning");
+
+    if (isPregnant) {
+        if (formBanner && formBanner.classList) formBanner.classList.remove("hidden");
+        if (slipBanner && slipBanner.classList) slipBanner.classList.remove("hidden");
+        showToast("⚠️ गर्भावस्था चेतावनी सक्रिय: गर्भपातकारी औषधियां पूर्णतः वर्जित हैं!", "error");
+    } else {
+        if (formBanner && formBanner.classList) formBanner.classList.add("hidden");
+        if (slipBanner && slipBanner.classList) slipBanner.classList.add("hidden");
+    }
+
+    window.updateLivePrescription();
+};
+
+window.autoFillPrescription = function(diseaseId) {
+    const dis = appDiseases.find(d => d.id === diseaseId);
+    if (!dis) return;
+
+    const weightInput = parseFloat(document.getElementById("animalWeightKg")?.value) || 350;
+    const pregSelect = document.getElementById("animalPregnancyStatus");
+    const isPregnant = (pregSelect?.value === "pregnant");
+
+    const diagInput = document.getElementById("opdDiagnosisInput");
+    if (diagInput) diagInput.value = `${dis.localName} (${dis.name})`;
+
+    const adviceInput = document.getElementById("opdAdvice");
+    if (adviceInput) adviceInput.value = `${dis.primaryRx} ${dis.supportiveRx}`;
+
+    // Clear existing medicine rows
+    appMedicationRows = [];
+
+    let abortifacientBlockedCount = 0;
+
+    if (Array.isArray(dis.structuredRx) && dis.structuredRx.length > 0) {
+        dis.structuredRx.forEach(med => {
+            let doseString = "";
+            if (med.baseDoseMgPerKg > 0 && med.concentrationMgPerMl > 0) {
+                const totalMg = weightInput * med.baseDoseMgPerKg;
+                const ml = Math.max(1, Math.round((totalMg / med.concentrationMgPerMl) * 10) / 10);
+                doseString = `${ml} ml (${weightInput}kg भार अनुसार)`;
+            } else {
+                doseString = "1 शीशी / मानक खुराक";
+            }
+
+            let drugDisplayName = med.drug;
+
+            if (isPregnant && med.abortifacient) {
+                abortifacientBlockedCount++;
+                drugDisplayName = `[⚠️ वर्जित/ABORTIFACIENT] ${med.drug} - गर्भवती में निषेध!`;
+                doseString = "0 ml (स्वतः रद्द)";
+            }
+
+            appMedicationRows.push({
+                drugName: drugDisplayName,
+                dose: doseString,
+                route: med.route,
+                duration: med.duration
+            });
+        });
+    } else {
+        appMedicationRows.push({
+            drugName: dis.primaryRx.substring(0, 48),
+            dose: `${Math.round(weightInput * 0.05)} ml`,
+            route: "IM",
+            duration: "3 दिन"
+        });
+    }
+
+    renderMedicationRowsInput();
+    window.switchAppTab("opdTab");
+    window.updateLivePrescription();
+
+    if (isPregnant && abortifacientBlockedCount > 0) {
+        showToast(`⚠️ गर्भवती पशु: ${abortifacientBlockedCount} गर्भपातकारी औषधियां पर्ची में स्वतः ब्लॉक की गईं!`, "error");
+    } else {
+        showToast(`'${dis.localName}' का औषधीय प्रोटोकॉल (${weightInput}kg अनुसार) पर्ची में दर्ज किया गया!`, "success");
+    }
+};
+
+// ===============================================================
+// 6. LIVE GEMINI AI DIAGNOSTIC ASSISTANT
+// ===============================================================
+
+function checkStoredApiKey() {
+    const key = localStorage.getItem("vetcare_gemini_api_key");
+    const dot = document.getElementById("apiKeyStatusDot");
+    if (dot && dot.classList) {
+        if (key && key.trim().length > 10) {
+            dot.className = "w-2 h-2 rounded-full bg-emerald-500 animate-pulse";
+            dot.title = "Gemini AI Key सक्रिय";
+        } else {
+            dot.className = "w-2 h-2 rounded-full bg-slate-400";
+            dot.title = "Gemini AI Key दर्ज नहीं";
+        }
+    }
+}
+
+window.openApiKeyModal = function() {
+    const modal = document.getElementById("apiKeyModal");
+    const input = document.getElementById("geminiApiKeyInput");
+    if (modal && modal.classList) {
+        modal.style.display = "flex";
+        modal.classList.remove("hidden");
+    }
+    if (input) {
+        input.value = localStorage.getItem("vetcare_gemini_api_key") || "";
+    }
+};
+
+window.closeApiKeyModal = function() {
+    const modal = document.getElementById("apiKeyModal");
+    if (modal && modal.classList) {
+        modal.style.display = "none";
+        modal.classList.add("hidden");
+    }
+};
+
+window.saveGeminiApiKey = function() {
+    const input = document.getElementById("geminiApiKeyInput");
+    const val = input ? input.value.trim() : "";
+    if (!val || val.length < 15) {
+        showToast("कृपया वैध Google Gemini API Key दर्ज करें!", "error");
+        return;
+    }
+    localStorage.setItem("vetcare_gemini_api_key", val);
+    checkStoredApiKey();
+    window.closeApiKeyModal();
+    showToast("Gemini API Key सुरक्षित कर ली गई!", "success");
+};
+
+window.clearStoredApiKey = function() {
+    localStorage.removeItem("vetcare_gemini_api_key");
+    const input = document.getElementById("geminiApiKeyInput");
+    if (input) input.value = "";
+    checkStoredApiKey();
+    showToast("Gemini API Key हटा दी गई।", "info");
+};
+
+window.closeGeminiAiPanel = function() {
+    const panel = document.getElementById("geminiAiPanel");
+    if (panel && panel.classList) {
+        panel.classList.add("hidden");
+    }
+};
+
+window.runGeminiAiConsultation = async function() {
+    const apiKey = localStorage.getItem("vetcare_gemini_api_key");
+    if (!apiKey) {
+        showToast("कृपया पहले 'AI कुंजी' बटन से अपनी Gemini API Key दर्ज करें!", "error");
+        window.openApiKeyModal();
+        return;
+    }
+
+    const species = document.getElementById("diagSpecies")?.value || "Bovine";
+    const cardinalSign = document.getElementById("diagCardinalSign")?.value || "NONE";
+    const tempInput = document.getElementById("diagTemp")?.value || "101.5";
+    const mucous = document.getElementById("diagMucous")?.value || "Normal";
+    const urine = document.getElementById("diagUrine")?.value || "Normal";
+    const dung = document.getElementById("diagDung")?.value || "Normal";
+    const weight = document.getElementById("animalWeightKg")?.value || "350";
+    const preg = document.getElementById("animalPregnancyStatus")?.value || "non-pregnant";
+
+    const checkedBoxes = document.querySelectorAll(".diag-symptom-cb:checked");
+    const symptoms = Array.from(checkedBoxes).map(cb => cb.value).join(", ") || "कोई अतिरिक्त लक्षण नहीं";
+
+    const panel = document.getElementById("geminiAiPanel");
+    const loading = document.getElementById("geminiAiLoading");
+    const content = document.getElementById("geminiAiResponseContent");
+
+    if (panel && panel.classList) panel.classList.remove("hidden");
+    if (loading && loading.classList) loading.classList.remove("hidden");
+    if (content) content.innerHTML = "";
+
+    const promptText = `You are a Senior Veterinary Clinical Pathologist. Analyze the following patient vitals and symptoms, and provide a rapid, professional differential diagnosis in clean Devanagari Hindi (with English drug names):
+Patient:
+- Species: ${species}
+- Body Weight: ${weight} kg
+- Pregnancy Status: ${preg}
+- Temperature: ${tempInput} °F
+- Cardinal Sign: ${cardinalSign}
+- Mucous Membrane: ${mucous}
+- Urine Status: ${urine}
+- Dung/Stool: ${dung}
+- Observed Symptoms: ${symptoms}
+
+Please structure your clinical answer as:
+1. 🔬 शीर्ष 2 संभावित रोग (Top 2 Differentials with % confidence)
+2. 💊 अनुशंसित आपातकालीन उपचार व औषधियां (Drug doses calculated for ${weight}kg)
+3. ⚠️ गर्भावस्था एवं टॉक्सिकोलॉजी चेतावनी (Safety alerts for ${preg} status)
+4. 🌾 सहायक देखभाल व डाइट निर्देश. Keep response clear, direct, and actionable.`;
+
+    try {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                contents: [{
+                    parts: [{ text: promptText }]
+                }]
+            })
+        });
+
+        if (!response.ok) {
+            const errJson = await response.json().catch(() => ({}));
+            throw new Error(errJson.error?.message || `HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+        const candidate = data.candidates?.[0]?.content?.parts?.[0]?.text;
+
+        if (!candidate) {
+            throw new Error("Gemini AI से कोई वैध प्रत्युत्तर प्राप्त नहीं हुआ।");
+        }
+
+        // Simple formatting parser from markdown bullets to styled HTML
+        const formattedHtml = candidate
+            .replace(/\*\*(.*?)\*\*/g, '<strong class="text-indigo-950 font-bold">$1</strong>')
+            .replace(/^\s*\*\s(.*)$/gm, '<div class="flex items-start gap-1.5 my-1"><span class="text-indigo-600 font-bold">•</span><span>$1</span></div>')
+            .replace(/\n\n/g, '<br/>');
+
+        if (content) {
+            content.innerHTML = `
+                <div class="bg-white p-4 rounded-xl border border-indigo-100 shadow-sm leading-relaxed font-devanagari">
+                    ${formattedHtml}
+                </div>
+            `;
+        }
+        showToast("Gemini AI Live Consultation संपन्न हुआ!", "success");
+    } catch (err) {
+        console.error("Gemini API Error:", err);
+        if (content) {
+            content.innerHTML = `
+                <div class="bg-rose-50 border border-rose-200 text-rose-800 p-3 rounded-xl font-devanagari text-xs">
+                    <strong>त्रुटि:</strong> Gemini API से संपर्क नहीं हो सका (${escapeHtml(err.message)})। कृपया अपनी API Key जांचें।
+                </div>
+            `;
+        }
+    } finally {
+        if (loading && loading.classList) loading.classList.add("hidden");
+    }
+};
+
+// ===============================================================
+// 7. DUAL-BANK PAYMENT GATEWAY LOGIC (SBI & PNB)
+// ===============================================================
+
+window.openPaymentModal = function() {
+    try {
+        const modal = document.getElementById("paymentModal");
+        if (modal) {
+            modal.style.display = "flex";
+            if (modal.classList) modal.classList.remove("hidden");
+        }
+        if (document.body && document.body.classList) {
+            document.body.classList.add("modal-active");
+        }
+        updatePaymentGatewayUI();
+    } catch (err) {
+        console.error("Payment modal error:", err);
+    }
+};
+
+window.closePaymentModal = function() {
+    try {
+        const modal = document.getElementById("paymentModal");
+        if (modal) {
+            modal.style.display = "none";
+            if (modal.classList) modal.classList.add("hidden");
+        }
+        if (document.body && document.body.classList) {
+            document.body.classList.remove("modal-active");
+        }
+    } catch (err) {
+        console.error("Close payment modal error:", err);
+    }
+};
 
 window.selectBankTab = function(bankKey) {
     if (bankKey !== "sbi" && bankKey !== "pnb") return;
@@ -606,11 +1247,11 @@ window.selectBankTab = function(bankKey) {
     if (bankKey === "sbi") {
         if (sbiBtn) sbiBtn.className = "flex-1 py-2 rounded-lg bg-white shadow-sm text-brand-700 transition flex items-center justify-center gap-1.5 font-devanagari font-bold";
         if (pnbBtn) pnbBtn.className = "flex-1 py-2 rounded-lg text-slate-600 hover:text-slate-900 transition flex items-center justify-center gap-1.5 font-devanagari font-semibold";
-        showToast("प्राथमिक बैंक: State Bank of India चुना गया", "info");
+        showToast("प्राथमिक बैंक: State Bank of India सक्रिय", "info");
     } else {
         if (pnbBtn) pnbBtn.className = "flex-1 py-2 rounded-lg bg-white shadow-sm text-rose-700 transition flex items-center justify-center gap-1.5 font-devanagari font-bold";
         if (sbiBtn) sbiBtn.className = "flex-1 py-2 rounded-lg text-slate-600 hover:text-slate-900 transition flex items-center justify-center gap-1.5 font-devanagari font-semibold";
-        showToast("बैकअप बैंक: Punjab National Bank चुना गया", "info");
+        showToast("बैकअप बैंक: Punjab National Bank सक्रिय", "info");
     }
 
     updatePaymentGatewayUI();
@@ -651,15 +1292,12 @@ function updatePaymentGatewayUI() {
     if (ifscEl) ifscEl.textContent = bank.ifsc;
     if (branchEl) branchEl.textContent = bank.branch;
 
-    // Standard RFC-Compliant UPI URI
     const upiPayload = `upi://pay?pa=${encodeURIComponent(bank.upiId)}&pn=${encodeURIComponent(VETCARE_PAYMENT_CONFIG.payeeName)}&am=${amount}&cu=INR&tn=${encodeURIComponent('Vetcare Pro ' + currentSelectedPlan.label)}`;
 
-    // High Density Production QR Code
     if (qrImageEl) {
         qrImageEl.src = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=4&data=${encodeURIComponent(upiPayload)}`;
     }
 
-    // Direct Intent Link
     if (intentLink) {
         intentLink.href = upiPayload;
     }
@@ -698,7 +1336,7 @@ function fallbackCopy(text, labelName) {
         document.execCommand("copy");
         showToast(`${labelName} कॉपी हो गया!`, "success");
     } catch (err) {
-        showToast("कॉपी नहीं हो सका, कृपया मैन्युअल नोट करें।", "error");
+        showToast("कॉपी नहीं हो सका, कृपया हाथ से नोट करें।", "error");
     }
     document.body.removeChild(textArea);
 }
@@ -722,14 +1360,14 @@ window.submitUtrVerification = function() {
     };
 
     localStorage.setItem("vetcare_pro_subscription", JSON.stringify(verifiedRecord));
-    showToast("धन्यवाद! UTR सत्यापित हुआ। आपकी प्रो सदस्यता सक्रिय हो चुकी है।", "success");
+    showToast("धन्यवाद! UTR सत्यापित हुआ। आपकी प्रो सदस्यता तत्काल सक्रिय की गई।", "success");
 
     if (utrInput) utrInput.value = "";
     setTimeout(window.closePaymentModal, 1500);
 };
 
 // ==========================================
-// 7. APPLICATION TAB CONTROLLER
+// 8. APPLICATION TAB NAVIGATION
 // ==========================================
 
 window.switchAppTab = function(tabId) {
@@ -754,14 +1392,14 @@ window.switchAppTab = function(tabId) {
 };
 
 // ==========================================
-// 8. OPD PRESCRIPTION & WHATSAPP DISPATCH
+// 9. OPD PRESCRIPTION & WHATSAPP ENGINE
 // ==========================================
 
 function setupDefaultPrescriptionMedicines() {
     appMedicationRows = [
         {
             drugName: "Inj. Ceftiofur Sodium (Intraceft)",
-            dose: "1 gm",
+            dose: "1 gm (350kg अनुसार)",
             route: "Intramuscular (IM)",
             duration: "3 दिन"
         },
@@ -787,14 +1425,15 @@ function renderMedicationRowsInput() {
 
     container.innerHTML = "";
     appMedicationRows.forEach((row, index) => {
+        const isAlert = row.drugName.includes("वर्जित") || row.drugName.includes("ABORTIFACIENT");
         const div = document.createElement("div");
-        div.className = "grid grid-cols-12 gap-1.5 items-center bg-slate-50 p-2 rounded-lg border border-slate-200 text-xs";
+        div.className = `grid grid-cols-12 gap-1.5 items-center p-2 rounded-xl border text-xs ${isAlert ? 'bg-rose-50 border-rose-300' : 'bg-slate-50 border-slate-200'}`;
         div.innerHTML = `
             <div class="col-span-5">
-                <input type="text" value="${escapeHtml(row.drugName)}" placeholder="दवा का नाम" class="w-full px-2 py-1.5 border rounded bg-white font-medium" oninput="window.updateMedRow(${index}, 'drugName', this.value)">
+                <input type="text" value="${escapeHtml(row.drugName)}" placeholder="दवा का नाम" class="w-full px-2 py-1.5 border rounded bg-white font-medium ${isAlert ? 'text-rose-700 font-bold' : ''}" oninput="window.updateMedRow(${index}, 'drugName', this.value)">
             </div>
             <div class="col-span-2">
-                <input type="text" value="${escapeHtml(row.dose)}" placeholder="मात्रा" class="w-full px-2 py-1.5 border rounded bg-white text-center" oninput="window.updateMedRow(${index}, 'dose', this.value)">
+                <input type="text" value="${escapeHtml(row.dose)}" placeholder="मात्रा" class="w-full px-2 py-1.5 border rounded bg-white text-center font-semibold" oninput="window.updateMedRow(${index}, 'dose', this.value)">
             </div>
             <div class="col-span-3">
                 <select class="w-full px-1.5 py-1.5 border rounded bg-white text-[11px]" onchange="window.updateMedRow(${index}, 'route', this.value)">
@@ -827,7 +1466,7 @@ window.addMedicationRow = function(defaultName = "", defaultDose = "", defaultRo
         duration: defaultDuration
     });
     renderMedicationRowsInput();
-    updateLivePrescription();
+    window.updateLivePrescription();
 };
 
 window.removeMedicationRow = function(index) {
@@ -837,20 +1476,20 @@ window.removeMedicationRow = function(index) {
     }
     appMedicationRows.splice(index, 1);
     renderMedicationRowsInput();
-    updateLivePrescription();
+    window.updateLivePrescription();
 };
 
 window.updateMedRow = function(index, field, value) {
     if (appMedicationRows[index]) {
         appMedicationRows[index][field] = value;
-        updateLivePrescription();
+        window.updateLivePrescription();
     }
 };
 
 window.clearOpdForm = function() {
     const fields = [
         "ownerName", "ownerPhone", "ownerAddress",
-        "animalBreedSex", "animalAgeWeight",
+        "animalBreedSex", "animalAge",
         "vitalTemp", "vitalHR", "vitalRR", "vitalRumen",
         "opdDiagnosisInput", "opdAdvice"
     ];
@@ -859,18 +1498,23 @@ window.clearOpdForm = function() {
         if (el) el.value = "";
     });
 
+    const pregSelect = document.getElementById("animalPregnancyStatus");
+    if (pregSelect) pregSelect.value = "non-pregnant";
+    window.handlePregnancyStatusChange();
+
     setupDefaultPrescriptionMedicines();
-    updateLivePrescription();
+    window.updateLivePrescription();
     showToast("OPD फॉर्म खाली कर दिया गया है।", "info");
 };
 
-function updateLivePrescription() {
+window.updateLivePrescription = function() {
     const owner = document.getElementById("ownerName")?.value.trim() || "रमेश कुमार";
     const phone = document.getElementById("ownerPhone")?.value.trim() || "98XXXXXXXX";
     const address = document.getElementById("ownerAddress")?.value.trim() || "स्थानीय पता";
     const species = document.getElementById("animalSpecies")?.value || "गाय (Cattle)";
     const breedSex = document.getElementById("animalBreedSex")?.value.trim() || "HF Cross";
-    const ageWt = document.getElementById("animalAgeWeight")?.value.trim() || "4 वर्ष | 420 kg";
+    const age = document.getElementById("animalAge")?.value.trim() || "4 वर्ष";
+    const weight = document.getElementById("animalWeightKg")?.value.trim() || "350";
     const diag = document.getElementById("opdDiagnosisInput")?.value.trim() || "Bovine Mastitis (संदिग्ध)";
     const advice = document.getElementById("opdAdvice")?.value.trim() || "ठंडा व सुपाच्य चारा दें। पानी प्रचुर मात्रा में पिलाएं।";
 
@@ -883,12 +1527,11 @@ function updateLivePrescription() {
     const paidFee = parseFloat(document.getElementById("opdPaidFee")?.value || 0);
     const dueFee = Math.max(0, totalFee - paidFee);
 
-    // Update Live Preview DOM
     setText("slipOwner", owner);
     setText("slipPhone", phone);
     setText("slipAddress", address);
     setText("slipSpeciesBreed", `${species} | ${breedSex}`);
-    setText("slipAgeWeight", ageWt);
+    setText("slipAgeWeight", `${age} | ${weight} kg`);
     setText("slipDiagnosis", diag);
     setText("slipAdviceText", advice);
 
@@ -905,10 +1548,11 @@ function updateLivePrescription() {
     if (tableBody) {
         tableBody.innerHTML = "";
         appMedicationRows.forEach((row, i) => {
+            const isAlert = row.drugName.includes("वर्जित") || row.drugName.includes("ABORTIFACIENT");
             const tr = document.createElement("tr");
             tr.innerHTML = `
                 <td class="py-1 px-1.5 text-slate-400 font-mono">${i + 1}</td>
-                <td class="py-1 px-1.5 font-bold text-slate-800">${escapeHtml(row.drugName || "-")}</td>
+                <td class="py-1 px-1.5 font-bold ${isAlert ? 'text-rose-700' : 'text-slate-800'}">${escapeHtml(row.drugName || "-")}</td>
                 <td class="py-1 px-1.5 font-semibold text-brand-800">${escapeHtml(row.dose || "-")}</td>
                 <td class="py-1 px-1.5 text-slate-600">${escapeHtml(row.route || "-")}</td>
                 <td class="py-1 px-1.5 text-slate-600">${escapeHtml(row.duration || "-")}</td>
@@ -916,8 +1560,7 @@ function updateLivePrescription() {
             tableBody.appendChild(tr);
         });
     }
-}
-window.updateLivePrescription = updateLivePrescription;
+};
 
 window.dispatchToWhatsApp = function() {
     const owner = document.getElementById("ownerName")?.value.trim() || "पशुपालक";
@@ -931,11 +1574,14 @@ window.dispatchToWhatsApp = function() {
 
     const species = document.getElementById("animalSpecies")?.value || "पशु";
     const breed = document.getElementById("animalBreedSex")?.value || "-";
+    const weight = document.getElementById("animalWeightKg")?.value || "350";
     const diag = document.getElementById("opdDiagnosisInput")?.value || "रोग निदान";
     const vTemp = document.getElementById("vitalTemp")?.value || "सामान्य";
     const advice = document.getElementById("opdAdvice")?.value || "सावधानी रखें।";
     const totalFee = document.getElementById("opdTotalFee")?.value || "0";
     const dueFee = document.getElementById("slipDueFee")?.textContent || "₹0";
+
+    const isPregnant = (document.getElementById("animalPregnancyStatus")?.value === "pregnant");
 
     let medText = "";
     appMedicationRows.forEach((m, i) => {
@@ -945,7 +1591,8 @@ window.dispatchToWhatsApp = function() {
     const msg = `🐾 *VETCARE CLINICAL OPD PRESCRIPTION* 🐾\n` +
         `-----------------------------------------\n` +
         `👤 *पशुपालक:* ${owner}\n` +
-        `🐄 *पशु:* ${species} (${breed})\n` +
+        `🐄 *पशु:* ${species} (${breed}) | भार: ${weight} kg\n` +
+        `${isPregnant ? '⚠️ *गर्भावस्था स्थिति: गर्भवती (PREGNANT)*\n' : ''}` +
         `🌡️ *तापमान (Temp):* ${vTemp} °F\n` +
         `🔬 *संभावित निदान:* *${diag}*\n` +
         `-----------------------------------------\n` +
@@ -961,219 +1608,6 @@ window.dispatchToWhatsApp = function() {
     const waUrl = `https://wa.me/91${phone}?text=${encodeURIComponent(msg)}`;
     window.open(waUrl, "_blank");
     showToast("WhatsApp डिस्पैच तैयार!", "success");
-};
-
-// ===============================================================
-// 9. 3-WAY DIAGNOSIS ENGINE (SPECIES + VITALS + MULTI-SYMPTOMS)
-// ===============================================================
-
-function populateSymptomsChecklist() {
-    const container = document.getElementById("symptomsChecklist");
-    if (!container) return;
-
-    const symptomSet = new Set();
-    appDiseases.forEach(d => {
-        if (Array.isArray(d.symptoms)) {
-            d.symptoms.forEach(s => symptomSet.add(s.trim()));
-        }
-    });
-
-    const sortedSymptoms = Array.from(symptomSet).sort();
-    container.innerHTML = "";
-
-    sortedSymptoms.forEach((symptom) => {
-        const label = document.createElement("label");
-        label.className = "symptom-item flex items-center gap-2 p-1.5 hover:bg-slate-100 rounded text-xs cursor-pointer select-none";
-        label.innerHTML = `
-            <input type="checkbox" value="${escapeHtml(symptom)}" class="diag-symptom-cb rounded text-brand-600 focus:ring-brand-500" onchange="window.runDiagnostics()">
-            <span class="text-slate-700 font-devanagari">${escapeHtml(symptom)}</span>
-        `;
-        container.appendChild(label);
-    });
-}
-
-window.filterSymptomCheckboxes = function() {
-    const q = (document.getElementById("symptomSearch")?.value || "").toLowerCase();
-    const items = document.querySelectorAll(".symptom-item");
-    items.forEach(item => {
-        if (!item) return;
-        const txt = item.textContent.toLowerCase();
-        item.style.display = txt.includes(q) ? "flex" : "none";
-    });
-};
-
-window.runDiagnostics = function() {
-    const selectedSpecies = document.getElementById("diagSpecies")?.value || "Bovine";
-    const tempInput = parseFloat(document.getElementById("diagTemp")?.value);
-    const mucousVal = document.getElementById("diagMucous")?.value || "normal";
-    const rumenVal = document.getElementById("diagRumen")?.value || "normal";
-
-    const checkedBoxes = document.querySelectorAll(".diag-symptom-cb:checked");
-    const chosenSymptoms = Array.from(checkedBoxes).map(cb => cb.value.toLowerCase());
-
-    const resultsContainer = document.getElementById("diagnosticResultsList");
-    const matchCountBadge = document.getElementById("matchCountBadge");
-    const tempLabel = document.getElementById("tempStatus");
-
-    // Dynamic Temperature Classification
-    if (!isNaN(tempInput) && tempLabel) {
-        if (tempInput > 103.0) {
-            tempLabel.textContent = "🔥 उच्च ज्वर (High Fever)";
-            tempLabel.className = "font-bold text-xs text-rose-600";
-        } else if (tempInput < 100.0) {
-            tempLabel.textContent = "❄️ हाइपोथर्मिया / ठंडा शरीर";
-            tempLabel.className = "font-bold text-xs text-blue-600";
-        } else {
-            tempLabel.textContent = "✓ सामान्य (Normal Range)";
-            tempLabel.className = "font-bold text-xs text-emerald-600";
-        }
-    } else if (tempLabel) {
-        tempLabel.textContent = "";
-    }
-
-    if (chosenSymptoms.length === 0 && isNaN(tempInput)) {
-        if (resultsContainer) {
-            resultsContainer.innerHTML = `
-                <div class="text-center py-10 text-slate-400 text-xs font-devanagari">
-                    <i class="fa-solid fa-stethoscope text-3xl mb-2 text-slate-300"></i>
-                    <p>कृपया बाईं ओर लक्षण और वाइटल्स दर्ज करें।</p>
-                </div>
-            `;
-        }
-        if (matchCountBadge) matchCountBadge.textContent = "0 मिले";
-        return;
-    }
-
-    // 3-Way Diagnostic Matching Algorithm
-    const scoredDiseases = [];
-
-    appDiseases.forEach(d => {
-        let score = 0;
-        let matchedReasons = [];
-
-        // 1. Species Matching
-        if (d.species.includes(selectedSpecies) || d.species.includes("ALL")) {
-            score += 15;
-        } else {
-            score -= 40; // Heavy penalty for cross-species mismatches
-        }
-
-        // 2. Symptom Overlap Score
-        let matchCount = 0;
-        d.symptoms.forEach(ds => {
-            const lowerDs = ds.toLowerCase();
-            chosenSymptoms.forEach(cs => {
-                if (lowerDs.includes(cs) || cs.includes(lowerDs)) {
-                    matchCount++;
-                    matchedReasons.push(ds);
-                }
-            });
-        });
-
-        if (chosenSymptoms.length > 0) {
-            const ratio = matchCount / chosenSymptoms.length;
-            score += Math.round(ratio * 55);
-        }
-
-        // 3. Vitals & Clinical Rule Engine
-        if (d.vitalsRule) {
-            if (!isNaN(tempInput)) {
-                if (d.vitalsRule.tempMin && tempInput >= d.vitalsRule.tempMin) {
-                    score += 20;
-                    matchedReasons.push(`तापमान नियम (≥ ${d.vitalsRule.tempMin}°F)`);
-                }
-                if (d.vitalsRule.tempMax && tempInput <= d.vitalsRule.tempMax) {
-                    score += 20;
-                    matchedReasons.push(`तापमान नियम (≤ ${d.vitalsRule.tempMax}°F)`);
-                }
-            }
-            if (d.vitalsRule.mucous && d.vitalsRule.mucous === mucousVal) {
-                score += 15;
-                matchedReasons.push(`म्यूकस झिल्ली: ${mucousVal}`);
-            }
-            if (d.vitalsRule.rumen && d.vitalsRule.rumen === rumenVal) {
-                score += 15;
-                matchedReasons.push(`रुमेन गति: ${rumenVal}`);
-            }
-        }
-
-        if (score > 15) {
-            const confidence = Math.min(99, Math.max(10, score));
-            scoredDiseases.push({
-                disease: d,
-                confidence: confidence,
-                reasons: matchedReasons
-            });
-        }
-    });
-
-    scoredDiseases.sort((a, b) => b.confidence - a.confidence);
-
-    if (matchCountBadge) {
-        matchCountBadge.textContent = `${scoredDiseases.length} संभावित`;
-    }
-
-    if (!resultsContainer) return;
-    resultsContainer.innerHTML = "";
-
-    if (scoredDiseases.length === 0) {
-        resultsContainer.innerHTML = `
-            <div class="p-4 bg-amber-50 rounded-xl border border-amber-200 text-amber-900 text-xs text-center font-devanagari">
-                कोई सटीक निदान मेल नहीं खाया। कृपया अधिक लक्षण जोड़ें या वाइटल्स बदलें।
-            </div>
-        `;
-        return;
-    }
-
-    scoredDiseases.forEach(item => {
-        const d = item.disease;
-        const confColor = item.confidence >= 75 ? "emerald" : (item.confidence >= 50 ? "amber" : "slate");
-
-        const div = document.createElement("div");
-        div.className = "bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm hover:border-brand-500 transition cursor-pointer text-xs space-y-2";
-        div.innerHTML = `
-            <div class="flex items-center justify-between">
-                <div>
-                    <h4 class="font-bold text-slate-900 font-devanagari text-sm">${escapeHtml(d.localName)}</h4>
-                    <span class="text-[10px] text-slate-500 font-sans italic">${escapeHtml(d.name)}</span>
-                </div>
-                <div class="text-right">
-                    <span class="inline-block px-2 py-0.5 rounded-full text-xs font-black bg-${confColor}-100 text-${confColor}-800 border border-${confColor}-300 font-sans">
-                        ${item.confidence}% संभावना
-                    </span>
-                </div>
-            </div>
-
-            <div class="text-[11px] text-slate-600 bg-slate-50 p-2 rounded border border-slate-100">
-                <strong class="text-slate-800 font-devanagari">Rx प्राथमिक उपचार:</strong> ${escapeHtml(d.primaryRx)}
-            </div>
-
-            <div class="flex items-center justify-between pt-1">
-                <span class="text-[10px] text-slate-400 font-devanagari">श्रेणी: ${d.category}</span>
-                <button type="button" onclick="window.applyDiagnosisToPrescription('${d.id}')" class="px-2.5 py-1 bg-brand-600 hover:bg-brand-700 text-white rounded text-[11px] font-bold font-devanagari flex items-center gap-1 shadow-sm">
-                    <i class="fa-solid fa-file-circle-check"></i> पर्ची में दर्ज करें
-                </button>
-            </div>
-        `;
-        resultsContainer.appendChild(div);
-    });
-};
-
-window.applyDiagnosisToPrescription = function(diseaseId) {
-    const dis = appDiseases.find(d => d.id === diseaseId);
-    if (!dis) return;
-
-    const diagInput = document.getElementById("opdDiagnosisInput");
-    if (diagInput) diagInput.value = `${dis.localName} (${dis.name})`;
-
-    const adviceInput = document.getElementById("opdAdvice");
-    if (adviceInput) adviceInput.value = `${dis.primaryRx}. ${dis.supportiveRx}`;
-
-    window.addMedicationRow(dis.primaryRx.substring(0, 48) + "...", "यथासंभव", "IM", "3-5 दिन");
-
-    window.switchAppTab("opdTab");
-    updateLivePrescription();
-    showToast(`'${dis.localName}' पर्ची में दर्ज किया गया!`, "success");
 };
 
 // ==========================================
@@ -1204,7 +1638,7 @@ function renderDiseaseDirectory() {
     if (filtered.length === 0) {
         container.innerHTML = `
             <div class="col-span-full py-12 text-center text-slate-400 font-devanagari text-sm">
-                कोई रोग रिकॉर्ड नहीं मिला। आप 'नया रोग जोड़ें' टैब से नया रोग दर्ज कर सकते हैं।
+                कोई रोग रिकॉर्ड नहीं मिला। आप 'नया रोग जोड़ें' टैब से नया रोग पंजीकृत कर सकते हैं।
             </div>
         `;
         return;
@@ -1244,8 +1678,8 @@ function renderDiseaseDirectory() {
 
             <div class="pt-2 border-t border-slate-100 flex items-center justify-between">
                 <span class="text-[10px] text-slate-400 font-sans">${d.species.join(", ")}</span>
-                <button type="button" onclick="window.applyDiagnosisToPrescription('${d.id}')" class="text-xs text-brand-600 hover:text-brand-800 font-bold font-devanagari flex items-center gap-1">
-                    <i class="fa-solid fa-notes-medical"></i> पर्ची बनाएं
+                <button type="button" onclick="window.autoFillPrescription('${d.id}')" class="text-xs text-brand-600 hover:text-brand-800 font-bold font-devanagari flex items-center gap-1">
+                    <i class="fa-solid fa-notes-medical"></i> पर्ची बनाएं (Auto-Fill)
                 </button>
             </div>
         `;
@@ -1261,6 +1695,7 @@ window.handleCustomDiseaseSubmit = function(event) {
     const localName = document.getElementById("custDisLocal")?.value.trim();
     const species = document.getElementById("custDisSpecies")?.value || "Bovine";
     const category = document.getElementById("custDisCategory")?.value || "Bacterial";
+    const cardinalKey = document.getElementById("custDisCardinalKey")?.value.trim() || `CARD_${Date.now()}`;
     const rawSymptoms = document.getElementById("custDisSymptoms")?.value.trim();
     const primaryRx = document.getElementById("custDisPrimaryRx")?.value.trim();
     const supportiveRx = document.getElementById("custDisSupportive")?.value.trim();
@@ -1280,12 +1715,19 @@ window.handleCustomDiseaseSubmit = function(event) {
         localName: localName,
         species: [species],
         category: category,
+        cardinalKey: cardinalKey,
+        tempProfile: "HIGH",
+        mucousProfile: "CONGESTED",
+        urineProfile: "NORMAL",
+        dungProfile: "NORMAL",
         symptoms: symptomsArray,
-        vitalsRule: { tempMin: 102.0, mucous: "congested", rumen: "hypomotile" },
         primaryRx: primaryRx,
         supportiveRx: supportiveRx || "सपोर्टिव थेरेपी एवं आराम।",
         withdrawalNotice: withdrawalNotice || "लागू नहीं",
-        differentials: differentials || "क्लीनिकल परीक्षण आवश्यक"
+        differentials: differentials || "क्लीनिकल परीक्षण आवश्यक",
+        structuredRx: [
+            { drug: primaryRx.substring(0, 40), baseDoseMgPerKg: 2.0, concentrationMgPerMl: 50, route: "IM", duration: "3 दिन", abortifacient: false }
+        ]
     };
 
     saveCustomDiseasesToStorage(newDisease);
@@ -1426,7 +1868,7 @@ window.sendKhataWhatsAppReminder = function(khataId) {
         `💵 *कुल बिल:* ₹${record.bill}\n` +
         `✅ *जमा राशि:* ₹${record.paid}\n` +
         `🔴 *शेष बकाया राशि:* *₹${record.due}*\n\n` +
-        `कृपया इस बकाया राशि का भुगतान शीघ्रातिशीघ्र ऑनलाइन UPI या क्लिनिक पर करने की कृपा करें।\n` +
+        `कृपया इस बकाया राशि का भुगतान ऑनलाइन UPI या क्लिनिक पर शीघ्रातिशीघ्र करने की कृपा करें।\n` +
         `सधन्यवाद,\n*Vetcare Services* | +91 94140 XXXXX`;
 
     window.open(`https://wa.me/91${phone}?text=${encodeURIComponent(msg)}`, "_blank");
@@ -1442,7 +1884,7 @@ window.deleteKhataEntry = function(khataId) {
 };
 
 // ==========================================
-// 12. UTILITY & TOAST NOTIFICATION HELPERS
+// 12. UTILITY & TOAST HELPER FUNCTIONS
 // ==========================================
 
 function setText(elementId, text) {
