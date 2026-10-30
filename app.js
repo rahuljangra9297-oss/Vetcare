@@ -1,14 +1,14 @@
 /**
- * Vetcare | Clinical & Smart Dairy Assistant
- * Production Core Application Logic (app.js)
- * Includes Super Admin Panel State Management & Configuration Persistence
+ * Vetcare Services | Clinical & Smart Dairy Assistant
+ * Production Application Engine (app.js)
+ * Fully integrated with real verified dual-bank credentials & Super Admin configuration persistence
  */
 
 (function () {
   "use strict";
 
   /* =========================================================================
-     1. GLOBAL CONFIGURATION, STATE & STORAGE KEYS
+     1. EMBEDDED REAL BANK CREDENTIALS & MASTER DEFAULT CONFIGURATION
      ========================================================================= */
   const STORAGE_KEYS = {
     CONFIG: "vetcare_master_config",
@@ -19,29 +19,34 @@
     CURRENT_ROLE: "vetcare_user_role"
   };
 
-  // Master Default Settings (Default PIN: 9297)
+  // Permanently embedded verified real bank credentials & system defaults
   const DEFAULT_CONFIG = {
     adminPin: "9297",
-    payeeName: "VETCARE CLINICAL SOLUTIONS",
+    payeeName: "Vetcare Services",
+    accountHolder: "Mr. Rahul",
     monthlyPrice: 199,
     yearlyPrice: 1499,
     sbi: {
-      upiId: "vetcare@sbi",
-      acc: "405901000123",
-      ifsc: "SBIN0001234"
+      bankName: "State Bank of India (Israna Branch)",
+      upiId: "rahuljangra9297@oksbi",
+      acc: "65204067585",
+      ifsc: "SBIN0013693",
+      qrIntentBase: "upi://pay?pa=rahuljangra9297@oksbi&pn=Vetcare%20Services&cu=INR&am="
     },
     pnb: {
-      upiId: "vetcare@pnb",
-      acc: "01230001009876",
-      ifsc: "PUNB0123400"
+      bankName: "Punjab National Bank (Israna Branch)",
+      upiId: "rahuljangra9297-1@okicici",
+      acc: "6687001700015098",
+      ifsc: "PUNB0668700",
+      qrIntentBase: "upi://pay?pa=rahuljangra9297-1@okicici&pn=Vetcare%20Services&cu=INR&am="
     },
-    appTitle: "Vetcare",
+    appTitle: "Vetcare Services",
     appLogoUrl: "",
     appTagline: "पशु स्वास्थ्य निदान, 3-स्तरीय क्लिनिकल डिसीजन इंजन एवं संपूर्ण स्मार्ट डेयरी समाधान",
-    adminWhatsApp: "9876543210"
+    adminWhatsApp: "9297000000"
   };
 
-  // Live Application Config State
+  // Live in-memory configuration state
   let AppConfig = { ...DEFAULT_CONFIG };
 
   // Runtime Application State
@@ -61,11 +66,11 @@
     }
   };
 
-  // Safe DOM Helper
+  // Strict DOM selector helper
   const $ = (id) => document.getElementById(id);
 
   /* =========================================================================
-     2. MASTER CLINICAL DISEASE DATABASE (UNLIMITED EXTENSIBLE ARCHITECTURE)
+     2. MASTER CLINICAL DISEASE DATABASE (UNLIMITED 20+ PROFILES)
      ========================================================================= */
   const CLINICAL_DISEASES = [
     {
@@ -172,7 +177,7 @@
       keywords: ["अफारा", "bloat", "पेट फूलना", "ढोलक", "गैस"],
       desc: "रूमेन में गैस या झाग का अत्यधिक संचय। बायाँ पेट ढोलक जैसा तन जाना, सांस लेने में अत्यधिक कष्ट, जीभ बाहर निकलना।",
       farmerRemedy: "देसी उपचार: 50 मिली तारपीन का तेल + 300 मिली सरसों का तेल + 20 ग्राम हींग मिलाकर धीरे-धीरे पिलाएं। मुंह में लकड़ी की खपच्ची बांधें ताकि जुगाली व लार बने।",
-      doctorRx: "1. Trocar & Cannula द्वारा बाएं फ्लैंक (Paralumbar Fossa) से आपातकालीन गैस निकासी\n2. Bloatosil / Tympol liquid 100ml ओरल नाल से\n3. Inj. Spasmo-vet (Dicyclomine) 15ml I/M\n4. Inj. Belamyl 10ml I/M\n5. Rumen Buffers & Probiotic Cultures (Bioboost Bolus)।"
+      doctorRx: "1. Trocar & Cannula द्वारा बाएं फ्लैंक से आपातकालीन गैस निकासी\n2. Bloatosil / Tympol liquid 100ml ओरल नाल से\n3. Inj. Spasmo-vet (Dicyclomine) 15ml I/M\n4. Inj. Belamyl 10ml I/M\n5. Rumen Buffers & Probiotic Cultures (Bioboost Bolus)।"
     },
     {
       id: "THEILERIOSIS",
@@ -231,7 +236,7 @@
       contraindicatedInPregnancy: [],
       keywords: ["ppr", "बकरी प्लेग", "मुंह में छाले", "दस्त", "बदबूदार दस्त"],
       desc: "भेड़-बकरियों का जानलेवा विषाणु रोग। मुंह में छाले, अत्यधिक बदबूदार दस्त, आंखों से कीचड़, निमोनिया व तेज बुखार।",
-      farmerRemedy: "देसी उपचार: ओआरएस (ORS) या नमक-चीनी-नींबू पानी लगातार पिलाएं। छाले पर सुहागा व ग्लिसरीन लगाएं। बीमार बकरियों को तुरंत स्वस्थ बकरियों से अलग करें।",
+      farmerRemedy: "देसी उपचार: ओआरएस (ORS) या नमक-चीनी-नींबू पानी लगातार पिलाएं। छाले पर सुहागा व ग्लिसरीन लगाएं। बीमार बकरियों को तुरंत अलग करें।",
       doctorRx: "1. Inj. Enrofloxacin 10% (1ml/10kg) I/M 3 दिन\n2. Inj. Melonex Plus (2-3ml) I/M\n3. Inj. Avil 2ml I/M\n4. Belamyl 2ml I/M\n5. गंभीर स्थिति में Metronidazole ड्रिप + Ringer Lactate I/V।"
     },
     {
@@ -275,7 +280,7 @@
       dung: "NORMAL",
       contraindicatedInPregnancy: [],
       keywords: ["surra", "सर्रा", "गोल चक्कर", "सिर टकराना", "तीव्र बुखार"],
-      desc: "ट्रिपैनोसोमा इवान्साई परजीवी जनित रोग। पशु का पागलों की तरह गोल चक्कर काटना, दीवार से सिर टकराना, आंखों में मोतियाबिंद व रुक-रुक कर बुखार।",
+      desc: "ट्रिपैनोसोमा इवान्साई परजीवी जनित रोग। पशु का गोल चक्कर काटना, दीवार से सिर टकराना, आंखों में मोतियाबिंद व रुक-रुक कर बुखार।",
       farmerRemedy: "देसी उपचार: पशु को चोट लगने से बचाएं। डंक मारने वाली मक्खियों से पशु बाड़े को मुक्त रखें।",
       doctorRx: "1. Inj. Quinapyramine Sulfate & Chloride (Triquin) 1ml/40kg S/C\n2. Inj. Melonex Plus 15ml I/M\n3. Mannitol 20% I/V मस्तिष्क सूजन घटाने हेतु\n4. Inj. Tribivet 10ml I/M\n5. Neurobion Forte / B-Complex इंजेक्शन।"
     },
@@ -291,7 +296,7 @@
       contraindicatedInPregnancy: [],
       keywords: ["rabies", "रेबीज", "बावलापन", "कुत्ते का काटना", "रंभाना"],
       desc: "रेबीज वायरस जनित 100% घातक न्यूरोलॉजिकल रोग। पागल कुत्ते या सियार के काटने से होता है। पशु लगातार रंभाता है, लार टपकाता है व आक्रामक होता है।",
-      farmerRemedy: "देसी उपचार: कोई इलाज नहीं। कुत्ते के काटने पर घाव को 15 मिनट बहते पानी व कपड़े धोने वाले साबुन से धोएं और तुरंत एंटी-रेबीज वैक्सीन लगवाएं।",
+      farmerRemedy: "देसी उपचार: कोई इलाज नहीं। कुत्ते के काटने पर घाव को 15 मिनट बहते पानी व साबुन से धोएं और तुरंत एंटी-रेबीज वैक्सीन लगवाएं।",
       doctorRx: "1. लक्षण प्रकट होने के बाद कोई उपचार संभव नहीं है।\n2. पोस्ट-बाइट प्रोफिलैक्सिस: Rabivax-Vet (0, 3, 7, 14, 28वें दिन) S/C अथवा I/M।"
     },
     {
@@ -336,7 +341,7 @@
       contraindicatedInPregnancy: [],
       keywords: ["prolapse", "फूल दिखाना", "पाछा", "गर्भाशय बाहर"],
       desc: "ब्याने से पूर्व अथवा बाद में योनि या संपूर्ण गर्भाशय का मांसल भाग बाहर उलट जाना।",
-      farmerRemedy: "देसी उपचार: बाहर निकले अंग को लाल दवा (पोटाश) के ठंडे पानी से धोएं, बर्फ से सेकें, ऊपर उठाकर साफ कपड़े से ढकें व तुरंत डॉक्टर बुलाएं।",
+      farmerRemedy: "देसी उपचार: बाहर निकले अंग को लाल दवा के ठंडे पानी से धोएं, बर्फ से सेकें, ऊपर उठाकर साफ कपड़े से ढकें व तुरंत डॉक्टर बुलाएं।",
       doctorRx: "1. Epidural Anesthesia: 2% Lignocaine HCl 5-8ml intercoccygeal space में\n2. अंग को एंटीसेप्टिक से धोकर वापस अंदर व्यवस्थित बैठाएं\n3. Buhner's suture अथवा Vulvar rope truss लगाएं\n4. Inj. Melonex Plus 15ml I/M\n5. Inj. Hydroxyprogesterone 750mg I/M (Proluton Depot)।"
     },
     {
@@ -387,18 +392,17 @@
   ];
 
   /* =========================================================================
-     3. MASTER ADMIN CONFIGURATION & PERSISTENCE ENGINE
+     3. SUPER ADMIN CONFIGURATION, PERSISTENCE & LIVE DOM BINDING
      ========================================================================= */
 
   /**
-   * Load master configuration from localStorage with safe fallback
+   * Loads configuration from localStorage or embeds real defaults
    */
   function loadAdminConfiguration() {
     try {
       const saved = localStorage.getItem(STORAGE_KEYS.CONFIG);
       if (saved) {
         const parsed = JSON.parse(saved);
-        // Deep merge with defaults to preserve nested structures
         AppConfig = {
           ...DEFAULT_CONFIG,
           ...parsed,
@@ -409,7 +413,7 @@
         AppConfig = { ...DEFAULT_CONFIG };
       }
     } catch (e) {
-      console.warn("Using fallback configuration:", e);
+      console.warn("Storage fallback triggered:", e);
       AppConfig = { ...DEFAULT_CONFIG };
     }
     applyConfigToDOM();
@@ -419,7 +423,7 @@
    * Immediately updates live UI components across all modules
    */
   function applyConfigToDOM() {
-    // 1. Branding: Titles & Taglines
+    // 1. App Title & Branding
     const pageTitle = $("pageTitleTag");
     if (pageTitle) pageTitle.innerText = `${AppConfig.appTitle} | Clinical & Smart Dairy Assistant`;
 
@@ -433,12 +437,12 @@
     if (gatewayTagline) gatewayTagline.innerText = AppConfig.appTagline;
 
     const footerBranding = $("footerAppBranding");
-    if (footerBranding) footerBranding.innerText = `${AppConfig.appTitle} Clinical Assistant • सुरक्षित और सत्यापित प्रणाली`;
+    if (footerBranding) footerBranding.innerText = `${AppConfig.appTitle} • सुरक्षित और सत्यापित प्रणाली`;
 
-    // 2. Branding: Logo rendering
+    // 2. Logo updates
     const gatewayLogoBox = $("gatewayLogoBox");
     const headerLogoBox = $("headerLogoBox");
-    const initials = (AppConfig.appTitle || "VC").substring(0, 2).toUpperCase();
+    const initials = (AppConfig.appTitle || "VS").substring(0, 2).toUpperCase();
 
     if (AppConfig.appLogoUrl && AppConfig.appLogoUrl.trim().length > 5) {
       const imgHtml = `<img src="${AppConfig.appLogoUrl}" class="w-full h-full object-cover" alt="Logo" onerror="this.parentElement.innerHTML='<span class=\\'font-black text-white\\'>${initials}</span>';" />`;
@@ -451,7 +455,7 @@
 
     // 3. Payment Modal Displays
     const dispPayee = $("dispPayeeName");
-    if (dispPayee) dispPayee.innerText = AppConfig.payeeName;
+    if (dispPayee) dispPayee.innerText = `${AppConfig.payeeName} (${AppConfig.accountHolder})`;
 
     const dispMon = $("dispPlanMonthlyPrice");
     if (dispMon) dispMon.innerText = `₹${AppConfig.monthlyPrice} / माह`;
@@ -459,13 +463,12 @@
     const dispAnn = $("dispPlanAnnualPrice");
     if (dispAnn) dispAnn.innerText = `₹${AppConfig.yearlyPrice} / वर्ष`;
 
-    // Re-render active bank details, QR, and direct UPI deep-link
+    // 4. Update bank details & dynamic QR code
     updateBankModalDisplay();
   }
 
   /**
    * Verify entered 4-digit Master Admin PIN
-   * @param {string} [enteredPin] - Optional parameter, otherwise reads from DOM
    */
   window.verifyAdminPin = function (enteredPin) {
     const input = $("inputAdminPIN");
@@ -490,8 +493,7 @@
   };
 
   /**
-   * Saves updated settings to localStorage and updates UI immediately
-   * @param {Object} [formData] - Optional settings payload
+   * Saves updated settings to localStorage and immediately updates live UI
    */
   window.saveAdminSettings = function (formData) {
     const data = formData || {
@@ -499,14 +501,18 @@
       monthlyPrice: $("cfgMonthlyPrice") ? parseFloat($("cfgMonthlyPrice").value) || AppConfig.monthlyPrice : AppConfig.monthlyPrice,
       yearlyPrice: $("cfgAnnualPrice") ? parseFloat($("cfgAnnualPrice").value) || AppConfig.yearlyPrice : AppConfig.yearlyPrice,
       sbi: {
+        bankName: DEFAULT_CONFIG.sbi.bankName,
         upiId: $("cfgSbiUpi") ? $("cfgSbiUpi").value.trim() : AppConfig.sbi.upiId,
         acc: $("cfgSbiAccount") ? $("cfgSbiAccount").value.trim() : AppConfig.sbi.acc,
-        ifsc: $("cfgSbiIfsc") ? $("cfgSbiIfsc").value.trim().toUpperCase() : AppConfig.sbi.ifsc
+        ifsc: $("cfgSbiIfsc") ? $("cfgSbiIfsc").value.trim().toUpperCase() : AppConfig.sbi.ifsc,
+        qrIntentBase: `upi://pay?pa=${$("cfgSbiUpi") ? $("cfgSbiUpi").value.trim() : AppConfig.sbi.upiId}&pn=${encodeURIComponent(AppConfig.payeeName)}&cu=INR&am=`
       },
       pnb: {
+        bankName: DEFAULT_CONFIG.pnb.bankName,
         upiId: $("cfgPnbUpi") ? $("cfgPnbUpi").value.trim() : AppConfig.pnb.upiId,
         acc: $("cfgPnbAccount") ? $("cfgPnbAccount").value.trim() : AppConfig.pnb.acc,
-        ifsc: $("cfgPnbIfsc") ? $("cfgPnbIfsc").value.trim().toUpperCase() : AppConfig.pnb.ifsc
+        ifsc: $("cfgPnbIfsc") ? $("cfgPnbIfsc").value.trim().toUpperCase() : AppConfig.pnb.ifsc,
+        qrIntentBase: `upi://pay?pa=${$("cfgPnbUpi") ? $("cfgPnbUpi").value.trim() : AppConfig.pnb.upiId}&pn=${encodeURIComponent(AppConfig.payeeName)}&cu=INR&am=`
       },
       appTitle: $("cfgAppTitle") ? $("cfgAppTitle").value.trim() || AppConfig.appTitle : AppConfig.appTitle,
       appLogoUrl: $("cfgLogoUrl") ? $("cfgLogoUrl").value.trim() : AppConfig.appLogoUrl,
@@ -527,7 +533,6 @@
       pnb: { ...AppConfig.pnb, ...data.pnb }
     };
 
-    // Save locally
     try {
       localStorage.setItem(STORAGE_KEYS.CONFIG, JSON.stringify(AppConfig));
     } catch (e) {
@@ -545,18 +550,14 @@
       }
     }
 
-    // Live update DOM without page reload
     applyConfigToDOM();
     window.closeAdminDashboard();
-    alert("✅ सभी एडमिन सेटिंग्स सफलतापूर्वक सुरक्षित कर दी गई हैं!");
+    alert("✅ सभी एडमिन सेटिंग्स व बैंक विवरण सुरक्षित कर दिए गए हैं!");
   };
 
-  // Alias for index.html compatibility
+  // Global Alias
   window.saveAllAdminSettings = () => window.saveAdminSettings();
 
-  /* =========================================================================
-     4. SUPER ADMIN UI MODAL CONTROLLERS & REAL-TIME METRICS
-     ========================================================================= */
   window.openAdminPinModal = function () {
     const modal = $("modalAdminPIN");
     const input = $("inputAdminPIN");
@@ -573,7 +574,6 @@
   };
 
   window.openAdminDashboard = function () {
-    // Populate form inputs
     if ($("cfgPayeeName")) $("cfgPayeeName").value = AppConfig.payeeName;
     if ($("cfgMonthlyPrice")) $("cfgMonthlyPrice").value = AppConfig.monthlyPrice;
     if ($("cfgAnnualPrice")) $("cfgAnnualPrice").value = AppConfig.yearlyPrice;
@@ -593,7 +593,7 @@
     if ($("cfgAdminWhatsApp")) $("cfgAdminWhatsApp").value = AppConfig.adminWhatsApp;
     if ($("cfgAdminPIN")) $("cfgAdminPIN").value = AppConfig.adminPin;
 
-    // Real-time Data Metrics Update
+    // Real-time Data Metrics
     const savedOpd = getSavedOPDCases();
     const khata = getSavedKhata();
     const inventory = getSavedInventory();
@@ -644,12 +644,104 @@
   };
 
   /* =========================================================================
+     4. DUAL-BANK PAYMENT GATEWAY WITH REAL CREDENTIALS & DYNAMIC QR
+     ========================================================================= */
+
+  window.openPaymentModal = function () {
+    const modal = $("modalPremiumPayment");
+    if (modal) modal.style.display = "flex";
+    updateBankModalDisplay();
+  };
+  window.openPremiumPaymentModal = () => window.openPaymentModal();
+
+  window.closePaymentModal = function () {
+    const modal = $("modalPremiumPayment");
+    if (modal) modal.style.display = "none";
+  };
+  window.closePremiumPaymentModal = () => window.closePaymentModal();
+
+  window.selectPaymentPlan = function (plan) {
+    AppState.selectedPlan = plan;
+    const bMon = $("btnPlanMonthly");
+    const bAnn = $("btnPlanAnnual");
+
+    if (plan === "MONTHLY") {
+      if (bMon) bMon.className = "py-2 rounded-xl bg-blue-600 text-white font-bold text-center transition";
+      if (bAnn) bAnn.className = "py-2 rounded-xl text-slate-700 font-medium text-center transition";
+    } else {
+      if (bAnn) bAnn.className = "py-2 rounded-xl bg-blue-600 text-white font-bold text-center transition";
+      if (bMon) bMon.className = "py-2 rounded-xl text-slate-700 font-medium text-center transition";
+    }
+    updateBankModalDisplay();
+  };
+
+  window.switchBankTab = function (bank) {
+    AppState.activeBank = bank;
+    const bSbi = $("btnTabSBI");
+    const bPnb = $("btnTabPNB");
+
+    if (bank === "SBI") {
+      if (bSbi) bSbi.className = "flex-1 py-2 font-bold bg-blue-50 text-blue-700 text-center transition";
+      if (bPnb) bPnb.className = "flex-1 py-2 font-medium bg-slate-50 text-slate-600 text-center transition";
+    } else {
+      if (bPnb) bPnb.className = "flex-1 py-2 font-bold bg-amber-50 text-amber-800 text-center transition";
+      if (bSbi) bSbi.className = "flex-1 py-2 font-medium bg-slate-50 text-slate-600 text-center transition";
+    }
+    updateBankModalDisplay();
+  };
+
+  /**
+   * Generates dynamic UPI intent string & QR code using verified real bank details
+   */
+  function updateBankModalDisplay() {
+    const isSbi = AppState.activeBank === "SBI";
+    const bankData = isSbi ? AppConfig.sbi : AppConfig.pnb;
+    const upiId = bankData.upiId;
+    const acct = bankData.acc;
+    const ifsc = bankData.ifsc;
+    const amount = AppState.selectedPlan === "MONTHLY" ? AppConfig.monthlyPrice : AppConfig.yearlyPrice;
+
+    if ($("dispPayeeName")) $("dispPayeeName").innerText = `${AppConfig.payeeName} (${AppConfig.accountHolder})`;
+    if ($("dispUPIId")) $("dispUPIId").innerText = upiId;
+    if ($("dispAccountNumber")) $("dispAccountNumber").innerText = `${acct} [${bankData.bankName}]`;
+    if ($("dispIFSC")) $("dispIFSC").innerText = ifsc;
+    if ($("directUPIAmount")) $("directUPIAmount").innerText = amount;
+
+    // Dynamic NPCI compliant UPI string with exact parameters
+    const encodedPayee = encodeURIComponent(AppConfig.payeeName);
+    const encodedNote = encodeURIComponent(`Vetcare_${AppState.selectedPlan}_Access`);
+    const upiUri = `upi://pay?pa=${upiId}&pn=${encodedPayee}&cu=INR&am=${amount}&tn=${encodedNote}`;
+
+    const upiLink = $("btnDirectUPILink");
+    if (upiLink) upiLink.href = upiUri;
+
+    const qrImg = $("dynamicQRImage");
+    if (qrImg) {
+      qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(upiUri)}`;
+    }
+  }
+
+  window.sendPaymentProofWhatsApp = function () {
+    const amount = AppState.selectedPlan === "MONTHLY" ? AppConfig.monthlyPrice : AppConfig.yearlyPrice;
+    const targetNumber = AppConfig.adminWhatsApp || DEFAULT_CONFIG.adminWhatsApp;
+    const isSbi = AppState.activeBank === "SBI";
+    const selectedBankName = isSbi ? AppConfig.sbi.bankName : AppConfig.pnb.bankName;
+    const msg = `नमस्ते श्री राहुल जी, मैंने Vetcare Services के ${AppState.selectedPlan} प्लान (₹${amount}) का भुगतान बैंक (${selectedBankName}) द्वारा कर दिया है। कृपया संलग्न स्क्रीनशॉट/UTR देखकर प्रीमियम तुरंत एक्टिवेट करें।`;
+    const clean = targetNumber.startsWith("91") ? targetNumber : `91${targetNumber}`;
+    window.open(`https://api.whatsapp.com/send?phone=${clean}&text=${encodeURIComponent(msg)}`, "_blank");
+  };
+
+  window.escalateToAdminWhatsApp = function () {
+    const targetNumber = AppConfig.adminWhatsApp || DEFAULT_CONFIG.adminWhatsApp;
+    const msg = `नमस्ते एडमिन, मुझे ${AppConfig.appTitle} में सहायता/मार्गदर्शन चाहिए।`;
+    const clean = targetNumber.startsWith("91") ? targetNumber : `91${targetNumber}`;
+    window.open(`https://api.whatsapp.com/send?phone=${clean}&text=${encodeURIComponent(msg)}`, "_blank");
+  };
+
+  /* =========================================================================
      5. ROLE-BASED ACCESS & NAVIGATION CONTROLLER
      ========================================================================= */
 
-  /**
-   * Handles role selection ('doctor' | 'farmer') with zero regressions
-   */
   window.selectRole = function (role) {
     const normalized = (role || "").toUpperCase();
     AppState.currentRole = normalized === "DOCTOR" ? "DOCTOR" : "FARMER";
@@ -775,7 +867,7 @@
   };
 
   /* =========================================================================
-     6. 3-WAY CLINICAL DIAGNOSIS ENGINE (SCORING & AUTO-FILL)
+     6. 3-WAY CLINICAL DIAGNOSIS ENGINE & PREGNANCY RED ALERT
      ========================================================================= */
 
   window.setDiagnosisMode = function (mode) {
@@ -852,21 +944,17 @@
   };
 
   /**
-   * 3-Way Weighted Diagnosis Scoring Algorithm:
-   * Cardinal Sign: 40%
-   * Temperature: 20%
-   * Eyes / Mucous Membrane: 15%
-   * Urine Sign: 15%
-   * Dung / Feces: 10%
+   * 3-Way Weighted Diagnosis Scoring:
+   * Cardinal 40%, Temp 20%, Eyes 15%, Urine 15%, Dung 10%
    */
   window.applyMatrixFilters = function () {
     const sel = $("selCardinalSign");
     AppState.matrixState.cardinal = sel ? sel.value : "ALL";
 
     const scored = CLINICAL_DISEASES.map((dis) => {
-      let probability = 10; // Baseline clinical probability
+      let probability = 10;
 
-      // 1. Cardinal Symptom (40% Weight)
+      // 1. Cardinal (40%)
       if (AppState.matrixState.cardinal !== "ALL") {
         if (dis.cardinal === AppState.matrixState.cardinal) {
           probability += 40;
@@ -875,7 +963,7 @@
         }
       }
 
-      // 2. Temperature (20% Weight)
+      // 2. Temp (20%)
       if (AppState.matrixState.temp) {
         if (dis.temp === AppState.matrixState.temp) {
           probability += 20;
@@ -884,27 +972,26 @@
         }
       }
 
-      // 3. Eyes / Mucosa (15% Weight)
+      // 3. Eyes (15%)
       if (AppState.matrixState.eyes && dis.eyes) {
         if (dis.eyes === AppState.matrixState.eyes) probability += 15;
       }
 
-      // 4. Urine (15% Weight)
+      // 4. Urine (15%)
       if (AppState.matrixState.urine && dis.urine) {
         if (dis.urine === AppState.matrixState.urine) probability += 15;
       }
 
-      // 5. Dung / Feces (10% Weight)
+      // 5. Dung (10%)
       if (AppState.matrixState.dung && dis.dung) {
         if (dis.dung === AppState.matrixState.dung) probability += 10;
       }
 
-      // Secondary symptom chips contribution
+      // Secondary chips
       if (AppState.matrixState.secondary.length > 0) {
         probability += Math.min(20, AppState.matrixState.secondary.length * 4);
       }
 
-      // Clamping limits
       if (probability > 98) probability = 98;
       if (probability < 5) probability = 5;
 
@@ -1027,7 +1114,7 @@
   }
 
   /**
-   * Auto-Fills Diagnosis & Rx into OPD Slip with Pregnancy Red Alert validation
+   * Auto-Fills OPD Rx with Pregnancy Red Alert verification
    */
   window.autoFillOPD = function (diseaseId) {
     const disease = CLINICAL_DISEASES.find((d) => d.id === diseaseId);
@@ -1041,7 +1128,6 @@
 
     window.switchTab("rx");
 
-    // Pregnancy Red Alert Check
     if (isPregnant && disease.contraindicatedInPregnancy && disease.contraindicatedInPregnancy.length > 0) {
       alert(`🚨 PREGNANCY RED ALERT (गाभिन पशु चेतावनी):\nइस रोग के उपचार में प्रयुक्त दवा (${disease.contraindicatedInPregnancy.join(", ")}) गाभिन पशु के लिए असुरक्षित है और गर्भपात (Abortion) करा सकती है!\n\nसुरक्षित विकल्प: ${disease.safeAlternative || "Isoflupredone / सुरक्षित एंटीबायोटिक का चुनाव करें।"}`);
     } else {
@@ -1050,7 +1136,7 @@
   };
 
   /* =========================================================================
-     7. DIGITAL OPD PRESCRIPTIONS, PRINTING & GPS
+     7. DIGITAL OPD PRESCRIPTIONS, GPS & PRINTING
      ========================================================================= */
 
   function getSavedOPDCases() {
@@ -1116,7 +1202,6 @@
       return;
     }
 
-    // Pregnancy check on Rx dispatch
     if (pregnancy.includes("गाभिन") && med.toLowerCase().includes("dexa")) {
       if (!confirm("⚠️ चेतावनी: Rx में Dexamethasone सम्मिलित है जो गाभिन पशु के लिए घातक हो सकता है। क्या आप फिर भी पर्ची भेजना चाहते हैं?")) {
         return;
@@ -1178,7 +1263,6 @@ _Generated via ${AppConfig.appTitle}_`;
     cases.unshift(newCase);
     localStorage.setItem(STORAGE_KEYS.OPD, JSON.stringify(cases));
 
-    // Auto-update Khata if due exists
     if (newCase.due > 0) {
       const khata = getSavedKhata();
       khata.unshift({
@@ -1315,7 +1399,7 @@ _Generated via ${AppConfig.appTitle}_`;
   };
 
   /* =========================================================================
-     8. PASHUPALAK KHATA BAHI (LEDGER) & WHATSAPP TAGADA
+     8. PASHUPALAK KHATA BAHI & 1-CLICK TAGADA DISPATCH
      ========================================================================= */
 
   function getSavedKhata() {
@@ -1577,96 +1661,7 @@ _Generated via ${AppConfig.appTitle}_`;
   };
 
   /* =========================================================================
-     10. DUAL-BANK PAYMENT GATEWAY & DYNAMIC QR ENGINE
-     ========================================================================= */
-
-  window.openPaymentModal = function () {
-    const modal = $("modalPremiumPayment");
-    if (modal) modal.style.display = "flex";
-    updateBankModalDisplay();
-  };
-  window.openPremiumPaymentModal = () => window.openPaymentModal();
-
-  window.closePaymentModal = function () {
-    const modal = $("modalPremiumPayment");
-    if (modal) modal.style.display = "none";
-  };
-  window.closePremiumPaymentModal = () => window.closePaymentModal();
-
-  window.selectPaymentPlan = function (plan) {
-    AppState.selectedPlan = plan;
-    const bMon = $("btnPlanMonthly");
-    const bAnn = $("btnPlanAnnual");
-
-    if (plan === "MONTHLY") {
-      if (bMon) bMon.className = "py-2 rounded-xl bg-blue-600 text-white font-bold text-center transition";
-      if (bAnn) bAnn.className = "py-2 rounded-xl text-slate-700 font-medium text-center transition";
-    } else {
-      if (bAnn) bAnn.className = "py-2 rounded-xl bg-blue-600 text-white font-bold text-center transition";
-      if (bMon) bMon.className = "py-2 rounded-xl text-slate-700 font-medium text-center transition";
-    }
-    updateBankModalDisplay();
-  };
-
-  window.switchBankTab = function (bank) {
-    AppState.activeBank = bank;
-    const bSbi = $("btnTabSBI");
-    const bPnb = $("btnTabPNB");
-
-    if (bank === "SBI") {
-      if (bSbi) bSbi.className = "flex-1 py-2 font-bold bg-blue-50 text-blue-700 text-center transition";
-      if (bPnb) bPnb.className = "flex-1 py-2 font-medium bg-slate-50 text-slate-600 text-center transition";
-    } else {
-      if (bPnb) bPnb.className = "flex-1 py-2 font-bold bg-amber-50 text-amber-800 text-center transition";
-      if (bSbi) bSbi.className = "flex-1 py-2 font-medium bg-slate-50 text-slate-600 text-center transition";
-    }
-    updateBankModalDisplay();
-  };
-
-  function updateBankModalDisplay() {
-    const isSbi = AppState.activeBank === "SBI";
-    const bankData = isSbi ? AppConfig.sbi : AppConfig.pnb;
-    const upiId = bankData.upiId || (isSbi ? DEFAULT_CONFIG.sbi.upiId : DEFAULT_CONFIG.pnb.upiId);
-    const acct = bankData.acc || (isSbi ? DEFAULT_CONFIG.sbi.acc : DEFAULT_CONFIG.pnb.acc);
-    const ifsc = bankData.ifsc || (isSbi ? DEFAULT_CONFIG.sbi.ifsc : DEFAULT_CONFIG.pnb.ifsc);
-    const amount = AppState.selectedPlan === "MONTHLY" ? AppConfig.monthlyPrice : AppConfig.yearlyPrice;
-
-    if ($("dispUPIId")) $("dispUPIId").innerText = upiId;
-    if ($("dispAccountNumber")) $("dispAccountNumber").innerText = acct;
-    if ($("dispIFSC")) $("dispIFSC").innerText = ifsc;
-    if ($("directUPIAmount")) $("directUPIAmount").innerText = amount;
-
-    // NPCI compliant URI
-    const payeeClean = encodeURIComponent(AppConfig.payeeName);
-    const noteClean = encodeURIComponent(`Vetcare_${AppState.selectedPlan}`);
-    const upiUri = `upi://pay?pa=${upiId}&pn=${payeeClean}&am=${amount}&cu=INR&tn=${noteClean}`;
-
-    const upiLink = $("btnDirectUPILink");
-    if (upiLink) upiLink.href = upiUri;
-
-    const qrImg = $("dynamicQRImage");
-    if (qrImg) {
-      qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(upiUri)}`;
-    }
-  }
-
-  window.sendPaymentProofWhatsApp = function () {
-    const amount = AppState.selectedPlan === "MONTHLY" ? AppConfig.monthlyPrice : AppConfig.yearlyPrice;
-    const targetNumber = AppConfig.adminWhatsApp || DEFAULT_CONFIG.adminWhatsApp;
-    const msg = `नमस्ते एडमिन, मैंने Vetcare ${AppState.selectedPlan} प्लान (₹${amount}) का भुगतान बैंक (${AppState.activeBank}) द्वारा कर दिया है। कृपया संलग्न स्क्रीनशॉट देखकर प्रीमियम सक्रिय करें।`;
-    const clean = targetNumber.startsWith("91") ? targetNumber : `91${targetNumber}`;
-    window.open(`https://api.whatsapp.com/send?phone=${clean}&text=${encodeURIComponent(msg)}`, "_blank");
-  };
-
-  window.escalateToAdminWhatsApp = function () {
-    const targetNumber = AppConfig.adminWhatsApp || DEFAULT_CONFIG.adminWhatsApp;
-    const msg = `नमस्ते एडमिन, मुझे ${AppConfig.appTitle} ऐप में तकनीकी सहायता/मार्गदर्शन चाहिए।`;
-    const clean = targetNumber.startsWith("91") ? targetNumber : `91${targetNumber}`;
-    window.open(`https://api.whatsapp.com/send?phone=${clean}&text=${encodeURIComponent(msg)}`, "_blank");
-  };
-
-  /* =========================================================================
-     11. GEMINI AI VET CONSULTANT
+     10. GEMINI AI VET CONSULTANT
      ========================================================================= */
 
   window.openAIKeyModal = function () {
@@ -1755,7 +1750,7 @@ _Generated via ${AppConfig.appTitle}_`;
   };
 
   /* =========================================================================
-     12. BREEDING & FEED CALCULATOR MODULES
+     11. BREEDING & FEED CALCULATOR MODULES
      ========================================================================= */
 
   function renderBreedingModule() {
@@ -1810,7 +1805,6 @@ _Generated via ${AppConfig.appTitle}_`;
     const weight = parseFloat($("feedWeight") ? $("feedWeight").value : 400) || 400;
     const milk = parseFloat($("feedMilk") ? $("feedMilk").value : 10) || 0;
 
-    // Scientific Dairy Nutrition Formula:
     const grain = (1.5 + milk * 0.4).toFixed(1);
     const green = (weight * 0.05).toFixed(0);
     const dry = (weight * 0.012).toFixed(1);
@@ -1824,7 +1818,7 @@ _Generated via ${AppConfig.appTitle}_`;
   };
 
   /* =========================================================================
-     13. BACKUP, RESTORE & DATA EXPORT ENGINE
+     12. BACKUP, RESTORE & DATA EXPORT ENGINE
      ========================================================================= */
 
   window.exportDataBackupJSON = function () {
@@ -1845,7 +1839,7 @@ _Generated via ${AppConfig.appTitle}_`;
   };
 
   window.clearDemoDataOnly = function () {
-    if (confirm("चेतावनी: क्या आप केवल टेस्ट खाता, ओपीडी व इन्वेंट्री डेटा हटाना चाहते हैं? मास्टर एडमिन सेटिंग्स सुरक्षित रहेंगी।")) {
+    if (confirm("चेतावनी: क्या आप केवल टेस्ट खाता, ओपीडी व इन्वेंट्री डेटा हटाना चाहते हैं? मास्टर एडमिन सेटिंग्स व बैंक डिटेल्स सुरक्षित रहेंगी।")) {
       localStorage.removeItem(STORAGE_KEYS.KHATA);
       localStorage.removeItem(STORAGE_KEYS.INVENTORY);
       localStorage.removeItem(STORAGE_KEYS.OPD);
@@ -1857,7 +1851,7 @@ _Generated via ${AppConfig.appTitle}_`;
   };
 
   /* =========================================================================
-     14. PWA SERVICE WORKER REGISTRATION
+     13. PWA SERVICE WORKER REGISTRATION
      ========================================================================= */
   function registerServiceWorker() {
     if ("serviceWorker" in navigator) {
@@ -1870,7 +1864,7 @@ _Generated via ${AppConfig.appTitle}_`;
   }
 
   /* =========================================================================
-     15. INITIALIZATION DISPATCHER
+     14. INITIALIZATION DISPATCHER
      ========================================================================= */
   function initApp() {
     loadAdminConfiguration();
@@ -1881,11 +1875,9 @@ _Generated via ${AppConfig.appTitle}_`;
     renderSavedOPDList();
     registerServiceWorker();
 
-    // Check if role was persisted
     const savedRole = localStorage.getItem(STORAGE_KEYS.CURRENT_ROLE);
     if (savedRole) {
-      // Keep on gateway initially or restore state seamlessly
-      console.log(`Vetcare initialized. Stored role: ${savedRole}`);
+      console.log(`Vetcare initialized. Preserved role: ${savedRole}`);
     }
   }
 
