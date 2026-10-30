@@ -875,4 +875,338 @@
         </div>
       </div>
 
-      <div class="flex gap-
+      <div class="flex gap-2.5 pt-2">
+        <button onclick="closeAddKhataModal()" class="w-1/3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3 rounded-2xl text-xs sm:text-sm transition flex items-center justify-center gap-1">
+          <span>←</span> पीछे जाएं
+        </button>
+        <button onclick="saveKhataBillEntry()" class="w-2/3 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-2xl text-xs sm:text-sm shadow-md transition active:scale-98 flex items-center justify-center gap-1.5">
+          <span>💾</span> बिल सुरक्षित करें
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL 2: PREMIUM SUBSCRIPTION (WITH CANCEL & CLOSE) ==================== -->
+  <div id="modalPremium" style="display: none;" class="fixed inset-0 z-50 items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">
+    <div class="bg-white border border-slate-200 rounded-3xl max-w-lg w-full p-5 sm:p-6 space-y-4 shadow-2xl my-auto">
+      <div class="flex justify-between items-center border-b border-slate-100 pb-2">
+        <div class="flex items-center gap-2">
+          <span class="text-2xl">💎</span>
+          <div>
+            <h3 class="text-sm sm:text-base font-bold text-slate-900">Vetcare प्रो - प्रीमियम सदस्यता</h3>
+            <p class="text-[11px] text-slate-500">असीमित AI क्लिनिकल कंसल्टेशन व क्लाउड बैकअप</p>
+          </div>
+        </div>
+        <button onclick="closePremiumModal()" title="बंद करें" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center text-base font-bold transition">✕</button>
+      </div>
+
+      <!-- Pricing Cards -->
+      <div class="grid grid-cols-2 gap-3">
+        <div class="p-3.5 rounded-2xl border-2 border-slate-200 bg-slate-50 text-center space-y-1">
+          <span class="text-[11px] font-bold text-slate-600 uppercase">मासिक प्लान</span>
+          <div class="text-lg sm:text-xl font-black text-slate-900">₹199<span class="text-xs font-normal text-slate-500">/माह</span></div>
+          <p class="text-[10px] text-slate-500">1 माह सम्पूर्ण एक्सेस</p>
+        </div>
+        <div class="p-3.5 rounded-2xl border-2 border-amber-400 bg-amber-50/60 text-center space-y-1 relative">
+          <span class="absolute -top-2.5 right-2 bg-amber-600 text-white text-[9px] font-extrabold px-2 py-0.5 rounded-full">सर्वाधिक लोकप्रिय 🔥</span>
+          <span class="text-[11px] font-bold text-amber-900 uppercase">वार्षिक महाबचत</span>
+          <div class="text-lg sm:text-xl font-black text-amber-900">₹1,499<span class="text-xs font-normal text-amber-700">/वर्ष</span></div>
+          <p class="text-[10px] text-emerald-700 font-bold">पूरे ₹889 की सीधी बचत</p>
+        </div>
+      </div>
+
+      <!-- Bank Accounts / UPI Details -->
+      <div class="space-y-3">
+        <div class="bg-blue-50 border border-blue-200 rounded-2xl p-3 space-y-1.5">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-blue-900">🏛️ प्राथमिक खाता (SBI Primary UPI):</span>
+            <span class="text-[10px] bg-blue-600 text-white font-bold px-2 py-0.5 rounded-full">SBI Official</span>
+          </div>
+          <div class="flex items-center justify-between bg-white p-2 rounded-xl border border-blue-100">
+            <span class="text-xs font-mono font-bold text-slate-800">vetcare.sbi@upi</span>
+            <button onclick="navigator.clipboard.writeText('vetcare.sbi@upi'); alert('SBI UPI ID कॉपी हो गई!');" class="text-[11px] text-blue-600 font-bold hover:underline">कॉपी 📋</button>
+          </div>
+        </div>
+
+        <div class="bg-purple-50 border border-purple-200 rounded-2xl p-3 space-y-1.5">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-purple-900">🏛️ बैकअप खाता (PNB Backup UPI):</span>
+            <span class="text-[10px] bg-purple-600 text-white font-bold px-2 py-0.5 rounded-full">PNB Backup</span>
+          </div>
+          <div class="flex items-center justify-between bg-white p-2 rounded-xl border border-purple-100">
+            <span class="text-xs font-mono font-bold text-slate-800">vetcare.pnb@upi</span>
+            <button onclick="navigator.clipboard.writeText('vetcare.pnb@upi'); alert('PNB UPI ID कॉपी हो गई!');" class="text-[11px] text-purple-600 font-bold hover:underline">कॉपी 📋</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Transaction UTR Form -->
+      <div class="space-y-2">
+        <label class="block text-xs font-semibold text-slate-700">भुगतान के बाद 12 अंकों का UTR / Transaction No. दर्ज करें:</label>
+        <div class="flex gap-2">
+          <input id="inputPremiumUTR" type="text" maxlength="12" placeholder="उदा. 4123XXXXXXXX" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-mono outline-none" />
+          <button onclick="submitPremiumUTR()" class="bg-amber-600 hover:bg-amber-700 text-white font-bold px-4 py-2 rounded-xl text-xs shrink-0 transition">सत्यापित करें</button>
+        </div>
+      </div>
+
+      <!-- Hindi Disclaimer Banner -->
+      <div class="p-3 bg-amber-50 border border-amber-300 rounded-2xl text-[11px] leading-relaxed text-amber-950 space-y-1">
+        <strong class="font-bold flex items-center gap-1 text-amber-900">
+          <span>⚠️</span> वैधानिक एवं सुरक्षा सूचना:
+        </strong>
+        <p>भुगतान के उपरांत 12 अंकों का UTR / Transaction No. दर्ज करें। आपका प्रो एक्टिवेशन 15 मिनट में स्वतः प्रमाणित हो जाएगा। किसी भी सहायता या तत्काल एक्टिवेशन हेतु हेल्पलाइन पर संपर्क करें।</p>
+      </div>
+
+      <!-- Bottom Cancel / Back Button -->
+      <button onclick="closePremiumModal()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2.5 rounded-2xl text-xs sm:text-sm transition flex items-center justify-center gap-1">
+        <span>←</span> पीछे जाएं (Cancel)
+      </button>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL 3: DOCTOR DECLARATION (WITH CANCEL & CLOSE) ==================== -->
+  <div id="modalDoctorDeclaration" style="display: none;" class="fixed inset-0 z-50 items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+    <div class="bg-white border border-slate-200 rounded-3xl max-w-md w-full p-6 space-y-4 shadow-2xl">
+      <div class="flex justify-between items-center border-b border-slate-100 pb-2.5">
+        <h3 class="text-sm font-bold text-slate-900 flex items-center gap-1.5">
+          <span>🩺</span> वैधानिक क्लिनिकल स्व-घोषणा
+        </h3>
+        <button onclick="closeDoctorDeclarationModal()" title="बंद करें" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center text-base font-bold transition">✕</button>
+      </div>
+      
+      <div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl text-xs sm:text-sm text-slate-600 space-y-2 leading-relaxed">
+        <p>1. मैं पुष्टि करता हूँ कि मैं एक पंजीकृत पशु चिकित्सक (Veterinary Doctor) / पैरावेट / अधिकृत पशु स्वास्थ्य कार्यकर्ता हूँ।</p>
+        <p>2. मैं स्वीकार करता हूँ कि इस ऐप में दी गई दवाएं, इंजेक्शन, डोज़ और उपचार केवल क्लिनिकल सहायता हेतु हैं।</p>
+        <p>3. मरीज पशु के प्रत्यक्ष शारीरिक परीक्षण और उपचार के समस्त क्लिनिकल व वैधानिक परिणामों की जिम्मेदारी मेरी स्वयं की होगी।</p>
+      </div>
+
+      <div class="flex gap-2.5 pt-2">
+        <button onclick="closeDoctorDeclarationModal()" class="w-1/3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3 rounded-2xl text-xs sm:text-sm transition flex items-center justify-center gap-1">
+          <span>←</span> पीछे जाएं
+        </button>
+        <button onclick="acceptDoctorDeclaration()" class="w-2/3 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-2xl text-xs sm:text-sm shadow-md transition active:scale-98">
+          मैं सहमत हूँ • प्रवेश करें ➔
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL 4: AI KEY CONFIG (WITH CANCEL & CLOSE) ==================== -->
+  <div id="modalAIKey" style="display: none;" class="fixed inset-0 z-50 items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+    <div class="bg-white border border-slate-200 rounded-3xl max-w-sm w-full p-5 space-y-3 shadow-2xl text-xs">
+      <div class="flex justify-between items-center border-b border-slate-100 pb-2">
+        <h3 class="font-bold text-purple-700 flex items-center gap-1">
+          <span>⚙️</span> Gemini AI API Key
+        </h3>
+        <button onclick="closeAIKeyModal()" title="बंद करें" class="w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center text-sm font-bold transition">✕</button>
+      </div>
+      <p class="text-slate-500 text-[11px]">Google AI Studio से प्राप्त निःशुल्क API Key दर्ज करें:</p>
+      <input id="inputGeminiKey" type="password" placeholder="AIzaSy..." class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 outline-none font-mono text-xs" />
+      <div class="flex gap-2 pt-1">
+        <button onclick="closeAIKeyModal()" class="w-1/3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2 rounded-xl text-xs flex items-center justify-center gap-1">
+          <span>←</span> पीछे जाएं
+        </button>
+        <button onclick="saveGeminiKey()" class="w-2/3 bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 rounded-xl text-xs shadow-xs">सुरक्षित करें</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PRINTABLE SLIP CONTAINER -->
+  <div id="printableSlipArea" class="hidden p-6 bg-white text-slate-900 border border-slate-300 space-y-3 font-sans"></div>
+
+  <!-- INLINE NAVIGATION, BACK-STACK, AND ROLE DISPATCH LOGIC -->
+  <script>
+    // Tab History Stack for Mobile Back Navigation
+    let tabNavigationHistory = [];
+    let currentRole = localStorage.getItem('vetcare_role') || 'FARMER';
+    let currentActiveTab = 'diagnosis';
+
+    function switchTab(tabKey, pushToHistory = true) {
+      if (pushToHistory && currentActiveTab && currentActiveTab !== tabKey) {
+        tabNavigationHistory.push(currentActiveTab);
+      }
+      currentActiveTab = tabKey;
+
+      const allTabs = ['farmerHome', 'remedies', 'diagnosis', 'rx', 'records', 'ai', 'breeding', 'feed', 'finance'];
+      
+      allTabs.forEach(t => {
+        const viewEl = document.getElementById('view' + t.charAt(0).toUpperCase() + t.slice(1));
+        const navEl = document.getElementById('nav' + t.charAt(0).toUpperCase() + t.slice(1));
+        if (viewEl) viewEl.classList.add('hidden');
+        if (navEl) {
+          navEl.classList.remove('active-nav-tab');
+          navEl.classList.add('text-slate-400');
+        }
+      });
+
+      const activeView = document.getElementById('view' + tabKey.charAt(0).toUpperCase() + tabKey.slice(1));
+      const activeNav = document.getElementById('nav' + tabKey.charAt(0).toUpperCase() + tabKey.slice(1));
+      if (activeView) activeView.classList.remove('hidden');
+      if (activeNav) {
+        activeNav.classList.add('active-nav-tab');
+        activeNav.classList.remove('text-slate-400');
+      }
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+
+      if (tabKey === 'finance' && typeof renderKhataLedger === 'function') {
+        renderKhataLedger();
+      }
+    }
+
+    // Universal Mobile Back Action
+    function navigateBack() {
+      if (tabNavigationHistory.length > 0) {
+        const previousTab = tabNavigationHistory.pop();
+        switchTab(previousTab, false);
+      } else {
+        navigateToHome();
+      }
+    }
+
+    // Universal Home Action based on active role
+    function navigateToHome() {
+      tabNavigationHistory = [];
+      if (currentRole === 'DOCTOR') {
+        switchTab('diagnosis', false);
+      } else {
+        switchTab('farmerHome', false);
+      }
+    }
+
+    // Role-Based Screen Separation Engine
+    function selectRole(role) {
+      currentRole = role;
+      localStorage.setItem('vetcare_role', role);
+
+      document.getElementById('screenGateway').classList.add('hidden');
+      document.getElementById('screenMainApp').classList.remove('hidden');
+
+      const roleBadge = document.getElementById('currentUserRoleBadge');
+      const isDoctor = (role === 'DOCTOR');
+
+      // Adjust Bottom Navigation Bar dynamically for the selected role
+      if (isDoctor) {
+        if (roleBadge) {
+          roleBadge.textContent = '🩺 अधिकृत पशु चिकित्सक (Doctor)';
+          roleBadge.className = 'text-[10px] sm:text-[11px] font-bold text-blue-700';
+        }
+        // Show Doctor Tabs
+        ['navDiagnosis', 'navRx', 'navRecords', 'navAI'].forEach(id => {
+          const el = document.getElementById(id);
+          if (el) { el.classList.remove('hidden'); el.classList.add('flex'); }
+        });
+        // Hide Farmer Tabs
+        ['navFarmerHome', 'navRemedies'].forEach(id => {
+          const el = document.getElementById(id);
+          if (el) { el.classList.add('hidden'); el.classList.remove('flex'); }
+        });
+        const finLabel = document.getElementById('navFinanceLabel');
+        if (finLabel) finLabel.textContent = 'खाता बही';
+
+        // Doctor Lands on Clinical Workspace
+        tabNavigationHistory = [];
+        switchTab('diagnosis', false);
+      } else {
+        if (roleBadge) {
+          roleBadge.textContent = '👨‍🌾 स्मार्ट पशुपालक (Farmer)';
+          roleBadge.className = 'text-[10px] sm:text-[11px] font-bold text-emerald-700';
+        }
+        // Show Farmer Specific Tabs
+        ['navFarmerHome', 'navRemedies'].forEach(id => {
+          const el = document.getElementById(id);
+          if (el) { el.classList.remove('hidden'); el.classList.add('flex'); }
+        });
+        // Hide Complex Doctor Tabs
+        ['navDiagnosis', 'navRx', 'navRecords', 'navAI'].forEach(id => {
+          const el = document.getElementById(id);
+          if (el) { el.classList.add('hidden'); el.classList.remove('flex'); }
+        });
+        const finLabel = document.getElementById('navFinanceLabel');
+        if (finLabel) finLabel.textContent = 'दूध / बही';
+
+        // Farmer Lands on Dedicated Farmer Home
+        tabNavigationHistory = [];
+        switchTab('farmerHome', false);
+      }
+    }
+
+    function returnToGateway() {
+      document.getElementById('screenMainApp').classList.add('hidden');
+      document.getElementById('screenGateway').classList.remove('hidden');
+      tabNavigationHistory = [];
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // Modal Handlers
+    function openDoctorDeclarationModal() {
+      document.getElementById('modalDoctorDeclaration').style.display = 'flex';
+    }
+    function closeDoctorDeclarationModal() {
+      document.getElementById('modalDoctorDeclaration').style.display = 'none';
+    }
+    function acceptDoctorDeclaration() {
+      closeDoctorDeclarationModal();
+      selectRole('DOCTOR');
+    }
+
+    function openPremiumModal() {
+      document.getElementById('modalPremium').style.display = 'flex';
+    }
+    function closePremiumModal() {
+      document.getElementById('modalPremium').style.display = 'none';
+    }
+    function submitPremiumUTR() {
+      const utr = (document.getElementById('inputPremiumUTR')?.value || '').trim();
+      if (!utr || utr.length < 8) {
+        alert('कृपया वैध 12 अंकों का UTR / Transaction No. दर्ज करें!');
+        return;
+      }
+      alert('धन्यवाद! UTR प्राप्त हुआ। आपका प्रो खाता शीघ्र एक्टिवेट हो जाएगा।');
+      closePremiumModal();
+    }
+
+    function openAIKeyModal() {
+      document.getElementById('modalAIKey').style.display = 'flex';
+      const savedKey = localStorage.getItem('vetcare_gemini_key') || '';
+      const input = document.getElementById('inputGeminiKey');
+      if (input) input.value = savedKey;
+    }
+    function closeAIKeyModal() {
+      document.getElementById('modalAIKey').style.display = 'none';
+    }
+    function saveGeminiKey() {
+      const input = document.getElementById('inputGeminiKey');
+      const k = input ? input.value.trim() : '';
+      localStorage.setItem('vetcare_gemini_key', k);
+      alert('Gemini AI Key सुरक्षित कर ली गई!');
+      closeAIKeyModal();
+    }
+
+    function openAddKhataModal() {
+      const modal = document.getElementById('modalAddKhataBill');
+      if (modal) {
+        modal.style.display = 'flex';
+        const dateInput = document.getElementById('newBillDate');
+        if (dateInput) dateInput.value = new Date().toISOString().split('T')[0];
+      }
+    }
+    function closeAddKhataModal() {
+      const modal = document.getElementById('modalAddKhataBill');
+      if (modal) modal.style.display = 'none';
+    }
+
+    // Auto-boot restoration
+    window.addEventListener('DOMContentLoaded', () => {
+      const savedRole = localStorage.getItem('vetcare_role');
+      if (savedRole) {
+        selectRole(savedRole);
+      }
+    });
+  </script>
+
+  <!-- External DB and Modular App Logic -->
+  <script src="./clinical-db.js"></script>
+  <script src="./app.js"></script>
+</body>
+</html>
