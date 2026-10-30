@@ -32,7 +32,7 @@
   "screenshots": [
     {
       "src": "https://cdn-icons-png.flaticon.com/512/3004/3004458.png",
-      "sizes": "540x720",
+      "sizes": "720x1280",
       "type": "image/png",
       "form_factor": "narrow",
       "label": "Vetcare Mobile Clinical Dashboard"
