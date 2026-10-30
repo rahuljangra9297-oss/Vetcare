@@ -1,7 +1,6 @@
 // ==================== GLOBAL APP CONTROLLER ====================
 let userRole = localStorage.getItem('vetcare_active_role') || null;
 let currentTagFilter = 'ALL';
-const ADMIN_MASTER_PIN = "VETCARE99";
 
 window.addEventListener('DOMContentLoaded', () => {
   if (userRole) {
@@ -40,33 +39,27 @@ function selectRole(role) {
 }
 
 function returnToGateway() {
-  if (confirm('क्या आप प्रवेश द्वार पर लौटकर अपना रोल बदलना चाहते हैं?')) {
+  if (confirm('क्या आप मुख्य स्क्रीन पर लौटकर अपना रोल बदलना चाहते हैं?')) {
     localStorage.removeItem('vetcare_active_role');
     userRole = null;
     showGateway();
   }
 }
 
-// ==================== DOCTOR AUTH MODAL (CLICK-SAFE) ====================
-function openDoctorAuthModal() {
-  const modal = document.getElementById('modalDoctorAuth');
+// ==================== DOCTOR SELF-DECLARATION (NO PIN GATE) ====================
+function openDoctorDeclarationModal() {
+  const modal = document.getElementById('modalDoctorDeclaration');
   if (modal) modal.style.display = 'flex';
 }
 
-function closeDoctorAuthModal() {
-  const modal = document.getElementById('modalDoctorAuth');
+function closeDoctorDeclarationModal() {
+  const modal = document.getElementById('modalDoctorDeclaration');
   if (modal) modal.style.display = 'none';
 }
 
-function verifyDoctorPasscode() {
-  const enteredPin = document.getElementById('inputAdminPasscode').value.trim();
-  if (enteredPin === ADMIN_MASTER_PIN) {
-    closeDoctorAuthModal();
-    selectRole('DOCTOR');
-    alert('✅ डॉक्टर सत्यापन सफल! क्लिनिकल इंजेक्शन तालिका व ओपीडी पर्ची अनलॉक हो गई है।');
-  } else {
-    alert('❌ अमान्य अप्रूवल कोड! आप केवल किसान मोड में ही प्रवेश कर सकते हैं।');
-  }
+function acceptDoctorDeclaration() {
+  closeDoctorDeclarationModal();
+  selectRole('DOCTOR');
 }
 
 // ==================== UI ROLE ADAPTATION ====================
@@ -81,8 +74,8 @@ function applyRoleUI() {
   const finDebitLabel = document.getElementById('finDebitLabel');
 
   if (userRole === 'DOCTOR') {
-    badge.innerText = '🩺 अधिकृत पशु चिकित्सक';
-    badge.className = 'text-[10px] text-blue-600 font-bold';
+    badge.innerText = '🩺 अधिकृत पशु चिकित्सक (Doctor)';
+    badge.className = 'text-[10px] sm:text-xs text-blue-600 font-bold';
     if (navRx) navRx.classList.remove('hidden');
     if (navBreeding) navBreeding.classList.add('hidden');
     if (navFeed) navFeed.classList.add('hidden');
@@ -92,8 +85,8 @@ function applyRoleUI() {
     if (finDebitLabel) finDebitLabel.innerText = 'क्लिनिक खर्च';
     switchTab('diagnosis');
   } else {
-    badge.innerText = '👨‍🌾 स्मार्ट पशुपालक';
-    badge.className = 'text-[10px] text-emerald-600 font-bold';
+    badge.innerText = '👨‍🌾 स्मार्ट पशुपालक (Farmer)';
+    badge.className = 'text-[10px] sm:text-xs text-emerald-600 font-bold';
     if (navRx) navRx.classList.add('hidden');
     if (navBreeding) navBreeding.classList.remove('hidden');
     if (navFeed) navFeed.classList.remove('hidden');
@@ -122,57 +115,57 @@ function handleAppSearch() {
 
   if (results.length === 0) {
     container.innerHTML = `
-      <div class="p-8 text-center bg-white rounded-3xl border border-slate-200 text-slate-500 text-xs">
-        🔍 कोई बीमारी या लक्षण नहीं मिला।
+      <div class="p-8 text-center bg-white rounded-3xl border border-slate-200 text-slate-500 text-xs sm:text-sm">
+        🔍 कोई बीमारी या लक्षण नहीं मिला। कृपया अन्य शब्द लिखकर खोजें।
       </div>`;
     return;
   }
 
   container.innerHTML = results.map(d => `
-    <div class="bg-white border border-slate-200 rounded-3xl p-4 shadow-xs space-y-3 transition">
+    <div class="bg-white border border-slate-200 rounded-3xl p-4 sm:p-5 shadow-xs space-y-3.5 transition">
       
       <!-- Card Header -->
       <div class="flex justify-between items-start border-b border-slate-100 pb-2.5">
         <div>
-          <h3 class="text-sm font-bold text-slate-900">${d.id}. ${d.name}</h3>
-          <p class="text-[11px] text-blue-600 font-semibold">देसी नाम: ${d.localName}</p>
+          <h3 class="text-sm sm:text-base font-bold text-slate-900">${d.id}. ${d.name}</h3>
+          <p class="text-xs text-blue-600 font-semibold">देसी नाम: ${d.localName}</p>
         </div>
-        <span class="text-[10px] font-mono bg-slate-100 text-slate-700 px-2 py-0.5 rounded-full font-bold">${d.temp}</span>
+        <span class="text-[10px] sm:text-xs font-mono bg-slate-100 text-slate-700 px-2.5 py-0.5 rounded-full font-bold">${d.temp}</span>
       </div>
 
       <!-- Cardinal Sign -->
-      <div class="bg-rose-50/80 border border-rose-200 rounded-2xl p-2.5 text-xs text-rose-950">
-        <strong class="text-rose-700 block mb-0.5">🚨 प्रमुख मुख्य लक्षण:</strong>
+      <div class="bg-rose-50/80 border border-rose-200 rounded-2xl p-3 text-xs sm:text-sm text-rose-950">
+        <strong class="text-rose-700 block mb-0.5">🚨 प्रमुख मुख्य लक्षण (Cardinal Sign):</strong>
         ${d.cardinal}
       </div>
 
       <!-- MEDICINE SECTION: DOCTOR TABLE vs FARMER SHIELD -->
       ${userRole === 'DOCTOR' ? `
-        <div class="space-y-1.5 pt-1">
+        <div class="space-y-2 pt-1">
           <div class="flex justify-between items-center">
-            <span class="text-xs font-bold text-blue-900 flex items-center gap-1">💉 एलोपैथिक इंजेक्शन तालिका:</span>
-            <button onclick="loadToRx('${d.name}')" class="text-[10px] bg-blue-600 text-white px-2.5 py-0.5 rounded-lg font-bold shadow-xs">+ पर्चे में लें</button>
+            <span class="text-xs sm:text-sm font-bold text-blue-900 flex items-center gap-1">💉 एलोपैथिक इंजेक्शन तालिका:</span>
+            <button onclick="loadToRx('${d.name}')" class="text-xs bg-blue-600 text-white px-3 py-1 rounded-xl font-bold shadow-xs active:scale-95 transition">+ पर्चे में लें</button>
           </div>
           
           <div class="overflow-x-auto border border-slate-200 rounded-2xl">
-            <table class="w-full text-left text-[10px] text-slate-700 divide-y divide-slate-200">
+            <table class="w-full text-left text-[11px] sm:text-xs text-slate-700 divide-y divide-slate-200">
               <thead class="bg-slate-50 text-slate-900 font-bold">
                 <tr>
-                  <th class="p-2">वर्ग</th>
-                  <th class="p-2">जेनेरिक साल्ट</th>
-                  <th class="p-2">एथिकल ब्रांड (MRP)</th>
-                  <th class="p-2">डोज़ व रूट</th>
-                  <th class="p-2">गर्भ सुरक्षा</th>
+                  <th class="p-2.5">वर्ग</th>
+                  <th class="p-2.5">जेनेरिक साल्ट</th>
+                  <th class="p-2.5">एथिकल ब्रांड (MRP)</th>
+                  <th class="p-2.5">डोज़ व रूट</th>
+                  <th class="p-2.5">गर्भ सुरक्षा</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-slate-100 bg-white">
                 ${d.injections.map(inj => `
                   <tr>
-                    <td class="p-2 font-semibold text-slate-900">${inj.category}</td>
-                    <td class="p-2 font-mono text-slate-600">${inj.generic}</td>
-                    <td class="p-2 text-blue-700 font-semibold">${inj.ethical}</td>
-                    <td class="p-2 font-mono">${inj.dose} (${inj.route})</td>
-                    <td class="p-2 font-bold">${inj.pregSafe}</td>
+                    <td class="p-2.5 font-semibold text-slate-900">${inj.category}</td>
+                    <td class="p-2.5 font-mono text-slate-600">${inj.generic}</td>
+                    <td class="p-2.5 text-blue-700 font-semibold">${inj.ethical}</td>
+                    <td class="p-2.5 font-mono">${inj.dose} (${inj.route})</td>
+                    <td class="p-2.5 font-bold">${inj.pregSafe}</td>
                   </tr>
                 `).join('')}
               </tbody>
@@ -180,41 +173,41 @@ function handleAppSearch() {
           </div>
         </div>
       ` : `
-        <div class="bg-emerald-50/70 border border-emerald-200 rounded-2xl p-3 text-xs text-emerald-950 flex items-center gap-2.5">
-          <span class="text-xl">🛡️</span>
+        <div class="bg-emerald-50/70 border border-emerald-200 rounded-2xl p-3.5 text-xs sm:text-sm text-emerald-950 flex items-center gap-3">
+          <span class="text-2xl">🛡️</span>
           <div>
             <strong>किसान सुरक्षा नियम:</strong>
-            <p class="text-[10px] text-emerald-800 leading-tight mt-0.5">एंटीबायोटिक इंजेक्शन केवल अधिकृत पशु चिकित्सक से ही लगवाएं। नीचे दिए गए काढ़े, ओरल टॉनिक व घरेलू उपचार सुरक्षित हैं।</p>
+            <p class="text-xs text-emerald-800 leading-tight mt-0.5">एंटीबायोटिक इंजेक्शन केवल अधिकृत पशु चिकित्सक से ही लगवाएं। नीचे दिए गए काढ़े, ओरल टॉनिक व घरेलू उपचार सुरक्षित हैं।</p>
           </div>
         </div>
       `}
 
       <!-- ORAL SUPPLEMENTS -->
-      <div class="bg-slate-50 border border-slate-200 rounded-2xl p-2.5 space-y-1.5 text-xs">
-        <strong class="text-slate-800 block text-[11px]">🍼 ओरल सप्लीमेंट्स व टॉनिक:</strong>
+      <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3 space-y-1.5 text-xs sm:text-sm">
+        <strong class="text-slate-800 block text-xs">🍼 ओरल सप्लीमेंट्स व टॉनिक:</strong>
         ${d.oralSupplements.map(sup => `
-          <div class="border-b border-slate-200/60 pb-1 last:border-0 last:pb-0 text-[11px]">
+          <div class="border-b border-slate-200/60 pb-1.5 last:border-0 last:pb-0">
             <span class="font-bold text-blue-700">• ${sup.name}:</span> ${sup.formulation} (${sup.dose})
-            <p class="text-[10px] text-slate-500">${sup.note}</p>
+            <p class="text-[11px] text-slate-500">${sup.note}</p>
           </div>
         `).join('')}
       </div>
 
       <!-- HOMEOPATHY -->
-      <div class="bg-emerald-50/60 border border-emerald-200 rounded-2xl p-2.5 space-y-1 text-xs">
-        <strong class="text-emerald-900 block text-[11px]">🌿 होम्योपैथिक औषधियां:</strong>
+      <div class="bg-emerald-50/60 border border-emerald-200 rounded-2xl p-3 space-y-1 text-xs sm:text-sm">
+        <strong class="text-emerald-900 block text-xs">🌿 होम्योपैथिक औषधियां:</strong>
         ${d.homeopathy.map(hom => `
-          <div class="text-[11px] text-emerald-950">
-            <strong>• ${hom.drug}</strong>: ${hom.dose} <span class="text-slate-500">(${hom.indication})</span>
+          <div class="text-emerald-950">
+            <strong>• ${hom.drug}</strong>: ${hom.dose} <span class="text-slate-500 text-xs">(${hom.indication})</span>
           </div>
         `).join('')}
       </div>
 
       <!-- HOME REMEDIES -->
-      <div class="bg-amber-50/50 border border-amber-200 rounded-2xl p-2.5 space-y-1 text-xs">
-        <strong class="text-amber-900 block text-[11px]">🥣 सिद्ध देहाती घरेलू नुस्खे:</strong>
+      <div class="bg-amber-50/50 border border-amber-200 rounded-2xl p-3 space-y-1 text-xs sm:text-sm">
+        <strong class="text-amber-900 block text-xs">🥣 सिद्ध देहाती घरेलू नुस्खे:</strong>
         ${d.homeRemedies.map(rem => `
-          <div class="text-[11px] text-amber-950">
+          <div class="text-amber-950">
             <strong>• ${rem.remedy}</strong>: ${rem.method}
           </div>
         `).join('')}
@@ -227,9 +220,9 @@ function handleAppSearch() {
 function filterByTag(tag, btn) {
   currentTagFilter = tag;
   document.querySelectorAll('.q-chip').forEach(c => {
-    c.className = 'q-chip px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 font-medium shrink-0';
+    c.className = 'q-chip px-3.5 py-1.5 rounded-xl bg-slate-100 text-slate-700 font-medium shrink-0';
   });
-  if (btn) btn.className = 'q-chip px-3 py-1.5 rounded-xl bg-blue-600 text-white font-bold shrink-0 shadow-xs';
+  if (btn) btn.className = 'q-chip px-3.5 py-1.5 rounded-xl bg-blue-600 text-white font-bold shrink-0 shadow-xs';
   handleAppSearch();
 }
 
@@ -246,19 +239,19 @@ function initBreedingModule() {
 
   if (heatDiv && typeof BREEDING_GUIDE_DATA !== 'undefined') {
     heatDiv.innerHTML = BREEDING_GUIDE_DATA.heatSigns.map(h => `
-      <div class="p-2.5 bg-slate-50 border border-slate-200 rounded-xl space-y-0.5">
+      <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-0.5">
         <strong class="text-rose-600">${h.stage}</strong>
-        <p class="text-slate-700 text-[11px]">${h.signs}</p>
-        <span class="text-[10px] font-bold text-blue-700">${h.action}</span>
+        <p class="text-slate-700 text-xs">${h.signs}</p>
+        <span class="text-xs font-bold text-blue-700">${h.action}</span>
       </div>
     `).join('');
   }
 
   if (disDiv && typeof BREEDING_GUIDE_DATA !== 'undefined') {
     disDiv.innerHTML = BREEDING_GUIDE_DATA.dischargeTypes.map(d => `
-      <div class="p-2.5 rounded-xl border ${d.safe ? 'bg-emerald-50 border-emerald-200 text-emerald-950' : 'bg-rose-50 border-rose-200 text-rose-950'}">
+      <div class="p-3 rounded-xl border ${d.safe ? 'bg-emerald-50 border-emerald-200 text-emerald-950' : 'bg-rose-50 border-rose-200 text-rose-950'}">
         <strong>${d.type}</strong>
-        <p class="text-[11px] mt-0.5">${d.meaning}</p>
+        <p class="text-xs mt-0.5">${d.meaning}</p>
       </div>
     `).join('');
   }
