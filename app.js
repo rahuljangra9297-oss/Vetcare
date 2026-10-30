@@ -2,16 +2,16 @@
  * Vetcare Clinical Assistant & Smart Dairy Engine
  * Production-Ready Application Logic (app.js)
  * 
- * CRITICAL FIXES & MODULES:
- * 1. Immediate Global Window Bindings for selectRole & Gateway Transition
- * 2. Event Listener Fallbacks for Role Selection
- * 3. Role-Based Screen Initialization (Doctor Workspace vs Farmer Dashboard)
- * 4. Smart Navigation & Back Stack Engine (Hardware/Browser Back Button Interception)
- * 5. 3-Way Clinical Diagnosis Engine (Weighted 5-Factor Scoring, Rx Auto-Fill, Pregnancy Alert)
- * 6. Digital OPD Prescription Generator & 1-Click WhatsApp Dispatch
- * 7. Financial Dashboard & Khata Ledger (Live Totals, WhatsApp Tagada Dispatch)
- * 8. Premium Payment Gateway Engine (Dual-Bank SBI/PNB, Dynamic QR, Direct UPI Deep Link)
- * 9. Live Gemini AI Clinical Consultation Engine
+ * Complete Modules:
+ * 1. Stock & Inventory Management Engine (Low-Stock Alerts, Field Counter, Firebase Sync)
+ * 2. Universal Role Selection & Gateway Transitions (Doctor vs Farmer)
+ * 3. Smart Navigation & Back Stack Engine (HTML5 Popstate & Modal Interceptor)
+ * 4. 3-Way Clinical Diagnosis Decision Engine (Weighted 5-Factor Scoring, Rx Auto-Fill, Pregnancy Alert)
+ * 5. Digital OPD Prescription Generator & 1-Click WhatsApp Dispatch
+ * 6. Financial Dashboard & Khata Ledger (Live Totals, 1-Click WhatsApp Tagada)
+ * 7. Premium Payment Gateway Engine (Dual-Bank SBI/PNB, Dynamic QR, Direct UPI Deep Link)
+ * 8. Live Gemini AI Clinical Consultation Engine
+ * 9. Feed Calculator & Heat Tracking Breeding Modules
  */
 
 // ==========================================
@@ -29,6 +29,7 @@ const APP_CONFIG = {
     geminiKey: 'vetcare_gemini_key',
     khata: 'vetcare_khata_records',
     opdCases: 'vetcare_opd_cases',
+    stock: 'vetcare_inventory_stock',
     paymentStatus: 'vetcare_pro_status'
   }
 };
@@ -46,6 +47,7 @@ let appState = {
   activeBank: 'SBI',
   activePlan: 'MONTHLY',
   khataFilter: 'ALL',
+  stockFilter: 'ALL',
   matrix: {
     temp: null,
     eyes: null,
@@ -58,6 +60,7 @@ let appState = {
 let activeTabHistory = [];
 let khataRecords = [];
 let opdCases = [];
+let stockInventory = [];
 
 let firestoreDb = null;
 try {
@@ -66,7 +69,7 @@ try {
     console.log('Firebase Cloud Firestore successfully linked.');
   }
 } catch (e) {
-  console.warn('Firebase running in local offline storage mode.', e);
+  console.warn('Firebase running in local storage mode.', e);
 }
 
 // ==========================================
@@ -119,6 +122,7 @@ function getTodayISODate() {
 
 function getActiveModal() {
   const modals = [
+    'modalAddStock',
     'modalAddKhataBill',
     'modalPremium',
     'modalDoctorDeclaration',
@@ -136,6 +140,7 @@ function getActiveModal() {
 function closeAllModals() {
   let closed = false;
   const modals = [
+    'modalAddStock',
     'modalAddKhataBill',
     'modalPremium',
     'modalDoctorDeclaration',
@@ -173,7 +178,298 @@ window.addEventListener('orientationchange', () => {
 });
 
 // ==========================================
-// 3. UNIVERSAL ROLE SELECTION & TRANSITION (IMMEDIATE ATTACHMENT)
+// 3. STOCK & INVENTORY ENGINE (NEW)
+// ==========================================
+function loadStockInventory() {
+  try {
+    const raw = localStorage.getItem(APP_CONFIG.storageKeys.stock);
+    stockInventory = raw ? JSON.parse(raw) : [];
+  } catch (e) {
+    stockInventory = [];
+  }
+
+  // Pre-populate realistic default inventory if completely empty
+  if (!stockInventory || stockInventory.length === 0) {
+    stockInventory = [
+      {
+        id: 'STK-01',
+        name: 'Berenil (Diminazene Aceturate RTU)',
+        category: 'INJECTION',
+        batch: 'BRN-441',
+        expiry: '2026-06-30',
+        qty: 3,
+        unit: 'वायल (Vials)',
+        threshold: 2
+      },
+      {
+        id: 'STK-02',
+        name: 'Melonex Plus 100ml (Meloxicam + Paracetamol)',
+        category: 'INJECTION',
+        batch: 'MLX-771',
+        expiry: '2025-11-30',
+        qty: 5,
+        unit: 'वायल (Vials)',
+        threshold: 2
+      },
+      {
+        id: 'STK-03',
+        name: 'HF Bull Semen Straw (ID: HF-504 High Yield)',
+        category: 'SEMEN',
+        batch: 'SAG-HF504',
+        expiry: '2030-12-31',
+        qty: 8,
+        unit: 'स्ट्रॉ (Straws)',
+        threshold: 3
+      },
+      {
+        id: 'STK-04',
+        name: 'Murrah Buffalo Semen Straw (ID: MB-102 Elite Sire)',
+        category: 'SEMEN',
+        batch: 'SAG-MB102',
+        expiry: '2030-12-31',
+        qty: 1,
+        unit: 'स्ट्रॉ (Straws)',
+        threshold: 3
+      },
+      {
+        id: 'STK-05',
+        name: 'Intacef Tazo 4.5g (Ceftriaxone + Tazobactam)',
+        category: 'INJECTION',
+        batch: 'ITZ-842',
+        expiry: '2026-08-31',
+        qty: 2,
+        unit: 'वायल (Vials)',
+        threshold: 2
+      }
+    ];
+    persistStockInventory();
+  }
+}
+
+function persistStockInventory() {
+  try {
+    localStorage.setItem(APP_CONFIG.storageKeys.stock, JSON.stringify(stockInventory));
+  } catch (e) {
+    console.error('LocalStorage write error (stock):', e);
+  }
+
+  // Cloud Firestore Sync
+  if (firestoreDb) {
+    try {
+      const batch = firestoreDb.batch();
+      stockInventory.slice(0, 30).forEach(item => {
+        const ref = firestoreDb.collection('vetcare_inventory').doc(item.id);
+        batch.set(ref, item, { merge: true });
+      });
+      batch.commit().catch(err => console.warn('Firestore stock sync error:', err));
+    } catch (err) {}
+  }
+}
+
+window.renderStockInventory = function() {
+  const container = $('stockInventoryList');
+  if (!container) return;
+
+  const searchQuery = safeGetValue('stockSearchInput').toLowerCase();
+
+  let totalItems = stockInventory.length;
+  let lowAlertCount = 0;
+  let semenCount = 0;
+
+  stockInventory.forEach(item => {
+    const q = parseFloat(item.qty) || 0;
+    const th = parseFloat(item.threshold) || 0;
+    if (q <= th) lowAlertCount++;
+    if (item.category === 'SEMEN') semenCount += q;
+  });
+
+  safeSetText('stockTotalItems', totalItems);
+  safeSetText('stockLowAlertItems', lowAlertCount);
+  safeSetText('stockSemenTotal', semenCount);
+
+  let filtered = stockInventory.filter(item => {
+    const nameMatch = (item.name || '').toLowerCase().includes(searchQuery);
+    const batchMatch = (item.batch || '').toLowerCase().includes(searchQuery);
+    if (!nameMatch && !batchMatch) return false;
+
+    if (appState.stockFilter === 'LOW') {
+      return (parseFloat(item.qty) || 0) <= (parseFloat(item.threshold) || 0);
+    }
+    if (appState.stockFilter !== 'ALL') {
+      return item.category === appState.stockFilter;
+    }
+    return true;
+  });
+
+  safeSetText('stockCountBadge', `${filtered.length} आइटम्स`);
+
+  if (filtered.length === 0) {
+    container.innerHTML = `
+      <div class="p-8 text-center bg-white border-2 border-dashed border-slate-200 rounded-3xl space-y-2">
+        <span class="text-3xl block">📦</span>
+        <h4 class="text-sm font-bold text-slate-700">कोई स्टॉक आइटम नहीं मिला</h4>
+        <p class="text-xs text-slate-500">ऊपर दिए गए "➕ नया स्टॉक जोड़ें" बटन से नया स्टॉक दर्ज करें।</p>
+      </div>
+    `;
+    return;
+  }
+
+  const categoryLabels = {
+    'INJECTION': '💉 इंजेक्शन',
+    'ORAL': '🍼 ओरल/टॉनिक',
+    'SEMEN': '❄️ सीमन स्ट्रॉ',
+    'VACCINE': '🛡️ वैक्सीन',
+    'OTHER': '🩹 सर्जिकल/अन्य'
+  };
+
+  container.innerHTML = filtered.map(item => {
+    const isLow = (parseFloat(item.qty) || 0) <= (parseFloat(item.threshold) || 0);
+
+    return `
+      <div class="bg-white border ${isLow ? 'border-rose-300 bg-rose-50/20' : 'border-slate-200'} rounded-2xl p-4 shadow-xs space-y-3 transition">
+        <div class="flex items-start justify-between gap-2 border-b border-slate-100 pb-2">
+          <div>
+            <h4 class="text-xs sm:text-sm font-bold text-slate-900">${item.name}</h4>
+            <div class="flex items-center gap-2 text-[10px] sm:text-[11px] text-slate-500 font-medium mt-0.5">
+              <span class="bg-slate-100 text-slate-700 px-2 py-0.5 rounded-md font-semibold">${categoryLabels[item.category] || item.category}</span>
+              <span>बैच: <strong class="font-mono text-slate-700">${item.batch || 'N/A'}</strong></span>
+              <span>एक्सपायरी: <strong class="font-mono text-slate-700">${item.expiry || 'N/A'}</strong></span>
+            </div>
+          </div>
+          <button onclick="window.deleteStockItem('${item.id}')" title="हटाएं" class="text-slate-300 hover:text-rose-600 text-xs p-1">🗑️</button>
+        </div>
+
+        <div class="flex items-center justify-between gap-2">
+          <div class="space-y-0.5">
+            <span class="text-[10px] text-slate-400 block font-semibold">उपलब्ध स्टॉक मात्रा:</span>
+            <div class="flex items-baseline gap-1.5">
+              <span class="text-lg sm:text-xl font-black ${isLow ? 'text-rose-600' : 'text-slate-900'}">${item.qty}</span>
+              <span class="text-xs text-slate-500 font-semibold">${item.unit}</span>
+            </div>
+          </div>
+
+          ${isLow ? `
+            <div class="px-2.5 py-1 rounded-xl bg-rose-100 border border-rose-300 text-rose-800 text-[10px] font-black flex items-center gap-1 shadow-2xs">
+              <span>⚠️</span> स्टॉक समाप्त होने वाला है! (न्यूनतम: ${item.threshold})
+            </div>
+          ` : `
+            <div class="text-[10px] text-emerald-700 font-bold bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-lg">
+              ✅ पर्याप्त स्टॉक
+            </div>
+          `}
+
+          <!-- Quick Counter Adjustment Buttons -->
+          <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200">
+            <button 
+              onclick="window.decreaseStock('${item.id}')" 
+              title="1 घटाएं"
+              class="w-7 h-7 rounded-lg bg-white hover:bg-rose-50 text-slate-700 hover:text-rose-600 font-black text-sm flex items-center justify-center shadow-xs border border-slate-200 active:scale-95 transition"
+            >
+              −
+            </button>
+            <button 
+              onclick="window.increaseStock('${item.id}')" 
+              title="1 बढ़ाएं"
+              class="w-7 h-7 rounded-lg bg-white hover:bg-emerald-50 text-slate-700 hover:text-emerald-700 font-black text-sm flex items-center justify-center shadow-xs border border-slate-200 active:scale-95 transition"
+            >
+              +
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+};
+
+window.increaseStock = function(id) {
+  const item = stockInventory.find(i => i.id === id);
+  if (!item) return;
+  item.qty = (parseFloat(item.qty) || 0) + 1;
+  persistStockInventory();
+  window.renderStockInventory();
+};
+
+window.decreaseStock = function(id) {
+  const item = stockInventory.find(i => i.id === id);
+  if (!item) return;
+  item.qty = Math.max(0, (parseFloat(item.qty) || 0) - 1);
+  persistStockInventory();
+  window.renderStockInventory();
+};
+
+window.adjustStockQty = function(id, delta) {
+  if (delta > 0) window.increaseStock(id);
+  else window.decreaseStock(id);
+};
+
+window.deleteStockItem = function(id) {
+  if (!confirm('क्या आप सचमुच यह स्टॉक आइटम हटाना चाहते हैं?')) return;
+  stockInventory = stockInventory.filter(i => i.id !== id);
+  persistStockInventory();
+  window.renderStockInventory();
+};
+
+window.setStockFilter = function(category, btnEl) {
+  appState.stockFilter = category;
+  document.querySelectorAll('.stock-chip').forEach(c => c.classList.remove('stock-chip-active'));
+  if (btnEl) btnEl.classList.add('stock-chip-active');
+  window.renderStockInventory();
+};
+
+window.filterStockRecords = function() {
+  window.renderStockInventory();
+};
+
+window.openAddStockModal = function() {
+  const modal = $('modalAddStock');
+  if (modal) {
+    modal.style.display = 'flex';
+    safeSetValue('newStockName', '');
+    safeSetValue('newStockBatch', '');
+    safeSetValue('newStockExpiry', '');
+    safeSetValue('newStockQty', '');
+    safeSetValue('newStockThreshold', '3');
+  }
+};
+
+window.closeAddStockModal = function() {
+  const modal = $('modalAddStock');
+  if (modal) modal.style.display = 'none';
+};
+
+window.saveStockItem = function() {
+  const name = safeGetValue('newStockName');
+  const category = safeGetValue('newStockCategory', 'INJECTION');
+  const unit = safeGetValue('newStockUnit', 'वायल (Vials)');
+  const batch = safeGetValue('newStockBatch', 'N/A');
+  const expiry = safeGetValue('newStockExpiry', 'N/A');
+  const qty = parseFloat(safeGetValue('newStockQty', 0)) || 0;
+  const threshold = parseFloat(safeGetValue('newStockThreshold', 3)) || 3;
+
+  if (!name) {
+    alert('कृपया दवा या सीमन स्ट्रॉ का नाम दर्ज करें!');
+    return;
+  }
+
+  const newItem = {
+    id: 'STK-' + Date.now(),
+    name,
+    category,
+    unit,
+    batch,
+    expiry,
+    qty,
+    threshold
+  };
+
+  stockInventory.unshift(newItem);
+  persistStockInventory();
+  window.closeAddStockModal();
+  window.renderStockInventory();
+};
+
+// ==========================================
+// 4. UNIVERSAL ROLE SELECTION & GATEWAY
 // ==========================================
 window.selectRole = function(rawRole) {
   try {
@@ -208,6 +504,7 @@ window.selectRole = function(rawRole) {
     }
 
     renderKhataLedger();
+    window.renderStockInventory();
     evaluateDiagnosis();
     fixMobileViewport();
   } catch (err) {
@@ -271,12 +568,14 @@ function showMainApp() {
     }
   }
 
-  const doctorNavIds = ['navDiagnosis', 'navRx', 'navRecords', 'navAI'];
+  // Doctor Navigation
+  const doctorNavIds = ['navDiagnosis', 'navRx', 'navInventory', 'navRecords', 'navAI'];
   doctorNavIds.forEach(id => {
     if (isDoctor) showElement(id, 'flex');
     else hideElement(id);
   });
 
+  // Farmer Navigation
   const farmerNavIds = ['navFarmerHome', 'navRemedies'];
   farmerNavIds.forEach(id => {
     if (isDoctor) hideElement(id);
@@ -296,7 +595,7 @@ function showMainApp() {
 }
 
 // ==========================================
-// 4. SMART NAVIGATION & BACK STACK ENGINE
+// 5. SMART NAVIGATION & BACK STACK ENGINE
 // ==========================================
 window.switchTab = function(tabKey, pushHistory = true) {
   const targetView = $('view' + tabKey.charAt(0).toUpperCase() + tabKey.slice(1));
@@ -320,6 +619,7 @@ window.switchTab = function(tabKey, pushHistory = true) {
     'remedies',
     'diagnosis',
     'rx',
+    'inventory',
     'records',
     'ai',
     'breeding',
@@ -349,7 +649,9 @@ window.switchTab = function(tabKey, pushHistory = true) {
 
   window.scrollTo({ top: 0, behavior: 'smooth' });
 
-  if (tabKey === 'finance') {
+  if (tabKey === 'inventory') {
+    window.renderStockInventory();
+  } else if (tabKey === 'finance') {
     renderKhataLedger();
   } else if (tabKey === 'diagnosis') {
     evaluateDiagnosis();
@@ -398,7 +700,7 @@ window.addEventListener('popstate', (event) => {
 });
 
 // ==========================================
-// 5. CLINICAL KNOWLEDGE ENGINE (UNLIMITED DB)
+// 6. CLINICAL KNOWLEDGE ENGINE (UNLIMITED DB)
 // ==========================================
 const CLINICAL_DISEASES_DB = [
   {
@@ -986,7 +1288,7 @@ window.autoFillRxToOPD = function(encodedName, encodedDrugs) {
 };
 
 // ==========================================
-// 6. DIGITAL OPD PRESCRIPTION & WHATSAPP
+// 7. DIGITAL OPD PRESCRIPTION & WHATSAPP
 // ==========================================
 window.calculateDue = function() {
   const total = parseFloat(safeGetValue('opdTotalFee', 0)) || 0;
@@ -1140,7 +1442,7 @@ window.saveOfflineCaseDirectly = function() {
 };
 
 // ==========================================
-// 7. FINANCIAL DASHBOARD & KHATA ENGINE
+// 8. FINANCIAL DASHBOARD & KHATA ENGINE
 // ==========================================
 function loadLocalKhataRecords() {
   try {
@@ -1482,7 +1784,7 @@ window.saveKhataBillEntry = function() {
 };
 
 // ==========================================
-// 8. PREMIUM PAYMENT & DUAL-BANK ENGINE
+// 9. PREMIUM PAYMENT & DUAL-BANK ENGINE
 // ==========================================
 window.openPaymentModal = window.openPremiumModal = function() {
   const modal = $('modalPremium');
@@ -1521,7 +1823,7 @@ window.submitPaymentVerification = window.submitPremiumUTR = function() {
 };
 
 // ==========================================
-// 9. LIVE GEMINI AI CONSULTANT ENGINE
+// 10. LIVE GEMINI AI CONSULTANT ENGINE
 // ==========================================
 window.openAIKeyModal = function() {
   const modal = $('modalAIKey');
@@ -1596,7 +1898,7 @@ window.runAIConsultant = async function() {
 };
 
 // ==========================================
-// 10. FEED & BREEDING ENGINES
+// 11. FEED & BREEDING ENGINES
 // ==========================================
 window.calculateDailyRation = function() {
   const wt = parseFloat(safeGetValue('feedWeight', 400)) || 400;
@@ -1615,7 +1917,7 @@ window.calculateDailyRation = function() {
 };
 
 // ==========================================
-// 11. EVENT LISTENER FALLBACKS & BOOTSTRAP
+// 12. EVENT LISTENER FALLBACKS & BOOTSTRAP
 // ==========================================
 function bindRoleSelectionFallbacks() {
   const gateway = $('screenGateway');
@@ -1640,6 +1942,7 @@ function bindRoleSelectionFallbacks() {
 
 function initApp() {
   loadLocalKhataRecords();
+  loadStockInventory();
   bindRoleSelectionFallbacks();
   fixMobileViewport();
 
@@ -1660,6 +1963,7 @@ function initApp() {
   }
 
   renderKhataLedger();
+  window.renderStockInventory();
   evaluateDiagnosis();
 }
 
