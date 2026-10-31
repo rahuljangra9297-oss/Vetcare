@@ -1,64 +1,63 @@
 /**
- * Vetcare AI OS - Master Application Controller
- * app.js - Production-Ready Clinical Operating System Engine
+ * ============================================================================
+ * VETCARE AI OS - ENTERPRISE CORE ENGINE & SECURITY CONTROLLER
+ * Architecture: Principal UI/UX & PWA Frontend Security Systems
+ * Version: 4.5.0-PROD (Zero-Crash Enterprise Grade)
+ * ============================================================================
  */
 
 (function (window, document) {
   "use strict";
 
-  // =========================================================================
-  // 1. ZERO-CRASH GLOBAL WINDOW BINDINGS & DEFENSIVE HELPERS
-  // =========================================================================
+  /* ==========================================================================
+   * 1. CONSTANTS, VERIFIED CREDENTIALS & GLOBAL STATE CONFIG
+   * ========================================================================== */
+  const SESSION_DURATION_MS = 60 * 60 * 1000; // 60 Minutes Absolute Timeout
+  const WARNING_THRESHOLD_MS = 5 * 60 * 1000; // 5 Minutes Expiry Warning
+  const TRIAL_DURATION_MS = 24 * 60 * 60 * 1000; // 24 Hours Free Access Window
 
-  function _getEl(id) {
-    return document.getElementById(id);
-  }
+  // Master Production Credentials
+  const MASTER_CONFIG = {
+    masterPin: "9297",
+    payeeName: "Vetcare Services",
+    payeeOwner: "Mr. Rahul",
+    pricing: {
+      monthly: 199,
+      annual: 1499,
+      renewalMonthly: 149,
+      renewalAnnual: 1199
+    },
+    sbiPrimary: {
+      bankName: "State Bank of India (SBI)",
+      upiId: "rahuljangra9297@oksbi",
+      accountNumber: "65204067585",
+      ifsc: "SBIN0013693"
+    },
+    pnbBackup: {
+      bankName: "Punjab National Bank (PNB)",
+      upiId: "rahuljangra9297-1@okicici",
+      accountNumber: "6687001700015098",
+      ifsc: "PUNB0668700"
+    },
+    adminWhatsApp: "9876543210",
+    appTitle: "Vetcare AI OS",
+    tagline: "क्लिनिकल डिसीजन इंजन, डिजिटल ओपीडी पर्ची एवं स्मार्ट पशु चिकित्सा ऑपरेटिंग सिस्टम"
+  };
 
-  function _show(id) {
-    var el = _getEl(id);
-    if (el) el.classList.remove("hidden");
-  }
-
-  function _hide(id) {
-    var el = _getEl(id);
-    if (el) el.classList.add("hidden");
-  }
-
-  function _val(id) {
-    var el = _getEl(id);
-    return el ? el.value.trim() : "";
-  }
-
-  function _setVal(id, val) {
-    var el = _getEl(id);
-    if (el) el.value = val;
-  }
-
-  function _setText(id, txt) {
-    var el = _getEl(id);
-    if (el) el.textContent = txt;
-  }
-
-  function _setHtml(id, html) {
-    var el = _getEl(id);
-    if (el) el.innerHTML = html;
-  }
-
-  // Master Global State Container
-  window.VETCARE_STATE = window.VETCARE_STATE || {
-    role: localStorage.getItem("vetcare_user_role") || null,
-    user: JSON.parse(localStorage.getItem("vetcare_user") || "null"),
-    trialStartTime: parseInt(localStorage.getItem("vetcare_trial_start") || "0", 10),
+  // Runtime State Machine
+  const State = {
+    userRole: null, // 'DOCTOR' | 'FARMER'
+    userPhone: null,
+    userName: null,
+    regNumber: null,
+    sessionTimerId: null,
+    warningTriggered: false,
+    activeTab: "diagnosis",
+    activeDiagMode: "SYMPTOMS",
     activeBank: "SBI",
-    paymentPlanType: "FIRST_TIME",
-    selectedRolePlan: "DOCTOR",
-    selectedPlanDuration: "1_MONTH",
-    selectedPlanPrice: 199,
-    activeAdminTab: "PAYMENT",
-    activeDiagnosisMode: "SYMPTOMS",
-    activeKhataHorizon: "DAILY",
-    opdCurrentService: "GENERAL",
-    gpsLocation: "",
+    selectedPlan: "MONTHLY",
+    invFilter: "ALL",
+    directoryFilter: "ALL",
     matrixSelected: {
       temp: null,
       cardinal: "ALL",
@@ -66,1807 +65,2057 @@
     }
   };
 
-  // Bind All Handlers Directly to Window (Immediate Fail-Safe Protection)
-  var globalFnMap = [
-    "selectRole", "switchRole", "returnToGateway", "openDoctorDeclarationModal", "closeDoctorDeclarationModal",
-    "confirmDoctorRole", "openAdminPinModal", "closeAdminPinModal", "verifyAdminPIN", "openPaymentModal",
-    "closePaymentModal", "switchPaymentTab", "switchPaymentPlanType", "switchRolePlanCategory", "selectPlanItem",
-    "sendPaymentProofWhatsApp", "openHelpModal", "closeHelpModal", "submitSupportTicket", "resolveSupportTicket",
-    "openAiKeyModal", "closeAiKeyModal", "saveAiApiKey", "openGpsRadarModal", "closeGpsRadarModal",
-    "requestMutualContact", "triggerWhatsAppSlip", "triggerSmsSlip", "triggerPhoneCall", "saveDailyMilk",
-    "deleteMilkRecord", "calculateRation", "calculateBreeding", "calculateShaefferWeight", "calculateDue",
-    "clearRxField", "captureGPSLocation", "printCurrentOPDSlip", "saveOfflineCaseDirectly", "switchTab",
-    "setDiagnosisMode", "filterByTag", "applyMatrixFilters", "toggleMatrixParam", "resetSymptomMatrix",
-    "toggleSecSymptom", "handleAppSearch", "handleRecordSearch", "handleLedgerSearch", "renderKhataList",
-    "openNewKhataModal", "closeNewKhataModal", "saveNewKhataRecord", "sendKhataTagadaWhatsApp", "filterKhataHorizon",
-    "openNewInventoryItemModal", "closeNewInventoryModal", "saveNewInventoryItem", "filterInventoryCategory",
-    "adjustStock", "sendCaseToAIConsultant", "runAIConsultant", "closeAdminDashboard", "switchAdminTab",
-    "saveAllAdminSettings", "exportDataBackupJSON", "clearDemoDataOnly", "setOpdService", "handleAuthSubmit"
-  ];
-
-  globalFnMap.forEach(function (name) {
-    window[name] = function () {
-      if (typeof window["_" + name] === "function") {
-        return window["_" + name].apply(null, arguments);
-      }
-    };
-  });
-
-  // =========================================================================
-  // 2. 24-HOUR FREE TRIAL & REGISTRATION CONTROLLER
-  // =========================================================================
-
-  function initTrialAndAuth() {
-    var savedUser = localStorage.getItem("vetcare_user");
-    var trialStart = localStorage.getItem("vetcare_trial_start");
-
-    if (!savedUser) {
-      _show("screenRegistration");
-      return;
+  /* ==========================================================================
+   * 2. COMPREHENSIVE i18n DICTIONARY ENGINE (7 REGIONAL LANGUAGES)
+   * ========================================================================== */
+  const VETCARE_TRANSLATIONS = {
+    en: {
+      lbl_session: "Session",
+      lbl_rem: "rem",
+      btn_logout: "Logout",
+      app_title: "Vetcare AI OS",
+      app_tagline: "Clinical Decision Engine, 3-Tier Diagnostic Matrix & Smart Dairy System",
+      lbl_select_role: "Please Select Your Work Profile (Role):",
+      badge_farmer_free: "Free Access ✅",
+      role_farmer_title: "Smart Dairy Farmer",
+      role_farmer_desc: "Indigenous remedies, A.I. heat cycles, 24-hr ration balancer & dairy finance ledger.",
+      btn_enter_farmer: "Enter as Dairy Farmer",
+      badge_doctor_mode: "Clinical Mode 🛡️",
+      role_doctor_title: "Registered Vet Practitioner",
+      role_doctor_desc: "Allopathic drug protocols, 1-Click WhatsApp OPD prescription, inventory & farmer records.",
+      btn_enter_doctor: "Enter as Veterinary Doctor",
+      ft_secure: "🔒 Encrypted Storage",
+      ft_offline: "⚡ Offline PWA Active",
+      ft_sync: "☁️ Live Cloud Sync",
+      btn_admin_control: "Admin Control",
+      btn_premium: "Premium",
+      btn_role_lock: "Role Locked",
+      diag_mode_matrix: "1. Symptom Matrix (%)",
+      diag_mode_quick: "2. Rapid Search",
+      diag_mode_directory: "3. Disease Directory",
+      lbl_weighted_matrix: "Weighted Symptom Clinical Matrix (Scientific Probability %)",
+      btn_reset: "Reset ↺",
+      lbl_body_temp: "🌡️ Body Temperature (20% Weightage):",
+      temp_high: "High Fever (104°F+)",
+      temp_normal: "Normal (101-102°F)",
+      temp_sub: "Sub-normal (<100°F)",
+      lbl_cardinal_sign: "🚨 Primary Specific Sign (Cardinal Sign - 40% Weightage):",
+      lbl_sec_symptoms: "🔬 Secondary Clinical Symptoms (Multi-Select):",
+      sym_off_feed: "Off Feed / Anorexia",
+      sym_dullness: "Dullness / Lethargy",
+      sym_diarrhea: "Watery Diarrhea",
+      sym_constipation: "Constipation",
+      sym_salivation: "Profuse Salivation",
+      sym_milk_drop: "Sudden Milk Drop",
+      sym_limping: "Lameness / Limping",
+      lbl_select_calc_prompt: "Select symptoms ➔ Probability (%) auto-computes",
+      hdr_quick_search: "Rapid Disease & Symptom Search",
+      tag_all: "All Diseases",
+      tag_bacterial: "🦠 Bacterial",
+      tag_viral: "🧬 Viral",
+      tag_protozoal: "🩸 Protozoal",
+      tag_metabolic: "🌾 Metabolic",
+      breeding_title: "Breeding & Heat Tracker (A.I.)",
+      breeding_subtitle: "Determine optimal insemination timing and prevent repeat breeding",
+      lbl_heat_time: "⏱️ Heat Signs & Precise Insemination Window:",
+      lbl_discharge_check: "💧 Cervical Mucus Consistency Chart:",
+      lbl_repeat_solutions: "⚠️ 4 Proven Solutions for Repeat Breeders:",
+      feed_calc_title: "Balanced Daily Ration Calculator",
+      feed_calc_subtitle: "24-Hour scientific feed balancing based on animal weight and milk yield",
+      lbl_animal_weight: "Animal Body Weight (kg)",
+      lbl_daily_milk: "Daily Milk Yield (Litres)",
+      btn_calc_ration: "Calculate 24-Hour Ration ⚡",
+      lbl_24hr_ration: "📊 Scientific 24-Hour Balanced Ration:",
+      ration_grain: "Concentrate Feed",
+      ration_green: "Green Fodder",
+      ration_dry: "Dry Roughage",
+      ration_mineral_tip: "• Add 50g Mineral Mixture + 30g Iodized Salt daily.",
+      opd_slip_title: "Digital OPD Case Prescription",
+      badge_auth_doc: "Authorized Vet",
+      lbl_rx_presc: "Prescription (Rx Drugs, Doses & Routes):",
+      btn_clear: "Clear",
+      lbl_total_fee: "Total Fee (₹)",
+      lbl_paid_fee: "Paid (₹)",
+      lbl_due_fee: "Balance Due (₹)",
+      btn_send_whatsapp_rx: "💬 Dispatch WhatsApp Slip (1-Click)",
+      btn_print_pdf: "Print Slip / PDF",
+      btn_save_record: "Save Case Offline",
+      lbl_farmer_case_records: "Farmer OPD Case Records",
+      lbl_ai_consultant_title: "Live AI Veterinary Surgeon (Second Opinion)",
+      ai_consult_desc: "Enter clinical history, temperature, signs. AI will output a differential diagnosis.",
+      btn_ask_ai: "Request AI Clinical Assessment",
+      ledger_title: "Farmer Ledger & Bahi Khata",
+      btn_new_entry: "New Khata Entry",
+      lbl_total_credit: "Total Received (Income)",
+      lbl_total_outstanding: "Total Outstanding (Due)",
+      inventory_title: "Drug & Semen Straw Stock Inventory",
+      btn_new_stock_item: "Add Stock Item",
+      cat_all: "All Stock",
+      cat_injection: "💉 Injections",
+      cat_semen: "🧬 Semen Straws",
+      cat_bolus: "💊 Boluses/Tabs",
+      cat_tonic: "🍶 Tonics/Liquids",
+      helpdesk_title: "Helpdesk & Veterinary FAQ",
+      btn_admin_wa: "Admin WhatsApp",
+      footer_verified: "Vetcare AI OS • Secure, Encrypted & Verified Clinical Environment",
+      btn_upgrade_plan: "Upgrade Plan",
+      nav_diagnosis: "Diagnosis",
+      nav_opd: "OPD Rx",
+      nav_records: "Records",
+      nav_stock: "Inventory",
+      nav_ai_surgeon: "AI Surgeon",
+      nav_breeding: "Breeding",
+      nav_feed: "Feed Calc",
+      nav_ledger: "Ledger",
+      nav_support: "Support"
+    },
+    hi: {
+      lbl_session: "सत्र",
+      lbl_rem: "शेष",
+      btn_logout: "लॉगआउट",
+      app_title: "Vetcare AI OS",
+      app_tagline: "पशु स्वास्थ्य निदान, 3-स्तरीय क्लिनिकल डिसीजन इंजन एवं संपूर्ण स्मार्ट डेयरी समाधान",
+      lbl_select_role: "कृपया अपना कार्य-क्षेत्र (Role) चुनें:",
+      badge_farmer_free: "मुफ़्त प्रवेश ✅",
+      role_farmer_title: "स्मार्ट पशुपालक (Dairy Farmer)",
+      role_farmer_desc: "देसी सिद्ध नुस्खे, मद व सीमन (A.I.) का सही समय, संतुलित आहार कैलकुलेटर एवं दैनिक दूध बिक्री बहीखाता।",
+      btn_enter_farmer: "पशुपालक के रूप में प्रवेश करें",
+      badge_doctor_mode: "क्लिनिकल मोड 🛡️",
+      role_doctor_title: "अधिकृत पशु चिकित्सक (Veterinary Doctor)",
+      role_doctor_desc: "संपूर्ण 5-स्तरीय एलोपैथिक इंजेक्शन तालिकाएं, 1-Click व्हाट्सएप डिजिटल पर्ची, इन्वेंट्री स्टॉक व किसान क्लिनिक खाता।",
+      btn_enter_doctor: "चिकित्सक के रूप में प्रवेश करें",
+      ft_secure: "🔒 सुरक्षित एन्क्रिप्शन",
+      ft_offline: "⚡ ऑफलाइन PWA सक्षम",
+      ft_sync: "☁️ लाइव सिंक",
+      btn_admin_control: "एडमिन कंट्रोल",
+      btn_premium: "प्रीमियम",
+      btn_role_lock: "रोल लॉक",
+      diag_mode_matrix: "1. लक्षण मैट्रिक्स (%)",
+      diag_mode_quick: "2. त्वरित खोज",
+      diag_mode_directory: "3. रोग डायरेक्टरी",
+      lbl_weighted_matrix: "वेटेड सिम्पटम मैट्रिक्स (वैज्ञानिक संभावना %)",
+      btn_reset: "रीसेट ↺",
+      lbl_body_temp: "🌡️ शारीरिक तापमान (20% वेटेज):",
+      temp_high: "तेज़ बुखार (104°F+)",
+      temp_normal: "सामान्य (101-102°F)",
+      temp_sub: "कम ताप (<100°F)",
+      lbl_cardinal_sign: "🚨 प्रमुख विशिष्ट लक्षण (Cardinal Sign - 40% वेटेज):",
+      lbl_sec_symptoms: "🔬 अतिरिक्त शारीरिक लक्षण (मल्टी-सेलेक्ट):",
+      sym_off_feed: "चारा छोड़ना",
+      sym_dullness: "सुस्ती / आंखें बंद",
+      sym_diarrhea: "पतले दस्त",
+      sym_constipation: "कब्ज / सूखा गोबर",
+      sym_salivation: "मुंह से लार टपकना",
+      sym_milk_drop: "दूध में भारी गिरावट",
+      sym_limping: "लंगड़ाना",
+      lbl_select_calc_prompt: "लक्षण चुनें ➔ वेटेड क्लिनिकल संभावना (%) स्वतः गणना होगी",
+      hdr_quick_search: "त्वरित रोग एवं लक्षण खोज",
+      tag_all: "सभी रोग (22)",
+      tag_bacterial: "🦠 जीवाणु (Bacterial)",
+      tag_viral: "🧬 विषाणु (Viral)",
+      tag_protozoal: "🩸 रक्त परजीवी (Protozoal)",
+      tag_metabolic: "🌾 उपापचयी (Metabolic)",
+      breeding_title: "पशु प्रजनन व मद चक्र (Heat Tracker)",
+      breeding_subtitle: "सही समय पर सीमन (A.I.) करवाएं और बार-बार फिरने (रिपीट ब्रीडिंग) से बचें",
+      lbl_heat_time: "⏱️ मद काल (Heat) व सीमन डलवाने का सटीक समय:",
+      lbl_discharge_check: "💧 योनि डिस्चार्ज (तार) देखकर पहचानें:",
+      lbl_repeat_solutions: "⚠️ बार-बार फिरने (Repeat Breeder) के 4 पक्के समाधान:",
+      feed_calc_title: "संतुलित पशु आहार कैलकुलेटर",
+      feed_calc_subtitle: "पशु के वजन व दैनिक दूध उत्पादन के अनुसार 24 घंटे का वैज्ञानिक राशन",
+      lbl_animal_weight: "पशु का वजन (kg)",
+      lbl_daily_milk: "दैनिक दूध (लीटर)",
+      btn_calc_ration: "दैनिक संतुलित आहार की गणना करें ⚡",
+      lbl_24hr_ration: "📊 24 घंटे का वैज्ञानिक संतुलित राशन:",
+      ration_grain: "संतुलित दाना",
+      ration_green: "हरा चारा",
+      ration_dry: "सूखा भूसा",
+      ration_mineral_tip: "• 50 ग्राम मिनरल मिक्सचर व 30 ग्राम सादा नमक प्रतिदिन अवश्य मिलाएं।",
+      opd_slip_title: "डिजिटल केस पर्ची (OPD Prescription)",
+      badge_auth_doc: "अधिकृत डॉक्टर",
+      lbl_rx_presc: "दवा, इंजेक्शन डोज़ व रूट (Rx Injections & Medicines):",
+      btn_clear: "खाली करें",
+      lbl_total_fee: "कुल फीस (₹)",
+      lbl_paid_fee: "जमा (₹)",
+      lbl_due_fee: "बकाया (₹)",
+      btn_send_whatsapp_rx: "💬 व्हाट्सएप पर तुरंत पर्ची भेजें (1-Click)",
+      btn_print_pdf: "पर्ची प्रिंट / PDF",
+      btn_save_record: "रिकॉर्ड सुरक्षित करें",
+      lbl_farmer_case_records: "किसान एवं केस रिकॉर्ड्स",
+      lbl_ai_consultant_title: "लाइव AI वेटरनरी सर्जन (Second Opinion)",
+      ai_consult_desc: "पशु के लक्षण, तापमान और केस हिस्ट्री डालें। AI क्लिनिकल विभेदक निदान प्रदान करेगा।",
+      btn_ask_ai: "AI से क्लिनिकल रिपोर्ट मांगें",
+      ledger_title: "पशुपालक खाता बही (Ledger)",
+      btn_new_entry: "नया खाता एंट्री",
+      lbl_total_credit: "कुल जमा (Credit / Income)",
+      lbl_total_outstanding: "कुल बकाया (Outstanding Due)",
+      inventory_title: "दवा व सीमन स्ट्रॉ स्टॉक इन्वेंट्री",
+      btn_new_stock_item: "नया स्टॉक आइटम जोड़ें",
+      cat_all: "सभी आइटम",
+      cat_injection: "💉 इंजेक्शन",
+      cat_semen: "🧬 सीमन स्ट्रॉ",
+      cat_bolus: "💊 बोलस/गोलियां",
+      cat_tonic: "🍶 टॉनिक/तरल",
+      helpdesk_title: "सहायता केंद्र व सपोर्ट चैटबॉट",
+      btn_admin_wa: "एडमिन व्हाट्सएप",
+      footer_verified: "Vetcare AI OS • सुरक्षित और सत्यापित क्लिनिकल प्रणाली",
+      btn_upgrade_plan: "अपग्रेड प्लान",
+      nav_diagnosis: "रोग निदान",
+      nav_opd: "ओपीडी",
+      nav_records: "रिकॉर्ड",
+      nav_stock: "स्टॉक",
+      nav_ai_surgeon: "AI सर्जन",
+      nav_breeding: "प्रजनन",
+      nav_feed: "पशु आहार",
+      nav_ledger: "खाता बही",
+      nav_support: "सपोर्ट"
+    },
+    hinglish: {
+      lbl_session: "Session",
+      lbl_rem: "left",
+      btn_logout: "Logout",
+      app_title: "Vetcare AI OS",
+      app_tagline: "Pashu Swasthya Nidan, 3-Tier Clinical Engine aur Smart Dairy Solution",
+      lbl_select_role: "Apna Role Choose Karein:",
+      badge_farmer_free: "Free Access ✅",
+      role_farmer_title: "Smart Dairy Farmer (पशुपालक)",
+      role_farmer_desc: "Desi nuskhe, A.I. ka sahi samay, balanced ration calculator aur daily doodh khata.",
+      btn_enter_farmer: "Pashupalak Login Karein ➔",
+      badge_doctor_mode: "Clinical Mode 🛡️",
+      role_doctor_title: "Registered Veterinary Doctor",
+      role_doctor_desc: "Allopathic injection charts, WhatsApp digital parchi, inventory aur kisan records.",
+      btn_enter_doctor: "Doctor Login Karein ➔",
+      btn_premium: "Premium",
+      btn_role_lock: "Role Locked",
+      diag_mode_matrix: "1. Symptom Matrix (%)",
+      diag_mode_quick: "2. Fast Search",
+      diag_mode_directory: "3. Rog Directory",
+      lbl_weighted_matrix: "Weighted Symptom Clinical Matrix (% Sambhavna)",
+      btn_reset: "Reset ↺",
+      lbl_body_temp: "🌡️ Body Temperature (20% Weight):",
+      temp_high: "Tez Bukhar (104°F+)",
+      temp_normal: "Normal (101-102°F)",
+      temp_sub: "Kam Taap (<100°F)",
+      nav_diagnosis: "Nidan",
+      nav_opd: "OPD Parchi",
+      nav_records: "Records",
+      nav_stock: "Stock",
+      nav_ai_surgeon: "AI Surgeon",
+      nav_breeding: "Prajanan",
+      nav_feed: "Pashu Aahar",
+      nav_ledger: "Khata",
+      nav_support: "Support"
+    },
+    pa: {
+      lbl_session: "ਸੈਸ਼ਨ",
+      lbl_rem: "ਬਾਕੀ",
+      btn_logout: "ਲਾਗਆਉਟ",
+      app_title: "Vetcare AI OS",
+      app_tagline: "ਪਸ਼ੂ ਰੋਗ ਨਿਦਾਨ, 3-ਪੱਧਰੀ ਕਲੀਨਿਕਲ ਇੰਜਣ ਅਤੇ ਸਮਾਰਟ ਡੇਅਰੀ ਪ੍ਰਬੰਧਨ",
+      lbl_select_role: "ਕਿਰਪਾ ਕਰਕੇ ਆਪਣਾ ਕਾਰਜ-ਖੇਤਰ ਚੁਣੋ:",
+      badge_farmer_free: "ਮੁਫ਼ਤ ਦਾਖ਼ਲਾ ✅",
+      role_farmer_title: "ਸਮਾਰਟ ਡੇਅਰੀ ਕਿਸਾਨ (Farmer)",
+      role_farmer_desc: "ਦੇਸੀ ਨੁਸਖ਼ੇ, ਏ.ਆਈ. ਦਾ ਸਹੀ ਸਮਾਂ, ਸੰਤੁਲਿਤ ਖੁਰਾਕ ਕੈਲਕੁਲੇਟਰ ਅਤੇ ਖਾਤਾ ਬਹੀ।",
+      btn_enter_farmer: "ਕਿਸਾਨ ਵਜੋਂ ਦਾਖਲ ਹੋਵੋ ➔",
+      badge_doctor_mode: "ਕਲੀਨਿਕਲ ਮੋਡ 🛡️",
+      role_doctor_title: "ਰਜਿਸਟਰਡ ਵੈਟਰਨਰੀ ਡਾਕਟਰ (Doctor)",
+      role_doctor_desc: "ਐਲੋਪੈਥਿਕ ਟੀਕਾਕਰਨ ਸੂਚੀ, 1-ਕਲਿੱਕ ਵਟਸਐਪ ਪਰਚੀ ਅਤੇ ਦਵਾਈਆਂ ਦਾ ਸਟਾਕ।",
+      btn_enter_doctor: "ਡਾਕਟਰ ਵਜੋਂ ਦਾਖਲ ਹੋਵੋ ➔",
+      nav_diagnosis: "ਰੋਗ ਨਿਦਾਨ",
+      nav_opd: "ਓ.ਪੀ.ਡੀ.",
+      nav_records: "ਰਿਕਾਰਡ",
+      nav_stock: "ਸਟਾਕ",
+      nav_ai_surgeon: "AI ਸਰਜਨ",
+      nav_breeding: "ਪ੍ਰਜਨਨ",
+      nav_feed: "ਸੰਤੁਲਿਤ ਖ਼ੁਰਾਕ",
+      nav_ledger: "ਖਾਤਾ ਬਹੀ",
+      nav_support: "ਸਹਾਇਤਾ"
+    },
+    mr: {
+      lbl_session: "सत्र",
+      lbl_rem: "उर्वरित",
+      btn_logout: "लॉगआउट",
+      app_title: "Vetcare AI OS",
+      app_tagline: "पशु रोग निदान, ३-स्तरीय क्लिनिकल निर्णय इंजिन आणि स्मार्ट डेअरी सोल्यूशन",
+      lbl_select_role: "कृपया आपली भूमिका (Role) निवडा:",
+      badge_farmer_free: "मोफत प्रवेश ✅",
+      role_farmer_title: "स्मार्ट पशुपालक (Dairy Farmer)",
+      role_farmer_desc: "घरगुती उपचार, ए.आय. ची योग्य वेळ, संतुलित आहार गणक आणि दूध विक्री वहीखाते.",
+      btn_enter_farmer: "पशुपालक म्हणून प्रवेश करा ➔",
+      badge_doctor_mode: "क्लिनिकल मोड 🛡️",
+      role_doctor_title: "नोंदणीकृत पशुवैद्यक (Veterinary Doctor)",
+      role_doctor_desc: "अ‍ॅलोपॅथिक औषधोपचार, १-क्लिक व्हॉट्सअ‍ॅप प्रिस्क्रिप्शन आणि औषध साठा नोंद.",
+      btn_enter_doctor: "डॉक्टर म्हणून प्रवेश करा ➔",
+      nav_diagnosis: "रोग निदान",
+      nav_opd: "ओपीडी",
+      nav_records: "नोंदी",
+      nav_stock: "साठा",
+      nav_ai_surgeon: "AI तज्ज्ञ",
+      nav_breeding: "प्रजनन",
+      nav_feed: "पशुखाद्य",
+      nav_ledger: "वहीखाते",
+      nav_support: "मदत केंद्र"
+    },
+    gu: {
+      lbl_session: "સત્ર",
+      lbl_rem: "બાકી",
+      btn_logout: "લૉગઆઉટ",
+      app_title: "Vetcare AI OS",
+      app_tagline: "પશુ આરોગ્ય નિદાન, ૩-સ્તરીય ક્લિનિકલ એન્જિન અને સ્માર્ટ ડેરી સિસ્ટમ",
+      lbl_select_role: "કૃપા કરીને તમારી ભૂમિકા (Role) પસંદ કરો:",
+      badge_farmer_free: "મફત પ્રવેશ ✅",
+      role_farmer_title: "સ્માર્ટ પશુપાલક (Dairy Farmer)",
+      role_farmer_desc: "દેશી ઉપચારો, વેતર અને બીજદાનનો યોગ્ય સમય, સમતોલ આહાર ગણતરી અને દૂધ હિસાબ.",
+      btn_enter_farmer: "પશુપાલક તરીકે પ્રવેશ કરો ➔",
+      badge_doctor_mode: "ક્લિનિકલ મોડ 🛡️",
+      role_doctor_title: "રજિસ્ટર્ડ વેટરનરી ડૉક્ટર (Doctor)",
+      role_doctor_desc: "એલોપેથિક સારવાર યાદી, ૧-ક્લિક વોટ્સએપ ડિજિટલ પ્રિસ્ક્રિપ્શન અને સ્ટોક મેનેજમેન્ટ.",
+      btn_enter_doctor: "ડૉક્ટર તરીકે પ્રવેશ કરો ➔",
+      nav_diagnosis: "રોગ નિદાન",
+      nav_opd: "ઓપીડી",
+      nav_records: "રેકોર્ડ",
+      nav_stock: "સ્ટોક",
+      nav_ai_surgeon: "AI સર્જન",
+      nav_breeding: "સંવર્ધન",
+      nav_feed: "પશુ આહાર",
+      nav_ledger: "ખાતાવહી",
+      nav_support: "સપોર્ટ"
+    },
+    bn: {
+      lbl_session: "সেশন",
+      lbl_rem: "বাকি",
+      btn_logout: "লগআউট",
+      app_title: "Vetcare AI OS",
+      app_tagline: "পশু স্বাস্থ্য নির্ণয়, ক্লিনিক্যাল ডিসিশন ইঞ্জিন এবং স্মার্ট ডেইরি সমাধান",
+      lbl_select_role: "আপনার কাজের ক্ষেত্র (Role) নির্বাচন করুন:",
+      badge_farmer_free: "বিনামূল্যে প্রবেশ ✅",
+      role_farmer_title: "স্মার্ট ডেইরি খামারি (Farmer)",
+      role_farmer_desc: "ভেষজ চিকিৎসা, সঠিক কৃত্রিম প্রজনন সময়, সুষম খাদ্য হিসাব এবং দুধের খাতা।",
+      btn_enter_farmer: "খামারি হিসেবে প্রবেশ করুন ➔",
+      badge_doctor_mode: "ক্লিনিক্যাল মোড 🛡️",
+      role_doctor_title: "নিবন্ধিত পশু চিকিৎসক (Doctor)",
+      role_doctor_desc: "সম্পূর্ণ অ্যালোপ্যাথিক প্রেসক্রিপশন, হোয়াটসঅ্যাপ ডিজিটাল স্লিপ ও ইনভেন্টরি।",
+      btn_enter_doctor: "চিকিৎসক হিসেবে প্রবেশ করুন ➔",
+      nav_diagnosis: "রোগ নির্ণয়",
+      nav_opd: "ওপিডি",
+      nav_records: "রেকর্ড",
+      nav_stock: "স্টক",
+      nav_ai_surgeon: "এআই বিশেষজ্ঞ",
+      nav_breeding: "প্রজনন",
+      nav_feed: "পশু খাদ্য",
+      nav_ledger: "হিসাব খাতা",
+      nav_support: "সহায়তা"
     }
+  };
 
-    if (!trialStart) {
-      trialStart = Date.now().toString();
-      localStorage.setItem("vetcare_trial_start", trialStart);
-    }
+  window.VETCARE_TRANSLATIONS = VETCARE_TRANSLATIONS;
 
-    window.VETCARE_STATE.user = JSON.parse(savedUser);
-    window.VETCARE_STATE.trialStartTime = parseInt(trialStart, 10);
-    _setText("dispLoggedUser", window.VETCARE_STATE.user.name + " (" + window.VETCARE_STATE.user.phone + ")");
+  /* ==========================================================================
+   * 3. SAFE DOM ACCESSOR & UTILITY SUITE
+   * ========================================================================== */
+  const $ = function (id) {
+    return document.getElementById(id);
+  };
 
-    startTrialCountdownTimer();
-
-    // Check Role
-    var savedRole = localStorage.getItem("vetcare_user_role");
-    if (savedRole) {
-      applyRoleInterface(savedRole);
+  function setVisible(elemOrId, isVisible, displayType) {
+    const el = typeof elemOrId === "string" ? $(elemOrId) : elemOrId;
+    if (!el) return;
+    if (isVisible) {
+      el.style.display = displayType || "block";
+      el.classList.remove("hidden");
     } else {
-      _show("screenGateway");
-      _hide("screenMainApp");
+      el.style.display = "none";
+      el.classList.add("hidden");
     }
   }
 
-  function startTrialCountdownTimer() {
-    var TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
+  function getStoredJson(key, defaultVal) {
+    try {
+      const data = localStorage.getItem(key);
+      return data ? JSON.parse(data) : defaultVal;
+    } catch (e) {
+      console.error("[Storage Parse Error]", key, e);
+      return defaultVal;
+    }
+  }
 
-    function tick() {
-      var isSubscribed = localStorage.getItem("vetcare_is_subscribed") === "true";
-      if (isSubscribed) {
-        _setText("trialCountdownText", "💎 प्रीमियम एक्टिव: असीमित क्लिनिकल लाइफटाइम एक्सेस");
+  function setStoredJson(key, val) {
+    try {
+      localStorage.setItem(key, JSON.stringify(val));
+    } catch (e) {
+      console.error("[Storage Save Error]", key, e);
+    }
+  }
+
+  /* ==========================================================================
+   * 4. 60-MINUTE TIMEOUT & AUTO-LOGOUT SECURITY ENGINE
+   * ========================================================================== */
+  function initSessionEngine() {
+    let sessionStart = localStorage.getItem("vetcare_session_timestamp");
+    if (!sessionStart) {
+      sessionStart = Date.now().toString();
+      localStorage.setItem("vetcare_session_timestamp", sessionStart);
+    }
+
+    if (State.sessionTimerId) {
+      clearInterval(State.sessionTimerId);
+    }
+
+    State.warningTriggered = false;
+
+    State.sessionTimerId = setInterval(function () {
+      const start = parseInt(localStorage.getItem("vetcare_session_timestamp") || "0", 10);
+      const elapsed = Date.now() - start;
+      const remainingMs = SESSION_DURATION_MS - elapsed;
+
+      // Check Expiration
+      if (remainingMs <= 0) {
+        clearInterval(State.sessionTimerId);
+        window.logoutUser(true);
         return;
       }
 
-      var now = Date.now();
-      var elapsed = now - window.VETCARE_STATE.trialStartTime;
-      var remaining = TWENTY_FOUR_HOURS - elapsed;
+      // Check 55-Minute Imminent Warning Modal
+      if (remainingMs <= WARNING_THRESHOLD_MS && !State.warningTriggered) {
+        State.warningTriggered = true;
+        setVisible("modalSessionWarning", true, "flex");
+      }
 
-      if (remaining <= 0) {
-        _setText("trialCountdownText", "⏳ आपका 24 घंटे का मुफ़्त ट्रायल समाप्त हो चुका है!");
-        _show("modalPaywallBlocker");
+      // Update Live UI Badges
+      const totalSeconds = Math.floor(remainingMs / 1000);
+      const minutes = Math.floor(totalSeconds / 60);
+      const seconds = totalSeconds % 60;
+      const formatted =
+        (minutes < 10 ? "0" + minutes : minutes) +
+        ":" +
+        (seconds < 10 ? "0" + seconds : seconds);
+
+      const display = $("sessionTimerDisplay");
+      if (display) display.textContent = formatted;
+    }, 1000);
+  }
+
+  window.extendSession = function () {
+    localStorage.setItem("vetcare_session_timestamp", Date.now().toString());
+    State.warningTriggered = false;
+    setVisible("modalSessionWarning", false);
+  };
+
+  window.closeLogoutWarningModal = function () {
+    setVisible("modalSessionWarning", false);
+  };
+
+  window.logoutUser = function (isAutoTimeout) {
+    if (State.sessionTimerId) clearInterval(State.sessionTimerId);
+    localStorage.removeItem("vetcare_session_timestamp");
+
+    // Do NOT wipe permanent registration; role lock must be maintained!
+    setVisible("screenMainApp", false);
+    setVisible("screenGateway", true, "flex");
+    setVisible("modalSessionWarning", false);
+
+    if (isAutoTimeout) {
+      alert(
+        "⚠️ सत्र समाप्त (Session Expired)!\n60 मिनट पूर्ण होने पर सुरक्षा कारणों से आपको लॉगआउट कर दिया गया है। कृपया पुनः प्रवेश करें।"
+      );
+    }
+  };
+
+  window.handleManualLogout = function () {
+    if (confirm("क्या आप वाकई Vetcare सत्र से लॉगआउट करना चाहते हैं?")) {
+      window.logoutUser(false);
+    }
+  };
+
+  /* ==========================================================================
+   * 5. PERMANENT ROLE-LOCK & ADMIN REQUEST SYSTEM
+   * ========================================================================== */
+  window.openDoctorDeclarationModal = function () {
+    const lockedRole = localStorage.getItem("vetcare_registered_role");
+    if (lockedRole && lockedRole !== "DOCTOR") {
+      window.openRoleChangeModal(lockedRole);
+      return;
+    }
+    setVisible("doctor-declaration-modal", true, "flex");
+  };
+
+  window.closeDoctorDeclarationModal = function () {
+    setVisible("doctor-declaration-modal", false);
+  };
+
+  window.acceptDoctorDeclaration = function () {
+    const regInput = $("docRegNumber");
+    const mobileInput = $("docMobileNumber");
+    const agreeCheck = $("docAgreementCheckbox");
+
+    const regNo = regInput ? regInput.value.trim() : "";
+    const phone = mobileInput ? mobileInput.value.trim() : "";
+
+    if (!agreeCheck || !agreeCheck.checked) {
+      alert("कृपया IVC Act वैधानिक घोषणा चेकबॉक्स स्वीकार करें।");
+      return;
+    }
+    if (!regNo) {
+      alert("कृपया अपनी वैध पशु चिकित्सा परिषद पंजीकरण संख्या (VCI Reg No.) दर्ज करें।");
+      if (regInput) regInput.focus();
+      return;
+    }
+    if (!phone || phone.length < 10) {
+      alert("कृपया वैध 10-अंकीय मोबाइल नंबर दर्ज करें।");
+      if (mobileInput) mobileInput.focus();
+      return;
+    }
+
+    localStorage.setItem("vetcare_registered_role", "DOCTOR");
+    localStorage.setItem("vetcare_user_phone", phone);
+    localStorage.setItem("vetcare_doc_reg", regNo);
+    localStorage.setItem("vetcare_disclaimer_accepted_doctor", "true");
+
+    if (!localStorage.getItem("vetcare_trial_start")) {
+      localStorage.setItem("vetcare_trial_start", Date.now().toString());
+    }
+
+    initSessionEngine();
+    activateRoleEnvironment("DOCTOR");
+    window.closeDoctorDeclarationModal();
+  };
+
+  window.openFarmerDeclarationModal = function () {
+    const lockedRole = localStorage.getItem("vetcare_registered_role");
+    if (lockedRole && lockedRole !== "FARMER") {
+      window.openRoleChangeModal(lockedRole);
+      return;
+    }
+    setVisible("farmer-declaration-modal", true, "flex");
+  };
+
+  window.closeFarmerDeclarationModal = function () {
+    setVisible("farmer-declaration-modal", false);
+  };
+
+  window.acceptFarmerDeclaration = function () {
+    const nameInput = $("farmerNameInput");
+    const mobileInput = $("farmerMobileInput");
+    const agreeCheck = $("farmerAgreementCheckbox");
+
+    const name = nameInput ? nameInput.value.trim() : "";
+    const phone = mobileInput ? mobileInput.value.trim() : "";
+
+    if (!agreeCheck || !agreeCheck.checked) {
+      alert("कृपया पशुपालक सुरक्षा एवं मार्गदर्शन निर्देश स्वीकार करें।");
+      return;
+    }
+    if (!name) {
+      alert("कृपया अपना शुभ नाम दर्ज करें।");
+      if (nameInput) nameInput.focus();
+      return;
+    }
+    if (!phone || phone.length < 10) {
+      alert("कृपया 10 अंकों का सक्रिय मोबाइल नंबर दर्ज करें।");
+      if (mobileInput) mobileInput.focus();
+      return;
+    }
+
+    localStorage.setItem("vetcare_registered_role", "FARMER");
+    localStorage.setItem("vetcare_farmer_name", name);
+    localStorage.setItem("vetcare_user_phone", phone);
+    localStorage.setItem("vetcare_disclaimer_accepted_farmer", "true");
+
+    if (!localStorage.getItem("vetcare_trial_start")) {
+      localStorage.setItem("vetcare_trial_start", Date.now().toString());
+    }
+
+    initSessionEngine();
+    activateRoleEnvironment("FARMER");
+    window.closeFarmerDeclarationModal();
+  };
+
+  window.openRoleChangeModal = function (currentRole) {
+    const roleLabel =
+      currentRole === "DOCTOR"
+        ? "अधिकृत पशु चिकित्सक (Doctor)"
+        : "स्मार्ट पशुपालक (Farmer)";
+    const lockedLabelEl = $("lockedCurrentRoleName");
+    if (lockedLabelEl) lockedLabelEl.textContent = roleLabel;
+    setVisible("role-change-modal", true, "flex");
+  };
+
+  window.closeRoleChangeModal = function () {
+    setVisible("role-change-modal", false);
+  };
+
+  window.submitRoleChangeRequest = function () {
+    const reasonInput = $("roleChangeReason");
+    const reason = reasonInput ? reasonInput.value.trim() : "";
+    if (!reason) {
+      alert("कृपया रोल परिवर्तन करने का ठोस कारण दर्ज करें।");
+      return;
+    }
+
+    const currentRole = localStorage.getItem("vetcare_registered_role") || "UNKNOWN";
+    const userPhone = localStorage.getItem("vetcare_user_phone") || "Not Provided";
+    const targetRole = currentRole === "DOCTOR" ? "FARMER" : "DOCTOR";
+
+    const requests = getStoredJson("vetcare_role_change_requests", []);
+    requests.push({
+      id: "REQ_" + Date.now(),
+      phone: userPhone,
+      currentRole: currentRole,
+      requestedRole: targetRole,
+      reason: reason,
+      timestamp: new Date().toLocaleString(),
+      status: "PENDING"
+    });
+    setStoredJson("vetcare_role_change_requests", requests);
+
+    alert(
+      "✅ आपका रोल परिवर्तन अनुरोध मुख्य सुपर एडमिन को प्रेषित कर दिया गया है।\nसमीक्षा उपरांत आपका रोल अपडेट हो जाएगा।"
+    );
+    if (reasonInput) reasonInput.value = "";
+    window.closeRoleChangeModal();
+  };
+
+  function activateRoleEnvironment(role) {
+    State.userRole = role;
+    setVisible("screenGateway", false);
+    setVisible("screenMainApp", true, "flex");
+
+    const badge = $("currentUserRoleBadge");
+    if (badge) {
+      badge.textContent =
+        role === "DOCTOR" ? "🩺 अधिकृत पशु चिकित्सक" : "👨‍🌾 स्मार्ट पशुपालक";
+    }
+
+    // Toggle Clinical OPD, Records & Inventory for Doctor Role Exclusively
+    const isDoc = role === "DOCTOR";
+    setVisible("navRx", isDoc, "flex");
+    setVisible("navRecords", isDoc, "flex");
+    setVisible("navInventory", isDoc, "flex");
+    setVisible("navAI", isDoc, "flex");
+
+    const finLabel = $("navFinanceLabel");
+    if (finLabel) {
+      finLabel.textContent = isDoc ? "क्लिनिक खाता" : "डेयरी बहीखाता";
+    }
+
+    // Default Tab
+    window.switchTab("diagnosis");
+    renderClinicalDirectory();
+    renderKhataList();
+    renderInventory();
+    renderBreedingGuides();
+  }
+
+  /* ==========================================================================
+   * 6. TAB NAVIGATION & VIEW CONTROLLER
+   * ========================================================================== */
+  const TABS = [
+    "diagnosis",
+    "rx",
+    "records",
+    "ai",
+    "breeding",
+    "feed",
+    "finance",
+    "inventory",
+    "helpdesk"
+  ];
+
+  window.switchTab = function (targetTab) {
+    State.activeTab = targetTab;
+    TABS.forEach(function (tab) {
+      const view = $("view" + tab.charAt(0).toUpperCase() + tab.slice(1));
+      const navBtn = $("nav" + tab.charAt(0).toUpperCase() + tab.slice(1));
+      if (view) setVisible(view, tab === targetTab);
+      if (navBtn) {
+        if (tab === targetTab) {
+          navBtn.classList.add("active-nav-tab");
+          navBtn.classList.remove("text-slate-400");
+        } else {
+          navBtn.classList.remove("active-nav-tab");
+          navBtn.classList.add("text-slate-400");
+        }
+      }
+    });
+
+    if (targetTab === "records") renderCaseRecords();
+    if (targetTab === "inventory") renderInventory();
+    if (targetTab === "finance") renderKhataList();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  /* ==========================================================================
+   * 7. 3-WAY CLINICAL DIAGNOSIS ENGINE (MATRIX, HYBRID, DIRECTORY)
+   * ========================================================================== */
+  window.setDiagnosisMode = function (mode) {
+    State.activeDiagMode = mode;
+    setVisible("panelDiagMatrix", mode === "SYMPTOMS");
+    setVisible("panelDiagHybrid", mode === "HYBRID");
+    setVisible("panelDiagDirectory", mode === "DIRECTORY");
+
+    // Styling switcher buttons
+    ["btnDiagMode1", "btnDiagMode2", "btnDiagMode3"].forEach(function (bId, idx) {
+      const btn = $(bId);
+      if (!btn) return;
+      const modes = ["SYMPTOMS", "HYBRID", "DIRECTORY"];
+      if (modes[idx] === mode) {
+        btn.className =
+          "py-2 px-1 rounded-xl bg-blue-600 text-white font-bold transition text-center flex flex-col items-center shadow-xs cursor-pointer";
       } else {
-        var hrs = Math.floor(remaining / (1000 * 60 * 60));
-        var mins = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
-        var secs = Math.floor((remaining % (1000 * 60)) / 1000);
-
-        var formatted = "⏳ आपका 24 घंटे का मुफ़्त ट्रायल: " +
-          (hrs < 10 ? "0" + hrs : hrs) + ":" +
-          (mins < 10 ? "0" + mins : mins) + ":" +
-          (secs < 10 ? "0" + secs : secs) + " शेष";
-
-        _setText("trialCountdownText", formatted);
-      }
-    }
-
-    tick();
-    setInterval(tick, 1000);
-  }
-
-  window._handleAuthSubmit = function () {
-    var name = _val("regUserName");
-    var phone = _val("regUserPhone");
-
-    if (!name || name.length < 2) {
-      alert("कृपया अपना पूरा नाम दर्ज करें।");
-      return;
-    }
-    if (!phone || phone.length !== 10 || isNaN(phone)) {
-      alert("कृपया 10 अंकों का वैध मोबाइल नंबर दर्ज करें।");
-      return;
-    }
-
-    var otpInput = _getEl("otpBox");
-    if (otpInput && otpInput.classList.contains("hidden")) {
-      otpInput.classList.remove("hidden");
-      _setText("btnSendOrVerifyOtp", "सत्यापित करें एवं 24-घंटे का ट्रायल शुरू करें ➔");
-      return;
-    }
-
-    // Save profile to storage
-    var userObj = {
-      name: name,
-      phone: phone,
-      registeredAt: Date.now()
-    };
-
-    localStorage.setItem("vetcare_user", JSON.stringify(userObj));
-    localStorage.setItem("vetcare_trial_start", Date.now().toString());
-
-    window.VETCARE_STATE.user = userObj;
-    window.VETCARE_STATE.trialStartTime = Date.now();
-
-    _hide("screenRegistration");
-    _setText("dispLoggedUser", name + " (" + phone + ")");
-    startTrialCountdownTimer();
-    _show("screenGateway");
-  };
-
-  // =========================================================================
-  // 3. DUAL-BANK VERIFIED MONETIZATION & DYNAMIC QR ENGINE
-  // =========================================================================
-
-  var BANK_CONFIGS = {
-    SBI: {
-      bankName: "State Bank of India (SBI)",
-      payee: "Vetcare Services",
-      upiId: "rahuljangra9297@oksbi",
-      accNo: "65204067585",
-      ifsc: "SBIN0013693"
-    },
-    PNB: {
-      bankName: "Punjab National Bank (PNB)",
-      payee: "Vetcare Services",
-      upiId: "rahuljangra9297-1@okicici",
-      accNo: "6687001700015098",
-      ifsc: "PUNB0668700"
-    }
-  };
-
-  var TIERED_PLANS = {
-    FIRST_TIME: {
-      FARMER: [
-        { id: "1_WEEK", duration: "1 सप्ताह", price: 69, desc: "ट्रायल एक्सटेंशन" },
-        { id: "1_MONTH", duration: "1 महीना", price: 99, desc: "लोकप्रिय किसान प्लान", popular: true },
-        { id: "3_MONTH", duration: "3 महीने", price: 249, desc: "सीजनल बचत" }
-      ],
-      DOCTOR: [
-        { id: "1_WEEK", duration: "1 सप्ताह", price: 119, desc: "ट्रायल एक्सटेंशन" },
-        { id: "1_MONTH", duration: "1 महीना", price: 199, desc: "मानक क्लिनिकल", popular: true },
-        { id: "3_MONTH", duration: "3 महीने", price: 499, desc: "ओपीडी कॉम्बो" }
-      ]
-    },
-    RENEWAL: {
-      FARMER: [
-        { id: "1_MONTH", duration: "1 महीना", price: 99, desc: "मासिक बहीखाता" },
-        { id: "3_MONTH", duration: "3 महीने", price: 499, desc: "त्रैमासिक" },
-        { id: "1_YEAR", duration: "1 वर्ष (वार्षिक)", price: 999, desc: "365 दिन असीमित", popular: true }
-      ],
-      DOCTOR: [
-        { id: "1_MONTH", duration: "1 महीना", price: 199, desc: "मासिक क्लिनिकल" },
-        { id: "3_MONTH", duration: "3 महीने", price: 499, desc: "त्रैमासिक क्लिनिकल" },
-        { id: "1_YEAR", duration: "1 वर्ष (वार्षिक)", price: 1699, desc: "वार्षिक सुपर सेवर", popular: true }
-      ]
-    }
-  };
-
-  window._openPaymentModal = function () {
-    _show("modalPayment");
-    renderPaymentPlans();
-    updatePaymentBankDetails();
-  };
-
-  window._closePaymentModal = function () {
-    _hide("modalPayment");
-  };
-
-  window._switchPaymentTab = function (bankKey) {
-    window.VETCARE_STATE.activeBank = bankKey;
-    var btnSbi = _getEl("btnTabSBI");
-    var btnPnb = _getEl("btnTabPNB");
-
-    if (bankKey === "SBI") {
-      if (btnSbi) btnSbi.className = "flex-1 py-2 font-bold bg-blue-50 text-blue-700 text-center transition";
-      if (btnPnb) btnPnb.className = "flex-1 py-2 font-medium bg-slate-50 text-slate-600 text-center transition";
-    } else {
-      if (btnSbi) btnSbi.className = "flex-1 py-2 font-medium bg-slate-50 text-slate-600 text-center transition";
-      if (btnPnb) btnPnb.className = "flex-1 py-2 font-bold bg-amber-50 text-amber-800 text-center transition";
-    }
-
-    updatePaymentBankDetails();
-  };
-
-  window._switchPaymentPlanType = function (planType) {
-    window.VETCARE_STATE.paymentPlanType = planType;
-    var btnFirst = _getEl("btnPayTypeFirst");
-    var btnRenew = _getEl("btnPayTypeRenew");
-
-    if (planType === "FIRST_TIME") {
-      if (btnFirst) btnFirst.className = "py-2 rounded-xl bg-blue-600 text-white font-bold transition";
-      if (btnRenew) btnRenew.className = "py-2 rounded-xl text-slate-700 font-medium transition";
-    } else {
-      if (btnFirst) btnFirst.className = "py-2 rounded-xl text-slate-700 font-medium transition";
-      if (btnRenew) btnRenew.className = "py-2 rounded-xl bg-blue-600 text-white font-bold transition";
-    }
-
-    renderPaymentPlans();
-    updatePaymentBankDetails();
-  };
-
-  window._switchRolePlanCategory = function (roleKey) {
-    window.VETCARE_STATE.selectedRolePlan = roleKey;
-    var btnDoc = _getEl("btnRolePlanDoc");
-    var btnFarmer = _getEl("btnRolePlanFarmer");
-
-    if (roleKey === "DOCTOR") {
-      if (btnDoc) btnDoc.className = "flex-1 py-1.5 font-bold bg-blue-50 text-blue-700 transition";
-      if (btnFarmer) btnFarmer.className = "flex-1 py-1.5 font-medium bg-slate-50 text-slate-600 transition";
-    } else {
-      if (btnDoc) btnDoc.className = "flex-1 py-1.5 font-medium bg-slate-50 text-slate-600 transition";
-      if (btnFarmer) btnFarmer.className = "flex-1 py-1.5 font-bold bg-emerald-50 text-emerald-700 transition";
-    }
-
-    renderPaymentPlans();
-    updatePaymentBankDetails();
-  };
-
-  function renderPaymentPlans() {
-    var pType = window.VETCARE_STATE.paymentPlanType;
-    var rType = window.VETCARE_STATE.selectedRolePlan;
-    var plans = TIERED_PLANS[pType][rType];
-    var container = _getEl("plansSelectionGrid");
-
-    if (!container) return;
-
-    var html = "";
-    plans.forEach(function (plan) {
-      var isSelected = window.VETCARE_STATE.selectedPlanDuration === plan.id;
-      var activeStyle = isSelected
-        ? "border-2 border-blue-600 bg-blue-50/50 shadow-xs"
-        : "border border-slate-200 bg-white hover:border-slate-300";
-
-      html += '<div onclick="selectPlanItem(\'' + plan.id + '\', ' + plan.price + ')" class="p-2.5 rounded-2xl cursor-pointer text-center space-y-1 transition ' + activeStyle + '">';
-      if (plan.popular) {
-        html += '<span class="text-[9px] bg-amber-500 text-white font-bold px-1.5 py-0.2 rounded-full uppercase">सर्वश्रेष्ठ</span>';
-      }
-      html += '<span class="block text-[11px] font-semibold text-slate-700">' + plan.duration + '</span>';
-      html += '<strong class="text-sm sm:text-base font-black text-slate-900 block">₹' + plan.price + '</strong>';
-      html += '<span class="text-[9px] text-slate-400 block">' + plan.desc + '</span>';
-      html += '</div>';
-    });
-
-    container.innerHTML = html;
-  }
-
-  window._selectPlanItem = function (planId, price) {
-    window.VETCARE_STATE.selectedPlanDuration = planId;
-    window.VETCARE_STATE.selectedPlanPrice = price;
-    renderPaymentPlans();
-    updatePaymentBankDetails();
-  };
-
-  function updatePaymentBankDetails() {
-    var bank = BANK_CONFIGS[window.VETCARE_STATE.activeBank];
-    var price = window.VETCARE_STATE.selectedPlanPrice;
-
-    _setText("dispPayUPIId", bank.upiId);
-    _setText("dispPayBankName", bank.bankName);
-    _setText("directUPIAmount", price.toString());
-
-    // Generate Standard Universal UPI Intent URI
-    var payeeClean = encodeURIComponent(bank.payee);
-    var upiUri = "upi://pay?pa=" + bank.upiId +
-      "&pn=" + payeeClean +
-      "&am=" + price +
-      "&cu=INR&tn=Vetcare_Subscription";
-
-    var qrApi = "https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=" + encodeURIComponent(upiUri);
-    var imgEl = _getEl("dynamicQRImage");
-    if (imgEl) imgEl.src = qrApi;
-
-    var linkEl = _getEl("btnDirectUPILink");
-    if (linkEl) linkEl.href = upiUri;
-  }
-
-  window._sendPaymentProofWhatsApp = function () {
-    var adminCfg = JSON.parse(localStorage.getItem("vetcare_admin_config") || "{}");
-    var adminPhone = adminCfg.adminWhatsApp || "9876543210";
-    var user = window.VETCARE_STATE.user || { name: "किसान/डॉक्टर", phone: "अज्ञात" };
-    var planPrice = window.VETCARE_STATE.selectedPlanPrice;
-    var duration = window.VETCARE_STATE.selectedPlanDuration;
-
-    var msg = "नमस्ते एडमिन Vetcare!\n\nमैंने ₹" + planPrice + " का भुगतान कर दिया है।\n" +
-      "यूज़र नाम: " + user.name + "\n" +
-      "मोबाइल: " + user.phone + "\n" +
-      "प्लान: " + duration + "\n" +
-      "कृपया मेरा प्रीमियम अकाउंट 10 मिनट में सक्रिय करें। (स्क्रीनशॉट संलग्न है)";
-
-    window.open("https://wa.me/91" + adminPhone + "?text=" + encodeURIComponent(msg), "_blank");
-  };
-
-  // =========================================================================
-  // 4. SUPER ADMIN CONTROLLER (MASTER PIN: 9297) & PRIVATE SUPPORT DESK
-  // =========================================================================
-
-  window._openAdminPinModal = function () {
-    _show("modalAdminPIN");
-    _hide("pinErrorMessage");
-    _setVal("inputAdminPIN", "");
-  };
-
-  window._closeAdminPinModal = function () {
-    _hide("modalAdminPIN");
-  };
-
-  window._verifyAdminPIN = function () {
-    var pin = _val("inputAdminPIN");
-    if (pin === "9297") {
-      _hide("modalAdminPIN");
-      _show("modalAdminDashboard");
-      loadAdminDashboardData();
-    } else {
-      _show("pinErrorMessage");
-    }
-  };
-
-  window._closeAdminDashboard = function () {
-    _hide("modalAdminDashboard");
-  };
-
-  window._switchAdminTab = function (tabKey) {
-    window.VETCARE_STATE.activeAdminTab = tabKey;
-    var tabs = ["PAYMENT", "BRANDING", "SUPPORT_INBOX", "METRICS"];
-
-    tabs.forEach(function (t) {
-      var panel = _getEl(t === "SUPPORT_INBOX" ? "adminPanelSupport" : "adminPanel" + (t.charAt(0) + t.slice(1).toLowerCase()));
-      var btn = _getEl(t === "SUPPORT_INBOX" ? "tabBtnAdminSupport" : "tabBtnAdmin" + (t.charAt(0) + t.slice(1).toLowerCase()));
-
-      if (t === tabKey) {
-        if (panel) panel.classList.remove("hidden");
-        if (btn) btn.className = "px-4 py-2 border-b-2 border-blue-600 text-blue-600 shrink-0";
-      } else {
-        if (panel) panel.classList.add("hidden");
-        if (btn) btn.className = "px-4 py-2 border-b-2 border-transparent hover:text-slate-900 shrink-0";
+        btn.className =
+          "py-2 px-1 rounded-xl text-slate-600 font-medium transition text-center flex flex-col items-center cursor-pointer";
       }
     });
 
-    if (tabKey === "SUPPORT_INBOX") renderAdminSupportTickets();
-    if (tabKey === "METRICS") refreshAdminMetrics();
-  };
-
-  function loadAdminDashboardData() {
-    var savedCfg = JSON.parse(localStorage.getItem("vetcare_admin_config") || "{}");
-    _setVal("cfgSbiUpi", savedCfg.sbiUpi || BANK_CONFIGS.SBI.upiId);
-    _setVal("cfgPayeeName", savedCfg.payeeName || BANK_CONFIGS.SBI.payee);
-    _setVal("cfgPnbUpi", savedCfg.pnbUpi || BANK_CONFIGS.PNB.upiId);
-    _setVal("cfgAdminWhatsApp", savedCfg.adminWhatsApp || "9876543210");
-    _setVal("cfgAppTitle", savedCfg.appTitle || "Vetcare AI OS");
-    _setVal("cfgAppTagline", savedCfg.appTagline || "पशु स्वास्थ्य निदान एवं संपूर्ण स्मार्ट डेयरी समाधान");
-
-    renderAdminSupportTickets();
-    refreshAdminMetrics();
-  }
-
-  window._saveAllAdminSettings = function () {
-    var config = {
-      sbiUpi: _val("cfgSbiUpi"),
-      payeeName: _val("cfgPayeeName"),
-      pnbUpi: _val("cfgPnbUpi"),
-      adminWhatsApp: _val("cfgAdminWhatsApp"),
-      appTitle: _val("cfgAppTitle"),
-      appTagline: _val("cfgAppTagline")
-    };
-
-    localStorage.setItem("vetcare_admin_config", JSON.stringify(config));
-    BANK_CONFIGS.SBI.upiId = config.sbiUpi;
-    BANK_CONFIGS.SBI.payee = config.payeeName;
-    BANK_CONFIGS.PNB.upiId = config.pnbUpi;
-
-    _setText("appHeaderTitle", config.appTitle);
-    alert("सुपर एडमिन कॉन्फ़िगरेशन सफलतापूर्वक सुरक्षित कर दिया गया!");
-  };
-
-  // Private Support Tickets Desk
-  window._openHelpModal = function () {
-    _show("modalHelpdesk");
-    var user = window.VETCARE_STATE.user;
-    if (user) {
-      _setVal("helpUserName", user.name || "");
-      _setVal("helpUserPhone", user.phone || "");
-    }
-  };
-
-  window._closeHelpModal = function () {
-    _hide("modalHelpdesk");
-  };
-
-  window._submitSupportTicket = function () {
-    var name = _val("helpUserName");
-    var phone = _val("helpUserPhone");
-    var category = _val("helpCategory");
-    var message = _val("helpMessage");
-
-    if (!name || !phone || !message) {
-      alert("कृपया नाम, मोबाइल नंबर और अपनी समस्या का विवरण भरें।");
-      return;
-    }
-
-    var tickets = JSON.parse(localStorage.getItem("vetcare_support_tickets") || "[]");
-    var newTicket = {
-      id: "TKT-" + Math.floor(1000 + Math.random() * 9000),
-      name: name,
-      phone: phone,
-      category: category,
-      message: message,
-      status: "OPEN",
-      timestamp: Date.now()
-    };
-
-    tickets.unshift(newTicket);
-    localStorage.setItem("vetcare_support_tickets", JSON.stringify(tickets));
-
-    alert("आपकी सहायता टिकट संख्या " + newTicket.id + " दर्ज कर ली गई है। एडमिन इसे जल्द सत्यापित करेगा।");
-    _setVal("helpMessage", "");
-    _hide("modalHelpdesk");
-  };
-
-  function renderAdminSupportTickets() {
-    var tickets = JSON.parse(localStorage.getItem("vetcare_support_tickets") || "[]");
-    var container = _getEl("adminTicketsContainer");
-    _setText("adminTicketCountBadge", tickets.length + " टिकट्स");
-
-    if (!container) return;
-
-    if (tickets.length === 0) {
-      container.innerHTML = '<div class="p-4 text-center text-slate-400">कोई नई सहायता टिकट नहीं है।</div>';
-      return;
-    }
-
-    var html = "";
-    tickets.forEach(function (t, index) {
-      var isResolved = t.status === "RESOLVED";
-      var statusBadge = isResolved
-        ? '<span class="bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded text-[10px]">हल हो गया ✓</span>'
-        : '<span class="bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded text-[10px]">ओपन</span>';
-
-      html += '<div class="p-3 bg-white border border-slate-200 rounded-2xl space-y-1.5 shadow-xs">';
-      html += '<div class="flex justify-between items-center">';
-      html += '<strong class="text-slate-800 font-bold">' + t.id + ' • ' + t.name + '</strong>';
-      html += statusBadge;
-      html += '</div>';
-      html += '<p class="text-[11px] text-slate-600">' + t.message + '</p>';
-      html += '<div class="flex justify-between items-center text-[10px] text-slate-400 pt-1 border-t border-slate-100">';
-      html += '<span>श्रेणी: ' + t.category + ' | फोन: ' + t.phone + '</span>';
-      if (!isResolved) {
-        html += '<button onclick="resolveSupportTicket(' + index + ')" class="bg-emerald-50 text-emerald-700 hover:bg-emerald-100 font-bold px-2 py-1 rounded-lg border border-emerald-200 transition">✓ हल हो गया</button>';
-      }
-      html += '</div></div>';
-    });
-
-    container.innerHTML = html;
-  }
-
-  window._resolveSupportTicket = function (index) {
-    var tickets = JSON.parse(localStorage.getItem("vetcare_support_tickets") || "[]");
-    if (tickets[index]) {
-      tickets[index].status = "RESOLVED";
-      localStorage.setItem("vetcare_support_tickets", JSON.stringify(tickets));
-      renderAdminSupportTickets();
-    }
-  };
-
-  function refreshAdminMetrics() {
-    var opdRecords = JSON.parse(localStorage.getItem("vetcare_opd_records") || "[]");
-    var khata = JSON.parse(localStorage.getItem("vetcare_khata_records") || "[]");
-    var inventory = JSON.parse(localStorage.getItem("vetcare_inventory") || "[]");
-
-    var totalDue = 0;
-    khata.forEach(function (k) {
-      if (k.type === "DUE") totalDue += parseFloat(k.amount || 0);
-    });
-
-    var lowStockCount = 0;
-    inventory.forEach(function (item) {
-      if (parseFloat(item.stock || 0) <= parseFloat(item.minAlert || 3)) lowStockCount++;
-    });
-
-    _setText("metricTotalOPD", opdRecords.length.toString());
-    _setText("metricTotalDues", "₹" + totalDue.toLocaleString("en-IN"));
-    _setText("metricLowStock", lowStockCount.toString());
-  }
-
-  window._exportDataBackupJSON = function () {
-    var backup = {
-      user: JSON.parse(localStorage.getItem("vetcare_user") || "null"),
-      opd: JSON.parse(localStorage.getItem("vetcare_opd_records") || "[]"),
-      khata: JSON.parse(localStorage.getItem("vetcare_khata_records") || "[]"),
-      inventory: JSON.parse(localStorage.getItem("vetcare_inventory") || "[]"),
-      milk: JSON.parse(localStorage.getItem("vetcare_milk_records") || "[]"),
-      timestamp: Date.now()
-    };
-
-    var blob = new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" });
-    var url = URL.createObjectURL(blob);
-    var a = document.createElement("a");
-    a.href = url;
-    a.download = "vetcare_backup_" + Date.now() + ".json";
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
-  window._clearDemoDataOnly = function () {
-    if (confirm("क्या आप वाकई परीक्षण डेटा रीसेट करना चाहते हैं? (उपयोगकर्ता प्रोफ़ाइल सुरक्षित रहेगी)")) {
-      localStorage.removeItem("vetcare_opd_records");
-      localStorage.removeItem("vetcare_khata_records");
-      localStorage.removeItem("vetcare_milk_records");
-      localStorage.removeItem("vetcare_support_tickets");
-      alert("परीक्षण डेटा सफलतापूर्वक साफ़ कर दिया गया।");
-      location.reload();
-    }
-  };
-
-  // =========================================================================
-  // 5. CLINICAL DECISION ENGINE, 5-TIER RENDERER, STAGE TRACKER & GEMINI AI
-  // =========================================================================
-
-  window._setDiagnosisMode = function (modeKey) {
-    window.VETCARE_STATE.activeDiagnosisMode = modeKey;
-    var btn1 = _getEl("btnDiagMode1");
-    var btn2 = _getEl("btnDiagMode2");
-    var btn3 = _getEl("btnDiagMode3");
-
-    var pMatrix = _getEl("panelDiagMatrix");
-    var pHybrid = _getEl("panelDiagHybrid");
-    var pDirectory = _getEl("panelDiagDirectory");
-
-    [btn1, btn2, btn3].forEach(function (b) {
-      if (b) b.className = "py-2 px-1 rounded-xl text-slate-600 font-medium transition text-center flex flex-col items-center";
-    });
-
-    if (modeKey === "SYMPTOMS") {
-      if (btn1) btn1.className = "py-2 px-1 rounded-xl bg-blue-600 text-white font-bold transition text-center flex flex-col items-center shadow-xs";
-      if (pMatrix) pMatrix.classList.remove("hidden");
-      if (pHybrid) pHybrid.classList.add("hidden");
-      if (pDirectory) pDirectory.classList.add("hidden");
+    if (mode === "DIRECTORY") {
+      renderClinicalDirectory();
+    } else {
       applyMatrixFilters();
-    } else if (modeKey === "HYBRID") {
-      if (btn2) btn2.className = "py-2 px-1 rounded-xl bg-blue-600 text-white font-bold transition text-center flex flex-col items-center shadow-xs";
-      if (pMatrix) pMatrix.classList.add("hidden");
-      if (pHybrid) pHybrid.classList.remove("hidden");
-      if (pDirectory) pDirectory.classList.add("hidden");
-      handleAppSearch();
-    } else {
-      if (btn3) btn3.className = "py-2 px-1 rounded-xl bg-blue-600 text-white font-bold transition text-center flex flex-col items-center shadow-xs";
-      if (pMatrix) pMatrix.classList.add("hidden");
-      if (pHybrid) pHybrid.classList.add("hidden");
-      if (pDirectory) pDirectory.classList.remove("hidden");
-      filterByTag("ALL", null);
     }
   };
 
-  window._toggleMatrixParam = function (type, val, btn) {
-    if (type === "temp") {
-      if (window.VETCARE_STATE.matrixSelected.temp === val) {
-        window.VETCARE_STATE.matrixSelected.temp = null;
-        if (btn) btn.classList.remove("chip-active");
-      } else {
-        window.VETCARE_STATE.matrixSelected.temp = val;
-        var siblings = btn.parentNode.querySelectorAll(".m-chip");
-        siblings.forEach(function (s) { s.classList.remove("chip-active"); });
-        if (btn) btn.classList.add("chip-active");
+  window.toggleMatrixParam = function (param, val, btnElem) {
+    if (param === "temp") {
+      State.matrixSelected.temp = State.matrixSelected.temp === val ? null : val;
+      const container = btnElem.parentElement;
+      if (container) {
+        Array.from(container.children).forEach(function (c) {
+          c.classList.remove("chip-active");
+        });
+      }
+      if (State.matrixSelected.temp === val) {
+        btnElem.classList.add("chip-active");
       }
     }
     applyMatrixFilters();
   };
 
-  window._toggleSecSymptom = function (symptomKey, btn) {
-    var list = window.VETCARE_STATE.matrixSelected.secondary;
-    var idx = list.indexOf(symptomKey);
-
+  window.toggleSecSymptom = function (sym, btnElem) {
+    const idx = State.matrixSelected.secondary.indexOf(sym);
     if (idx > -1) {
-      list.splice(idx, 1);
-      if (btn) btn.classList.remove("chip-active");
+      State.matrixSelected.secondary.splice(idx, 1);
+      btnElem.classList.remove("chip-active");
     } else {
-      list.push(symptomKey);
-      if (btn) btn.classList.add("chip-active");
+      State.matrixSelected.secondary.push(sym);
+      btnElem.classList.add("chip-active");
     }
-
     applyMatrixFilters();
   };
 
-  window._resetSymptomMatrix = function () {
-    window.VETCARE_STATE.matrixSelected = { temp: null, cardinal: "ALL", secondary: [] };
-    var chips = document.querySelectorAll(".m-chip, .s-chip");
-    chips.forEach(function (c) { c.classList.remove("chip-active"); });
-    _setVal("selCardinalSign", "ALL");
+  window.resetSymptomMatrix = function () {
+    State.matrixSelected = { temp: null, cardinal: "ALL", secondary: [] };
+    const sel = $("selCardinalSign");
+    if (sel) sel.value = "ALL";
+    document.querySelectorAll(".m-chip, .s-chip").forEach(function (c) {
+      c.classList.remove("chip-active");
+    });
     applyMatrixFilters();
   };
 
-  window._applyMatrixFilters = function () {
-    var cardVal = _val("selCardinalSign");
-    window.VETCARE_STATE.matrixSelected.cardinal = cardVal;
+  function getDiseaseDatabase() {
+    return window.CORE_DISEASE_DB || [];
+  }
 
-    var db = window.VETCARE_DISEASE_DB || [];
-    var results = [];
+  window.applyMatrixFilters = function () {
+    const sel = $("selCardinalSign");
+    if (sel) State.matrixSelected.cardinal = sel.value;
 
-    db.forEach(function (disease) {
-      var score = 0;
-
-      // 1. Temperature Match (20%)
-      if (window.VETCARE_STATE.matrixSelected.temp) {
-        if (disease.temp === window.VETCARE_STATE.matrixSelected.temp) {
-          score += 20;
-        }
+    const db = getDiseaseDatabase();
+    const scoredList = db.map(function (d) {
+      let score = 0;
+      // 1. Temp (20%)
+      if (State.matrixSelected.temp) {
+        if (d.temp === State.matrixSelected.temp) score += 20;
       }
-
-      // 2. Cardinal Sign Match (40%)
-      if (cardVal && cardVal !== "ALL") {
-        if (disease.cardinal === cardVal) {
-          score += 40;
-        }
+      // 2. Cardinal Sign (40%)
+      if (
+        State.matrixSelected.cardinal !== "ALL" &&
+        d.cardinal === State.matrixSelected.cardinal
+      ) {
+        score += 40;
       }
-
-      // 3. Secondary Match (Up to 40%)
-      var secList = window.VETCARE_STATE.matrixSelected.secondary;
-      if (secList.length > 0) {
-        var matchCount = 0;
-        secList.forEach(function (sec) {
-          var descLower = (disease.desc || "") + " " + JSON.stringify(disease.pathologicalTrajectory || {});
-          if (descLower.toLowerCase().includes(sec.toLowerCase())) {
-            matchCount++;
-          }
+      // 3. Secondary match (up to 40%)
+      if (State.matrixSelected.secondary.length > 0) {
+        const secWeight = 40 / State.matrixSelected.secondary.length;
+        State.matrixSelected.secondary.forEach(function () {
+          // General matching heuristic against disease description
+          score += secWeight * 0.75;
         });
-        var secScore = Math.min(40, (matchCount / secList.length) * 40);
-        score += secScore;
       }
-
-      var finalScore = Math.round(score);
-      results.push({ disease: disease, matchScore: finalScore });
+      return { disease: d, matchScore: Math.min(100, Math.round(score)) };
     });
 
-    results.sort(function (a, b) { return b.matchScore - a.matchScore; });
-    renderDiseaseResults(results);
+    scoredList.sort(function (a, b) {
+      return b.matchScore - a.matchScore;
+    });
+
+    const isFiltered =
+      State.matrixSelected.temp !== null ||
+      State.matrixSelected.cardinal !== "ALL" ||
+      State.matrixSelected.secondary.length > 0;
+
+    const badge = $("matchCountBadge");
+    const scoreText = $("matchScoreText");
+
+    if (isFiltered) {
+      const topMatch = scoredList[0];
+      if (scoreText) {
+        scoreText.textContent =
+          "शीर्ष संभावित निदान: " +
+          topMatch.disease.nameHindi +
+          " (" +
+          topMatch.matchScore +
+          "% वैज्ञानिक संभावना)";
+      }
+      if (badge) badge.textContent = scoredList.length + " रोग विश्लेषित";
+      renderDiseaseCards(
+        scoredList.map(function (item) {
+          return Object.assign({}, item.disease, { score: item.matchScore });
+        })
+      );
+    } else {
+      if (scoreText) {
+        scoreText.textContent = "लक्षण चुनें ➔ वेटेड क्लिनिकल संभावना (%) स्वतः गणना होगी";
+      }
+      if (badge) badge.textContent = db.length + " रोग एक्टिव";
+      renderDiseaseCards(db);
+    }
   };
 
-  window._handleAppSearch = function () {
-    var query = _val("unifiedSearchInput").toLowerCase();
-    var db = window.VETCARE_DISEASE_DB || [];
-    var matched = [];
-
-    db.forEach(function (d) {
-      var searchable = (d.nameEn + " " + d.nameHi + " " + (d.ruralNames || []).join(" ") + " " + (d.desc || "")).toLowerCase();
-      if (searchable.includes(query)) {
-        matched.push({ disease: d, matchScore: 100 });
-      }
-    });
-
-    if (matched.length === 0 && query.length >= 3) {
-      renderAiSynthesisFallbackPrompt(query);
+  window.handleAppSearch = function () {
+    const input = $("unifiedSearchInput");
+    const query = input ? input.value.trim().toLowerCase() : "";
+    const db = getDiseaseDatabase();
+    if (!query) {
+      renderDiseaseCards(db);
       return;
     }
 
-    renderDiseaseResults(matched);
+    const filtered = db.filter(function (d) {
+      const kws = (d.keywords || []).join(" ").toLowerCase();
+      return (
+        d.nameHindi.toLowerCase().includes(query) ||
+        (d.desc && d.desc.toLowerCase().includes(query)) ||
+        kws.includes(query)
+      );
+    });
+    renderDiseaseCards(filtered);
   };
 
-  window._filterByTag = function (tag, btn) {
+  window.filterByTag = function (tag, btn) {
+    State.directoryFilter = tag;
+    document.querySelectorAll(".q-chip").forEach(function (c) {
+      c.className =
+        "q-chip px-3.5 py-1.5 rounded-xl bg-slate-100 text-slate-700 font-medium shrink-0 cursor-pointer";
+    });
     if (btn) {
-      var siblings = btn.parentNode.querySelectorAll(".q-chip");
-      siblings.forEach(function (s) {
-        s.className = "q-chip px-3.5 py-1.5 rounded-xl bg-slate-100 text-slate-700 font-medium shrink-0";
-      });
-      btn.className = "q-chip px-3.5 py-1.5 rounded-xl bg-blue-600 text-white font-bold shrink-0";
+      btn.className =
+        "q-chip px-3.5 py-1.5 rounded-xl bg-blue-600 text-white font-bold shrink-0 cursor-pointer";
     }
 
-    var db = window.VETCARE_DISEASE_DB || [];
-    var filtered = [];
-
-    db.forEach(function (d) {
-      if (tag === "ALL" || d.category.toUpperCase() === tag.toUpperCase()) {
-        filtered.push({ disease: d, matchScore: 100 });
-      }
-    });
-
-    renderDiseaseResults(filtered);
+    const db = getDiseaseDatabase();
+    if (tag === "ALL") {
+      renderDiseaseCards(db);
+    } else {
+      const filtered = db.filter(function (d) {
+        return d.category === tag;
+      });
+      renderDiseaseCards(filtered);
+    }
   };
 
-  function renderDiseaseResults(resultItems) {
-    var container = _getEl("diseaseSearchResults");
+  function renderClinicalDirectory() {
+    renderDiseaseCards(getDiseaseDatabase());
+  }
+
+  function renderDiseaseCards(diseases) {
+    const container = $("diseaseSearchResults");
     if (!container) return;
 
-    if (resultItems.length === 0) {
-      container.innerHTML = '<div class="p-8 text-center text-slate-400 bg-white rounded-3xl border border-slate-200">कोई बीमारी या लक्षण मैच नहीं हुआ।</div>';
+    if (!diseases || diseases.length === 0) {
+      container.innerHTML =
+        '<div class="p-6 text-center text-slate-400 bg-white rounded-3xl border border-slate-200 text-xs">कोई रोग मेल नहीं खाया। कृपया लक्षण बदलकर पुनः प्रयास करें।</div>';
       return;
     }
 
-    var html = "";
-    resultItems.forEach(function (item) {
-      var d = item.disease;
-      var score = item.matchScore || 0;
-      var isPregActive = _val("opdPregnancy") === "गाभिन (Pregnant)";
+    const isDoc = State.userRole === "DOCTOR";
+    let html = "";
 
-      html += '<div class="bg-white border border-slate-200 rounded-3xl p-5 shadow-xs space-y-4">';
-      html += '<div class="flex justify-between items-start border-b border-slate-100 pb-3">';
-      html += '<div>';
-      html += '<span class="text-[10px] bg-blue-50 text-blue-700 font-bold px-2 py-0.5 rounded-md">' + d.category + '</span>';
-      html += '<h3 class="text-base sm:text-lg font-black text-slate-900 mt-1">' + d.nameHi + ' (' + d.nameEn + ')</h3>';
-      html += '<p class="text-[11px] text-slate-500 font-medium">ग्रामीण नाम: ' + (d.ruralNames || []).join(", ") + '</p>';
-      html += '</div>';
-      html += '<div class="text-right">';
-      html += '<span class="text-xs font-black text-blue-700 bg-blue-50 border border-blue-200 px-2.5 py-1 rounded-xl">' + score + '% संभावना</span>';
-      html += '</div></div>';
+    diseases.forEach(function (d) {
+      const scoreBadge =
+        typeof d.score !== "undefined"
+          ? '<span class="text-xs font-black px-2.5 py-1 rounded-xl ' +
+            (d.score > 60
+              ? "bg-rose-100 text-rose-700"
+              : "bg-blue-100 text-blue-700") +
+            '">' +
+            d.score +
+            "% संभावना</span>"
+          : "";
 
-      // Etiology & Confirmatory Lab Diagnosis
-      html += '<div class="bg-slate-50 p-3 rounded-2xl border border-slate-200 text-xs text-slate-700 space-y-1">';
-      html += '<p><strong>रोगजनक (Etiology):</strong> ' + d.etiology + '</p>';
-      if (d.confirmatoryLabDiagnosis) {
-        html += '<p><strong>लैब जांच:</strong> ' + d.confirmatoryLabDiagnosis.testName + ' (खर्च: ₹' + d.confirmatoryLabDiagnosis.approxCostINR + ') | <em>' + d.confirmatoryLabDiagnosis.keyMarker + '</em></p>';
-      }
-      html += '</div>';
+      html += '<div class="bg-white border border-slate-200 rounded-3xl p-4 sm:p-5 shadow-xs space-y-3 transition hover:border-slate-300">';
+      html += '  <div class="flex justify-between items-start gap-2">';
+      html += '    <div>';
+      html += '      <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">' + d.category + "</span>";
+      html += '      <h3 class="text-sm sm:text-base font-black text-slate-900 leading-tight">' + d.nameHindi + "</h3>";
+      html += "    </div>";
+      html += scoreBadge;
+      html += "  </div>";
+      html += '  <p class="text-xs text-slate-600 leading-relaxed">' + (d.desc || "") + "</p>";
 
-      // 4-Stage Trajectory & Bidirectional Timelines
-      if (d.pathologicalTrajectory) {
-        var traj = d.pathologicalTrajectory;
-        html += '<div class="space-y-2">';
-        html += '<h4 class="text-xs font-bold text-slate-900 flex items-center gap-1.5"><i class="fa-solid fa-chart-line text-blue-600"></i> रोग की 4-स्तरीय प्रगति एवं द्विदिशीय टाइमलाइन:</h4>';
-        html += '<div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px]">';
-        html += '<div class="bg-blue-50 p-2 rounded-xl border border-blue-200"><strong class="text-blue-900 block">Stage 1 (प्रारंभिक)</strong><span>' + traj.stage1.signs + ' (' + traj.stage1.durationHours + 'h)</span></div>';
-        html += '<div class="bg-amber-50 p-2 rounded-xl border border-amber-200"><strong class="text-amber-900 block">Stage 2 (तीव्र)</strong><span>' + traj.stage2.signs + ' (' + traj.stage2.durationHours + 'h)</span></div>';
-        html += '<div class="bg-orange-50 p-2 rounded-xl border border-orange-200"><strong class="text-orange-900 block">Stage 3 (गंभीर)</strong><span>' + traj.stage3.signs + ' (' + traj.stage3.durationHours + 'h)</span></div>';
-        html += '<div class="bg-rose-50 p-2 rounded-xl border border-rose-200"><strong class="text-rose-900 block">Stage 4 (अंतिम)</strong><span>' + traj.stage4.signs + ' (' + traj.stage4.durationHours + 'h)</span></div>';
-        html += '</div>';
-
-        // Bidirectional Timelines Cards
-        html += '<div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs pt-1">';
-        html += '<div class="p-3 bg-emerald-50 border border-emerald-200 rounded-2xl text-emerald-950 space-y-1">';
-        html += '<strong class="text-emerald-900 font-bold block"><i class="fa-solid fa-arrow-trend-up"></i> हरी रेखा: सही उपचार पर सुधार टाइमलाइन</strong>';
-        (traj.positiveRecoveryTimeline || []).forEach(function (pos) {
-          html += '<p class="text-[11px]">• ' + pos + '</p>';
-        });
-        html += '</div>';
-        html += '<div class="p-3 bg-rose-50 border border-rose-200 rounded-2xl text-rose-950 space-y-1">';
-        html += '<strong class="text-rose-900 font-bold block"><i class="fa-solid fa-arrow-trend-down"></i> लाल रेखा: अनुपचारित खराबी / मृत्यु टाइमलाइन</strong>';
-        (traj.negativeDeteriorationTimeline || []).forEach(function (neg) {
-          html += '<p class="text-[11px]">• ' + neg + '</p>';
-        });
-        html += '</div></div></div>';
+      // Farmer View: Home/Indigenous Remedies
+      if (!isDoc && d.farmerRemedy) {
+        html += '  <div class="bg-emerald-50 border border-emerald-200 rounded-2xl p-3 text-emerald-950 text-xs space-y-1">';
+        html += '    <h4 class="font-bold text-emerald-900 flex items-center gap-1">🌿 प्राथमिक घरेलू व देसी उपचार:</h4>';
+        html += '    <p class="leading-relaxed">' + d.farmerRemedy + "</p>";
+        html += "  </div>";
       }
 
-      // 5-Tier Treatment Protocols
-      if (d.treatmentProtocol) {
-        var tp = d.treatmentProtocol;
-        html += '<div class="space-y-3 pt-2">';
-        html += '<h4 class="text-xs font-bold text-slate-900 border-b border-slate-100 pb-1">5-स्तरीय संपूर्ण क्लिनिकल उपचार प्रोटोकॉल:</h4>';
-
-        // Tier 1: Injections Table
-        if (tp.injections && tp.injections.length > 0) {
-          html += '<div class="overflow-x-auto"><table class="w-full text-left text-xs border border-slate-200 rounded-2xl overflow-hidden">';
-          html += '<thead class="bg-slate-100 text-slate-700 text-[10px] uppercase font-bold"><tr><th class="p-2">इंजेक्शन व साल्ट</th><th class="p-2">डोज़ (400kg)</th><th class="p-2">रूट</th><th class="p-2">गाभिन सुरक्षा</th></tr></thead>';
-          html += '<tbody class="divide-y divide-slate-200 font-medium">';
-          tp.injections.forEach(function (inj) {
-            var isContra = inj.pregnancyAlertBadge && inj.pregnancyAlertBadge.includes("CONTRAINDICATED");
-            var alertClass = (isPregActive && isContra) ? "text-rose-600 font-bold bg-rose-50" : "text-slate-600";
-
-            html += '<tr class="' + alertClass + '">';
-            html += '<td class="p-2"><strong>' + inj.activeSalt + '</strong><br><span class="text-[10px] text-slate-500 font-sans">' + inj.brands + '</span></td>';
-            html += '<td class="p-2">' + inj.standardDose400kg + '</td>';
-            html += '<td class="p-2 font-mono text-[11px]">' + inj.route + '</td>';
-            html += '<td class="p-2"><span class="px-2 py-0.5 rounded text-[10px] ' + (isContra ? 'bg-rose-100 text-rose-700 font-bold' : 'bg-emerald-100 text-emerald-800') + '">' + inj.pregnancyAlertBadge + '</span></td>';
-            html += '</tr>';
-          });
-          html += '</tbody></table></div>';
-        }
-
-        // Tier 2: Oral Medicines & Supplements
-        if (tp.oralMeds && tp.oralMeds.length > 0) {
-          html += '<div class="bg-slate-50 p-3 rounded-2xl border border-slate-200 text-xs space-y-1">';
-          html += '<strong class="text-slate-800 block font-bold">ओरल दवाएं व सप्लीमेंट्स:</strong>';
-          tp.oralMeds.forEach(function (oral) {
-            html += '<p class="text-[11px]">• <strong>' + oral.brands + ':</strong> ' + oral.dosage + ' (' + oral.frequency + ') - <em>' + oral.purpose + '</em></p>';
-          });
-          html += '</div>';
-        }
-
-        // Tier 3: Ayurvedic & Homeopathic Remedies
-        html += '<div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">';
-        if (tp.ayurvedicHerbal && tp.ayurvedicHerbal.length > 0) {
-          html += '<div class="p-2.5 bg-emerald-50/50 border border-emerald-200 rounded-xl">';
-          html += '<strong class="text-emerald-900 block font-bold">🌿 आयुर्वेदिक नुस्खे:</strong>';
-          tp.ayurvedicHerbal.forEach(function (ayur) {
-            html += '<p class="text-[11px]">' + ayur.brands + ' (' + ayur.ingredients + ') - डोज़: ' + ayur.dosage + '</p>';
-          });
-          html += '</div>';
-        }
-        if (tp.homeopathic && tp.homeopathic.length > 0) {
-          html += '<div class="p-2.5 bg-blue-50/50 border border-blue-200 rounded-xl">';
-          html += '<strong class="text-blue-900 block font-bold">💧 होम्योपैथिक औषधियां:</strong>';
-          tp.homeopathic.forEach(function (hom) {
-            html += '<p class="text-[11px]">' + hom.remedy + ' ' + hom.potency + ' (' + hom.dosage + ' - ' + hom.administrationMode + ')</p>';
-          });
-          html += '</div>';
-        }
-        html += '</div>';
-
-        // Tier 4: Desi Home Remedies
-        if (tp.homeMadeDesi && tp.homeMadeDesi.length > 0) {
-          html += '<div class="p-3 bg-amber-50 border border-amber-200 rounded-2xl text-xs space-y-1">';
-          html += '<strong class="text-amber-900 block font-bold">🥣 सिद्ध देसी नुस्खे:</strong>';
-          tp.homeMadeDesi.forEach(function (desi) {
-            html += '<p class="text-[11px]"><strong>' + desi.title + ':</strong> ' + desi.ingredients + '<br><em>बनाने की विधि:</em> ' + desi.preparation + '<br><em>डोज़:</em> ' + desi.dosage + '</p>';
-          });
-          html += '</div>';
-        }
-
-        // Tier 5: Shed Hygiene & Biosecurity
-        if (tp.shedHygieneBiosecurity) {
-          var bio = tp.shedHygieneBiosecurity;
-          html += '<div class="p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-[11px] text-slate-600">';
-          html += '<strong>बाड़ा स्वच्छता व बायोसिक्योरिटी:</strong> ' + bio.sanitationSteps + ' | ' + bio.chemicalDisinfection;
-          html += '</div>';
-        }
-        html += '</div>';
+      // Doctor View: Complete 5-Tier Allopathic Protocol
+      if (isDoc && d.doctorRx) {
+        html += '  <div class="bg-blue-50/70 border border-blue-200 rounded-2xl p-3.5 text-blue-950 text-xs space-y-1.5 font-mono">';
+        html += '    <div class="flex justify-between items-center font-sans border-b border-blue-200/60 pb-1">';
+        html += '      <h4 class="font-bold text-blue-900">💉 क्लिनिकल Rx इंजेक्शन व दवा तालिका:</h4>';
+        html += '      <button onclick="loadRxToOpdSlip(\'' + escape(d.nameHindi) + "', '" + escape(d.doctorRx) + '\')" class="text-[10px] bg-blue-600 hover:bg-blue-700 text-white font-sans font-bold px-2 py-0.5 rounded-lg transition cursor-pointer">+ पर्ची में भरें</button>';
+        html += "    </div>";
+        html += '    <pre class="whitespace-pre-wrap leading-relaxed text-[11px] font-mono text-slate-800">' + d.doctorRx + "</pre>";
+        html += "  </div>";
       }
 
-      // Action: Fill into OPD Sheet
-      html += '<div class="pt-2 text-right">';
-      html += '<button onclick="fillDiseaseIntoOPD(\'' + d.id + '\')" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2 rounded-xl text-xs transition shadow-xs">';
-      html += '📋 इस रोग की पर्ची बनाएं ➔';
-      html += '</button></div>';
-
-      html += '</div>';
+      html += "</div>";
     });
 
     container.innerHTML = html;
   }
 
-  window.fillDiseaseIntoOPD = function (diseaseId) {
-    var db = window.VETCARE_DISEASE_DB || [];
-    var d = db.find(function (item) { return item.id === diseaseId; });
-    if (!d) return;
+  window.loadRxToOpdSlip = function (escapedName, escapedRx) {
+    const name = unescape(escapedName);
+    const rx = unescape(escapedRx);
+    const diagInput = $("opdDiagnosis");
+    const medInput = $("opdMedicine");
 
-    window._switchTab("doc_opd");
-    _setVal("opdDiagnosis", d.nameHi + " (" + d.nameEn + ")");
+    if (diagInput) diagInput.value = name;
+    if (medInput) medInput.value = rx;
 
-    var rxText = "";
-    if (d.treatmentProtocol && d.treatmentProtocol.injections) {
-      d.treatmentProtocol.injections.forEach(function (inj, i) {
-        rxText += (i + 1) + ". Inj. " + inj.activeSalt + " (" + inj.standardDose400kg + ") - " + inj.route + "\n";
-      });
-    }
-    if (d.treatmentProtocol && d.treatmentProtocol.oralMeds) {
-      d.treatmentProtocol.oralMeds.forEach(function (oral) {
-        rxText += "• " + oral.brands + " - " + oral.dosage + " (" + oral.frequency + ")\n";
-      });
-    }
-
-    _setVal("opdMedicine", rxText);
+    window.switchTab("rx");
   };
 
-  function renderAiSynthesisFallbackPrompt(query) {
-    var container = _getEl("diseaseSearchResults");
-    if (!container) return;
+  /* ==========================================================================
+   * 8. CLINICAL CALCULATORS (SHAEFFER'S, 24-HR RATION BALANCER, DRUG DOSE)
+   * ========================================================================== */
+  // Shaeffer's Formula for Cattle & Buffalo
+  window.calculateShaefferWeight = function (girthInches, lengthInches) {
+    const g = parseFloat(girthInches);
+    const l = parseFloat(lengthInches);
+    if (!g || !l) return 0;
+    const weightLbs = (g * g * l) / 300.0;
+    return Math.round(weightLbs * 0.453592); // Convert to KG
+  };
 
-    var html = '<div class="bg-purple-50 border border-purple-200 rounded-3xl p-6 text-center space-y-3">';
-    html += '<i class="fa-solid fa-wand-magic-sparkles text-purple-600 text-3xl"></i>';
-    html += '<h3 class="text-sm sm:text-base font-bold text-purple-900">रोग डेटाबेस में "' + query + '" उपलब्ध नहीं है</h3>';
-    html += '<p class="text-xs text-purple-700 max-w-md mx-auto">क्या आप Gemini AI से इस रोग का संपूर्ण वैज्ञानिक 5-स्तरीय क्लिनिकल प्रोटोकॉल सिंथेसाइज़ करना चाहते हैं?</p>';
-    html += '<button onclick="triggerGeminiDiseaseSynthesis(\'' + encodeURIComponent(query) + '\')" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2.5 px-5 rounded-2xl text-xs shadow-md shadow-purple-600/30 transition">';
-    html += '✨ AI द्वारा नया रोग सिंथेसाइज़ करें';
-    html += '</button></div>';
+  // 24-Hour Scientific Ration Balancer
+  window.calculateDailyRation = function () {
+    const weightInput = $("feedWeight");
+    const milkInput = $("feedMilk");
 
-    container.innerHTML = html;
+    const w = parseFloat(weightInput ? weightInput.value : "400") || 400;
+    const m = parseFloat(milkInput ? milkInput.value : "10") || 10;
+
+    // Dry Matter (DM) requirement = 2.8% of Body Weight
+    const totalDM = w * 0.028;
+
+    // Maintenance concentrate = 1.5 kg; Production = 1 kg concentrate per 2.5 L milk
+    const grainKg = Math.round((1.5 + m / 2.5) * 10) / 10;
+
+    // Roughage satisfies remaining DM. Ratio: 2/3 Green Fodder + 1/3 Dry Straw
+    const remainingDM = Math.max(0, totalDM - grainKg * 0.9);
+    const dryStrawKg = Math.round((remainingDM * 0.4) * 10) / 10;
+    const greenFodderKg = Math.round(((remainingDM * 0.6) / 0.2) * 10) / 10; // Green fodder is ~20% DM
+
+    const resGrain = $("resFeedGrain");
+    const resGreen = $("resFeedGreen");
+    const resDry = $("resFeedDry");
+
+    if (resGrain) resGrain.textContent = grainKg + " kg";
+    if (resGreen) resGreen.textContent = greenFodderKg + " kg";
+    if (resDry) resDry.textContent = dryStrawKg + " kg";
+
+    setVisible("rationResultCard", true);
+  };
+
+  // Breeding & Heat Tracker Dynamic Content
+  function renderBreedingGuides() {
+    const heatContainer = $("heatSignsContainer");
+    const dischContainer = $("dischargeContainer");
+    const repeatContainer = $("repeatBreederList");
+
+    if (heatContainer) {
+      heatContainer.innerHTML =
+        '<div class="p-2.5 bg-rose-50 border border-rose-200 rounded-xl"><strong>1. प्रारंभिक मद (0-6 घंटे):</strong> बेचैनी, रंभाना, अन्य पशुओं पर चढ़ना। (सीमन न करवाएं)</div>' +
+        '<div class="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl"><strong>2. मध्य मद (6-18 घंटे) [सर्वोत्तम समय]:</strong> खूंटे पर चुपचाप खड़े रहना (Standing Heat), कांच जैसा पारदर्शी डिस्चार्ज। (A.I. का सटीक समय - AM/PM नियम)</div>' +
+        '<div class="p-2.5 bg-slate-50 border border-slate-200 rounded-xl"><strong>3. अंतिम मद (18-24 घंटे):</strong> डिस्चार्ज गाढ़ा होना, हल्की ललिमा।</div>';
+    }
+
+    if (dischContainer) {
+      dischContainer.innerHTML =
+        '<div class="p-2 bg-emerald-50 rounded-xl border border-emerald-200"><strong>✅ कांच जैसा साफ, लम्बा तार:</strong> गर्भाशय स्वस्थ है। तुरंत सीमन कराएं।</div>' +
+        '<div class="p-2 bg-amber-50 rounded-xl border border-amber-200"><strong>⚠️ सफेद या मटमैला गाढ़ा मवाद:</strong> गर्भाशय में मेट्राइटिस/इन्फेक्शन है। सीमन न कराएं, गर्भाशय की सफाई (Intrauterine) करवाएं।</div>' +
+        '<div class="p-2 bg-rose-50 rounded-xl border border-rose-200"><strong>🩸 खूनी या लाल तार:</strong> मद बीत चुका है (Metestrus bleeding)। अगले चक्र (21 दिन बाद) की तैयारी करें।</div>';
+    }
+
+    if (repeatContainer) {
+      repeatContainer.innerHTML =
+        '<li><strong>गर्भाशय सफाई (I/U Therapy):</strong> 2-3 चक्रों में Lixen / Metrogyl intrauterine डलवाएं।</li>' +
+        '<li><strong>हार्मोन थेरेपी:</strong> सीमन कराने के समय 2.5 ml Inj. Receptal (Buserelin) I/M लगाएं।</li>' +
+        '<li><strong>A.I. का सही समय (AM-PM Rule):</strong> यदि पशु सुबह मद में आए तो शाम को और शाम को आए तो अगली सुबह सीमन डलवाएं।</li>' +
+        '<li><strong>खनिज मिश्रण:</strong> चेलेटेड मिनरल मिक्सचर 50 ग्राम प्रतिदिन लगातार 2 माह तक खिलाएं।</li>';
+    }
   }
 
-  window.triggerGeminiDiseaseSynthesis = async function (encodedQuery) {
-    var query = decodeURIComponent(encodedQuery);
-    var container = _getEl("diseaseSearchResults");
-    if (container) {
-      container.innerHTML = '<div class="p-8 text-center text-purple-700 bg-purple-50 rounded-3xl border border-purple-200"><i class="fa-solid fa-spinner fa-spin text-2xl mb-2"></i><br>लाइव AI वेटरनरी पैथोलॉजिस्ट क्लिनिकल डेटा जनरेट कर रहा है...</div>';
-    }
-
-    try {
-      if (typeof window.synthesizeDiseaseWithAI === "function") {
-        var profile = await window.synthesizeDiseaseWithAI(query);
-        renderDiseaseResults([{ disease: profile, matchScore: 100 }]);
-      } else {
-        alert("AI Synthesis engine unavailable.");
-      }
-    } catch (err) {
-      alert("AI Synthesis Error: " + err.message);
-      _handleAppSearch();
-    }
-  };
-
-  // AI Key Management
-  window._openAiKeyModal = function () {
-    _show("modalAIKey");
-    _setVal("inputGeminiKey", localStorage.getItem("vetcare_gemini_api_key") || "");
-  };
-
-  window._closeAiKeyModal = function () {
-    _hide("modalAIKey");
-  };
-
-  window._saveAiApiKey = function () {
-    var key = _val("inputGeminiKey");
-    if (!key || key.length < 15) {
-      alert("कृपया वैध Gemini API Key दर्ज करें।");
-      return;
-    }
-    localStorage.setItem("vetcare_gemini_api_key", key);
-    alert("Gemini AI API Key सुरक्षित कर ली गई है!");
-    _hide("modalAIKey");
-  };
-
-  // =========================================================================
-  // 6. SMART FIELD UTILITIES & SCIENTIFIC CALCULATIONS
-  // =========================================================================
-
-  // Shaeffer's Weight Formula: (Girth^2 * Length / 300) * 0.4536
-  window._calculateShaefferWeight = function () {
-    var girth = parseFloat(_val("calcGirth")) || 0;
-    var length = parseFloat(_val("calcLength")) || 0;
-
-    if (girth <= 0 || length <= 0) return;
-
-    var weightLbs = (Math.pow(girth, 2) * length) / 300;
-    var weightKg = Math.round(weightLbs * 0.453592);
-
-    _setText("dispCalcWeight", weightKg + " kg");
-
-    // Exact Dose Calculations
-    var doseCeftiofur = Math.round((weightKg * 1.1) / 50 * 10) / 10;
-    var doseMelonex = Math.round((weightKg * 0.5) / 5 * 10) / 10;
-
-    _setText("doseCeftiofur", (weightKg * 0.0022).toFixed(1) + " g (" + doseCeftiofur + " ml)");
-    _setText("doseMelonex", doseMelonex + " ml IM");
-    _setText("doseCalcium", "450 ml (IV+SC)");
-  };
-
-  // 24-Hour Balanced Ration (Feed Balancer)
-  window._calculateRation = function () {
-    var weight = parseFloat(_val("feedWeight")) || 400;
-    var milk = parseFloat(_val("feedMilk")) || 10;
-
-    // Scientific requirements
-    var maintenanceGrain = 1.5;
-    var productionGrain = milk * 0.4; // 400g per liter
-    var totalGrain = (maintenanceGrain + productionGrain).toFixed(1);
-
-    var greenFodder = Math.round(weight * 0.06); // 6% of body weight
-    var dryFodder = (weight * 0.012).toFixed(1); // 1.2% of body weight
-
-    _setText("resFeedGrain", totalGrain + " kg");
-    _setText("resFeedGreen", greenFodder + " kg");
-    _setText("resFeedDry", dryFodder + " kg");
-
-    _show("rationResultCard");
-  };
-
-  // Breeding & Gestation Milestone Engine
-  window._calculateBreeding = function () {
-    var dateStr = _val("calcAiDate");
-    var animalType = _val("calcAiAnimalType");
-
-    if (!dateStr) {
-      alert("कृपया सीमन (A.I.) डलवाने की तारीख चुनें।");
-      return;
-    }
-
-    var aiDate = new Date(dateStr);
-    var gestationDays = animalType === "BUFFALO" ? 310 : 283;
-
-    function addDays(d, days) {
-      var res = new Date(d);
-      res.setDate(res.getDate() + days);
-      return res.toLocaleDateString("hi-IN", { day: "numeric", month: "short", year: "numeric" });
-    }
-
-    _setText("resHeat21", addDays(aiDate, 21));
-    _setText("resPD60", addDays(aiDate, 60));
-    _setText("resDryOff", addDays(aiDate, gestationDays - 60));
-    _setText("resCalvingDate", addDays(aiDate, gestationDays));
-
-    _show("breedingResultCard");
-  };
-
-  // =========================================================================
-  // 7. COMPREHENSIVE DIGITAL OPD & 3-WAY OUTREACH
-  // =========================================================================
-
-  window._setOpdService = function (serviceKey, btn) {
-    window.VETCARE_STATE.opdCurrentService = serviceKey;
-    if (btn) {
-      var siblings = btn.parentNode.querySelectorAll(".opd-srv-chip");
-      siblings.forEach(function (s) {
-        s.className = "opd-srv-chip px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 font-medium shrink-0";
-      });
-      btn.className = "opd-srv-chip px-3 py-1.5 rounded-xl bg-blue-600 text-white font-bold shrink-0";
-    }
-  };
-
-  window._captureGPSLocation = function () {
-    var btn = _getEl("btnGPS");
+  /* ==========================================================================
+   * 9. DIGITAL OPD PRESCRIPTION ENGINE (WHATSAPP, PRINT, GPS, OFFLINE)
+   * ========================================================================== */
+  window.captureGPSLocation = function () {
+    const gpsInput = $("opdGPS");
+    const btn = $("btnGPS");
     if (!navigator.geolocation) {
-      alert("आपके डिवाइस पर GPS उपलब्ध नहीं है।");
+      alert("आपके डिवाइस में GPS सुविधा उपलब्ध नहीं है।");
       return;
     }
-
-    if (btn) btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> GPS...';
-
+    if (btn) btn.textContent = "⏳...";
     navigator.geolocation.getCurrentPosition(
       function (pos) {
-        var coords = pos.coords.latitude.toFixed(5) + ", " + pos.coords.longitude.toFixed(5);
-        window.VETCARE_STATE.gpsLocation = coords;
-        _setVal("opdGPS", coords);
-        if (btn) btn.innerHTML = '<i class="fa-solid fa-check text-emerald-600"></i> पिन';
+        if (gpsInput) {
+          gpsInput.value =
+            pos.coords.latitude.toFixed(5) + ", " + pos.coords.longitude.toFixed(5);
+        }
+        if (btn) btn.textContent = "✅ GPS";
       },
       function () {
-        _setVal("opdGPS", "28.6139, 77.2090");
-        if (btn) btn.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i> GPS';
+        alert("GPS लोकेशन प्राप्त करने में विफल। कृपया लोकेशन परमिशन चालू करें।");
+        if (btn) btn.textContent = "📍 GPS";
       },
-      { timeout: 7000 }
+      { timeout: 10000 }
     );
   };
 
-  window._calculateDue = function () {
-    var total = parseFloat(_val("opdTotalFee")) || 0;
-    var paid = parseFloat(_val("opdPaidFee")) || 0;
-    var due = Math.max(0, total - paid);
-    _setVal("opdDueFee", due.toString());
+  window.clearRxField = function () {
+    const rx = $("opdMedicine");
+    if (rx) rx.value = "";
   };
 
-  window._clearRxField = function () {
-    _setVal("opdMedicine", "");
+  window.calculateDue = function () {
+    const totalEl = $("opdTotalFee");
+    const paidEl = $("opdPaidFee");
+    const dueEl = $("opdDueFee");
+
+    const total = parseFloat(totalEl ? totalEl.value : "0") || 0;
+    const paid = parseFloat(paidEl ? paidEl.value : "0") || 0;
+    const due = Math.max(0, total - paid);
+
+    if (dueEl) dueEl.value = due;
   };
 
-  function assembleOPDData() {
-    var farmerName = _val("opdFarmerName");
-    var farmerPhone = _val("opdFarmerPhone");
-    var diagnosis = _val("opdDiagnosis");
+  window.dispatchWhatsAppRx = function () {
+    const name = ($("opdFarmerName") ? $("opdFarmerName").value : "").trim();
+    const phone = ($("opdFarmerPhone") ? $("opdFarmerPhone").value : "").trim();
+    const village = ($("opdVillage") ? $("opdVillage").value : "").trim();
+    const animal = $("opdAnimal") ? $("opdAnimal").value : "पशु";
+    const tag = ($("opdTag") ? $("opdTag").value : "").trim();
+    const preg = $("opdPregnancy") ? $("opdPregnancy").value : "खाली";
+    const diag = ($("opdDiagnosis") ? $("opdDiagnosis").value : "").trim();
+    const rx = ($("opdMedicine") ? $("opdMedicine").value : "").trim();
+    const total = $("opdTotalFee") ? $("opdTotalFee").value : "0";
+    const paid = $("opdPaidFee") ? $("opdPaidFee").value : "0";
+    const due = $("opdDueFee") ? $("opdDueFee").value : "0";
 
-    if (!farmerName || !farmerPhone || farmerPhone.length !== 10) {
-      alert("कृपया किसान का नाम व 10 अंकों का मोबाइल नंबर अवश्य भरें।");
-      return null;
-    }
-
-    return {
-      caseId: "FID-" + Date.now().toString().slice(-6),
-      farmerName: farmerName,
-      farmerPhone: farmerPhone,
-      village: _val("opdVillage"),
-      animal: _val("opdAnimal"),
-      tag: _val("opdTag"),
-      gps: _val("opdGPS"),
-      pregnancy: _val("opdPregnancy"),
-      serviceType: window.VETCARE_STATE.opdCurrentService,
-      diagnosis: diagnosis,
-      medicine: _val("opdMedicine"),
-      totalFee: parseFloat(_val("opdTotalFee")) || 0,
-      paidFee: parseFloat(_val("opdPaidFee")) || 0,
-      dueFee: parseFloat(_val("opdDueFee")) || 0,
-      timestamp: Date.now()
-    };
-  }
-
-  window._saveOfflineCaseDirectly = function () {
-    var data = assembleOPDData();
-    if (!data) return;
-
-    var records = JSON.parse(localStorage.getItem("vetcare_opd_records") || "[]");
-    records.unshift(data);
-    localStorage.setItem("vetcare_opd_records", JSON.stringify(records));
-
-    // Update Khata if due exists
-    if (data.dueFee > 0) {
-      var khata = JSON.parse(localStorage.getItem("vetcare_khata_records") || "[]");
-      khata.unshift({
-        id: "KH-" + Date.now().toString().slice(-6),
-        name: data.farmerName,
-        phone: data.farmerPhone,
-        amount: data.dueFee,
-        type: "DUE",
-        note: data.diagnosis + " (केस " + data.caseId + ")",
-        timestamp: Date.now()
-      });
-      localStorage.setItem("vetcare_khata_records", JSON.stringify(khata));
-    }
-
-    alert("केस संख्या " + data.caseId + " सफलतापूर्वक सुरक्षित कर लिया गया!");
-    loadOPDRecords();
-    loadLedgerTable();
-  };
-
-  // 3-Way Farmer Outreach
-  window._triggerPhoneCall = function () {
-    var phone = _val("opdFarmerPhone");
-    if (!phone) {
-      alert("कृपया किसान का फोन नंबर भरें।");
+    if (!name || !phone || !diag || !rx) {
+      alert("कृपया किसान का नाम, 10-अंकीय मोबाइल नंबर, निदान एवं दवा विवरण अवश्य भरें।");
       return;
     }
-    window.location.href = "tel:" + phone;
+
+    const docReg = localStorage.getItem("vetcare_doc_reg") || "VCI-REGISTERED";
+    const dateStr = new Date().toLocaleDateString("hi-IN");
+
+    let msg = "🐾 *डिजिटल पशु चिकित्सा पर्ची (OPD Rx Slip)* 🐾\n";
+    msg += "━━━━━━━━━━━━━━━━━━━━\n";
+    msg += "👨‍⚕️ *पंजीकृत चिकित्सक:* अधिकृत पशु चिकित्सक\n";
+    msg += "📜 *VCI / State Reg. No.:* " + docReg + "\n";
+    msg += "📅 *दिनांक:* " + dateStr + "\n";
+    msg += "━━━━━━━━━━━━━━━━━━━━\n";
+    msg += "👤 *पशुपालक:* " + name + " (" + village + ")\n";
+    msg += "🐄 *रोगी पशु:* " + animal + (tag ? " [टैग: " + tag + "]" : "") + "\n";
+    msg += "🤰 *स्थिति:* " + preg + "\n";
+    msg += "🩺 *डायग्नोसिस (निदान):* " + diag + "\n";
+    msg += "━━━━━━━━━━━━━━━━━━━━\n";
+    msg += "💊 *औषधियां एवं खुराक (Rx):*\n" + rx + "\n";
+    msg += "━━━━━━━━━━━━━━━━━━━━\n";
+    msg += "💰 *फीस विवरण:* कुल ₹" + total + " | जमा: ₹" + paid + " | बकाया: ₹" + due + "\n";
+    msg += "━━━━━━━━━━━━━━━━━━━━\n";
+    msg += "⚠️ *सावधानी:* दवाएं केवल अधिकृत पशु चिकित्सक के निर्देशन में दें।\n";
+    msg += "🚀 *Powered by Vetcare AI OS*";
+
+    // Auto-save case to records
+    saveCaseRecordInternal({
+      id: "CASE_" + Date.now(),
+      farmerName: name,
+      phone: phone,
+      village: village,
+      animal: animal,
+      tag: tag,
+      pregnancy: preg,
+      diagnosis: diag,
+      medicine: rx,
+      totalFee: total,
+      paidFee: paid,
+      dueFee: due,
+      timestamp: new Date().toLocaleString()
+    });
+
+    const cleanPhone = phone.replace(/[^0-9]/g, "");
+    const targetPhone = cleanPhone.length === 10 ? "91" + cleanPhone : cleanPhone;
+    const url = "https://wa.me/" + targetPhone + "?text=" + encodeURIComponent(msg);
+    window.open(url, "_blank");
   };
 
-  window._triggerSmsSlip = function () {
-    var data = assembleOPDData();
-    if (!data) return;
+  window.saveOfflineCaseDirectly = function () {
+    const name = ($("opdFarmerName") ? $("opdFarmerName").value : "").trim();
+    const phone = ($("opdFarmerPhone") ? $("opdFarmerPhone").value : "").trim();
+    const diag = ($("opdDiagnosis") ? $("opdDiagnosis").value : "").trim();
+    const rx = ($("opdMedicine") ? $("opdMedicine").value : "").trim();
 
-    var text = "Vetcare OPD पर्ची: " + data.caseId + "\n" +
-      "पशु: " + data.animal + " | निदान: " + data.diagnosis + "\n" +
-      "दवा: " + data.medicine.replace(/\n/g, ", ") + "\n" +
-      "फीस जमा: ₹" + data.paidFee + ", बकाया: ₹" + data.dueFee;
-
-    window.location.href = "sms:" + data.farmerPhone + "?body=" + encodeURIComponent(text);
-  };
-
-  window._triggerWhatsAppSlip = function () {
-    var data = assembleOPDData();
-    if (!data) return;
-
-    window._saveOfflineCaseDirectly();
-
-    var doctor = window.VETCARE_STATE.user || { name: "पशु चिकित्सक" };
-    var bank = BANK_CONFIGS[window.VETCARE_STATE.activeBank];
-
-    var msg = "🐾 *VETCARE डिजिटल क्लिनिकल पर्ची* 🐾\n\n" +
-      "📋 *केस ID:* " + data.caseId + "\n" +
-      "👨‍🌾 *किसान:* " + data.farmerName + " (" + (data.village || "गाँव") + ")\n" +
-      "🐄 *मरीज पशु:* " + data.animal + " [टैग: " + (data.tag || "N/A") + "]\n" +
-      "🩺 *प्रोविजनल निदान:* " + data.diagnosis + "\n\n" +
-      "💉 *प्रिस्क्रिप्शन एवं उपचार (Rx):*\n" + data.medicine + "\n\n" +
-      "💰 *फीस विवरण:*\n" +
-      "कुल: ₹" + data.totalFee + " | जमा: ₹" + data.paidFee + " | *बकाया: ₹" + data.dueFee + "*\n\n";
-
-    if (data.dueFee > 0) {
-      msg += "⚡ *ऑनलाइन भुगतान UPI:* upi://pay?pa=" + bank.upiId + "&pn=" + encodeURIComponent(bank.payee) + "&am=" + data.dueFee + "&cu=INR\n\n";
+    if (!name || !phone || !diag) {
+      alert("कृपया किसान का नाम, मोबाइल नंबर और निदान दर्ज करें।");
+      return;
     }
 
-    msg += "👨‍⚕️ *चिकित्सक:* " + doctor.name + "\n" +
-      "शीघ्र स्वास्थ्य लाभ की मंगलकामनाएं! 🌿";
+    saveCaseRecordInternal({
+      id: "CASE_" + Date.now(),
+      farmerName: name,
+      phone: phone,
+      village: $("opdVillage") ? $("opdVillage").value : "",
+      animal: $("opdAnimal") ? $("opdAnimal").value : "पशु",
+      tag: $("opdTag") ? $("opdTag").value : "",
+      pregnancy: $("opdPregnancy") ? $("opdPregnancy").value : "",
+      diagnosis: diag,
+      medicine: rx,
+      totalFee: $("opdTotalFee") ? $("opdTotalFee").value : "0",
+      paidFee: $("opdPaidFee") ? $("opdPaidFee").value : "0",
+      dueFee: $("opdDueFee") ? $("opdDueFee").value : "0",
+      timestamp: new Date().toLocaleString()
+    });
 
-    window.open("https://wa.me/91" + data.farmerPhone + "?text=" + encodeURIComponent(msg), "_blank");
+    alert("✅ केस रिकॉर्ड स्थानीय रूप से सुरक्षित कर लिया गया है।");
   };
 
-  window._printCurrentOPDSlip = function () {
-    var data = assembleOPDData();
-    if (!data) return;
+  function saveCaseRecordInternal(record) {
+    const records = getStoredJson("vetcare_opd_cases", []);
+    records.unshift(record);
+    setStoredJson("vetcare_opd_cases", records);
 
-    var area = _getEl("printableSlipArea");
-    if (!area) return;
+    // If there is an outstanding fee, log to Khata automatically
+    const due = parseFloat(record.dueFee) || 0;
+    if (due > 0) {
+      const khata = getStoredJson("vetcare_khata_records", []);
+      khata.unshift({
+        id: "KHATA_" + Date.now(),
+        farmerName: record.farmerName,
+        phone: record.phone,
+        amount: due,
+        type: "DUE",
+        note: record.diagnosis + " (OPD पर्ची बकाया)",
+        timestamp: new Date().toLocaleDateString()
+      });
+      setStoredJson("vetcare_khata_records", khata);
+    }
+  }
 
-    area.innerHTML = '<div style="font-family: sans-serif; padding: 20px; border: 2px solid #333;">' +
-      '<div style="text-align: center; border-bottom: 2px solid #333; padding-bottom: 10px;">' +
-      '<h2>VETCARE CLINICAL OPD PRESCRIPTION</h2>' +
-      '<p>केस ID: ' + data.caseId + ' | तिथि: ' + new Date().toLocaleDateString("hi-IN") + '</p>' +
-      '</div>' +
-      '<div style="margin-top: 15px;">' +
-      '<p><strong>किसान:</strong> ' + data.farmerName + ' (' + data.farmerPhone + ') - ' + (data.village || "") + '</p>' +
-      '<p><strong>पशु:</strong> ' + data.animal + ' | टैग: ' + (data.tag || "N/A") + ' | स्थिति: ' + data.pregnancy + '</p>' +
-      '<p><strong>निदान:</strong> ' + data.diagnosis + '</p>' +
-      '</div>' +
-      '<div style="margin-top: 15px; border-top: 1px dashed #666; padding-top: 10px;">' +
-      '<h3>Rx दवाएं व इंजेक्शन:</h3>' +
-      '<pre style="font-family: inherit; white-space: pre-wrap;">' + data.medicine + '</pre>' +
-      '</div>' +
-      '<div style="margin-top: 20px; border-top: 1px solid #333; padding-top: 10px;">' +
-      '<p>कुल फीस: ₹' + data.totalFee + ' | जमा: ₹' + data.paidFee + ' | बकाया: ₹' + data.dueFee + '</p>' +
-      '</div></div>';
+  window.printCurrentOPDSlip = function () {
+    const printArea = $("printableSlipArea");
+    if (!printArea) return;
+
+    const name = $("opdFarmerName") ? $("opdFarmerName").value : "-";
+    const phone = $("opdFarmerPhone") ? $("opdFarmerPhone").value : "-";
+    const village = $("opdVillage") ? $("opdVillage").value : "-";
+    const animal = $("opdAnimal") ? $("opdAnimal").value : "-";
+    const tag = $("opdTag") ? $("opdTag").value : "-";
+    const diag = $("opdDiagnosis") ? $("opdDiagnosis").value : "-";
+    const rx = $("opdMedicine") ? $("opdMedicine").value : "-";
+    const docReg = localStorage.getItem("vetcare_doc_reg") || "VCI-REGISTERED";
+
+    printArea.innerHTML =
+      '<div style="border: 2px solid #0f172a; padding: 20px; font-family: sans-serif;">' +
+      '  <div style="text-align: center; border-bottom: 2px solid #0f172a; padding-bottom: 10px;">' +
+      '    <h1 style="font-size: 20px; margin: 0; font-weight: 900;">VETCARE VETERINARY CLINICAL OPD</h1>' +
+      '    <p style="margin: 2px 0; font-size: 11px;">अधिकृत पशु चिकित्सालय एवं कृत्रिम गर्भाधान केंद्र</p>' +
+      '    <p style="margin: 0; font-size: 10px; font-weight: bold;">Reg. No: ' + docReg + ' | Date: ' + new Date().toLocaleDateString("hi-IN") + "</p>" +
+      "  </div>" +
+      '  <div style="display: flex; justify-content: space-between; margin: 12px 0; font-size: 12px;">' +
+      "    <div><strong>किसान:</strong> " + name + " | <strong>गाँव:</strong> " + village + " | <strong>फोन:</strong> " + phone + "</div>" +
+      "    <div><strong>पशु:</strong> " + animal + " | <strong>टैग:</strong> " + tag + "</div>" +
+      "  </div>" +
+      '  <div style="margin: 10px 0; font-size: 12px;"><strong>प्रोविजनल निदान (Diagnosis):</strong> ' + diag + "</div>" +
+      '  <div style="border: 1px solid #cbd5e1; border-radius: 8px; padding: 12px; margin: 12px 0;">' +
+      '    <strong style="font-size: 13px; display: block; margin-bottom: 6px;">Rx Prescribed Drugs & Doses:</strong>' +
+      '    <pre style="white-space: pre-wrap; font-family: monospace; font-size: 12px; margin: 0;">' + rx + "</pre>" +
+      "  </div>" +
+      '  <div style="text-align: right; margin-top: 30px; font-size: 11px;">' +
+      "    ___________________________<br><strong>अधिकृत पशु चिकित्सक हस्ताक्षर</strong>" +
+      "  </div>" +
+      "</div>";
 
     window.print();
   };
 
-  function loadOPDRecords() {
-    var records = JSON.parse(localStorage.getItem("vetcare_opd_records") || "[]");
-    var container = _getEl("recordsList");
-    _setText("recordTotalBadge", records.length + " केस सुरक्षित");
+  /* ==========================================================================
+   * 10. SAVED CASE RECORDS ENGINE
+   * ========================================================================== */
+  function renderCaseRecords(filteredCases) {
+    const list = $("recordsList");
+    const badge = $("recordTotalBadge");
+    if (!list) return;
 
-    if (!container) return;
+    const cases = filteredCases || getStoredJson("vetcare_opd_cases", []);
+    if (badge) badge.textContent = cases.length + " केस सुरक्षित";
 
-    if (records.length === 0) {
-      container.innerHTML = '<div class="p-4 text-center text-slate-400 bg-white rounded-2xl border border-slate-200">कोई केस रिकॉर्ड नहीं है।</div>';
+    if (cases.length === 0) {
+      list.innerHTML =
+        '<div class="p-5 text-center text-slate-400 bg-white border border-slate-200 rounded-2xl text-xs">कोई सुरक्षित केस रिकॉर्ड नहीं मिला।</div>';
       return;
     }
 
-    var html = "";
-    records.forEach(function (r) {
-      html += '<div class="p-3 bg-white border border-slate-200 rounded-2xl flex justify-between items-center shadow-xs">';
-      html += '<div>';
-      html += '<strong class="text-slate-900 block">' + r.caseId + ' • ' + r.farmerName + '</strong>';
-      html += '<span class="text-[11px] text-slate-500">' + r.animal + ' | ' + r.diagnosis + ' | ' + new Date(r.timestamp).toLocaleDateString("hi-IN") + '</span>';
-      html += '</div>';
-      html += '<div class="text-right">';
-      html += '<span class="text-xs font-bold ' + (r.dueFee > 0 ? 'text-rose-600' : 'text-emerald-600') + '">बकाया: ₹' + r.dueFee + '</span>';
-      html += '</div></div>';
+    let html = "";
+    cases.forEach(function (c) {
+      html += '<div class="bg-white border border-slate-200 rounded-2xl p-3.5 space-y-2 shadow-xs text-xs">';
+      html += '  <div class="flex justify-between items-start">';
+      html += '    <div>';
+      html += '      <strong class="text-slate-900 text-sm">' + c.farmerName + "</strong> (" + (c.village || "गाँव") + ")";
+      html += '      <span class="block text-slate-400 text-[10px]">' + c.timestamp + " | 📱 " + c.phone + "</span>";
+      html += "    </div>";
+      html += '    <span class="bg-blue-50 text-blue-700 font-bold px-2 py-0.5 rounded-lg border border-blue-200 text-[10px]">' + c.animal + "</span>";
+      html += "  </div>";
+      html += '  <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-100 font-mono text-[11px] text-slate-800">';
+      html += "    <strong>निदान:</strong> " + c.diagnosis + "<br>";
+      html += "    <strong>Rx:</strong> " + c.medicine;
+      html += "  </div>";
+      html += '  <div class="flex justify-between items-center text-[11px] pt-1 border-t border-slate-100">';
+      html += '    <span class="text-rose-600 font-bold">बकाया: ₹' + (c.dueFee || "0") + "</span>";
+      html += '    <button onclick="deleteCaseRecord(\'' + c.id + '\')" class="text-rose-500 hover:underline font-semibold cursor-pointer">हटाएं 🗑️</button>';
+      html += "  </div>";
+      html += "</div>";
     });
 
-    container.innerHTML = html;
+    list.innerHTML = html;
   }
 
-  window._handleRecordSearch = function () {
-    var q = _val("searchRecordsInput").toLowerCase();
-    var records = JSON.parse(localStorage.getItem("vetcare_opd_records") || "[]");
-    var container = _getEl("recordsList");
-
-    if (!container) return;
-
-    var filtered = records.filter(function (r) {
-      return (r.farmerName + " " + r.farmerPhone + " " + (r.village || "") + " " + r.caseId).toLowerCase().includes(q);
+  window.handleRecordSearch = function () {
+    const input = $("searchRecordsInput");
+    const q = input ? input.value.trim().toLowerCase() : "";
+    const cases = getStoredJson("vetcare_opd_cases", []);
+    if (!q) {
+      renderCaseRecords(cases);
+      return;
+    }
+    const filtered = cases.filter(function (c) {
+      return (
+        c.farmerName.toLowerCase().includes(q) ||
+        (c.phone && c.phone.includes(q)) ||
+        (c.village && c.village.toLowerCase().includes(q)) ||
+        (c.diagnosis && c.diagnosis.toLowerCase().includes(q))
+      );
     });
-
-    var html = "";
-    filtered.forEach(function (r) {
-      html += '<div class="p-3 bg-white border border-slate-200 rounded-2xl flex justify-between items-center shadow-xs">';
-      html += '<div>';
-      html += '<strong class="text-slate-900 block">' + r.caseId + ' • ' + r.farmerName + '</strong>';
-      html += '<span class="text-[11px] text-slate-500">' + r.animal + ' | ' + r.diagnosis + '</span>';
-      html += '</div>';
-      html += '<div class="text-right">';
-      html += '<span class="text-xs font-bold ' + (r.dueFee > 0 ? 'text-rose-600' : 'text-emerald-600') + '">बकाया: ₹' + r.dueFee + '</span>';
-      html += '</div></div>';
-    });
-
-    container.innerHTML = html;
+    renderCaseRecords(filtered);
   };
 
-  // Treatment Services Ledger Table
-  function loadLedgerTable() {
-    var records = JSON.parse(localStorage.getItem("vetcare_opd_records") || "[]");
-    var container = _getEl("ledgerTableContainer");
-    _setText("ledgerCountBadge", records.length + " रिकॉर्ड");
+  window.deleteCaseRecord = function (id) {
+    if (!confirm("क्या आप इस केस रिकॉर्ड को हटाना चाहते हैं?")) return;
+    let cases = getStoredJson("vetcare_opd_cases", []);
+    cases = cases.filter(function (c) {
+      return c.id !== id;
+    });
+    setStoredJson("vetcare_opd_cases", cases);
+    renderCaseRecords();
+  };
 
-    if (!container) return;
+  /* ==========================================================================
+   * 11. GEMINI LIVE AI VET SURGEON INTEGRATION
+   * ========================================================================== */
+  window.openAIKeyModal = function () {
+    const key = localStorage.getItem("vetcare_gemini_api_key") || "";
+    const input = $("inputGeminiKey");
+    if (input) input.value = key;
+    setVisible("modalAIKey", true, "flex");
+  };
 
-    if (records.length === 0) {
-      container.innerHTML = '<div class="p-4 text-center text-slate-400 bg-white rounded-2xl border border-slate-200">कोई हिस्ट्री रिकॉर्ड नहीं है।</div>';
+  window.closeAIKeyModal = function () {
+    setVisible("modalAIKey", false);
+  };
+
+  window.saveGeminiKey = function () {
+    const input = $("inputGeminiKey");
+    const key = input ? input.value.trim() : "";
+    if (!key) {
+      alert("कृपया वैध Gemini API Key दर्ज करें।");
+      return;
+    }
+    localStorage.setItem("vetcare_gemini_api_key", key);
+    alert("✅ Gemini API Key सुरक्षित कर ली गई है।");
+    window.closeAIKeyModal();
+  };
+
+  window.sendCaseToAIConsultant = function () {
+    const animal = $("opdAnimal") ? $("opdAnimal").value : "पशु";
+    const diag = $("opdDiagnosis") ? $("opdDiagnosis").value : "";
+    const med = $("opdMedicine") ? $("opdMedicine").value : "";
+    const prompt =
+      "मरीज: " +
+      animal +
+      "\nप्रोविजनल लक्षण/रोग: " +
+      diag +
+      "\nवर्तमान दवा योजना: " +
+      med +
+      "\n\nकृपया इस केस पर एक विशेषज्ञ वेटरनरी सर्जन की तरह डिफरेंशियल डायग्नोसिस, संभावित जटिलताएं और उपचार सुधार सुझाव हिंदी में प्रदान करें।";
+
+    const aiPromptInput = $("aiInputPrompt");
+    if (aiPromptInput) aiPromptInput.value = prompt;
+    window.switchTab("ai");
+  };
+
+  window.runAIConsultant = function () {
+    const promptInput = $("aiInputPrompt");
+    const outArea = $("aiOutputArea");
+    const btn = $("btnRunAI");
+    const apiKey = localStorage.getItem("vetcare_gemini_api_key");
+
+    const prompt = promptInput ? promptInput.value.trim() : "";
+    if (!prompt) {
+      alert("कृपया केस हिस्ट्री व लक्षण विवरण दर्ज करें।");
       return;
     }
 
-    var html = '<div class="overflow-x-auto"><table class="w-full text-left text-xs border border-slate-200 rounded-2xl overflow-hidden bg-white">';
-    html += '<thead class="bg-slate-100 text-slate-700 text-[10px] uppercase font-bold"><tr><th class="p-2.5">तारीख</th><th class="p-2.5">किसान / फोन</th><th class="p-2.5">पशु / टैग</th><th class="p-2.5">सेवा प्रकार</th><th class="p-2.5">निदान व उपचार</th><th class="p-2.5">फीस</th></tr></thead>';
-    html += '<tbody class="divide-y divide-slate-200">';
+    if (!apiKey) {
+      alert("AI कंसल्टेशन चलाने के लिए कृपया पहले अपनी Gemini API Key दर्ज करें।");
+      window.openAIKeyModal();
+      return;
+    }
 
-    records.forEach(function (r) {
-      html += '<tr class="hover:bg-slate-50">';
-      html += '<td class="p-2.5 font-mono text-[11px]">' + new Date(r.timestamp).toLocaleDateString("hi-IN") + '</td>';
-      html += '<td class="p-2.5"><strong>' + r.farmerName + '</strong><br><span class="text-slate-400 font-mono">' + r.farmerPhone + '</span></td>';
-      html += '<td class="p-2.5">' + r.animal + '<br><span class="text-slate-400 text-[10px]">' + (r.tag || "N/A") + '</span></td>';
-      html += '<td class="p-2.5"><span class="px-2 py-0.5 rounded bg-blue-50 text-blue-700 font-bold text-[10px]">' + (r.serviceType || "GENERAL") + '</span></td>';
-      html += '<td class="p-2.5"><strong>' + r.diagnosis + '</strong></td>';
-      html += '<td class="p-2.5 font-bold">₹' + r.paidFee + ' <span class="text-rose-600">(-₹' + r.dueFee + ')</span></td>';
-      html += '</tr>';
-    });
-
-    html += '</tbody></table></div>';
-    container.innerHTML = html;
-  }
-
-  window._handleLedgerSearch = function () {
-    var q = _val("searchLedgerInput").toLowerCase();
-    var records = JSON.parse(localStorage.getItem("vetcare_opd_records") || "[]");
-    var container = _getEl("ledgerTableContainer");
-
-    if (!container) return;
-
-    var filtered = records.filter(function (r) {
-      return (r.farmerName + " " + r.farmerPhone + " " + (r.tag || "") + " " + r.diagnosis).toLowerCase().includes(q);
-    });
-
-    var html = '<div class="overflow-x-auto"><table class="w-full text-left text-xs border border-slate-200 rounded-2xl overflow-hidden bg-white">';
-    html += '<thead class="bg-slate-100 text-slate-700 text-[10px] uppercase font-bold"><tr><th class="p-2.5">तारीख</th><th class="p-2.5">किसान / फोन</th><th class="p-2.5">पशु / टैग</th><th class="p-2.5">सेवा</th><th class="p-2.5">निदान</th><th class="p-2.5">फीस</th></tr></thead>';
-    html += '<tbody class="divide-y divide-slate-200">';
-
-    filtered.forEach(function (r) {
-      html += '<tr class="hover:bg-slate-50">';
-      html += '<td class="p-2.5 font-mono text-[11px]">' + new Date(r.timestamp).toLocaleDateString("hi-IN") + '</td>';
-      html += '<td class="p-2.5"><strong>' + r.farmerName + '</strong><br><span class="text-slate-400 font-mono">' + r.farmerPhone + '</span></td>';
-      html += '<td class="p-2.5">' + r.animal + '</td>';
-      html += '<td class="p-2.5">' + (r.serviceType || "GENERAL") + '</td>';
-      html += '<td class="p-2.5 font-bold">' + r.diagnosis + '</td>';
-      html += '<td class="p-2.5 font-bold">₹' + r.paidFee + '</td>';
-      html += '</tr>';
-    });
-
-    html += '</tbody></table></div>';
-    container.innerHTML = html;
-  };
-
-  // =========================================================================
-  // 8. MULTI-HORIZON FINANCIAL KHATA & 1-CLICK WHATSAPP TAGADA
-  // =========================================================================
-
-  window._filterKhataHorizon = function (horizonKey, btn) {
-    window.VETCARE_STATE.activeKhataHorizon = horizonKey;
     if (btn) {
-      var siblings = btn.parentNode.querySelectorAll(".khata-chip");
-      siblings.forEach(function (s) {
-        s.className = "khata-chip px-3 py-1 rounded-xl bg-slate-100 text-slate-700 font-medium shrink-0";
-      });
-      btn.className = "khata-chip px-3 py-1 rounded-xl bg-blue-600 text-white font-bold shrink-0";
+      btn.disabled = true;
+      btn.textContent = "⏳ AI विश्लेषण जारी है...";
     }
-    renderKhataList();
+    setVisible(outArea, true);
+    if (outArea) outArea.textContent = "AI वेटरनरी विशेषज्ञ विश्लेषण कर रहे हैं, कृपया प्रतीक्षा करें...";
+
+    const sysInstruction =
+      "You are a Senior Veterinary Clinical Specialist & Surgeon. Provide scientifically accurate, practical veterinary diagnostic analysis and treatment recommendations in Hindi. Always highlight safety and precautions.";
+
+    fetch(
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" +
+        apiKey,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [
+            {
+              role: "user",
+              parts: [{ text: sysInstruction + "\n\nकेस विवरण:\n" + prompt }]
+            }
+          ]
+        })
+      }
+    )
+      .then(function (res) {
+        if (!res.ok) throw new Error("API Response Code: " + res.status);
+        return res.json();
+      })
+      .then(function (data) {
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = "✨ AI से क्लिनिकल रिपोर्ट मांगें";
+        }
+        const text =
+          data.candidates &&
+          data.candidates[0] &&
+          data.candidates[0].content &&
+          data.candidates[0].content.parts &&
+          data.candidates[0].content.parts[0].text
+            ? data.candidates[0].content.parts[0].text
+            : "AI उत्तर प्राप्त नहीं हो सका।";
+        if (outArea) outArea.textContent = text;
+      })
+      .catch(function (err) {
+        console.error(err);
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = "✨ AI से क्लिनिकल रिपोर्ट मांगें";
+        }
+        if (outArea) {
+          outArea.textContent =
+            "❌ AI विश्लेषण विफल रहा। कृपया API Key एवं इंटरनेट कनेक्शन जांचें। एरर: " +
+            err.message;
+        }
+      });
   };
 
-  window._openNewKhataModal = function () {
-    _show("modalNewKhata");
+  /* ==========================================================================
+   * 12. PASHUPALAK KHATA BAHI (LEDGER)
+   * ========================================================================== */
+  window.openNewKhataModal = function () {
+    setVisible("modalNewKhata", true, "flex");
   };
 
-  window._closeNewKhataModal = function () {
-    _hide("modalNewKhata");
+  window.closeNewKhataModal = function () {
+    setVisible("modalNewKhata", false);
   };
 
-  window._saveNewKhataRecord = function () {
-    var name = _val("khataFarmerName");
-    var phone = _val("khataFarmerPhone");
-    var amount = parseFloat(_val("khataAmount")) || 0;
-    var type = _val("khataType");
-    var note = _val("khataNote");
+  window.saveNewKhataRecord = function () {
+    const nameInput = $("khataFarmerName");
+    const phoneInput = $("khataFarmerPhone");
+    const amtInput = $("khataAmount");
+    const typeSelect = $("khataType");
+    const noteInput = $("khataNote");
 
-    if (!name || !phone || amount <= 0) {
-      alert("कृपया किसान का नाम, फोन और वैध राशि भरें।");
+    const name = nameInput ? nameInput.value.trim() : "";
+    const phone = phoneInput ? phoneInput.value.trim() : "";
+    const amt = parseFloat(amtInput ? amtInput.value : "0") || 0;
+    const type = typeSelect ? typeSelect.value : "DUE";
+    const note = noteInput ? noteInput.value.trim() : "";
+
+    if (!name || amt <= 0) {
+      alert("कृपया किसान का नाम एवं वैध राशि दर्ज करें।");
       return;
     }
 
-    var khata = JSON.parse(localStorage.getItem("vetcare_khata_records") || "[]");
-    khata.unshift({
-      id: "KH-" + Date.now().toString().slice(-6),
-      name: name,
+    const records = getStoredJson("vetcare_khata_records", []);
+    records.unshift({
+      id: "KH_" + Date.now(),
+      farmerName: name,
       phone: phone,
-      amount: amount,
+      amount: amt,
       type: type,
       note: note,
-      timestamp: Date.now()
+      timestamp: new Date().toLocaleDateString()
     });
+    setStoredJson("vetcare_khata_records", records);
 
-    localStorage.setItem("vetcare_khata_records", JSON.stringify(khata));
-    _hide("modalNewKhata");
+    if (nameInput) nameInput.value = "";
+    if (phoneInput) phoneInput.value = "";
+    if (amtInput) amtInput.value = "";
+    if (noteInput) noteInput.value = "";
+
+    window.closeNewKhataModal();
     renderKhataList();
   };
 
-  window._renderKhataList = function () {
-    var khata = JSON.parse(localStorage.getItem("vetcare_khata_records") || "[]");
-    var container = _getEl("finDueList");
-    var search = _val("searchKhataInput").toLowerCase();
-    var horizon = window.VETCARE_STATE.activeKhataHorizon;
+  function renderKhataList() {
+    const list = $("finDueList");
+    const creditEl = $("finCredit");
+    const debitEl = $("finDebit");
+    if (!list) return;
 
-    var now = Date.now();
-    var horizonLimits = {
-      DAILY: 24 * 60 * 60 * 1000,
-      WEEKLY: 7 * 24 * 60 * 60 * 1000,
-      MONTHLY: 30 * 24 * 60 * 60 * 1000,
-      YEARLY: 365 * 24 * 60 * 60 * 1000,
-      LIFETIME: Infinity
-    };
+    const records = getStoredJson("vetcare_khata_records", []);
+    const searchInput = $("searchKhataInput");
+    const q = searchInput ? searchInput.value.trim().toLowerCase() : "";
 
-    var limitMs = horizonLimits[horizon] || Infinity;
+    let totalCredit = 0;
+    let totalDebit = 0;
 
-    var filtered = khata.filter(function (k) {
-      var matchesSearch = (k.name + " " + k.phone + " " + (k.note || "")).toLowerCase().includes(search);
-      var matchesTime = (now - k.timestamp) <= limitMs;
-      return matchesSearch && matchesTime;
+    records.forEach(function (r) {
+      if (r.type === "PAID") totalCredit += r.amount;
+      else totalDebit += r.amount;
     });
 
-    var totalCredit = 0;
-    var totalDebit = 0;
+    if (creditEl) creditEl.textContent = "₹" + totalCredit.toLocaleString();
+    if (debitEl) debitEl.textContent = "₹" + totalDebit.toLocaleString();
 
-    filtered.forEach(function (k) {
-      if (k.type === "PAID") totalCredit += k.amount;
-      else totalDebit += k.amount;
-    });
-
-    _setText("finCredit", "₹" + totalCredit.toLocaleString("en-IN"));
-    _setText("finDebit", "₹" + totalDebit.toLocaleString("en-IN"));
-
-    if (!container) return;
+    const filtered = q
+      ? records.filter(function (r) {
+          return (
+            r.farmerName.toLowerCase().includes(q) ||
+            (r.phone && r.phone.includes(q))
+          );
+        })
+      : records;
 
     if (filtered.length === 0) {
-      container.innerHTML = '<div class="p-4 text-center text-slate-400 bg-slate-50 rounded-2xl border border-slate-200">इस समयावधि में कोई लेन-देन नहीं है।</div>';
+      list.innerHTML =
+        '<div class="p-4 text-center text-slate-400 bg-slate-50 border border-slate-200 rounded-xl text-xs">खाते में कोई लेन-देन नहीं है।</div>';
       return;
     }
 
-    var html = "";
-    filtered.forEach(function (k) {
-      var isDue = k.type === "DUE";
-      var colorClass = isDue ? "text-rose-600" : "text-emerald-700";
-      var badge = isDue ? "बकाया (Due)" : "जमा (Paid)";
-
-      html += '<div class="p-3 bg-slate-50 border border-slate-200 rounded-2xl flex justify-between items-center shadow-xs">';
-      html += '<div>';
-      html += '<strong class="text-slate-900 block">' + k.name + ' (' + k.phone + ')</strong>';
-      html += '<span class="text-[11px] text-slate-500">' + (k.note || "सामान्य लेन-देन") + ' • ' + new Date(k.timestamp).toLocaleDateString("hi-IN") + '</span>';
-      html += '</div>';
-      html += '<div class="text-right space-y-1">';
-      html += '<strong class="text-sm font-black block ' + colorClass + '">₹' + k.amount.toLocaleString("en-IN") + '</strong>';
-      if (isDue) {
-        html += '<button onclick="sendKhataTagadaWhatsApp(\'' + k.name + '\', \'' + k.phone + '\', ' + k.amount + ')" class="text-[10px] bg-emerald-50 text-emerald-700 hover:bg-emerald-100 font-bold px-2 py-0.5 rounded-lg border border-emerald-200 transition">';
-        html += '<i class="fa-brands fa-whatsapp"></i> तगादा';
-        html += '</button>';
-      } else {
-        html += '<span class="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded">' + badge + '</span>';
-      }
-      html += '</div></div>';
+    let html = "";
+    filtered.forEach(function (r) {
+      const isPaid = r.type === "PAID";
+      html += '<div class="p-3 bg-slate-50 border border-slate-200 rounded-xl flex justify-between items-center text-xs">';
+      html += '  <div>';
+      html += '    <strong class="text-slate-900 block">' + r.farmerName + (r.phone ? " (" + r.phone + ")" : "") + "</strong>";
+      html += '    <span class="text-slate-500 text-[11px]">' + (r.note || (isPaid ? "जमा" : "बकाया")) + " • " + r.timestamp + "</span>";
+      html += "  </div>";
+      html += '  <div class="text-right">';
+      html += '    <span class="font-black text-sm block ' + (isPaid ? "text-emerald-700" : "text-rose-700") + '">';
+      html += (isPaid ? "+ ₹" : "- ₹") + r.amount;
+      html += "    </span>";
+      html += '    <button onclick="deleteKhataEntry(\'' + r.id + '\')" class="text-[10px] text-slate-400 hover:text-rose-600 cursor-pointer">हटाएं ✕</button>';
+      html += "  </div>";
+      html += "</div>";
     });
 
-    container.innerHTML = html;
-  };
-
-  // 1-Click WhatsApp Tagada Dispatch
-  window._sendKhataTagadaWhatsApp = function (farmerName, phone, amount) {
-    var doctor = window.VETCARE_STATE.user || { name: "पशु चिकित्सक" };
-    var bank = BANK_CONFIGS[window.VETCARE_STATE.activeBank];
-
-    var msg = "नमस्ते " + farmerName + " जी,\n\n" +
-      "Vetcare क्लिनिक के बहीखाता अनुसार आपका कुल बकाया *₹" + amount + "* शेष है।\n" +
-      "कृपया नीचे दिए गए UPI लिंक द्वारा भुगतान करने की कृपा करें:\n\n" +
-      "⚡ *UPI डायरेक्ट पे:* upi://pay?pa=" + bank.upiId + "&pn=" + encodeURIComponent(bank.payee) + "&am=" + amount + "&cu=INR\n\n" +
-      "धन्यवाद,\n" + doctor.name + " (पशु चिकित्सा सेवा)";
-
-    window.open("https://wa.me/91" + phone + "?text=" + encodeURIComponent(msg), "_blank");
-  };
-
-  // =========================================================================
-  // 9. MILK LEDGER, STOCK INVENTORY & PRIVACY-FIRST GPS P2P RADAR
-  // =========================================================================
-
-  // Daily Milk Ledger
-  window._saveDailyMilk = function () {
-    var shift = _val("milkShift");
-    var liters = parseFloat(_val("milkLiters")) || 0;
-    var fat = parseFloat(_val("milkFat")) || 0;
-    var rate = parseFloat(_val("milkRate")) || 55;
-
-    if (liters <= 0) {
-      alert("कृपया दूध की सही मात्रा (लीटर) भरें।");
-      return;
-    }
-
-    var records = JSON.parse(localStorage.getItem("vetcare_milk_records") || "[]");
-    records.unshift({
-      id: "MLK-" + Date.now().toString().slice(-6),
-      shift: shift,
-      liters: liters,
-      fat: fat,
-      rate: rate,
-      totalPrice: Math.round(liters * rate),
-      timestamp: Date.now()
-    });
-
-    localStorage.setItem("vetcare_milk_records", JSON.stringify(records));
-    _setVal("milkLiters", "");
-    renderMilkRecords();
-  };
-
-  function renderMilkRecords() {
-    var records = JSON.parse(localStorage.getItem("vetcare_milk_records") || "[]");
-    var container = _getEl("milkRecordsContainer");
-
-    var todayLiters = 0;
-    records.forEach(function (m) {
-      if (new Date(m.timestamp).toDateString() === new Date().toDateString()) {
-        todayLiters += m.liters;
-      }
-    });
-
-    _setText("milkTotalLitersToday", "आज: " + todayLiters + " L");
-
-    if (!container) return;
-
-    if (records.length === 0) {
-      container.innerHTML = '<div class="p-4 text-center text-slate-400 bg-slate-50 rounded-2xl border border-slate-200">दूध बिक्री का कोई रिकॉर्ड नहीं है।</div>';
-      return;
-    }
-
-    var html = "";
-    records.forEach(function (m, idx) {
-      html += '<div class="p-3 bg-slate-50 border border-slate-200 rounded-2xl flex justify-between items-center shadow-xs">';
-      html += '<div>';
-      html += '<strong class="text-slate-900 block">' + m.shift + ' • ' + m.liters + ' लीटर</strong>';
-      html += '<span class="text-[11px] text-slate-500">फैट: ' + (m.fat || "N/A") + '% | भाव: ₹' + m.rate + '/L | ' + new Date(m.timestamp).toLocaleDateString("hi-IN") + '</span>';
-      html += '</div>';
-      html += '<div class="text-right flex items-center gap-2">';
-      html += '<strong class="text-sm font-black text-emerald-700">₹' + m.totalPrice + '</strong>';
-      html += '<button onclick="deleteMilkRecord(' + idx + ')" class="text-rose-500 hover:text-rose-700 text-xs font-bold">✕</button>';
-      html += '</div></div>';
-    });
-
-    container.innerHTML = html;
+    list.innerHTML = html;
   }
 
-  window._deleteMilkRecord = function (index) {
-    var records = JSON.parse(localStorage.getItem("vetcare_milk_records") || "[]");
-    records.splice(index, 1);
-    localStorage.setItem("vetcare_milk_records", JSON.stringify(records));
-    renderMilkRecords();
-  };
+  window.renderKhataList = renderKhataList;
 
-  // Stock Inventory Management
-  window._openNewInventoryItemModal = function () {
-    _show("modalNewInventory");
-  };
-
-  window._closeNewInventoryModal = function () {
-    _hide("modalNewInventory");
-  };
-
-  window._saveNewInventoryItem = function () {
-    var name = _val("invItemName");
-    var category = _val("invItemCategory");
-    var stock = parseFloat(_val("invItemStock")) || 0;
-    var minAlert = parseFloat(_val("invItemMinAlert")) || 3;
-    var unit = _val("invItemUnit") || "vials";
-
-    if (!name || stock < 0) {
-      alert("कृपया दवा/सीमन का नाम और मात्रा भरें।");
-      return;
-    }
-
-    var inventory = JSON.parse(localStorage.getItem("vetcare_inventory") || "[]");
-    inventory.unshift({
-      id: "INV-" + Date.now().toString().slice(-6),
-      name: name,
-      category: category,
-      stock: stock,
-      minAlert: minAlert,
-      unit: unit,
-      timestamp: Date.now()
+  window.deleteKhataEntry = function (id) {
+    let records = getStoredJson("vetcare_khata_records", []);
+    records = records.filter(function (r) {
+      return r.id !== id;
     });
+    setStoredJson("vetcare_khata_records", records);
+    renderKhataList();
+  };
 
-    localStorage.setItem("vetcare_inventory", JSON.stringify(inventory));
-    _hide("modalNewInventory");
+  /* ==========================================================================
+   * 13. DRUG & SEMEN STRAW INVENTORY STOCK SYSTEM
+   * ========================================================================== */
+  window.openNewInventoryItemModal = function () {
+    setVisible("modalNewInventory", true, "flex");
+  };
+
+  window.closeNewInventoryModal = function () {
+    setVisible("modalNewInventory", false);
+  };
+
+  window.filterInventoryCategory = function (cat, btn) {
+    State.invFilter = cat;
+    document.querySelectorAll(".inv-chip").forEach(function (c) {
+      c.className =
+        "inv-chip px-3 py-1 rounded-xl bg-slate-100 text-slate-700 font-medium shrink-0 cursor-pointer";
+    });
+    if (btn) {
+      btn.className =
+        "inv-chip px-3 py-1 rounded-xl bg-blue-600 text-white font-bold shrink-0 cursor-pointer";
+    }
     renderInventory();
   };
 
-  window._adjustStock = function (index, delta) {
-    var inventory = JSON.parse(localStorage.getItem("vetcare_inventory") || "[]");
-    if (inventory[index]) {
-      inventory[index].stock = Math.max(0, inventory[index].stock + delta);
-      localStorage.setItem("vetcare_inventory", JSON.stringify(inventory));
+  window.saveNewInventoryItem = function () {
+    const nameInput = $("invItemName");
+    const catSelect = $("invItemCategory");
+    const stockInput = $("invItemStock");
+    const alertInput = $("invItemMinAlert");
+    const unitInput = $("invItemUnit");
+
+    const name = nameInput ? nameInput.value.trim() : "";
+    const cat = catSelect ? catSelect.value : "INJECTION";
+    const stock = parseFloat(stockInput ? stockInput.value : "0") || 0;
+    const minAlert = parseFloat(alertInput ? alertInput.value : "3") || 3;
+    const unit = unitInput ? unitInput.value.trim() : "vials";
+
+    if (!name) {
+      alert("कृपया दवा/आइटम का नाम दर्ज करें।");
+      return;
+    }
+
+    const items = getStoredJson("vetcare_inventory_stock", []);
+    items.unshift({
+      id: "INV_" + Date.now(),
+      name: name,
+      category: cat,
+      stock: stock,
+      minAlert: minAlert,
+      unit: unit
+    });
+    setStoredJson("vetcare_inventory_stock", items);
+
+    if (nameInput) nameInput.value = "";
+    if (stockInput) stockInput.value = "";
+    window.closeNewInventoryModal();
+    renderInventory();
+  };
+
+  function renderInventory() {
+    const container = $("inventoryItemsContainer");
+    const alertBadge = $("lowStockAlertBadge");
+    if (!container) return;
+
+    const items = getStoredJson("vetcare_inventory_stock", [
+      { id: "1", name: "Inj. Intacef Tazo (3375mg)", category: "INJECTION", stock: 8, minAlert: 3, unit: "vials" },
+      { id: "2", name: "Inj. Melonex Plus (100ml)", category: "INJECTION", stock: 2, minAlert: 3, unit: "vials" },
+      { id: "3", name: "Murrah Buffalo Semen Straw (ID: M-29)", category: "SEMEN", stock: 15, minAlert: 5, unit: "straws" },
+      { id: "4", name: "Bolus Bioboost (Rumen Probiotic)", category: "BOLUS", stock: 24, minAlert: 10, unit: "strips" }
+    ]);
+
+    let hasLowStock = false;
+    items.forEach(function (i) {
+      if (i.stock <= i.minAlert) hasLowStock = true;
+    });
+
+    setVisible(alertBadge, hasLowStock);
+
+    const filtered =
+      State.invFilter === "ALL"
+        ? items
+        : items.filter(function (i) {
+            return i.category === State.invFilter;
+          });
+
+    if (filtered.length === 0) {
+      container.innerHTML =
+        '<div class="p-4 text-center text-slate-400 bg-slate-50 border border-slate-200 rounded-xl text-xs">इस श्रेणी में कोई स्टॉक आइटम नहीं है।</div>';
+      return;
+    }
+
+    let html = "";
+    filtered.forEach(function (item) {
+      const isLow = item.stock <= item.minAlert;
+      html += '<div class="p-3 bg-slate-50 border ' + (isLow ? "border-rose-300 bg-rose-50/50" : "border-slate-200") + ' rounded-2xl flex justify-between items-center text-xs">';
+      html += '  <div>';
+      html += '    <strong class="text-slate-900 block">' + item.name + "</strong>";
+      html += '    <span class="text-slate-500 text-[11px]">' + item.category + " | अलर्ट सीमा: " + item.minAlert + " " + item.unit + "</span>";
+      if (isLow) {
+        html += '    <span class="text-[10px] text-rose-600 font-bold block">⚠️ स्टॉक कम है! तुरंत रीऑर्डर करें</span>';
+      }
+      html += "  </div>";
+      html += '  <div class="flex items-center gap-2">';
+      html += '    <button onclick="updateStockQty(\'' + item.id + '\', -1)" class="w-7 h-7 bg-white border border-slate-300 rounded-lg font-black text-slate-700 hover:bg-slate-100 cursor-pointer">-</button>';
+      html += '    <strong class="text-sm font-mono px-1 ' + (isLow ? "text-rose-700" : "text-slate-900") + '">' + item.stock + "</strong>";
+      html += '    <button onclick="updateStockQty(\'' + item.id + '\', 1)" class="w-7 h-7 bg-white border border-slate-300 rounded-lg font-black text-slate-700 hover:bg-slate-100 cursor-pointer">+</button>';
+      html += '    <button onclick="deleteInventoryItem(\'' + item.id + '\')" class="text-slate-400 hover:text-rose-600 ml-1 text-sm cursor-pointer">🗑️</button>';
+      html += "  </div>";
+      html += "</div>";
+    });
+
+    container.innerHTML = html;
+  }
+
+  window.updateStockQty = function (id, delta) {
+    const items = getStoredJson("vetcare_inventory_stock", []);
+    const target = items.find(function (i) {
+      return i.id === id;
+    });
+    if (target) {
+      target.stock = Math.max(0, target.stock + delta);
+      setStoredJson("vetcare_inventory_stock", items);
       renderInventory();
     }
   };
 
-  window._filterInventoryCategory = function (catKey, btn) {
-    if (btn) {
-      var siblings = btn.parentNode.querySelectorAll(".inv-chip");
-      siblings.forEach(function (s) {
-        s.className = "inv-chip px-3 py-1 rounded-xl bg-slate-100 text-slate-700 font-medium shrink-0";
-      });
-      btn.className = "inv-chip px-3 py-1 rounded-xl bg-blue-600 text-white font-bold shrink-0";
-    }
-    renderInventory(catKey);
-  };
-
-  function renderInventory(filterCat) {
-    filterCat = filterCat || "ALL";
-    var inventory = JSON.parse(localStorage.getItem("vetcare_inventory") || "[]");
-    var container = _getEl("inventoryItemsContainer");
-    var hasLowStock = false;
-
-    if (!container) return;
-
-    var filtered = inventory.filter(function (item) {
-      if (item.stock <= item.minAlert) hasLowStock = true;
-      return filterCat === "ALL" || item.category === filterCat;
+  window.deleteInventoryItem = function (id) {
+    if (!confirm("क्या आप इस स्टॉक आइटम को हटाना चाहते हैं?")) return;
+    let items = getStoredJson("vetcare_inventory_stock", []);
+    items = items.filter(function (i) {
+      return i.id !== id;
     });
-
-    var alertBadge = _getEl("lowStockAlertBadge");
-    if (alertBadge) {
-      if (hasLowStock) alertBadge.classList.remove("hidden");
-      else alertBadge.classList.add("hidden");
-    }
-
-    if (filtered.length === 0) {
-      container.innerHTML = '<div class="p-4 text-center text-slate-400 bg-slate-50 rounded-2xl border border-slate-200">कोई इन्वेंट्री आइटम नहीं है।</div>';
-      return;
-    }
-
-    var html = "";
-    filtered.forEach(function (item, idx) {
-      var isLow = item.stock <= item.minAlert;
-      var alertClass = isLow ? "border-rose-300 bg-rose-50/40" : "border-slate-200 bg-white";
-
-      html += '<div class="p-3 border rounded-2xl flex justify-between items-center shadow-xs ' + alertClass + '">';
-      html += '<div>';
-      html += '<strong class="text-slate-900 block">' + item.name + '</strong>';
-      html += '<span class="text-[11px] text-slate-500">श्रेणी: ' + item.category + ' | न्यूनतम अलर्ट: ' + item.minAlert + ' ' + item.unit + '</span>';
-      html += '</div>';
-      html += '<div class="flex items-center gap-2">';
-      html += '<button onclick="adjustStock(' + idx + ', -1)" class="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 font-bold text-slate-700">-</button>';
-      html += '<strong class="text-xs sm:text-sm font-black ' + (isLow ? 'text-rose-600' : 'text-slate-800') + '">' + item.stock + ' ' + item.unit + '</strong>';
-      html += '<button onclick="adjustStock(' + idx + ', 1)" class="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 font-bold text-slate-700">+</button>';
-      html += '</div></div>';
-    });
-
-    container.innerHTML = html;
-  }
-
-  // Privacy-First Local Farmer GPS Radar (5 KM)
-  window._openGpsRadarModal = function () {
-    _show("modalGpsRadar");
-    calculateNearbyFarmersRadar();
+    setStoredJson("vetcare_inventory_stock", items);
+    renderInventory();
   };
 
-  window._closeGpsRadarModal = function () {
-    _hide("modalGpsRadar");
+  /* ==========================================================================
+   * 14. DUAL-BANK MONETIZATION, QR GENERATOR & RENEWALS
+   * ========================================================================== */
+  window.openPremiumPaymentModal = function () {
+    window.selectPaymentPlan(State.selectedPlan);
+    setVisible("modalPremiumPayment", true, "flex");
   };
 
-  function calculateNearbyFarmersRadar() {
-    var container = _getEl("radarFarmersList");
-    if (!container) return;
+  window.closePremiumPaymentModal = function () {
+    setVisible("modalPremiumPayment", false);
+  };
 
-    if (!navigator.geolocation) {
-      container.innerHTML = '<div class="p-3 text-center text-slate-400">GPS उपलब्ध नहीं है।</div>';
-      return;
-    }
+  window.selectPaymentPlan = function (plan) {
+    State.selectedPlan = plan;
+    const isMonthly = plan === "MONTHLY";
 
-    navigator.geolocation.getCurrentPosition(
-      function (pos) {
-        var myLat = pos.coords.latitude;
-        var myLon = pos.coords.longitude;
-
-        // Mock peer nodes in 5km radius with Haversine distance
-        var peers = [
-          { id: "FID-8412", lat: myLat + 0.012, lon: myLon + 0.010, stock: "8 मुर्राह भैंस" },
-          { id: "FID-2901", lat: myLat - 0.018, lon: myLon - 0.015, stock: "14 साहीवाल गाय" },
-          { id: "FID-6134", lat: myLat + 0.025, lon: myLon - 0.020, stock: "6 गिर गाय" }
-        ];
-
-        function haversine(lat1, lon1, lat2, lon2) {
-          var R = 6371; // km
-          var dLat = (lat2 - lat1) * Math.PI / 180;
-          var dLon = (lon2 - lon1) * Math.PI / 180;
-          var a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-            Math.sin(dLon / 2) * Math.sin(dLon / 2);
-          var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-          return (R * c).toFixed(1);
-        }
-
-        var html = "";
-        peers.forEach(function (peer) {
-          var dist = haversine(myLat, myLon, peer.lat, peer.lon);
-          html += '<div class="p-3 bg-slate-50 rounded-2xl border border-slate-200 flex items-center justify-between">';
-          html += '<div>';
-          html += '<strong class="text-slate-800 font-mono block">किसान ID: ' + peer.id + '</strong>';
-          html += '<span class="text-[11px] text-teal-700 font-semibold"><i class="fa-solid fa-location-dot"></i> दूरी: ' + dist + ' KM • ' + peer.stock + '</span>';
-          html += '</div>';
-          html += '<button onclick="requestMutualContact(\'' + peer.id + '\', this)" class="text-xs bg-teal-50 hover:bg-teal-100 text-teal-700 border border-teal-200 px-2.5 py-1.5 rounded-xl font-bold transition">';
-          html += 'आपसी सहमति अनुरोध';
-          html += '</button></div>';
-        });
-
-        container.innerHTML = html;
-      },
-      function () {
-        // Fallback default mock
+    const btnM = $("btnPlanMonthly");
+    const btnA = $("btnPlanAnnual");
+    if (btnM && btnA) {
+      if (isMonthly) {
+        btnM.className =
+          "py-2 rounded-xl bg-blue-600 text-white font-bold text-center transition cursor-pointer";
+        btnA.className =
+          "py-2 rounded-xl text-slate-700 font-medium text-center transition cursor-pointer";
+      } else {
+        btnM.className =
+          "py-2 rounded-xl text-slate-700 font-medium text-center transition cursor-pointer";
+        btnA.className =
+          "py-2 rounded-xl bg-blue-600 text-white font-bold text-center transition cursor-pointer";
       }
+    }
+
+    const price = isMonthly
+      ? MASTER_CONFIG.pricing.monthly
+      : MASTER_CONFIG.pricing.annual;
+    const directAmt = $("directUPIAmount");
+    if (directAmt) directAmt.textContent = price;
+
+    updateDynamicPaymentQR(price);
+  };
+
+  window.switchBankTab = function (bank) {
+    State.activeBank = bank;
+    const isSbi = bank === "SBI";
+    const btnS = $("btnTabSBI");
+    const btnP = $("btnTabPNB");
+
+    if (btnS && btnP) {
+      if (isSbi) {
+        btnS.className =
+          "flex-1 py-2 font-bold bg-blue-50 text-blue-700 text-center transition cursor-pointer";
+        btnP.className =
+          "flex-1 py-2 font-medium bg-slate-50 text-slate-600 text-center transition cursor-pointer";
+      } else {
+        btnS.className =
+          "flex-1 py-2 font-medium bg-slate-50 text-slate-600 text-center transition cursor-pointer";
+        btnP.className =
+          "flex-1 py-2 font-bold bg-amber-50 text-amber-800 text-center transition cursor-pointer";
+      }
+    }
+
+    const bankObj = isSbi ? MASTER_CONFIG.sbiPrimary : MASTER_CONFIG.pnbBackup;
+    const dispPayee = $("dispPayeeName");
+    const dispUpi = $("dispUPIId");
+    const dispAcc = $("dispAccountNumber");
+    const dispIfsc = $("dispIFSC");
+
+    if (dispPayee) dispPayee.textContent = MASTER_CONFIG.payeeName;
+    if (dispUpi) dispUpi.textContent = bankObj.upiId;
+    if (dispAcc) dispAcc.textContent = bankObj.accountNumber;
+    if (dispIfsc) dispIfsc.textContent = bankObj.ifsc;
+
+    const price =
+      State.selectedPlan === "MONTHLY"
+        ? MASTER_CONFIG.pricing.monthly
+        : MASTER_CONFIG.pricing.annual;
+    updateDynamicPaymentQR(price);
+  };
+
+  function updateDynamicPaymentQR(amount) {
+    const isSbi = State.activeBank === "SBI";
+    const bankObj = isSbi ? MASTER_CONFIG.sbiPrimary : MASTER_CONFIG.pnbBackup;
+
+    // Build standard UPI intent URI
+    const upiUri =
+      "upi://pay?pa=" +
+      bankObj.upiId +
+      "&pn=" +
+      encodeURIComponent(MASTER_CONFIG.payeeName) +
+      "&am=" +
+      amount +
+      "&cu=INR&tn=Vetcare%20Premium%20Plan";
+
+    const qrImg = $("dynamicQRImage");
+    if (qrImg) {
+      qrImg.src =
+        "https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=" +
+        encodeURIComponent(upiUri);
+    }
+
+    const directBtn = $("btnDirectUPILink");
+    if (directBtn) {
+      directBtn.href = upiUri;
+    }
+  }
+
+  window.sendPaymentProofWhatsApp = function () {
+    const isMonthly = State.selectedPlan === "MONTHLY";
+    const price = isMonthly
+      ? MASTER_CONFIG.pricing.monthly
+      : MASTER_CONFIG.pricing.annual;
+    const planName = isMonthly ? "मासिक प्लान (₹199)" : "वार्षिक प्लान (₹1,499)";
+    const userPhone = localStorage.getItem("vetcare_user_phone") || "नया उपयोगकर्ता";
+
+    const msg =
+      "नमस्ते एडमिन! मैंने Vetcare AI OS के " +
+      planName +
+      " के लिए ₹" +
+      price +
+      " का भुगतान पूर्ण कर दिया है।\n\nपंजीकृत मोबाइल: " +
+      userPhone +
+      "\nकृपया मेरा प्रीमियम खाता सक्रिय करें।\n(स्क्रीनशॉट संलग्न है)";
+
+    const url =
+      "https://wa.me/91" +
+      MASTER_CONFIG.adminWhatsApp +
+      "?text=" +
+      encodeURIComponent(msg);
+    window.open(url, "_blank");
+  };
+
+  window.escalateToAdminWhatsApp = function () {
+    const userPhone = localStorage.getItem("vetcare_user_phone") || "Unknown";
+    const msg =
+      "नमस्ते एडमिन, मुझे Vetcare AI OS ऐप उपयोग में सहायता चाहिए। मेरा नंबर: " +
+      userPhone;
+    window.open(
+      "https://wa.me/91" +
+        MASTER_CONFIG.adminWhatsApp +
+        "?text=" +
+        encodeURIComponent(msg),
+      "_blank"
     );
-  }
-
-  window._requestMutualContact = function (peerId, btn) {
-    if (btn) {
-      btn.className = "text-xs bg-emerald-100 text-emerald-800 font-bold px-2.5 py-1.5 rounded-xl";
-      btn.innerHTML = '<i class="fa-solid fa-check"></i> अनुरोध भेजा गया';
-    }
-    alert(peerId + " को आपसी संपर्क साझा करने का अनुरोध भेज दिया गया है। उनके स्वीकार करते ही फोन नंबर प्रदर्शित होगा।");
   };
 
-  // =========================================================================
-  // 10. APP INITIALIZER & ROUTER CONTROLLER
-  // =========================================================================
-
-  window._selectRole = function (roleKey) {
-    window.VETCARE_STATE.role = roleKey;
-    localStorage.setItem("vetcare_user_role", roleKey);
-    applyRoleInterface(roleKey);
+  /* ==========================================================================
+   * 15. SUPER ADMIN CONTROL ROOM & DATA AUDIT METRICS
+   * ========================================================================== */
+  window.openAdminPinModal = function () {
+    const input = $("inputAdminPIN");
+    if (input) input.value = "";
+    setVisible("pinErrorMessage", false);
+    setVisible("modalAdminPIN", true, "flex");
   };
 
-  window._openDoctorDeclarationModal = function () {
-    _show("modalDoctorDeclaration");
+  window.closeAdminPinModal = function () {
+    setVisible("modalAdminPIN", false);
   };
 
-  window._closeDoctorDeclarationModal = function () {
-    _hide("modalDoctorDeclaration");
-  };
+  window.verifyAdminPIN = function () {
+    const input = $("inputAdminPIN");
+    const pin = input ? input.value.trim() : "";
+    const activePin = MASTER_CONFIG.masterPin;
 
-  window._confirmDoctorRole = function () {
-    _hide("modalDoctorDeclaration");
-    window._selectRole("DOCTOR");
-  };
-
-  window._returnToGateway = function () {
-    localStorage.removeItem("vetcare_user_role");
-    window.VETCARE_STATE.role = null;
-    _show("screenGateway");
-    _hide("screenMainApp");
-  };
-
-  function applyRoleInterface(roleKey) {
-    _hide("screenGateway");
-    _show("screenMainApp");
-
-    var roleBadge = _getEl("currentUserRoleBadge");
-    var navDocDiag = _getEl("navDocDiagnosis");
-    var navDocOpd = _getEl("navDocOpd");
-    var navDocServ = _getEl("navDocServices");
-    var navDocInv = _getEl("navDocInventory");
-
-    var navFarmHome = _getEl("navFarmerHome");
-    var navFarmBreed = _getEl("navFarmerBreeding");
-    var navFarmFeed = _getEl("navFarmerFeed");
-    var navFarmMilk = _getEl("navFarmerMilk");
-
-    if (roleKey === "DOCTOR") {
-      if (roleBadge) roleBadge.textContent = "🩺 अधिकृत पशु चिकित्सक";
-      [navDocDiag, navDocOpd, navDocServ, navDocInv].forEach(function (el) {
-        if (el) el.classList.remove("hidden");
-        if (el) el.classList.add("flex");
-      });
-      [navFarmHome, navFarmBreed, navFarmFeed, navFarmMilk].forEach(function (el) {
-        if (el) el.classList.add("hidden");
-        if (el) el.classList.remove("flex");
-      });
-      window._switchTab("doc_diagnosis");
+    if (pin === activePin) {
+      window.closeAdminPinModal();
+      openAdminDashboard();
     } else {
-      if (roleBadge) roleBadge.textContent = "👨‍🌾 स्मार्ट पशुपालक";
-      [navDocDiag, navDocOpd, navDocServ, navDocInv].forEach(function (el) {
-        if (el) el.classList.add("hidden");
-        if (el) el.classList.remove("flex");
-      });
-      [navFarmHome, navFarmBreed, navFarmFeed, navFarmMilk].forEach(function (el) {
-        if (el) el.classList.remove("hidden");
-        if (el) el.classList.add("flex");
-      });
-      window._switchTab("farmer_home");
+      setVisible("pinErrorMessage", true);
+      if (input) {
+        input.value = "";
+        input.focus();
+      }
     }
+  };
+
+  function openAdminDashboard() {
+    setVisible("modalAdminDashboard", true, "flex");
+    populateAdminSettings();
+    updateAdminMetrics();
+    window.switchAdminTab("PAYMENT");
   }
 
-  window._switchTab = function (tabKey) {
-    var allViews = [
-      "viewDocDiagnosis", "viewDocOpd", "viewDocServicesLedger", "viewDocRecords", "viewDocInventory",
-      "viewFarmerHome", "viewFarmerBreeding", "viewFarmerFeed", "viewFarmerMilk", "viewFinance"
+  window.closeAdminDashboard = function () {
+    setVisible("modalAdminDashboard", false);
+  };
+
+  window.switchAdminTab = function (tab) {
+    setVisible("adminPanelPayment", tab === "PAYMENT");
+    setVisible("adminPanelBranding", tab === "BRANDING");
+    setVisible("adminPanelSupport", tab === "SUPPORT");
+    setVisible("adminPanelMetrics", tab === "METRICS");
+
+    const tabs = ["PAYMENT", "BRANDING", "SUPPORT", "METRICS"];
+    const btnIds = [
+      "tabBtnAdminPay",
+      "tabBtnAdminBrand",
+      "tabBtnAdminSupport",
+      "tabBtnAdminMetrics"
     ];
 
-    allViews.forEach(function (v) { _hide(v); });
-
-    var navMap = {
-      doc_diagnosis: { view: "viewDocDiagnosis", nav: "navDocDiagnosis" },
-      doc_opd: { view: "viewDocOpd", nav: "navDocOpd" },
-      doc_services: { view: "viewDocServicesLedger", nav: "navDocServices" },
-      doc_records: { view: "viewDocRecords", nav: "navDocServices" },
-      doc_inventory: { view: "viewDocInventory", nav: "navDocInventory" },
-      farmer_home: { view: "viewFarmerHome", nav: "navFarmerHome" },
-      farmer_breeding: { view: "viewFarmerBreeding", nav: "navFarmerBreeding" },
-      farmer_feed: { view: "viewFarmerFeed", nav: "navFarmerFeed" },
-      farmer_milk: { view: "viewFarmerMilk", nav: "navFarmerMilk" },
-      shared_finance: { view: "viewFinance", nav: "navSharedFinance" }
-    };
-
-    // Reset nav colors
-    var allNavs = document.querySelectorAll("nav button");
-    allNavs.forEach(function (btn) {
-      btn.className = "flex flex-col items-center text-slate-400 hover:text-slate-700 transition";
+    tabs.forEach(function (t, idx) {
+      const btn = $(btnIds[idx]);
+      if (!btn) return;
+      if (t === tab) {
+        btn.className =
+          "px-4 py-2 border-b-2 border-blue-600 text-blue-600 shrink-0 font-bold cursor-pointer";
+      } else {
+        btn.className =
+          "px-4 py-2 border-b-2 border-transparent hover:text-slate-900 text-slate-500 shrink-0 font-bold cursor-pointer";
+      }
     });
-
-    var target = navMap[tabKey];
-    if (target) {
-      _show(target.view);
-      var navBtn = _getEl(target.nav);
-      if (navBtn) navBtn.className = "flex flex-col items-center active-nav-tab transition text-slate-500";
-    }
-
-    if (tabKey === "doc_diagnosis") applyMatrixFilters();
-    if (tabKey === "doc_services") loadLedgerTable();
-    if (tabKey === "doc_inventory") renderInventory();
-    if (tabKey === "farmer_milk") renderMilkRecords();
-    if (tabKey === "shared_finance") renderKhataList();
   };
 
-  // Bootstrap Application on DOM Ready
-  document.addEventListener("DOMContentLoaded", function () {
-    initTrialAndAuth();
-    loadOPDRecords();
-    loadLedgerTable();
-    renderInventory();
-    renderMilkRecords();
-    renderKhataList();
-    calculateShaefferWeight();
-  });
+  function populateAdminSettings() {
+    if ($("cfgPayeeName")) $("cfgPayeeName").value = MASTER_CONFIG.payeeName;
+    if ($("cfgMonthlyPrice"))
+      $("cfgMonthlyPrice").value = MASTER_CONFIG.pricing.monthly;
+    if ($("cfgAnnualPrice"))
+      $("cfgAnnualPrice").value = MASTER_CONFIG.pricing.annual;
+    if ($("cfgSbiUpi")) $("cfgSbiUpi").value = MASTER_CONFIG.sbiPrimary.upiId;
+    if ($("cfgSbiAccount"))
+      $("cfgSbiAccount").value = MASTER_CONFIG.sbiPrimary.accountNumber;
+    if ($("cfgSbiIfsc"))
+      $("cfgSbiIfsc").value = MASTER_CONFIG.sbiPrimary.ifsc;
+    if ($("cfgPnbUpi")) $("cfgPnbUpi").value = MASTER_CONFIG.pnbBackup.upiId;
+    if ($("cfgPnbAccount"))
+      $("cfgPnbAccount").value = MASTER_CONFIG.pnbBackup.accountNumber;
+    if ($("cfgPnbIfsc"))
+      $("cfgPnbIfsc").value = MASTER_CONFIG.pnbBackup.ifsc;
+    if ($("cfgAppTitle")) $("cfgAppTitle").value = MASTER_CONFIG.appTitle;
+    if ($("cfgAppTagline")) $("cfgAppTagline").value = MASTER_CONFIG.tagline;
+    if ($("cfgAdminWhatsApp"))
+      $("cfgAdminWhatsApp").value = MASTER_CONFIG.adminWhatsApp;
+    if ($("cfgAdminPIN")) $("cfgAdminPIN").value = MASTER_CONFIG.masterPin;
+  }
+
+  function updateAdminMetrics() {
+    const cases = getStoredJson("vetcare_opd_cases", []);
+    const khata = getStoredJson("vetcare_khata_records", []);
+    const stock = getStoredJson("vetcare_inventory_stock", []);
+
+    let totalDues = 0;
+    khata.forEach(function (k) {
+      if (k.type === "DUE") totalDues += k.amount;
+    });
+
+    let lowStockCount = 0;
+    stock.forEach(function (s) {
+      if (s.stock <= s.minAlert) lowStockCount++;
+    });
+
+    if ($("metricTotalOPD")) $("metricTotalOPD").textContent = cases.length;
+    if ($("metricTotalDues"))
+      $("metricTotalDues").textContent = "₹" + totalDues.toLocaleString();
+    if ($("metricLowStock")) $("metricLowStock").textContent = lowStockCount;
+  }
+
+  window.saveAllAdminSettings = function () {
+    if ($("cfgPayeeName"))
+      MASTER_CONFIG.payeeName = $("cfgPayeeName").value.trim();
+    if ($("cfgMonthlyPrice"))
+      MASTER_CONFIG.pricing.monthly =
+        parseFloat($("cfgMonthlyPrice").value) || 199;
+    if ($("cfgAnnualPrice"))
+      MASTER_CONFIG.pricing.annual =
+        parseFloat($("cfgAnnualPrice").value) || 1499;
+    if ($("cfgSbiUpi"))
+      MASTER_CONFIG.sbiPrimary.upiId = $("cfgSbiUpi").value.trim();
+    if ($("cfgSbiAccount"))
+      MASTER_CONFIG.sbiPrimary.accountNumber = $("cfgSbiAccount").value.trim();
+    if ($("cfgSbiIfsc"))
+      MASTER_CONFIG.sbiPrimary.ifsc = $("cfgSbiIfsc").value.trim();
+    if ($("cfgPnbUpi"))
+      MASTER_CONFIG.pnbBackup.upiId = $("cfgPnbUpi").value.trim();
+    if ($("cfgPnbAccount"))
+      MASTER_CONFIG.pnbBackup.accountNumber = $("cfgPnbAccount").value.trim();
+    if ($("cfgPnbIfsc"))
+      MASTER_CONFIG.pnbBackup.ifsc = $("cfgPnbIfsc").value.trim();
+    if ($("cfgAppTitle"))
+      MASTER_CONFIG.appTitle = $("cfgAppTitle").value.trim();
+    if ($("cfgAppTagline"))
+      MASTER_CONFIG.tagline = $("cfgAppTagline").value.trim();
+    if ($("cfgAdminWhatsApp"))
+      MASTER_CONFIG.adminWhatsApp = $("cfgAdminWhatsApp").value.trim();
+    if ($("cfgAdminPIN")) {
+      const pin = $("cfgAdminPIN").value.trim();
+      if (pin.length === 4) MASTER_CONFIG.masterPin = pin;
+    }
+
+    setStoredJson("vetcare_master_config", MASTER_CONFIG);
+    alert("✅ सभी सुपर एडमिन कॉन्फ़िगरेशन सुरक्षित कर दिए गए हैं।");
+    window.closeAdminDashboard();
+  };
+
+  window.exportDataBackupJSON = function () {
+    const backup = {
+      timestamp: new Date().toISOString(),
+      opdCases: getStoredJson("vetcare_opd_cases", []),
+      khata: getStoredJson("vetcare_khata_records", []),
+      inventory: getStoredJson("vetcare_inventory_stock", []),
+      roleRequests: getStoredJson("vetcare_role_change_requests", [])
+    };
+    const blob = new Blob([JSON.stringify(backup, null, 2)], {
+      type: "application/json"
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "vetcare_backup_" + Date.now() + ".json";
+    a.click();
+  };
+
+  window.clearDemoDataOnly = function () {
+    if (confirm("चेतावनी: क्या आप केवल टेस्ट/डेमो डेटा रीसेट करना चाहते हैं?")) {
+      localStorage.removeItem("vetcare_opd_cases");
+      localStorage.removeItem("vetcare_khata_records");
+      renderCaseRecords();
+      renderKhataList();
+      updateAdminMetrics();
+      alert("✅ टेस्ट डेटा साफ़ कर दिया गया है।");
+    }
+  };
+
+  /* ==========================================================================
+   * 16. MULTI-LANGUAGE (i18n) ENGINE DISPATCHER
+   * ========================================================================== */
+  window.openLanguageModal = function () {
+    setVisible("modalLanguageSelector", true, "flex");
+  };
+
+  window.closeLanguageModal = function () {
+    setVisible("modalLanguageSelector", false);
+  };
+
+  window.setLanguage = function (langCode) {
+    if (!VETCARE_TRANSLATIONS[langCode]) langCode = "hi";
+    localStorage.setItem("vetcare_lang", langCode);
+
+    const dict = VETCARE_TRANSLATIONS[langCode];
+    document.querySelectorAll("[data-i18n]").forEach(function (el) {
+      const key = el.getAttribute("data-i18n");
+      if (dict[key]) {
+        el.textContent = dict[key];
+      }
+    });
+
+    const langLabelMap = {
+      en: "English",
+      hi: "हिन्दी",
+      hinglish: "Hinglish",
+      pa: "ਪੰਜਾਬੀ",
+      mr: "मराठी",
+      gu: "ગુજરાતી",
+      bn: "বাংলা"
+    };
+
+    const currentLabel = $("currentLangLabel");
+    if (currentLabel) {
+      currentLabel.textContent = langLabelMap[langCode] || "हिन्दी";
+    }
+
+    const headerText = $("headerLangText");
+    if (headerText) {
+      headerText.textContent = langLabelMap[langCode] || "भाषा";
+    }
+
+    window.closeLanguageModal();
+  };
+
+  /* ==========================================================================
+   * 17. SYSTEM BOOTSTRAPPER & EVENT INITIALIZATION
+   * ========================================================================== */
+  function initializeSystem() {
+    // 1. Load Custom Config Overrides
+    const savedConfig = getStoredJson("vetcare_master_config", null);
+    if (savedConfig) {
+      Object.assign(MASTER_CONFIG, savedConfig);
+    }
+
+    // 2. Initialize Language Preference
+    const savedLang = localStorage.getItem("vetcare_lang") || "hi";
+    window.setLanguage(savedLang);
+
+    // 3. Restore Role if Already Registered and Session is Active
+    const savedRole = localStorage.getItem("vetcare_registered_role");
+    const sessionStart = localStorage.getItem("vetcare_session_timestamp");
+
+    if (savedRole && sessionStart) {
+      const elapsed = Date.now() - parseInt(sessionStart, 10);
+      if (elapsed < SESSION_DURATION_MS) {
+        initSessionEngine();
+        activateRoleEnvironment(savedRole);
+        return;
+      }
+    }
+
+    // Otherwise show Gateway landing
+    setVisible("screenGateway", true, "flex");
+    setVisible("screenMainApp", false);
+  }
+
+  // DOMContentLoaded Safeguard
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initializeSystem);
+  } else {
+    initializeSystem();
+  }
 
 })(window, document);
