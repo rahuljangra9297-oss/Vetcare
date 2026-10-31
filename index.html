@@ -10,36 +10,86 @@
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
 
-  <!-- Fail-Safe Bridge: Prevents ReferenceErrors prior to main script hydration -->
+  <!-- ========================================================================= -->
+  <!-- BULLETPROOF INLINE BRIDGE (ZERO REFERENCE ERRORS)                         -->
+  <!-- ========================================================================= -->
   <script>
+    window.selectRole = function(role) {
+      try { localStorage.setItem('vetcare_registered_role', role); } catch(e){}
+      var landing = document.getElementById('role-selection-screen');
+      var mainApp = document.getElementById('main-app-container');
+      if (landing) { landing.classList.add('hidden'); landing.style.display = 'none'; }
+      if (mainApp) { mainApp.classList.remove('hidden'); mainApp.style.display = 'block'; }
+      if (window.applyRoleState) {
+        window.applyRoleState(role);
+      } else if (typeof window.selectRoleInternal === 'function') {
+        window.selectRoleInternal(role.toUpperCase());
+      }
+    };
+
+    window.openDoctorDeclarationModal = function() {
+      var m = document.getElementById('doctor-declaration-modal');
+      if (m) { m.classList.remove('hidden'); m.style.display = 'flex'; }
+      else { window.selectRole('doctor'); }
+    };
+
+    window.closeDoctorDeclarationModal = function() {
+      var m = document.getElementById('doctor-declaration-modal');
+      if (m) { m.classList.add('hidden'); m.style.display = 'none'; }
+    };
+
+    window.confirmDoctorRole = function() {
+      var regInput = document.getElementById('doctor-reg-no');
+      if (regInput && regInput.value.trim().length > 0) {
+        try { localStorage.setItem('vetcare_doctor_reg_no', regInput.value.trim()); } catch(e){}
+      }
+      window.closeDoctorDeclarationModal();
+      window.selectRole('doctor');
+    };
+
+    window.openAdminPinModal = function() {
+      var m = document.getElementById('admin-pin-modal');
+      if (m) { m.classList.remove('hidden'); m.style.display = 'flex'; }
+    };
+
+    window.closeAdminPinModal = function() {
+      var m = document.getElementById('admin-pin-modal');
+      if (m) { m.classList.add('hidden'); m.style.display = 'none'; }
+    };
+
     window.openAiKeyModal = function() {
-      const modal = document.getElementById('modalAIKey');
-      if (modal) modal.style.display = 'flex';
-      const keyInput = document.getElementById('inputGeminiKey');
-      const savedKey = localStorage.getItem('vetcare_gemini_key') || '';
-      if (keyInput) keyInput.value = savedKey;
+      var m = document.getElementById('modalAIKey');
+      if (m) { m.classList.remove('hidden'); m.style.display = 'flex'; }
+      var keyInput = document.getElementById('inputGeminiKey');
+      var saved = localStorage.getItem('vetcare_gemini_api_key') || localStorage.getItem('vetcare_gemini_key') || '';
+      if (keyInput) keyInput.value = saved;
     };
 
     window.closeAiKeyModal = function() {
-      const modal = document.getElementById('modalAIKey');
-      if (modal) modal.style.display = 'none';
+      var m = document.getElementById('modalAIKey');
+      if (m) { m.classList.add('hidden'); m.style.display = 'none'; }
     };
 
     window.saveAiApiKey = function() {
-      const keyInput = document.getElementById('inputGeminiKey');
-      if (!keyInput) return;
-      const keyVal = keyInput.value.trim();
-      if (keyVal) {
-        localStorage.setItem('vetcare_gemini_key', keyVal);
-      } else {
-        localStorage.removeItem('vetcare_gemini_key');
+      var inp = document.getElementById('inputGeminiKey');
+      if (inp) {
+        var val = inp.value.trim();
+        if (val) {
+          localStorage.setItem('vetcare_gemini_api_key', val);
+          localStorage.setItem('vetcare_gemini_key', val);
+        } else {
+          localStorage.removeItem('vetcare_gemini_api_key');
+          localStorage.removeItem('vetcare_gemini_key');
+        }
       }
+      window.closeAiKeyModal();
       if (typeof window.syncAiKeyStatus === 'function') {
         window.syncAiKeyStatus();
       } else {
-        const badge = document.getElementById('ai-status-indicator');
+        var badge = document.getElementById('ai-status-indicator');
         if (badge) {
-          if (keyVal) {
+          var k = localStorage.getItem('vetcare_gemini_api_key');
+          if (k) {
             badge.textContent = '🟢 AI सक्रिय';
             badge.className = 'text-[9px] bg-emerald-50 text-emerald-700 font-mono font-bold px-2 py-0.5 rounded-full border border-emerald-300';
           } else {
@@ -48,12 +98,11 @@
           }
         }
       }
-      window.closeAiKeyModal();
     };
 
     window.toggleAiKeyVisibility = function() {
-      const input = document.getElementById('inputGeminiKey');
-      const btn = document.getElementById('btnToggleKeyVisibility');
+      var input = document.getElementById('inputGeminiKey');
+      var btn = document.getElementById('btnToggleKeyVisibility');
       if (!input) return;
       if (input.type === 'password') {
         input.type = 'text';
@@ -62,6 +111,20 @@
         input.type = 'password';
         if (btn) btn.textContent = '👁️';
       }
+    };
+
+    window.setAppLanguage = function(lang) {
+      try { localStorage.setItem('vetcare_selected_lang', lang); } catch(e){}
+      if (typeof window.onLanguageChange === 'function') {
+        window.onLanguageChange(lang);
+      }
+    };
+
+    window.returnToGateway = function() {
+      var landing = document.getElementById('role-selection-screen');
+      var mainApp = document.getElementById('main-app-container');
+      if (landing) { landing.classList.remove('hidden'); landing.style.display = 'flex'; }
+      if (mainApp) { mainApp.classList.add('hidden'); mainApp.style.display = 'none'; }
     };
   </script>
 
@@ -73,11 +136,8 @@
     .active-nav-tab { color: #2563eb !important; font-weight: 800 !important; }
     .active-nav-tab span { transform: scale(1.12); transition: transform 0.2s ease; }
     .chip-active { background-color: #2563eb !important; color: #ffffff !important; border-color: #2563eb !important; font-weight: 700 !important; }
-    @keyframes pulse-warn {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.35; }
-    }
-    .pulse-danger { animation: pulse-warn 1.4s infinite ease-in-out; }
+    @keyframes pulse-subtle { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+    .pulse-danger { animation: pulse-subtle 1.4s infinite ease-in-out; }
     @media print {
       body * { visibility: hidden; }
       #printableSlipArea, #printableSlipArea * { visibility: visible; }
@@ -88,23 +148,25 @@
 <body class="min-h-screen bg-slate-100 flex flex-col justify-between items-center selection:bg-blue-200">
 
   <!-- ========================================================================= -->
-  <!-- 1. ROLE-BASED LANDING SCREEN (FARMER vs CLINICAL DOCTOR)                  -->
+  <!-- 1. ROLE SELECTION LANDING SCREEN                                          -->
   <!-- ========================================================================= -->
-  <div id="screenGateway" class="w-full max-w-4xl min-h-screen p-4 sm:p-8 flex flex-col justify-center items-center space-y-6">
+  <div id="role-selection-screen" class="w-full max-w-4xl min-h-screen p-4 sm:p-8 flex flex-col justify-center items-center space-y-6">
     <div class="text-center space-y-3">
       <div id="gatewayLogoBox" class="w-20 h-20 mx-auto rounded-3xl bg-blue-600 flex items-center justify-center font-black text-white text-3xl shadow-xl shadow-blue-500/30 overflow-hidden">
         <span id="gatewayLogoText">VC</span>
       </div>
       <h1 id="gatewayAppTitle" class="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">Vetcare AI OS</h1>
-      <p id="gatewayTagline" class="text-xs sm:text-sm text-slate-600 max-w-md mx-auto">पशु स्वास्थ्य निदान, 3-स्तरीय क्लिनिकल डिसीजन इंजन एवं संपूर्ण स्मार्ट डेयरी समाधान</p>
+      <p id="gatewayTagline" class="text-xs sm:text-sm text-slate-600 max-w-md mx-auto">
+        पशु स्वास्थ्य निदान, 3-स्तरीय क्लिनिकल डिसीजन इंजन एवं संपूर्ण स्मार्ट डेयरी समाधान
+      </p>
     </div>
 
     <div class="w-full max-w-3xl space-y-3 pt-2">
       <p class="text-xs font-bold text-slate-500 text-center uppercase tracking-wider">कृपया अपना कार्य-क्षेत्र (Role) चुनें:</p>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-        <!-- ROLE 1: SMART DAIRY FARMER -->
-        <div onclick="selectRole('FARMER')" class="bg-gradient-to-br from-emerald-50 via-teal-50/40 to-white border-2 border-emerald-300 hover:border-emerald-500 rounded-3xl p-5 sm:p-6 cursor-pointer shadow-sm hover:shadow-md transition active:scale-98 flex flex-col justify-between space-y-4">
+        <!-- CARD 1: DAIRY FARMER -->
+        <div onclick="window.selectRole('farmer')" class="bg-gradient-to-br from-emerald-50 via-teal-50/40 to-white border-2 border-emerald-300 hover:border-emerald-500 rounded-3xl p-5 sm:p-6 cursor-pointer shadow-sm hover:shadow-md transition active:scale-98 flex flex-col justify-between space-y-4">
           <div class="space-y-2.5">
             <div class="flex items-center justify-between">
               <span class="text-4xl">👨‍🌾</span>
@@ -120,8 +182,8 @@
           </button>
         </div>
 
-        <!-- ROLE 2: REGISTERED VET PRACTITIONER -->
-        <div onclick="openDoctorDeclarationModal()" class="bg-gradient-to-br from-blue-50 via-indigo-50/40 to-white border-2 border-blue-300 hover:border-blue-500 rounded-3xl p-5 sm:p-6 cursor-pointer shadow-sm hover:shadow-md transition active:scale-98 flex flex-col justify-between space-y-4">
+        <!-- CARD 2: VETERINARY DOCTOR -->
+        <div onclick="window.openDoctorDeclarationModal()" class="bg-gradient-to-br from-blue-50 via-indigo-50/40 to-white border-2 border-blue-300 hover:border-blue-500 rounded-3xl p-5 sm:p-6 cursor-pointer shadow-sm hover:shadow-md transition active:scale-98 flex flex-col justify-between space-y-4">
           <div class="space-y-2.5">
             <div class="flex items-center justify-between">
               <span class="text-4xl">🩺</span>
@@ -139,7 +201,7 @@
       </div>
     </div>
 
-    <!-- GATEWAY FOOTER & SECURE ADMIN TRIGGER -->
+    <!-- FOOTER WITH ADMIN PIN TRIGGER -->
     <div class="pt-6 flex flex-col items-center gap-2 text-center">
       <div class="flex items-center gap-3 text-xs text-slate-400">
         <span>🔒 सुरक्षित एन्क्रिप्शन</span>
@@ -148,68 +210,93 @@
         <span>•</span>
         <span>☁️ लाइव AI इंजन</span>
       </div>
-      <button onclick="openAdminPinModal()" class="text-[11px] font-semibold text-slate-400 hover:text-blue-600 underline flex items-center gap-1 mt-1 transition">
-        <span>⚙️ एडमिन कंट्रोल</span>
+      <button onclick="window.openAdminPinModal()" class="text-[11px] font-semibold text-slate-400 hover:text-blue-600 underline flex items-center gap-1 mt-1 transition">
+        <span>⚙️ एडमिन कंट्रोल (PIN: 9297)</span>
       </button>
     </div>
   </div>
 
   <!-- ========================================================================= -->
-  <!-- 2. MAIN APPLICATION SHELL                                                 -->
+  <!-- 2. MAIN APPLICATION CONTAINER (SHELL)                                     -->
   <!-- ========================================================================= -->
-  <div id="screenMainApp" class="hidden w-full max-w-4xl min-h-screen flex flex-col bg-white border-x border-slate-200 shadow-xl pb-24 relative">
+  <div id="main-app-container" class="hidden w-full max-w-4xl min-h-screen flex flex-col bg-white border-x border-slate-200 shadow-xl pb-24 relative">
 
-    <!-- TOP HEADER -->
-    <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 px-3 sm:px-6 py-2.5 flex items-center justify-between shadow-xs">
+    <!-- STICKY TOP HEADER WITH TIMER, MULTI-LANGUAGE & ACTIONS -->
+    <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 px-3 sm:px-6 py-2.5 flex flex-wrap items-center justify-between gap-2 shadow-xs">
+      
+      <!-- BRAND & ROLE BADGE -->
       <div class="flex items-center space-x-2.5">
-        <div id="headerLogoBox" class="w-9 h-9 rounded-2xl bg-blue-600 flex items-center justify-center font-black text-white text-sm shadow-md shadow-blue-500/20 overflow-hidden">
+        <div id="headerLogoBox" class="w-9 h-9 rounded-2xl bg-blue-600 flex items-center justify-center font-black text-white text-sm shadow-md shadow-blue-500/20 overflow-hidden shrink-0">
           <span id="headerLogoText">VC</span>
         </div>
         <div>
           <div class="flex items-center gap-1.5">
-            <h1 class="text-sm sm:text-base font-black leading-tight text-slate-900" id="appHeaderTitle">Vetcare</h1>
+            <h1 class="text-sm sm:text-base font-black leading-tight text-slate-900" id="appHeaderTitle">Vetcare AI OS</h1>
             <span id="ai-status-indicator" class="text-[9px] bg-slate-100 text-slate-500 font-mono font-bold px-2 py-0.5 rounded-full border border-slate-300">⚪ AI निष्क्रिय</span>
           </div>
           <p class="text-[10px] sm:text-[11px] font-bold text-slate-600" id="currentUserRoleBadge">👨‍🌾 स्मार्ट पशुपालक</p>
         </div>
       </div>
 
-      <div class="flex items-center gap-1.5 sm:gap-2">
+      <!-- TIMER BADGE & LANGUAGE SWITCHER -->
+      <div class="flex items-center gap-2">
+        <div id="session-timer-badge" class="px-3 py-1 bg-amber-100 text-amber-800 text-xs font-bold rounded-full border border-amber-200">
+          ⏱️ सत्र: 59:59 शेष
+        </div>
+
+        <select id="language-switcher" onchange="window.setAppLanguage(this.value)" class="bg-slate-50 border border-slate-300 text-slate-800 text-xs rounded-xl px-2.5 py-1 font-bold outline-none cursor-pointer">
+          <option value="hi" selected>हिन्दी</option>
+          <option value="en">English</option>
+          <option value="hinglish">Hinglish</option>
+          <option value="pa">ਪੰਜਾਬੀ</option>
+          <option value="mr">मराठी</option>
+          <option value="gu">ગુજરાતી</option>
+          <option value="bn">বাংলা</option>
+        </select>
+      </div>
+
+      <!-- ACTION BUTTONS -->
+      <div class="flex items-center gap-1.5">
         <!-- AI KEY BUTTON -->
-        <button id="btn-header-ai-key" onclick="window.openAiKeyModal()" class="text-[11px] px-2.5 py-1.5 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-700 font-bold border border-purple-200 shadow-xs flex items-center gap-1.5 transition active:scale-95" title="Gemini AI Key Configure">
+        <button id="btn-header-ai-key" onclick="window.openAiKeyModal()" class="text-[11px] px-2.5 py-1 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-700 font-bold border border-purple-200 shadow-xs flex items-center gap-1 transition active:scale-95" title="Gemini AI Key">
           <span>⚙️</span> <span>AI Key</span>
         </button>
 
+        <!-- HELP BUTTON -->
+        <button onclick="window.switchTab ? window.switchTab('helpdesk') : null" class="text-[11px] px-2 py-1 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold border border-slate-200 transition">
+          💬 <span class="hidden sm:inline">सहायता</span>
+        </button>
+
         <!-- PREMIUM UPGRADE BUTTON -->
-        <button onclick="openPremiumPaymentModal()" class="text-[11px] px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold shadow-xs flex items-center gap-1 transition">
-          <span>💎</span> <span class="hidden sm:inline">प्रीमियम</span> भुगतान
+        <button onclick="window.openPremiumPaymentModal ? window.openPremiumPaymentModal() : null" class="text-[11px] px-2.5 py-1 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold shadow-xs flex items-center gap-1 transition">
+          <span>💎</span> <span class="hidden sm:inline">प्रीमियम</span>
         </button>
 
         <!-- SWITCH ROLE BUTTON -->
-        <button onclick="returnToGateway()" class="text-[11px] px-2 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold border border-slate-200 transition" title="रोल बदलें">
-          🔄 <span class="hidden sm:inline">रोल</span>
+        <button onclick="window.returnToGateway()" class="text-[11px] px-2 py-1 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold border border-slate-200 transition" title="रोल बदलें">
+          🔄 <span class="hidden sm:inline">रोल बदलें</span>
         </button>
       </div>
     </header>
 
-    <!-- MAIN BODY TABS -->
+    <!-- MAIN BODY TABS VIEW -->
     <main class="flex-1 p-3.5 sm:p-6 space-y-5">
 
       <!-- ===================================================================== -->
-      <!-- TAB 1: 3-WAY CLINICAL DIAGNOSIS ENGINE                                -->
+      <!-- TAB 1: CLINICAL DIAGNOSIS ENGINE                                      -->
       <!-- ===================================================================== -->
       <section id="viewDiagnosis" class="space-y-4">
         <!-- 3 Modes Switcher -->
         <div class="grid grid-cols-3 gap-1.5 bg-slate-100 p-1 rounded-2xl border border-slate-200 text-xs">
-          <button onclick="setDiagnosisMode('SYMPTOMS')" id="btnDiagMode1" class="py-2 px-1 rounded-xl bg-blue-600 text-white font-bold transition text-center flex flex-col items-center shadow-xs">
+          <button onclick="window.setDiagnosisMode ? window.setDiagnosisMode('SYMPTOMS') : null" id="btnDiagMode1" class="py-2 px-1 rounded-xl bg-blue-600 text-white font-bold transition text-center flex flex-col items-center shadow-xs">
             <span class="text-sm">🩺</span>
             <span class="text-[10px] sm:text-[11px]">1. लक्षण मैट्रिक्स (%)</span>
           </button>
-          <button onclick="setDiagnosisMode('HYBRID')" id="btnDiagMode2" class="py-2 px-1 rounded-xl text-slate-600 font-medium transition text-center flex flex-col items-center">
+          <button onclick="window.setDiagnosisMode ? window.setDiagnosisMode('HYBRID') : null" id="btnDiagMode2" class="py-2 px-1 rounded-xl text-slate-600 font-medium transition text-center flex flex-col items-center">
             <span class="text-sm">🔍</span>
             <span class="text-[10px] sm:text-[11px]">2. त्वरित खोज</span>
           </button>
-          <button onclick="setDiagnosisMode('DIRECTORY')" id="btnDiagMode3" class="py-2 px-1 rounded-xl text-slate-600 font-medium transition text-center flex flex-col items-center">
+          <button onclick="window.setDiagnosisMode ? window.setDiagnosisMode('DIRECTORY') : null" id="btnDiagMode3" class="py-2 px-1 rounded-xl text-slate-600 font-medium transition text-center flex flex-col items-center">
             <span class="text-sm">📁</span>
             <span class="text-[10px] sm:text-[11px]">3. रोग डायरेक्टरी</span>
           </button>
@@ -221,23 +308,23 @@
             <span class="text-xs font-bold text-blue-700 flex items-center gap-1.5">
               <span>🧬</span> वेटेड सिम्पटम मैट्रिक्स (वैज्ञानिक संभावना %)
             </span>
-            <button onclick="resetSymptomMatrix()" class="text-[11px] text-rose-600 hover:text-rose-700 font-bold">रीसेट ↺</button>
+            <button onclick="window.resetSymptomMatrix ? window.resetSymptomMatrix() : null" class="text-[11px] text-rose-600 hover:text-rose-700 font-bold">रीसेट ↺</button>
           </div>
 
           <!-- Temperature Weight (20%) -->
           <div class="space-y-1.5">
             <span class="text-[11px] font-semibold text-slate-700 block">🌡️ शारीरिक तापमान (20% वेटेज):</span>
             <div class="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar text-xs">
-              <button onclick="toggleMatrixParam('temp', 'HIGH', this)" class="m-chip px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 font-medium shrink-0">तेज़ बुखार (104°F+)</button>
-              <button onclick="toggleMatrixParam('temp', 'NORMAL', this)" class="m-chip px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 font-medium shrink-0">सामान्य (101-102°F)</button>
-              <button onclick="toggleMatrixParam('temp', 'SUB', this)" class="m-chip px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 font-medium shrink-0">कम ताप (&lt;100°F)</button>
+              <button onclick="window.toggleMatrixParam ? window.toggleMatrixParam('temp', 'HIGH', this) : null" class="m-chip px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 font-medium shrink-0">तेज़ बुखार (104°F+)</button>
+              <button onclick="window.toggleMatrixParam ? window.toggleMatrixParam('temp', 'NORMAL', this) : null" class="m-chip px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 font-medium shrink-0">सामान्य (101-102°F)</button>
+              <button onclick="window.toggleMatrixParam ? window.toggleMatrixParam('temp', 'SUB', this) : null" class="m-chip px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 font-medium shrink-0">कम ताप (&lt;100°F)</button>
             </div>
           </div>
 
           <!-- Cardinal Sign Weight (40%) -->
           <div class="space-y-1.5">
             <span class="text-[11px] font-semibold text-rose-600 block">🚨 प्रमुख विशिष्ट लक्षण (Cardinal Sign - 40% वेटेज):</span>
-            <select id="selCardinalSign" onchange="applyMatrixFilters()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs text-slate-800 outline-none font-medium">
+            <select id="selCardinalSign" onchange="window.applyMatrixFilters ? window.applyMatrixFilters() : null" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs text-slate-800 outline-none font-medium">
               <option value="ALL">-- कोई भी विशिष्ट लक्षण चुनें (वैकल्पिक) --</option>
               <option value="NECK_SWELLING">गले व जबड़े के नीचे गर्म दर्दनाक सूजन (गलघोंटू / HS)</option>
               <option value="GAS_SWELLING">पुट्ठे/कंधे में गैस भरी सूजन - चर्र-चर्र आवाज़ (लंगड़ा बुखार / BQ)</option>
@@ -266,13 +353,13 @@
           <div class="space-y-1.5">
             <span class="text-[11px] font-semibold text-slate-700 block">🔬 अतिरिक्त शारीरिक लक्षण (मल्टी-सेलेक्ट):</span>
             <div class="flex flex-wrap gap-1.5 text-xs" id="secSymptomChips">
-              <button onclick="toggleSecSymptom('OFF_FEED', this)" class="s-chip px-2.5 py-1 rounded-xl bg-slate-50 border border-slate-200 text-slate-600">चारा छोड़ना</button>
-              <button onclick="toggleSecSymptom('DULLNESS', this)" class="s-chip px-2.5 py-1 rounded-xl bg-slate-50 border border-slate-200 text-slate-600">सुस्ती / आंखें बंद</button>
-              <button onclick="toggleSecSymptom('DIARRHEA', this)" class="s-chip px-2.5 py-1 rounded-xl bg-slate-50 border border-slate-200 text-slate-600">पतले दस्त</button>
-              <button onclick="toggleSecSymptom('CONSTIPATION', this)" class="s-chip px-2.5 py-1 rounded-xl bg-slate-50 border border-slate-200 text-slate-600">कब्ज / सूखा गोबर</button>
-              <button onclick="toggleSecSymptom('SALIVATION', this)" class="s-chip px-2.5 py-1 rounded-xl bg-slate-50 border border-slate-200 text-slate-600">मुंह से लार टपकना</button>
-              <button onclick="toggleSecSymptom('MILK_DROP', this)" class="s-chip px-2.5 py-1 rounded-xl bg-slate-50 border border-slate-200 text-slate-600">दूध में भारी गिरावट</button>
-              <button onclick="toggleSecSymptom('LIMPING', this)" class="s-chip px-2.5 py-1 rounded-xl bg-slate-50 border border-slate-200 text-slate-600">लंगड़ाना</button>
+              <button onclick="window.toggleSecSymptom ? window.toggleSecSymptom('OFF_FEED', this) : null" class="s-chip px-2.5 py-1 rounded-xl bg-slate-50 border border-slate-200 text-slate-600">चारा छोड़ना</button>
+              <button onclick="window.toggleSecSymptom ? window.toggleSecSymptom('DULLNESS', this) : null" class="s-chip px-2.5 py-1 rounded-xl bg-slate-50 border border-slate-200 text-slate-600">सुस्ती / आंखें बंद</button>
+              <button onclick="window.toggleSecSymptom ? window.toggleSecSymptom('DIARRHEA', this) : null" class="s-chip px-2.5 py-1 rounded-xl bg-slate-50 border border-slate-200 text-slate-600">पतले दस्त</button>
+              <button onclick="window.toggleSecSymptom ? window.toggleSecSymptom('CONSTIPATION', this) : null" class="s-chip px-2.5 py-1 rounded-xl bg-slate-50 border border-slate-200 text-slate-600">कब्ज / सूखा गोबर</button>
+              <button onclick="window.toggleSecSymptom ? window.toggleSecSymptom('SALIVATION', this) : null" class="s-chip px-2.5 py-1 rounded-xl bg-slate-50 border border-slate-200 text-slate-600">मुंह से लार टपकना</button>
+              <button onclick="window.toggleSecSymptom ? window.toggleSecSymptom('MILK_DROP', this) : null" class="s-chip px-2.5 py-1 rounded-xl bg-slate-50 border border-slate-200 text-slate-600">दूध में भारी गिरावट</button>
+              <button onclick="window.toggleSecSymptom ? window.toggleSecSymptom('LIMPING', this) : null" class="s-chip px-2.5 py-1 rounded-xl bg-slate-50 border border-slate-200 text-slate-600">लंगड़ाना</button>
             </div>
           </div>
 
@@ -290,7 +377,7 @@
               type="text" 
               id="unifiedSearchInput" 
               placeholder="खोजें (उदा. गलघोंटू, अफारा, थनैल, चर्र-चर्र, मवाद, Milk Fever)..."
-              oninput="handleAppSearch()"
+              oninput="window.handleAppSearch ? window.handleAppSearch() : null"
               class="w-full bg-white text-slate-900 placeholder-slate-400 rounded-2xl px-4 py-3 text-xs sm:text-sm outline-none shadow-sm font-medium"
             />
           </div>
@@ -299,11 +386,11 @@
         <!-- MODE 3: DIRECTORY TAGS -->
         <div id="panelDiagDirectory" class="hidden space-y-2">
           <div class="flex gap-2 overflow-x-auto pb-1 no-scrollbar text-xs">
-            <button onclick="filterByTag('ALL', this)" class="q-chip px-3.5 py-1.5 rounded-xl bg-blue-600 text-white font-bold shrink-0">सभी रोग (22)</button>
-            <button onclick="filterByTag('BACTERIAL', this)" class="q-chip px-3.5 py-1.5 rounded-xl bg-slate-100 text-slate-700 font-medium shrink-0">🦠 जीवाणु (Bacterial)</button>
-            <button onclick="filterByTag('VIRAL', this)" class="q-chip px-3.5 py-1.5 rounded-xl bg-slate-100 text-slate-700 font-medium shrink-0">🧬 विषाणु (Viral)</button>
-            <button onclick="filterByTag('PROTOZOAL', this)" class="q-chip px-3.5 py-1.5 rounded-xl bg-slate-100 text-slate-700 font-medium shrink-0">🩸 रक्त परजीवी (Protozoal)</button>
-            <button onclick="filterByTag('METABOLIC', this)" class="q-chip px-3.5 py-1.5 rounded-xl bg-slate-100 text-slate-700 font-medium shrink-0">🌾 उपापचयी (Metabolic)</button>
+            <button onclick="window.filterByTag ? window.filterByTag('ALL', this) : null" class="q-chip px-3.5 py-1.5 rounded-xl bg-blue-600 text-white font-bold shrink-0">सभी रोग (22)</button>
+            <button onclick="window.filterByTag ? window.filterByTag('BACTERIAL', this) : null" class="q-chip px-3.5 py-1.5 rounded-xl bg-slate-100 text-slate-700 font-medium shrink-0">🦠 जीवाणु (Bacterial)</button>
+            <button onclick="window.filterByTag ? window.filterByTag('VIRAL', this) : null" class="q-chip px-3.5 py-1.5 rounded-xl bg-slate-100 text-slate-700 font-medium shrink-0">🧬 विषाणु (Viral)</button>
+            <button onclick="window.filterByTag ? window.filterByTag('PROTOZOAL', this) : null" class="q-chip px-3.5 py-1.5 rounded-xl bg-slate-100 text-slate-700 font-medium shrink-0">🩸 रक्त परजीवी (Protozoal)</button>
+            <button onclick="window.filterByTag ? window.filterByTag('METABOLIC', this) : null" class="q-chip px-3.5 py-1.5 rounded-xl bg-slate-100 text-slate-700 font-medium shrink-0">🌾 उपापचयी (Metabolic)</button>
           </div>
         </div>
 
@@ -359,7 +446,7 @@
             </div>
           </div>
 
-          <button onclick="calculateDailyRation()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-2xl shadow-sm transition active:scale-98 flex items-center justify-center gap-1.5">
+          <button onclick="window.calculateDailyRation ? window.calculateDailyRation() : null" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-2xl shadow-sm transition active:scale-98 flex items-center justify-center gap-1.5">
             <span>दैनिक संतुलित आहार की गणना करें</span> <span>⚡</span>
           </button>
 
@@ -388,7 +475,7 @@
       <!-- TAB 4: DIGITAL OPD PRESCRIPTION SLIP (DOCTOR ONLY)                    -->
       <!-- ===================================================================== -->
       <section id="viewRx" class="hidden space-y-4">
-        <!-- DOCTOR LIVE AI BOX INTEGRATION -->
+        <!-- DOCTOR LIVE AI BOX -->
         <div class="bg-gradient-to-r from-purple-900 via-indigo-900 to-slate-900 rounded-3xl p-5 text-white shadow-xl border border-purple-500/30 space-y-3.5">
           <div class="flex items-center justify-between border-b border-purple-800/60 pb-2.5">
             <div class="flex items-center gap-2">
@@ -414,19 +501,18 @@
             <div class="flex gap-2 items-center">
               <button 
                 id="btnDoctorAiAnalyze" 
-                onclick="runDoctorAiQuickSecondOpinion()" 
+                onclick="window.runDoctorAiQuickSecondOpinion ? window.runDoctorAiQuickSecondOpinion() : null" 
                 class="flex-1 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold py-2.5 rounded-xl text-xs sm:text-sm shadow-md shadow-purple-900/40 transition flex items-center justify-center gap-2 active:scale-98"
               >
                 <span>✨ विश्लेषण करें</span>
                 <span id="aiDoctorLoadingSpinner" class="hidden animate-spin text-sm">🔄</span>
               </button>
-              <button onclick="pasteOpdDetailsToAiPrompt()" class="bg-purple-950/70 hover:bg-purple-900 border border-purple-400/30 text-purple-200 font-semibold px-3 py-2.5 rounded-xl text-xs transition" title="वर्तमान OPD डेटा से भरें">
+              <button onclick="window.pasteOpdDetailsToAiPrompt ? window.pasteOpdDetailsToAiPrompt() : null" class="bg-purple-950/70 hover:bg-purple-900 border border-purple-400/30 text-purple-200 font-semibold px-3 py-2.5 rounded-xl text-xs transition" title="वर्तमान OPD डेटा से भरें">
                 📋 पर्ची से लाएं
               </button>
             </div>
           </div>
 
-          <!-- Pulsing Live Second Opinion Output Area -->
           <div id="aiDoctorQuickOutput" class="hidden p-3.5 bg-purple-950/60 border border-purple-500/40 rounded-2xl text-xs text-purple-100 whitespace-pre-wrap leading-relaxed max-h-56 overflow-y-auto"></div>
         </div>
 
@@ -436,7 +522,7 @@
               <span>📝</span> डिजिटल केस पर्ची (OPD Prescription)
             </h2>
             <div class="flex items-center gap-1.5">
-              <button onclick="sendCaseToAIConsultant()" class="text-[10px] bg-purple-50 text-purple-700 font-bold border border-purple-200 px-2 py-1 rounded-lg hover:bg-purple-100 transition">
+              <button onclick="window.sendCaseToAIConsultant ? window.sendCaseToAIConsultant() : null" class="text-[10px] bg-purple-50 text-purple-700 font-bold border border-purple-200 px-2 py-1 rounded-lg hover:bg-purple-100 transition">
                 🤖 AI कंसल्ट
               </button>
               <span class="text-[10px] bg-blue-50 text-blue-700 font-bold px-2 py-1 rounded-lg border border-blue-200">अधिकृत डॉक्टर</span>
@@ -463,7 +549,7 @@
           <div class="grid grid-cols-2 gap-2 text-xs sm:text-sm">
             <div class="flex gap-1.5">
               <input id="opdGPS" type="text" placeholder="GPS लोकेशन" readonly class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 text-xs font-mono" />
-              <button onclick="captureGPSLocation()" id="btnGPS" type="button" class="bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 px-2.5 py-1 rounded-xl text-xs font-semibold shrink-0">📍 GPS</button>
+              <button onclick="window.captureGPSLocation ? window.captureGPSLocation() : null" id="btnGPS" type="button" class="bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 px-2.5 py-1 rounded-xl text-xs font-semibold shrink-0">📍 GPS</button>
             </div>
             <select id="opdPregnancy" class="bg-slate-50 border border-slate-200 rounded-xl p-2 text-xs font-medium">
               <option value="खाली (Non-Pregnant)">खाली (Non-Pregnant)</option>
@@ -477,7 +563,7 @@
           <div>
             <div class="flex justify-between items-center mb-1">
               <label class="text-[11px] font-semibold text-slate-600">दवा, इंजेक्शन डोज़ व रूट (Rx Injections & Medicines):</label>
-              <button onclick="clearRxField()" class="text-[10px] text-rose-500 font-bold hover:underline">खाली करें</button>
+              <button onclick="window.clearRxField ? window.clearRxField() : null" class="text-[10px] text-rose-500 font-bold hover:underline">खाली करें</button>
             </div>
             <textarea id="opdMedicine" rows="3" placeholder="उदा. 1. Inj. Intacef Tazo (3375 mg) - I/V&#10;2. Inj. Melonex Plus (15 ml) - I/M&#10;3. Bolus Anistamin - 2 गोली सुबह/शाम..." class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs sm:text-sm outline-none font-mono"></textarea>
           </div>
@@ -486,11 +572,11 @@
           <div class="grid grid-cols-3 gap-2 text-xs sm:text-sm bg-slate-50 p-3 rounded-2xl border border-slate-200">
             <div>
               <span class="text-[10px] text-slate-500 block font-semibold">कुल फीस (₹)</span>
-              <input id="opdTotalFee" type="number" placeholder="500" oninput="calculateDue()" class="w-full bg-white p-1.5 rounded-lg border border-slate-200 font-bold" />
+              <input id="opdTotalFee" type="number" placeholder="500" oninput="window.calculateDue ? window.calculateDue() : null" class="w-full bg-white p-1.5 rounded-lg border border-slate-200 font-bold" />
             </div>
             <div>
               <span class="text-[10px] text-slate-500 block font-semibold">जमा (₹)</span>
-              <input id="opdPaidFee" type="number" placeholder="300" oninput="calculateDue()" class="w-full bg-white p-1.5 rounded-lg border border-slate-200 font-bold" />
+              <input id="opdPaidFee" type="number" placeholder="300" oninput="window.calculateDue ? window.calculateDue() : null" class="w-full bg-white p-1.5 rounded-lg border border-slate-200 font-bold" />
             </div>
             <div>
               <span class="text-[10px] text-slate-500 block font-semibold">बकाया (₹)</span>
@@ -499,15 +585,15 @@
           </div>
 
           <!-- DISPATCH BUTTONS -->
-          <button onclick="dispatchWhatsAppRx()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-2xl text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-md shadow-emerald-600/20 transition active:scale-98">
+          <button onclick="window.dispatchWhatsAppRx ? window.dispatchWhatsAppRx() : null" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-2xl text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-md shadow-emerald-600/20 transition active:scale-98">
             <span>💬 व्हाट्सएप पर तुरंत पर्ची भेजें (1-Click)</span>
           </button>
           
           <div class="grid grid-cols-2 gap-2 text-xs">
-            <button onclick="printCurrentOPDSlip()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2.5 rounded-xl border border-slate-200 flex items-center justify-center gap-1">
+            <button onclick="window.printCurrentOPDSlip ? window.printCurrentOPDSlip() : null" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2.5 rounded-xl border border-slate-200 flex items-center justify-center gap-1">
               <span>🖨️ पर्ची प्रिंट / PDF</span>
             </button>
-            <button onclick="saveOfflineCaseDirectly()" class="bg-blue-50 hover:bg-blue-100 text-blue-700 font-semibold py-2.5 rounded-xl border border-blue-200 flex items-center justify-center gap-1">
+            <button onclick="window.saveOfflineCaseDirectly ? window.saveOfflineCaseDirectly() : null" class="bg-blue-50 hover:bg-blue-100 text-blue-700 font-semibold py-2.5 rounded-xl border border-blue-200 flex items-center justify-center gap-1">
               <span>💾 रिकॉर्ड सुरक्षित करें</span>
             </button>
           </div>
@@ -528,7 +614,7 @@
           type="text" 
           id="searchRecordsInput" 
           placeholder="🔍 किसान का नाम, मोबाइल या गाँव से खोजें..." 
-          oninput="handleRecordSearch()"
+          oninput="window.handleRecordSearch ? window.handleRecordSearch() : null"
           class="w-full bg-white border border-slate-200 rounded-xl p-2.5 text-xs outline-none font-medium"
         />
         <div id="recordsList" class="space-y-2"></div>
@@ -547,7 +633,7 @@
           </div>
           <p class="text-xs text-slate-500">पशु के लक्षण, तापमान और केस हिस्ट्री डालें। AI क्लिनिकल विभेदक निदान (Differential Diagnosis) प्रदान करेगा।</p>
           <textarea id="aiInputPrompt" rows="4" placeholder="उदा. 4 वर्षीय मुर्राह भैंस, ब्याने के 20 दिन बाद तापमान 105°F, कॉफी रंग का पेशाब, खून की कमी और तेज सांस..." class="w-full bg-slate-50 border border-slate-200 rounded-2xl p-3 outline-none"></textarea>
-          <button onclick="runAIConsultant()" id="btnRunAI" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 rounded-2xl shadow-md shadow-purple-600/20 transition flex items-center justify-center gap-1.5">
+          <button onclick="window.runAIConsultant ? window.runAIConsultant() : null" id="btnRunAI" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 rounded-2xl shadow-md shadow-purple-600/20 transition flex items-center justify-center gap-1.5">
             <span>✨ AI से क्लिनिकल रिपोर्ट मांगें</span>
           </button>
           <div id="aiOutputArea" class="hidden p-4 bg-purple-50/50 border border-purple-200 rounded-2xl whitespace-pre-wrap text-xs leading-relaxed text-slate-800"></div>
@@ -563,7 +649,7 @@
             <h2 class="font-bold text-slate-900 flex items-center gap-1.5" id="financeTitle">
               <span>📊</span> पशुपालक खाता बही (Ledger)
             </h2>
-            <button onclick="openNewKhataModal()" class="text-xs bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 px-3 py-1.5 rounded-xl font-bold transition">
+            <button onclick="window.openNewKhataModal ? window.openNewKhataModal() : null" class="text-xs bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 px-3 py-1.5 rounded-xl font-bold transition">
               + नया खाता एंट्री
             </button>
           </div>
@@ -585,7 +671,7 @@
             type="text" 
             id="searchKhataInput" 
             placeholder="🔍 खाता में किसान का नाम या मोबाइल खोजें..." 
-            oninput="renderKhataList()"
+            oninput="window.renderKhataList ? window.renderKhataList() : null"
             class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs outline-none"
           />
 
@@ -608,18 +694,18 @@
                 ⚠️ कुछ दवाएं न्यूनतम स्टॉक से कम हैं!
               </span>
             </div>
-            <button onclick="openNewInventoryItemModal()" class="text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 px-3 py-1.5 rounded-xl font-bold transition">
+            <button onclick="window.openNewInventoryItemModal ? window.openNewInventoryItemModal() : null" class="text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 px-3 py-1.5 rounded-xl font-bold transition">
               + नया स्टॉक आइटम
             </button>
           </div>
 
           <!-- Inventory Filter Categories -->
           <div class="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar text-xs">
-            <button onclick="filterInventoryCategory('ALL', this)" class="inv-chip px-3 py-1 rounded-xl bg-blue-600 text-white font-bold shrink-0">सभी आइटम</button>
-            <button onclick="filterInventoryCategory('INJECTION', this)" class="inv-chip px-3 py-1 rounded-xl bg-slate-100 text-slate-700 font-medium shrink-0">💉 इंजेक्शन</button>
-            <button onclick="filterInventoryCategory('SEMEN', this)" class="inv-chip px-3 py-1 rounded-xl bg-slate-100 text-slate-700 font-medium shrink-0">🧬 सीमन स्ट्रॉ</button>
-            <button onclick="filterInventoryCategory('BOLUS', this)" class="inv-chip px-3 py-1 rounded-xl bg-slate-100 text-slate-700 font-medium shrink-0">💊 बोलस/गोलियां</button>
-            <button onclick="filterInventoryCategory('TONIC', this)" class="inv-chip px-3 py-1 rounded-xl bg-slate-100 text-slate-700 font-medium shrink-0">🍶 टॉनिक/तरल</button>
+            <button onclick="window.filterInventoryCategory ? window.filterInventoryCategory('ALL', this) : null" class="inv-chip px-3 py-1 rounded-xl bg-blue-600 text-white font-bold shrink-0">सभी आइटम</button>
+            <button onclick="window.filterInventoryCategory ? window.filterInventoryCategory('INJECTION', this) : null" class="inv-chip px-3 py-1 rounded-xl bg-slate-100 text-slate-700 font-medium shrink-0">💉 इंजेक्शन</button>
+            <button onclick="window.filterInventoryCategory ? window.filterInventoryCategory('SEMEN', this) : null" class="inv-chip px-3 py-1 rounded-xl bg-slate-100 text-slate-700 font-medium shrink-0">🧬 सीमन स्ट्रॉ</button>
+            <button onclick="window.filterInventoryCategory ? window.filterInventoryCategory('BOLUS', this) : null" class="inv-chip px-3 py-1 rounded-xl bg-slate-100 text-slate-700 font-medium shrink-0">💊 बोलस/गोलियां</button>
+            <button onclick="window.filterInventoryCategory ? window.filterInventoryCategory('TONIC', this) : null" class="inv-chip px-3 py-1 rounded-xl bg-slate-100 text-slate-700 font-medium shrink-0">🍶 टॉनिक/तरल</button>
           </div>
 
           <div id="inventoryItemsContainer" class="space-y-2"></div>
@@ -635,7 +721,7 @@
             <h2 class="font-bold text-slate-900 flex items-center gap-1.5">
               <span>🎧</span> सहायता केंद्र व सपोर्ट चैटबॉट
             </h2>
-            <button onclick="escalateToAdminWhatsApp()" class="text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-1 rounded-xl font-bold flex items-center gap-1">
+            <button onclick="window.escalateToAdminWhatsApp ? window.escalateToAdminWhatsApp() : null" class="text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-1 rounded-xl font-bold flex items-center gap-1">
               <span>💬</span> एडमिन व्हाट्सएप
             </button>
           </div>
@@ -657,7 +743,7 @@
 
           <div class="p-4 bg-blue-50 border border-blue-200 rounded-2xl text-center space-y-2">
             <p class="font-bold text-blue-900">तकनीकी समस्या या बैंक भुगतान सत्यापन के लिए:</p>
-            <button onclick="escalateToAdminWhatsApp()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl shadow-xs transition flex items-center justify-center gap-1.5">
+            <button onclick="window.escalateToAdminWhatsApp ? window.escalateToAdminWhatsApp() : null" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl shadow-xs transition flex items-center justify-center gap-1.5">
               <span>💬 एडमिन को सीधे व्हाट्सएप करें</span>
             </button>
           </div>
@@ -670,11 +756,11 @@
     <footer class="mt-8 mb-4 px-4 text-center space-y-1.5 text-slate-400 text-[11px]">
       <p id="footerAppBranding">Vetcare Clinical Assistant • सुरक्षित और सत्यापित प्रणाली</p>
       <div class="flex items-center justify-center gap-2">
-        <button onclick="openAdminPinModal()" class="text-slate-400 hover:text-blue-600 underline font-semibold transition">
-          ⚙️ एडमिन कंट्रोल
+        <button onclick="window.openAdminPinModal()" class="text-slate-400 hover:text-blue-600 underline font-semibold transition">
+          ⚙️ एडमिन कंट्रोल (PIN: 9297)
         </button>
         <span>•</span>
-        <button onclick="openPremiumPaymentModal()" class="text-amber-600 hover:underline font-semibold transition">
+        <button onclick="window.openPremiumPaymentModal ? window.openPremiumPaymentModal() : null" class="text-amber-600 hover:underline font-semibold transition">
           💎 अपग्रेड प्लान
         </button>
       </div>
@@ -682,47 +768,47 @@
 
     <!-- BOTTOM FIXED NAVIGATION BAR -->
     <nav class="fixed bottom-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-md border-t border-slate-200 max-w-4xl mx-auto flex items-center justify-around py-2 shadow-lg">
-      <button onclick="switchTab('diagnosis')" id="navDiagnosis" class="flex flex-col items-center active-nav-tab transition text-slate-500">
+      <button onclick="window.switchTab ? window.switchTab('diagnosis') : null" id="navDiagnosis" class="flex flex-col items-center active-nav-tab transition text-slate-500">
         <span class="text-lg">🩺</span>
         <span class="text-[10px] sm:text-xs mt-0.5">रोग निदान</span>
       </button>
       
-      <button onclick="switchTab('rx')" id="navRx" class="hidden flex-col items-center text-slate-400 hover:text-slate-700 transition">
+      <button onclick="window.switchTab ? window.switchTab('rx') : null" id="navRx" class="hidden flex-col items-center text-slate-400 hover:text-slate-700 transition">
         <span class="text-lg">📝</span>
         <span class="text-[10px] sm:text-xs mt-0.5">ओपीडी</span>
       </button>
 
-      <button onclick="switchTab('records')" id="navRecords" class="hidden flex-col items-center text-slate-400 hover:text-slate-700 transition">
+      <button onclick="window.switchTab ? window.switchTab('records') : null" id="navRecords" class="hidden flex-col items-center text-slate-400 hover:text-slate-700 transition">
         <span class="text-lg">📂</span>
         <span class="text-[10px] sm:text-xs mt-0.5">रिकॉर्ड</span>
       </button>
 
-      <button onclick="switchTab('inventory')" id="navInventory" class="hidden flex-col items-center text-slate-400 hover:text-slate-700 transition">
+      <button onclick="window.switchTab ? window.switchTab('inventory') : null" id="navInventory" class="hidden flex-col items-center text-slate-400 hover:text-slate-700 transition">
         <span class="text-lg">💊</span>
         <span class="text-[10px] sm:text-xs mt-0.5">स्टॉक</span>
       </button>
 
-      <button onclick="switchTab('ai')" id="navAI" class="hidden flex-col items-center text-slate-400 hover:text-slate-700 transition">
+      <button onclick="window.switchTab ? window.switchTab('ai') : null" id="navAI" class="hidden flex-col items-center text-slate-400 hover:text-slate-700 transition">
         <span class="text-lg">🤖</span>
         <span class="text-[10px] sm:text-xs mt-0.5">AI सर्जन</span>
       </button>
 
-      <button onclick="switchTab('breeding')" id="navBreeding" class="flex flex-col items-center text-slate-400 hover:text-slate-700 transition">
+      <button onclick="window.switchTab ? window.switchTab('breeding') : null" id="navBreeding" class="flex flex-col items-center text-slate-400 hover:text-slate-700 transition">
         <span class="text-lg">🧬</span>
         <span class="text-[10px] sm:text-xs mt-0.5">प्रजनन</span>
       </button>
 
-      <button onclick="switchTab('feed')" id="navFeed" class="flex flex-col items-center text-slate-400 hover:text-slate-700 transition">
+      <button onclick="window.switchTab ? window.switchTab('feed') : null" id="navFeed" class="flex flex-col items-center text-slate-400 hover:text-slate-700 transition">
         <span class="text-lg">🌾</span>
         <span class="text-[10px] sm:text-xs mt-0.5">पशु आहार</span>
       </button>
 
-      <button onclick="switchTab('finance')" id="navFinance" class="flex flex-col items-center text-slate-400 hover:text-slate-700 transition">
+      <button onclick="window.switchTab ? window.switchTab('finance') : null" id="navFinance" class="flex flex-col items-center text-slate-400 hover:text-slate-700 transition">
         <span class="text-lg">💰</span>
         <span class="text-[10px] sm:text-xs mt-0.5" id="navFinanceLabel">खाता बही</span>
       </button>
 
-      <button onclick="switchTab('helpdesk')" id="navHelpdesk" class="flex flex-col items-center text-slate-400 hover:text-slate-700 transition">
+      <button onclick="window.switchTab ? window.switchTab('helpdesk') : null" id="navHelpdesk" class="flex flex-col items-center text-slate-400 hover:text-slate-700 transition">
         <span class="text-lg">🎧</span>
         <span class="text-[10px] sm:text-xs mt-0.5">सपोर्ट</span>
       </button>
@@ -730,7 +816,86 @@
   </div>
 
   <!-- ========================================================================= -->
-  <!-- MODAL: GEMINI AI API KEY (INTEGRATED)                                    -->
+  <!-- MODAL: DOCTOR LEGAL DECLARATION (IVC ACT 1984)                            -->
+  <!-- ========================================================================= -->
+  <div id="doctor-declaration-modal" style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+    <div class="bg-white border border-slate-200 rounded-3xl max-w-md w-full p-6 space-y-4 shadow-2xl">
+      <div class="flex justify-between items-center border-b border-slate-100 pb-2.5">
+        <h3 class="text-sm font-bold text-slate-900 flex items-center gap-1.5">
+          <span>🩺</span> वैधानिक क्लिनिकल स्व-घोषणा (IVC Act 1984)
+        </h3>
+        <button onclick="window.closeDoctorDeclarationModal()" class="text-slate-400 hover:text-slate-600 text-sm font-bold">✕</button>
+      </div>
+      
+      <div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl text-xs sm:text-sm text-slate-600 space-y-2 leading-relaxed">
+        <p>1. मैं पुष्टि करता हूँ कि मैं एक पंजीकृत पशु चिकित्सा व्यवसायी (Registered Veterinary Practitioner) हूँ।</p>
+        <p>2. यह क्लिनिकल मॉड्यूल केवल निर्णय सहायता हेतु है। दवा की खुराक, रूट एवं रोगी पशु की अंतिम जिम्मेदारी प्रत्यक्ष परीक्षक की होगी।</p>
+      </div>
+
+      <div class="space-y-2">
+        <label class="block text-[11px] font-bold text-slate-700">राज्य पशु चिकित्सा परिषद पंजीकरण संख्या (State VCI Reg. No.):</label>
+        <input 
+          id="doctor-reg-no" 
+          type="text" 
+          placeholder="उदा. HVC-2018-09297" 
+          class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs font-mono font-bold text-slate-800 outline-none focus:border-blue-600" 
+        />
+        <label class="flex items-start gap-2 text-[11px] text-slate-600 pt-1 cursor-pointer">
+          <input type="checkbox" id="chk-ivc-compliance" checked class="mt-0.5 rounded text-blue-600" />
+          <span>मैं भारतीय पशु चिकित्सा परिषद अधिनियम (IVC Act 1984) के समस्त नियमों का पालन करने की प्रतिज्ञा करता हूँ।</span>
+        </label>
+      </div>
+
+      <div class="flex gap-2.5 pt-2">
+        <button onclick="window.closeDoctorDeclarationModal()" class="w-1/3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3 rounded-2xl text-xs sm:text-sm transition">
+          रद्द करें
+        </button>
+        <button onclick="window.confirmDoctorRole()" class="w-2/3 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-2xl text-xs sm:text-sm shadow-md transition active:scale-98">
+          मैं सहमत हूँ • पुष्टि करें ➔
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL: ADMIN MASTER PIN (9297)                                            -->
+  <!-- ========================================================================= -->
+  <div id="admin-pin-modal" style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+    <div class="bg-white border border-slate-200 rounded-3xl max-w-xs w-full p-6 space-y-4 shadow-2xl text-center">
+      <div class="w-12 h-12 bg-blue-100 text-blue-700 rounded-2xl mx-auto flex items-center justify-center text-2xl font-bold">
+        🔒
+      </div>
+      <div>
+        <h3 class="text-sm font-bold text-slate-900">4-Digit Master Admin PIN</h3>
+        <p class="text-xs text-slate-500 mt-1">सुपर एडमिन सुरक्षा जांच हेतु PIN दर्ज करें</p>
+      </div>
+
+      <div>
+        <input 
+          id="admin-pin-input" 
+          type="password" 
+          maxlength="4" 
+          pattern="[0-9]*" 
+          inputmode="numeric" 
+          placeholder="••••"
+          class="w-full text-center tracking-widest text-2xl font-mono py-2.5 border-2 border-slate-200 rounded-2xl outline-none focus:border-blue-600 transition"
+        />
+        <p id="pinErrorMessage" class="text-rose-600 text-[11px] font-bold mt-1.5 hidden">गलत PIN! कृपया पुनः प्रयास करें।</p>
+      </div>
+
+      <div class="flex gap-2">
+        <button onclick="window.closeAdminPinModal()" class="w-1/3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2.5 rounded-xl text-xs transition">
+          रद्द
+        </button>
+        <button onclick="window.verifyAdminPIN ? window.verifyAdminPIN() : null" class="w-2/3 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl text-xs shadow-md transition active:scale-98">
+          प्रवेश करें (Login) ➔
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL: GEMINI AI API KEY                                                  -->
   <!-- ========================================================================= -->
   <div id="modalAIKey" style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
     <div class="bg-white border border-slate-200 rounded-3xl max-w-sm w-full p-5 space-y-4 shadow-2xl text-xs sm:text-sm">
@@ -781,36 +946,7 @@
   </div>
 
   <!-- ========================================================================= -->
-  <!-- MODAL: DOCTOR CLINICAL SELF-DECLARATION                                   -->
-  <!-- ========================================================================= -->
-  <div id="modalDoctorDeclaration" style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-    <div class="bg-white border border-slate-200 rounded-3xl max-w-md w-full p-6 space-y-4 shadow-2xl">
-      <div class="flex justify-between items-center border-b border-slate-100 pb-2.5">
-        <h3 class="text-sm font-bold text-slate-900 flex items-center gap-1.5">
-          <span>🩺</span> वैधानिक क्लिनिकल स्व-घोषणा (Practitioner Declaration)
-        </h3>
-        <button onclick="closeDoctorDeclarationModal()" class="text-slate-400 hover:text-slate-600 text-sm font-bold">✕</button>
-      </div>
-      
-      <div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl text-xs sm:text-sm text-slate-600 space-y-2 leading-relaxed">
-        <p>1. मैं पुष्टि करता हूँ कि मैं एक पंजीकृत पशु चिकित्सक (Veterinary Doctor) / पैरावेट / अधिकृत पशु स्वास्थ्य कार्यकर्ता हूँ।</p>
-        <p>2. मैं स्वीकार करता हूँ कि इस ऐप में दी गई दवाएं, इंजेक्शन, डोज़ और उपचार केवल क्लिनिकल सहायता एवं सन्दर्भ हेतु हैं।</p>
-        <p>3. मरीज पशु के प्रत्यक्ष शारीरिक परीक्षण, डायग्नोसिस और उपचार के समस्त क्लिनिकल व वैधानिक परिणामों की जिम्मेदारी मेरी स्वयं की होगी।</p>
-      </div>
-
-      <div class="flex gap-2.5 pt-2">
-        <button onclick="closeDoctorDeclarationModal()" class="w-1/3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3 rounded-2xl text-xs sm:text-sm transition">
-          रद्द करें
-        </button>
-        <button onclick="acceptDoctorDeclaration()" class="w-2/3 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-2xl text-xs sm:text-sm shadow-md transition active:scale-98">
-          मैं सहमत हूँ • प्रवेश करें ➔
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ========================================================================= -->
-  <!-- MODAL: PREMIUM PAYMENT MODAL (DUAL BANK SBI/PNB, QR & UPI)                -->
+  <!-- MODAL: PREMIUM PAYMENT GATEWAY (SBI / PNB DUAL-BANK)                      -->
   <!-- ========================================================================= -->
   <div id="modalPremiumPayment" style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center p-3.5 sm:p-4 bg-slate-900/70 backdrop-blur-xs overflow-y-auto">
     <div class="bg-white border border-slate-200 rounded-3xl max-w-md w-full p-5 sm:p-6 space-y-4 shadow-2xl my-auto text-xs sm:text-sm">
@@ -822,16 +958,16 @@
             <p class="text-[11px] text-slate-500">Dual-Bank अधिकृत मर्चेंट गेटवे</p>
           </div>
         </div>
-        <button onclick="closePremiumPaymentModal()" class="text-slate-400 hover:text-slate-600 font-bold text-base">✕</button>
+        <button onclick="window.closePremiumPaymentModal ? window.closePremiumPaymentModal() : null" class="text-slate-400 hover:text-slate-600 font-bold text-base">✕</button>
       </div>
 
       <!-- Plan Selector -->
       <div class="grid grid-cols-2 gap-2 bg-slate-100 p-1 rounded-2xl">
-        <button id="btnPlanMonthly" onclick="selectPaymentPlan('MONTHLY')" class="py-2 rounded-xl bg-blue-600 text-white font-bold text-center transition">
+        <button id="btnPlanMonthly" onclick="window.selectPaymentPlan ? window.selectPaymentPlan('MONTHLY') : null" class="py-2 rounded-xl bg-blue-600 text-white font-bold text-center transition">
           <span class="block text-[11px]">मासिक प्लान</span>
           <span class="text-xs font-black" id="dispPlanMonthlyPrice">₹199 / माह</span>
         </button>
-        <button id="btnPlanAnnual" onclick="selectPaymentPlan('ANNUAL')" class="py-2 rounded-xl text-slate-700 font-medium text-center transition">
+        <button id="btnPlanAnnual" onclick="window.selectPaymentPlan ? window.selectPaymentPlan('ANNUAL') : null" class="py-2 rounded-xl text-slate-700 font-medium text-center transition">
           <span class="block text-[11px]">वार्षिक प्लान (बचत)</span>
           <span class="text-xs font-black" id="dispPlanAnnualPrice">₹1,499 / वर्ष</span>
         </button>
@@ -839,10 +975,10 @@
 
       <!-- Bank Switch Tabs -->
       <div class="flex border border-slate-200 rounded-xl overflow-hidden text-xs">
-        <button id="btnTabSBI" onclick="switchBankTab('SBI')" class="flex-1 py-2 font-bold bg-blue-50 text-blue-700 text-center transition">
+        <button id="btnTabSBI" onclick="window.switchBankTab ? window.switchBankTab('SBI') : null" class="flex-1 py-2 font-bold bg-blue-50 text-blue-700 text-center transition">
           🏛️ भारतीय स्टेट बैंक (SBI)
         </button>
-        <button id="btnTabPNB" onclick="switchBankTab('PNB')" class="flex-1 py-2 font-medium bg-slate-50 text-slate-600 text-center transition">
+        <button id="btnTabPNB" onclick="window.switchBankTab ? window.switchBankTab('PNB') : null" class="flex-1 py-2 font-medium bg-slate-50 text-slate-600 text-center transition">
           🏛️ पंजाब नेशनल बैंक (PNB)
         </button>
       </div>
@@ -851,11 +987,11 @@
       <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3.5 space-y-2 font-mono text-xs text-slate-800">
         <div class="flex justify-between">
           <span class="text-slate-500">खाता धारक (Payee):</span>
-          <span id="dispPayeeName" class="font-bold font-sans">VETCARE SOLUTIONS</span>
+          <span id="dispPayeeName" class="font-bold font-sans">Vetcare Services</span>
         </div>
         <div class="flex justify-between">
           <span class="text-slate-500">UPI ID:</span>
-          <span id="dispUPIId" class="font-bold text-blue-700">vetcare@sbi</span>
+          <span id="dispUPIId" class="font-bold text-blue-700">rahuljangra9297@oksbi</span>
         </div>
         <div class="flex justify-between">
           <span class="text-slate-500">खाता संख्या (A/C):</span>
@@ -880,52 +1016,15 @@
         ⚡ किसी भी UPI ऐप से सीधे पे करें (₹<span id="directUPIAmount">199</span>)
       </a>
 
-      <!-- Hindi Warning/Disclaimer Banner -->
+      <!-- Warning/Disclaimer Banner -->
       <div class="p-3 bg-amber-50 border border-amber-200 rounded-2xl text-amber-950 text-[11px] space-y-1">
         <p class="font-bold">⚠️ महत्वपूर्ण सूचना:</p>
         <p>भुगतान पूर्ण करने के उपरांत भुगतान का स्क्रीनशॉट या UTR संदर्भ संख्या नीचे दिए गए एडमिन नंबर पर व्हाट्सएप करें ताकि आपका प्रीमियम एक्टिवेट किया जा सके।</p>
       </div>
 
-      <button onclick="sendPaymentProofWhatsApp()" class="w-full bg-slate-900 hover:bg-black text-white font-semibold py-2.5 rounded-2xl text-xs transition flex items-center justify-center gap-1.5">
+      <button onclick="window.sendPaymentProofWhatsApp ? window.sendPaymentProofWhatsApp() : null" class="w-full bg-slate-900 hover:bg-black text-white font-semibold py-2.5 rounded-2xl text-xs transition flex items-center justify-center gap-1.5">
         <span>💬 व्हाट्सएप पर स्क्रीनशॉट भेजें</span>
       </button>
-    </div>
-  </div>
-
-  <!-- ========================================================================= -->
-  <!-- MODAL: SUPER ADMIN PIN VERIFICATION MODAL                                 -->
-  <!-- ========================================================================= -->
-  <div id="modalAdminPIN" style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-    <div class="bg-white border border-slate-200 rounded-3xl max-w-xs w-full p-6 space-y-4 shadow-2xl text-center">
-      <div class="w-12 h-12 bg-blue-100 text-blue-700 rounded-2xl mx-auto flex items-center justify-center text-2xl font-bold">
-        🔒
-      </div>
-      <div>
-        <h3 class="text-sm font-bold text-slate-900">4-Digit Master Admin PIN</h3>
-        <p class="text-xs text-slate-500 mt-1">सुपर एडमिन सुरक्षा जांच हेतु PIN दर्ज करें</p>
-      </div>
-
-      <div>
-        <input 
-          id="inputAdminPIN" 
-          type="password" 
-          maxlength="4" 
-          pattern="[0-9]*" 
-          inputmode="numeric" 
-          placeholder="••••"
-          class="w-full text-center tracking-widest text-2xl font-mono py-2.5 border-2 border-slate-200 rounded-2xl outline-none focus:border-blue-600 transition"
-        />
-        <p id="pinErrorMessage" class="text-rose-600 text-[11px] font-bold mt-1.5 hidden">गलत PIN! कृपया पुनः प्रयास करें।</p>
-      </div>
-
-      <div class="flex gap-2">
-        <button onclick="closeAdminPinModal()" class="w-1/3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2.5 rounded-xl text-xs transition">
-          रद्द
-        </button>
-        <button onclick="verifyAdminPIN()" class="w-2/3 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl text-xs shadow-md transition active:scale-98">
-          प्रवेश करें (Login) ➔
-        </button>
-      </div>
     </div>
   </div>
 
@@ -933,7 +1032,6 @@
   <!-- MODAL: SUPER ADMIN DASHBOARD MODAL                                        -->
   <!-- ========================================================================= -->
   <div id="modalAdminDashboard" style="display: none;" class="fixed inset-0 z-50 flex flex-col bg-white overflow-y-auto">
-    <!-- Super Admin Header -->
     <header class="sticky top-0 z-10 bg-slate-900 text-white px-4 sm:px-8 py-3.5 flex items-center justify-between shadow-md">
       <div class="flex items-center gap-2.5">
         <span class="text-2xl">👑</span>
@@ -942,39 +1040,35 @@
           <p class="text-[10px] text-slate-400">ग्लोबल कॉन्फ़िगरेशन, पेमेंट गेटवे, ब्रांडिंग व मैट्रिक्स</p>
         </div>
       </div>
-      <button onclick="closeAdminDashboard()" class="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-300 hover:text-white font-bold text-base transition">
+      <button onclick="window.closeAdminDashboard ? window.closeAdminDashboard() : null" class="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-300 hover:text-white font-bold text-base transition">
         ✕
       </button>
     </header>
 
-    <!-- Super Admin Body & Tabs -->
     <div class="max-w-4xl w-full mx-auto p-4 sm:p-6 space-y-6 flex-1 text-xs sm:text-sm">
-
-      <!-- Admin Tab Buttons -->
       <div class="flex border-b border-slate-200 overflow-x-auto no-scrollbar gap-2 pb-1 font-bold text-slate-600">
-        <button onclick="switchAdminTab('PAYMENT')" id="tabBtnAdminPay" class="px-4 py-2 border-b-2 border-blue-600 text-blue-600 shrink-0">
+        <button onclick="window.switchAdminTab ? window.switchAdminTab('PAYMENT') : null" id="tabBtnAdminPay" class="px-4 py-2 border-b-2 border-blue-600 text-blue-600 shrink-0">
           💳 बैंक व पेमेंट सेटिंग्स (Payment Settings)
         </button>
-        <button onclick="switchAdminTab('BRANDING')" id="tabBtnAdminBrand" class="px-4 py-2 border-b-2 border-transparent hover:text-slate-900 shrink-0">
+        <button onclick="window.switchAdminTab ? window.switchAdminTab('BRANDING') : null" id="tabBtnAdminBrand" class="px-4 py-2 border-b-2 border-transparent hover:text-slate-900 shrink-0">
           🖼️ ब्रांडिंग व पहचान (Branding Settings)
         </button>
-        <button onclick="switchAdminTab('SUPPORT')" id="tabBtnAdminSupport" class="px-4 py-2 border-b-2 border-transparent hover:text-slate-900 shrink-0">
+        <button onclick="window.switchAdminTab ? window.switchAdminTab('SUPPORT') : null" id="tabBtnAdminSupport" class="px-4 py-2 border-b-2 border-transparent hover:text-slate-900 shrink-0">
           📞 हेल्पलाइन व सपोर्ट (Support Settings)
         </button>
-        <button onclick="switchAdminTab('METRICS')" id="tabBtnAdminMetrics" class="px-4 py-2 border-b-2 border-transparent hover:text-slate-900 shrink-0">
+        <button onclick="window.switchAdminTab ? window.switchAdminTab('METRICS') : null" id="tabBtnAdminMetrics" class="px-4 py-2 border-b-2 border-transparent hover:text-slate-900 shrink-0">
           📊 डेटा ओवरव्यू (Data Metrics)
         </button>
       </div>
 
-      <!-- TAB 1: 💳 बैंक व पेमेंट सेटिंग्स (Payment Settings) -->
+      <!-- TAB 1: Payment Settings -->
       <div id="adminPanelPayment" class="space-y-4">
         <div class="bg-slate-50 border border-slate-200 rounded-3xl p-4 sm:p-5 space-y-3.5">
           <h3 class="text-xs sm:text-sm font-bold text-slate-900 border-b border-slate-200 pb-2">मर्चेंट एवं प्लान मूल्य (Pricing)</h3>
-          
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
               <label class="block text-slate-600 text-[11px] font-semibold mb-1">Payee Name</label>
-              <input id="cfgPayeeName" type="text" placeholder="उदा. VETCARE CLINICAL SOLUTIONS" class="w-full bg-white border border-slate-200 rounded-xl p-2.5 font-medium outline-none" />
+              <input id="cfgPayeeName" type="text" placeholder="उदा. Vetcare Services" class="w-full bg-white border border-slate-200 rounded-xl p-2.5 font-medium outline-none" />
             </div>
             <div>
               <label class="block text-slate-600 text-[11px] font-semibold mb-1">Monthly Plan Price (₹)</label>
@@ -995,7 +1089,7 @@
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 font-mono">
             <div>
               <label class="block text-slate-600 text-[11px] font-sans font-semibold mb-1">Primary SBI UPI ID</label>
-              <input id="cfgSbiUpi" type="text" placeholder="vetcare@sbi" class="w-full bg-white border border-slate-200 rounded-xl p-2.5 outline-none font-bold text-blue-700" />
+              <input id="cfgSbiUpi" type="text" placeholder="rahuljangra9297@oksbi" class="w-full bg-white border border-slate-200 rounded-xl p-2.5 outline-none font-bold text-blue-700" />
             </div>
             <div>
               <label class="block text-slate-600 text-[11px] font-sans font-semibold mb-1">SBI A/C Number</label>
@@ -1016,7 +1110,7 @@
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 font-mono">
             <div>
               <label class="block text-slate-600 text-[11px] font-sans font-semibold mb-1">Backup PNB UPI ID</label>
-              <input id="cfgPnbUpi" type="text" placeholder="vetcare@pnb" class="w-full bg-white border border-slate-200 rounded-xl p-2.5 outline-none font-bold text-amber-800" />
+              <input id="cfgPnbUpi" type="text" placeholder="rahuljangra9297-1@okicici" class="w-full bg-white border border-slate-200 rounded-xl p-2.5 outline-none font-bold text-amber-800" />
             </div>
             <div>
               <label class="block text-slate-600 text-[11px] font-sans font-semibold mb-1">PNB A/C Number</label>
@@ -1030,11 +1124,10 @@
         </div>
       </div>
 
-      <!-- TAB 2: 🖼️ ब्रांडिंग व पहचान (Branding Settings) -->
+      <!-- TAB 2: Branding Settings -->
       <div id="adminPanelBranding" class="hidden space-y-4">
         <div class="bg-slate-50 border border-slate-200 rounded-3xl p-4 sm:p-5 space-y-3.5">
           <h3 class="text-xs sm:text-sm font-bold text-slate-900 border-b border-slate-200 pb-2">ऐप पहचान एवं ब्रांडिंग</h3>
-          
           <div class="space-y-3">
             <div>
               <label class="block text-slate-600 text-[11px] font-semibold mb-1">App Title</label>
@@ -1043,7 +1136,6 @@
             <div>
               <label class="block text-slate-600 text-[11px] font-semibold mb-1">Header Logo Image URL</label>
               <input id="cfgLogoUrl" type="url" placeholder="https://domain.com/logo.png" class="w-full bg-white border border-slate-200 rounded-xl p-2.5 font-mono text-xs outline-none" />
-              <p class="text-[10px] text-slate-400 mt-1">यदि खाली छोड़ेंगे, तो डिफॉल्ट 'VC' मोनो प्रयुक्त होगा।</p>
             </div>
             <div>
               <label class="block text-slate-600 text-[11px] font-semibold mb-1">Clinic/Company Tagline</label>
@@ -1053,29 +1145,28 @@
         </div>
       </div>
 
-      <!-- TAB 3: 📞 हेल्पलाइन व सपोर्ट (Support Settings) -->
+      <!-- TAB 3: Support Settings -->
       <div id="adminPanelSupport" class="hidden space-y-4">
         <div class="bg-slate-50 border border-slate-200 rounded-3xl p-4 sm:p-5 space-y-3.5">
           <h3 class="text-xs sm:text-sm font-bold text-slate-900 border-b border-slate-200 pb-2">हेल्पलाइन व सुरक्षा प्रबंधन</h3>
-          
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label class="block text-slate-600 text-[11px] font-semibold mb-1">Target Admin WhatsApp Support Number (10 digits)</label>
-              <input id="cfgAdminWhatsApp" type="tel" maxlength="10" placeholder="9876543210" class="w-full bg-white border border-slate-200 rounded-xl p-2.5 font-bold outline-none" />
+              <label class="block text-slate-600 text-[11px] font-semibold mb-1">Admin WhatsApp Support Number</label>
+              <input id="cfgAdminWhatsApp" type="tel" maxlength="10" placeholder="9297000000" class="w-full bg-white border border-slate-200 rounded-xl p-2.5 font-bold outline-none" />
             </div>
             <div>
-              <label class="block text-slate-600 text-[11px] font-semibold mb-1">Master Admin PIN बदलें (4 digits)</label>
-              <input id="cfgAdminPIN" type="password" maxlength="4" placeholder="1234" class="w-full bg-white border border-slate-200 rounded-xl p-2.5 font-mono font-bold outline-none" />
+              <label class="block text-slate-600 text-[11px] font-semibold mb-1">Master Admin PIN (4 digits)</label>
+              <input id="cfgAdminPIN" type="password" maxlength="4" placeholder="9297" class="w-full bg-white border border-slate-200 rounded-xl p-2.5 font-mono font-bold outline-none" />
             </div>
           </div>
         </div>
       </div>
 
-      <!-- TAB 4: 📊 डेटा ओवरव्यू (Data Metrics) -->
+      <!-- TAB 4: Data Metrics -->
       <div id="adminPanelMetrics" class="hidden space-y-4">
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div class="bg-blue-50 border border-blue-200 rounded-2xl p-4 text-center">
-            <span class="text-xs text-blue-700 block font-semibold">Total Patients / OPD Slips Generated</span>
+            <span class="text-xs text-blue-700 block font-semibold">Total OPD Slips Generated</span>
             <strong id="metricTotalOPD" class="text-2xl font-black text-blue-900">0</strong>
           </div>
           <div class="bg-rose-50 border border-rose-200 rounded-2xl p-4 text-center">
@@ -1083,37 +1174,35 @@
             <strong id="metricTotalDues" class="text-2xl font-black text-rose-900">₹0</strong>
           </div>
           <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-center">
-            <span class="text-xs text-amber-700 block font-semibold">Low-Stock Inventory Items Count</span>
+            <span class="text-xs text-amber-700 block font-semibold">Low-Stock Inventory Items</span>
             <strong id="metricLowStock" class="text-2xl font-black text-amber-900">0</strong>
           </div>
         </div>
 
         <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-2">
-          <h4 class="font-bold text-slate-800">बैकअप व डेटा रीसेट</h4>
-          <p class="text-slate-500 text-xs">लोकल डेटा को JSON के रूप में एक्सपोर्ट करें या टेस्ट डेटा रीसेट करें।</p>
+          <h4 class="font-bold text-slate-800">डेटा बैकअप व रीसेट</h4>
           <div class="flex gap-2 flex-wrap">
-            <button onclick="exportDataBackupJSON()" class="bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold px-3 py-2 rounded-xl text-xs">
+            <button onclick="window.exportDataBackupJSON ? window.exportDataBackupJSON() : null" class="bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold px-3 py-2 rounded-xl text-xs">
               📥 बैकअप JSON डाउनलोड करें
             </button>
-            <button onclick="clearDemoDataOnly()" class="bg-rose-100 hover:bg-rose-200 text-rose-700 font-bold px-3 py-2 rounded-xl text-xs">
+            <button onclick="window.clearDemoDataOnly ? window.clearDemoDataOnly() : null" class="bg-rose-100 hover:bg-rose-200 text-rose-700 font-bold px-3 py-2 rounded-xl text-xs">
               🗑️ टेस्ट डेटा रीसेट
             </button>
           </div>
         </div>
       </div>
 
-      <!-- ACTION BUTTON: SAVE ALL SETTINGS -->
+      <!-- SAVE SETTINGS -->
       <div class="pt-4 border-t border-slate-200">
-        <button onclick="saveAllAdminSettings()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black py-3.5 rounded-2xl shadow-lg shadow-emerald-600/30 text-sm transition active:scale-98 flex items-center justify-center gap-2">
+        <button onclick="window.saveAllAdminSettings ? window.saveAllAdminSettings() : null" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black py-3.5 rounded-2xl shadow-lg shadow-emerald-600/30 text-sm transition active:scale-98 flex items-center justify-center gap-2">
           <span>💾 सभी बदलाव सुरक्षित करें (Save All Settings)</span>
         </button>
       </div>
-
     </div>
   </div>
 
   <!-- ========================================================================= -->
-  <!-- MODAL: NEW KHATA ENTRY MODAL                                              -->
+  <!-- MODAL: NEW KHATA ENTRY                                                    -->
   <!-- ========================================================================= -->
   <div id="modalNewKhata" style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
     <div class="bg-white border border-slate-200 rounded-3xl max-w-sm w-full p-5 space-y-3.5 shadow-2xl text-xs sm:text-sm">
@@ -1121,7 +1210,7 @@
         <h3 class="font-bold text-slate-900 flex items-center gap-1.5">
           <span>💰</span> नया खाता लेन-देन दर्ज करें
         </h3>
-        <button onclick="closeNewKhataModal()" class="text-slate-400 hover:text-slate-600 font-bold text-base">✕</button>
+        <button onclick="window.closeNewKhataModal ? window.closeNewKhataModal() : null" class="text-slate-400 hover:text-slate-600 font-bold text-base">✕</button>
       </div>
 
       <div class="space-y-2.5">
@@ -1138,14 +1227,14 @@
       </div>
 
       <div class="flex gap-2 pt-1">
-        <button onclick="closeNewKhataModal()" class="w-1/3 bg-slate-100 text-slate-700 font-bold py-2.5 rounded-xl">रद्द</button>
-        <button onclick="saveNewKhataRecord()" class="w-2/3 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl shadow-xs transition">सुरक्षित करें</button>
+        <button onclick="window.closeNewKhataModal ? window.closeNewKhataModal() : null" class="w-1/3 bg-slate-100 text-slate-700 font-bold py-2.5 rounded-xl">रद्द</button>
+        <button onclick="window.saveNewKhataRecord ? window.saveNewKhataRecord() : null" class="w-2/3 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl shadow-xs transition">सुरक्षित करें</button>
       </div>
     </div>
   </div>
 
   <!-- ========================================================================= -->
-  <!-- MODAL: NEW INVENTORY ITEM MODAL                                           -->
+  <!-- MODAL: NEW INVENTORY ITEM                                                 -->
   <!-- ========================================================================= -->
   <div id="modalNewInventory" style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
     <div class="bg-white border border-slate-200 rounded-3xl max-w-sm w-full p-5 space-y-3.5 shadow-2xl text-xs sm:text-sm">
@@ -1153,7 +1242,7 @@
         <h3 class="font-bold text-slate-900 flex items-center gap-1.5">
           <span>💊</span> नया स्टॉक आइटम जोड़ें
         </h3>
-        <button onclick="closeNewInventoryModal()" class="text-slate-400 hover:text-slate-600 font-bold text-base">✕</button>
+        <button onclick="window.closeNewInventoryModal ? window.closeNewInventoryModal() : null" class="text-slate-400 hover:text-slate-600 font-bold text-base">✕</button>
       </div>
 
       <div class="space-y-2.5">
@@ -1174,8 +1263,8 @@
       </div>
 
       <div class="flex gap-2 pt-1">
-        <button onclick="closeNewInventoryModal()" class="w-1/3 bg-slate-100 text-slate-700 font-bold py-2.5 rounded-xl">रद्द</button>
-        <button onclick="saveNewInventoryItem()" class="w-2/3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl shadow-xs transition">स्टॉक जोड़ें</button>
+        <button onclick="window.closeNewInventoryModal ? window.closeNewInventoryModal() : null" class="w-1/3 bg-slate-100 text-slate-700 font-bold py-2.5 rounded-xl">रद्द</button>
+        <button onclick="window.saveNewInventoryItem ? window.saveNewInventoryItem() : null" class="w-2/3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl shadow-xs transition">स्टॉक जोड़ें</button>
       </div>
     </div>
   </div>
@@ -1183,5 +1272,8 @@
   <!-- PRINTABLE OPD SLIP AREA -->
   <div id="printableSlipArea" class="hidden p-8 bg-white text-slate-900 border border-slate-400 space-y-4 font-sans text-xs"></div>
 
+  <!-- APPLICATION JAVASCRIPT BUNDLES -->
+  <script src="./clinical-db.js"></script>
+  <script src="./app.js"></script>
 </body>
 </html>
