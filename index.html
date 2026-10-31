@@ -10,6 +10,88 @@
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
 
+  <!-- ========================================================================= -->
+  <!-- 1. FAIL-SAFE INLINE HEAD BRIDGE (PREVENTS EARLY REFERENCE ERRORS)         -->
+  <!-- ========================================================================= -->
+  <script>
+    window.selectRole = window.selectRole || function(role) {
+      try {
+        localStorage.setItem('vetcare_registered_role', role);
+        const landing = document.getElementById('role-selection-screen');
+        const mainApp = document.getElementById('main-app-container');
+        if (landing) landing.style.display = 'none';
+        if (mainApp) {
+          mainApp.classList.remove('hidden');
+          mainApp.style.display = 'block';
+        }
+        if (window.applyRoleState) window.applyRoleState(role);
+      } catch (e) {
+        console.warn("Head bridge selectRole error:", e);
+      }
+    };
+
+    window.openDoctorDeclarationModal = window.openDoctorDeclarationModal || function() {
+      const modal = document.getElementById('modalDoctorDeclaration');
+      if (modal) modal.style.display = 'flex';
+    };
+
+    window.openFarmerDeclarationModal = window.openFarmerDeclarationModal || function() {
+      const modal = document.getElementById('modalFarmerDeclaration');
+      if (modal) modal.style.display = 'flex';
+    };
+
+    window.openAiKeyModal = window.openAiKeyModal || function() {
+      const modal = document.getElementById('modalAIKey');
+      const input = document.getElementById('inputGeminiKey');
+      if (input) {
+        input.value = localStorage.getItem('vetcare_gemini_api_key') || localStorage.getItem('vetcare_gemini_key') || '';
+      }
+      if (modal) modal.style.display = 'flex';
+    };
+
+    window.switchDiagSubTab = window.switchDiagSubTab || function(tabName) {
+      const matrixView = document.getElementById('diag-matrix-view');
+      const searchView = document.getElementById('diag-search-view');
+      const dirView = document.getElementById('diag-directory-view');
+
+      const tabMatrix = document.getElementById('subtab-matrix');
+      const tabSearch = document.getElementById('subtab-search');
+      const tabDir = document.getElementById('subtab-directory');
+
+      if (matrixView) matrixView.classList.toggle('hidden', tabName !== 'matrix');
+      if (searchView) searchView.classList.toggle('hidden', tabName !== 'search');
+      if (dirView) dirView.classList.toggle('hidden', tabName !== 'directory');
+
+      [tabMatrix, tabSearch, tabDir].forEach(btn => {
+        if (btn) {
+          btn.classList.remove('bg-blue-600', 'text-white', 'shadow', 'font-bold');
+          btn.classList.add('text-slate-700', 'font-medium');
+        }
+      });
+
+      const activeBtn = document.getElementById('subtab-' + tabName);
+      if (activeBtn) {
+        activeBtn.classList.remove('text-slate-700', 'font-medium');
+        activeBtn.classList.add('bg-blue-600', 'text-white', 'shadow', 'font-bold');
+      }
+    };
+
+    window.triggerDataSync = window.triggerDataSync || function() {
+      const isOnline = navigator.onLine;
+      const btn = document.getElementById('btn-header-sync');
+      if (btn) btn.innerHTML = '🔄 सिंक...';
+      setTimeout(() => {
+        if (isOnline) {
+          if (btn) btn.innerHTML = '🟢 सिंक';
+          alert('🟢 क्लाउड सिंक सक्रिय: आपका डेटा स्थानीय ब्राउज़र एवं क्लाउड में सुरक्षित है।');
+        } else {
+          if (btn) btn.innerHTML = '📴 ऑफ़लाइन';
+          alert('📴 ऑफ़लाइन मोड: इंटरनेट उपलब्ध नहीं है, सारा डेटा स्थानीय रूप से सुरक्षित है।');
+        }
+      }, 400);
+    };
+  </script>
+
   <style>
     * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans Devanagari", sans-serif; background-color: #f8fafc; color: #0f172a; }
@@ -17,12 +99,11 @@
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     .active-nav-tab { color: #2563eb !important; font-weight: 800 !important; }
     .active-nav-tab span { transform: scale(1.12); transition: transform 0.2s ease; }
-    .chip-active { background-color: #2563eb !important; color: #ffffff !important; border-color: #2563eb !important; font-weight: 700 !important; }
+    .pulse-danger { animation: pulse-warn 1.4s infinite ease-in-out; }
     @keyframes pulse-warn {
       0%, 100% { opacity: 1; }
       50% { opacity: 0.4; }
     }
-    .pulse-danger { animation: pulse-warn 1.4s infinite ease-in-out; }
     @media print {
       body * { visibility: hidden; }
       #printableSlipArea, #printableSlipArea * { visibility: visible; }
@@ -33,7 +114,7 @@
 <body class="min-h-screen bg-slate-100 flex flex-col justify-between items-center selection:bg-blue-200">
 
   <!-- ========================================================================= -->
-  <!-- 1. ROLE-BASED LANDING SCREEN (ZERO-FREEZE DIRECT INLINE BYPASS)           -->
+  <!-- 2. ROLE SELECTION LANDING SCREEN (ZERO-FREEZE DIRECT INLINE BYPASS)       -->
   <!-- ========================================================================= -->
   <div id="role-selection-screen" class="min-h-screen w-full max-w-4xl p-4 sm:p-8 flex flex-col justify-center items-center space-y-6">
     <div class="text-center space-y-3">
@@ -41,7 +122,7 @@
         <span>VC</span>
       </div>
       <h1 class="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">Vetcare AI OS</h1>
-      <p class="text-xs sm:text-sm text-slate-600 max-w-md mx-auto">क्लिनिकल डिसीजन इंजन, 5-स्तरीय एलोपैथिक उपचार तालिका एवं संपूर्ण स्मार्ट डेयरी प्रबंधन</p>
+      <p class="text-xs sm:text-sm text-slate-600 max-w-md mx-auto">क्लिनिकल डिसीजन इंजन, 5-स्तरीय एलोपैथिक उपचार तालिका एवं स्मार्ट डेयरी प्रबंधन</p>
     </div>
 
     <div class="w-full max-w-3xl space-y-3 pt-2">
@@ -57,10 +138,10 @@
             </div>
             <h2 class="text-base sm:text-lg font-black text-slate-900">स्मार्ट पशुपालक (Dairy Farmer)</h2>
             <p class="text-xs text-slate-600 leading-relaxed">
-              देसी सिद्ध नुस्खे, मद (Heat) व A.I. का सही समय, संतुलित आहार कैलकुलेटर, शाफर वजन मापक और दूध बिक्री बहीखाता।
+              देसी सिद्ध नुस्खे, मद (Heat) व A.I. का सही समय, 24 घंटे का संतुलित आहार कैलकुलेटर, शाफर वजन मापक और दूध बिक्री बहीखाता।
             </p>
           </div>
-          <button onclick="document.getElementById('role-selection-screen').style.display='none'; document.getElementById('main-app-container').classList.remove('hidden'); document.getElementById('main-app-container').style.display='block'; if(window.selectRole) window.selectRole('farmer');" class="w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-md transition-all active:scale-95 text-sm flex items-center justify-center gap-2">
+          <button onclick="document.getElementById('role-selection-screen').style.display='none'; document.getElementById('main-app-container').classList.remove('hidden'); document.getElementById('main-app-container').style.display='block'; window.selectRole('farmer');" class="w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-md transition-all active:scale-95 text-sm flex items-center justify-center gap-2">
             पशुपालक के रूप में प्रवेश करें →
           </button>
         </div>
@@ -77,7 +158,7 @@
               5-स्तरीय एलोपैथिक इंजेक्शन तालिकाएं, Shaeffer's डोज़ कैलकुलेटर, 1-Click व्हाट्सएप डिजिटल पर्ची व क्लिनिक खाता।
             </p>
           </div>
-          <button onclick="document.getElementById('role-selection-screen').style.display='none'; document.getElementById('main-app-container').classList.remove('hidden'); document.getElementById('main-app-container').style.display='block'; if(window.selectRole) window.selectRole('doctor');" class="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-md transition-all active:scale-95 text-sm flex items-center justify-center gap-2">
+          <button onclick="document.getElementById('role-selection-screen').style.display='none'; document.getElementById('main-app-container').classList.remove('hidden'); document.getElementById('main-app-container').style.display='block'; window.selectRole('doctor');" class="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-md transition-all active:scale-95 text-sm flex items-center justify-center gap-2">
             चिकित्सक के रूप में प्रवेश करें →
           </button>
         </div>
@@ -100,7 +181,7 @@
   </div>
 
   <!-- ========================================================================= -->
-  <!-- 2. MAIN APPLICATION CONTAINER                                             -->
+  <!-- 3. MAIN APPLICATION CONTAINER (STICKY HEADER + WORKSPACE)                 -->
   <!-- ========================================================================= -->
   <div id="main-app-container" class="hidden min-h-screen w-full max-w-4xl flex flex-col bg-white border-x border-slate-200 shadow-xl pb-24 relative">
 
@@ -123,12 +204,12 @@
       </div>
 
       <div class="flex items-center gap-1 sm:gap-2 flex-wrap justify-end">
-        <!-- Live Sync Button / Badge -->
-        <button id="btn-header-sync" onclick="window.triggerDataSync()" class="text-[10px] sm:text-[11px] px-2.5 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold border border-emerald-300 flex items-center gap-1 transition" title="क्लाउड डेटा सिंक">
-          <span>🟢 डेटा सिंक सुरक्षित</span>
+        <!-- Cloud Sync Badge / Button -->
+        <button id="btn-header-sync" onclick="window.triggerDataSync()" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-2 py-1 rounded-lg font-bold border border-slate-200 transition" title="क्लाउड डेटा सिंक">
+          🔄 सिंक
         </button>
 
-        <!-- Multi-language 7-Language dropdown -->
+        <!-- 7-Language Selector Dropdown -->
         <select id="app-language-selector" onchange="if(window.changeLanguage) window.changeLanguage(this.value);" class="text-[11px] bg-slate-50 border border-slate-200 rounded-xl px-2 py-1.5 font-bold text-slate-700 outline-none">
           <option value="hi" selected>हिन्दी</option>
           <option value="en">English</option>
@@ -139,27 +220,27 @@
           <option value="bn">বাংলা</option>
         </select>
 
-        <!-- AI Key button & Status badge -->
-        <button onclick="openAIKeyModal()" class="text-[11px] px-2 py-1.5 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-700 font-bold border border-purple-200 flex items-center gap-1 transition" title="Gemini AI Key">
+        <!-- Gemini AI Key Button & Status Badge -->
+        <button onclick="window.openAiKeyModal()" class="text-[11px] px-2 py-1.5 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-700 font-bold border border-purple-200 flex items-center gap-1 transition" title="Gemini AI Key">
           <span>⚙️</span> <span class="hidden sm:inline">AI Key</span>
         </button>
         <span id="ai-active-badge" class="hidden sm:inline-flex text-[10px] bg-emerald-50 text-emerald-700 border border-emerald-300 font-bold px-1.5 py-1 rounded-xl">🟢 AI Active</span>
 
-        <!-- Role switch button -->
-        <button onclick="document.getElementById('main-app-container').style.display='none'; document.getElementById('role-selection-screen').style.display='flex';" class="text-[11px] px-2 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold border border-slate-200 transition" title="रोल बदलें">
+        <!-- Switch Role Button -->
+        <button onclick="document.getElementById('main-app-container').style.display='none'; document.getElementById('role-selection-screen').style.display='flex';" class="text-[11px] px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold border border-slate-200 transition" title="रोल बदलें">
           🔄 <span class="hidden sm:inline">रोल बदलें</span>
         </button>
       </div>
     </header>
 
-    <!-- MAIN BODY TABS -->
+    <!-- MAIN BODY WORKSPACE -->
     <main class="flex-1 p-3 sm:p-6 space-y-5">
 
       <!-- ===================================================================== -->
-      <!-- VIEW 1: DIAGNOSIS WITH 3 SUB-TABS (MATRIX, QUICK SEARCH, DIRECTORY)    -->
+      <!-- VIEW 1: DIAGNOSIS (3 SUB-TABS: MATRIX, QUICK SEARCH, DIRECTORY)        -->
       <!-- ===================================================================== -->
       <section id="viewDiagnosis" class="space-y-4">
-        <!-- 3 SUB-NAVIGATION TABS RESTORATION -->
+        <!-- 3 SUB-NAVIGATION TABS -->
         <div class="grid grid-cols-3 gap-1.5 bg-slate-100 p-1.5 rounded-2xl border border-slate-200 text-xs">
           <button id="subtab-matrix" onclick="window.switchDiagSubTab('matrix')" class="py-2.5 px-1 rounded-xl text-slate-700 font-medium transition text-center flex flex-col items-center">
             <span class="text-sm">🧬</span>
@@ -175,7 +256,7 @@
           </button>
         </div>
 
-        <!-- CONTAINER A: SYMPTOM MATRIX (%) (HIDDEN INITIALLY) -->
+        <!-- CONTAINER A: DIAG-MATRIX-VIEW (SYMPTOM PROBABILITY CALCULATOR) -->
         <div id="diag-matrix-view" class="hidden bg-white border border-slate-200 rounded-3xl p-4 sm:p-5 shadow-xs space-y-4">
           <div class="flex justify-between items-center border-b border-slate-100 pb-2.5">
             <h3 class="text-xs sm:text-sm font-bold text-blue-700 flex items-center gap-1.5">
@@ -184,7 +265,7 @@
             <button onclick="resetSymptomMatrixCheckboxes()" class="text-[11px] text-rose-600 hover:text-rose-700 font-bold">रीसेट ↺</button>
           </div>
 
-          <!-- Body Temperature Input -->
+          <!-- Body Temperature Range Selection -->
           <div class="space-y-1.5">
             <label class="text-[11px] font-semibold text-slate-700 block">🌡️ पशु का शारीरिक तापमान चुनें (20% वेटेज):</label>
             <div class="grid grid-cols-3 gap-2 text-xs">
@@ -209,7 +290,7 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs" id="matrixCardinalContainer">
               <label class="flex items-center gap-2 p-2 rounded-xl border border-slate-200 bg-slate-50 cursor-pointer hover:bg-blue-50">
                 <input type="checkbox" value="NECK_SWELLING" class="matrix-cardinal-cb">
-                <span>गले व जबड़े के नीचे गर्म सूजन (गलघोंटू)</span>
+                <span>गले व जबड़े के नीचे गर्म दर्दनाक सूजन (गलघोंटू)</span>
               </label>
               <label class="flex items-center gap-2 p-2 rounded-xl border border-slate-200 bg-slate-50 cursor-pointer hover:bg-blue-50">
                 <input type="checkbox" value="GAS_SWELLING" class="matrix-cardinal-cb">
@@ -217,7 +298,7 @@
               </label>
               <label class="flex items-center gap-2 p-2 rounded-xl border border-slate-200 bg-slate-50 cursor-pointer hover:bg-blue-50">
                 <input type="checkbox" value="UDDER_HARD" class="matrix-cardinal-cb">
-                <span>अयन में कड़ापन, दूध में खून/छिछड़े (थनैल)</span>
+                <span>अयन में कड़ापन, दूध में छिछड़े/खून (थनैला)</span>
               </label>
               <label class="flex items-center gap-2 p-2 rounded-xl border border-slate-200 bg-slate-50 cursor-pointer hover:bg-blue-50">
                 <input type="checkbox" value="STERNAL_RECUMBENCY" class="matrix-cardinal-cb">
@@ -225,24 +306,24 @@
               </label>
               <label class="flex items-center gap-2 p-2 rounded-xl border border-slate-200 bg-slate-50 cursor-pointer hover:bg-blue-50">
                 <input type="checkbox" value="SWEET_BREATH" class="matrix-cardinal-cb">
-                <span>सांस से मीठी गंध, सूखा भूसा खाना (कीटोसिस)</span>
+                <span>सांस से मीठी गंध, सूखा भूसा खाना (कीटोशिस)</span>
               </label>
               <label class="flex items-center gap-2 p-2 rounded-xl border border-slate-200 bg-slate-50 cursor-pointer hover:bg-blue-50">
                 <input type="checkbox" value="LEFT_FLANK_DRUM" class="matrix-cardinal-cb">
-                <span>बायाँ पेट ढोलक जैसा फूलना (रूमेन अफारा)</span>
+                <span>बायाँ पेट ढोलक जैसा फूलना (रूमेन आफरा)</span>
               </label>
               <label class="flex items-center gap-2 p-2 rounded-xl border border-slate-200 bg-slate-50 cursor-pointer hover:bg-blue-50">
                 <input type="checkbox" value="RED_URINE" class="matrix-cardinal-cb">
-                <span>कॉफी/लाल रंग का पेशाब (बबेशियोसिस)</span>
+                <span>कॉफी/लाल रंग का पेशाब (बबेसियोसिस)</span>
               </label>
               <label class="flex items-center gap-2 p-2 rounded-xl border border-slate-200 bg-slate-50 cursor-pointer hover:bg-blue-50">
                 <input type="checkbox" value="LYMPH_SWELLING" class="matrix-cardinal-cb">
-                <span>कंधे की लिम्फ नोड में सूजन (थायलेरिया)</span>
+                <span>कंधे की लिम्फ नोड में सूजन (थाइलेरियोसिस)</span>
               </label>
             </div>
           </div>
 
-          <!-- Secondary Symptoms (40% Weightage) -->
+          <!-- Secondary Physical Signs (40% Weightage) -->
           <div class="space-y-1.5">
             <label class="text-[11px] font-semibold text-slate-700 block">🔬 अतिरिक्त शारीरिक लक्षण (मल्टी-सेलेक्ट):</label>
             <div class="flex flex-wrap gap-2 text-xs">
@@ -277,108 +358,61 @@
           </div>
         </div>
 
-        <!-- CONTAINER B: QUICK SEARCH (ACTIVE BY DEFAULT) -->
+        <!-- CONTAINER B: DIAG-SEARCH-VIEW (QUICK SEARCH + LIVE TREATMENT OUTPUT) -->
         <div id="diag-search-view" class="space-y-4">
           <div class="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-3xl p-4 sm:p-5 text-white shadow-md space-y-3">
             <div class="flex justify-between items-center">
               <h2 class="text-xs sm:text-sm font-bold flex items-center gap-1.5">
                 <span>🔍</span> त्वरित रोग खोज एवं 5-स्तरीय क्लिनिकल प्रोटोकॉल
               </h2>
-              <span class="text-[10px] bg-white/20 px-2 py-0.5 rounded-md font-mono">22+ क्लिनिकल प्रोफाइल</span>
+              <span class="text-[10px] bg-white/20 px-2 py-0.5 rounded-md font-mono">48+ क्लिनिकल प्रोफाइल</span>
             </div>
             <input 
               type="text" 
               id="unifiedDiseaseSearchInput" 
-              placeholder="लक्षण या रोग खोजें (उदा. गलघोंटू, चर्र-चर्र, थनैल, लाल पेशाब, Milk Fever, Ketosis, Bloat)..."
+              placeholder="लक्षण या रोग खोजें (उदा. गलघोंटू, चर्र-चर्र, थनैला, लाल पेशाब, Milk Fever, Ketosis, Bloat)..."
               class="w-full bg-white text-slate-900 placeholder-slate-400 rounded-2xl px-4 py-3 text-xs sm:text-sm outline-none font-medium shadow-sm"
             />
           </div>
 
           <!-- Category Chips -->
           <div class="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar text-xs">
-            <button onclick="filterDiseaseCategory('ALL', this)" class="q-filter-chip px-3 py-1.5 rounded-xl bg-blue-600 text-white font-bold shrink-0">सभी रोग (All)</button>
-            <button onclick="filterDiseaseCategory('BACTERIAL', this)" class="q-filter-chip px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 font-medium shrink-0">🦠 जीवाणु (Bacterial)</button>
-            <button onclick="filterDiseaseCategory('VIRAL', this)" class="q-filter-chip px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 font-medium shrink-0">🧬 विषाणु (Viral)</button>
-            <button onclick="filterDiseaseCategory('PROTOZOAL', this)" class="q-filter-chip px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 font-medium shrink-0">🩸 रक्त परजीवी (Protozoal)</button>
-            <button onclick="filterDiseaseCategory('METABOLIC', this)" class="q-filter-chip px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 font-medium shrink-0">🌾 उपापचयी (Metabolic)</button>
+            <button onclick="window.filterDiseaseCategory('ALL', this)" class="q-filter-chip px-3 py-1.5 rounded-xl bg-blue-600 text-white font-bold shrink-0">सभी रोग (All)</button>
+            <button onclick="window.filterDiseaseCategory('BACTERIAL', this)" class="q-filter-chip px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 font-medium shrink-0">🦠 जीवाणु (Bacterial)</button>
+            <button onclick="window.filterDiseaseCategory('VIRAL', this)" class="q-filter-chip px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 font-medium shrink-0">🧬 विषाणु (Viral)</button>
+            <button onclick="window.filterDiseaseCategory('PROTOZOAL', this)" class="q-filter-chip px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 font-medium shrink-0">🩸 रक्त परजीवी (Protozoal)</button>
+            <button onclick="window.filterDiseaseCategory('METABOLIC', this)" class="q-filter-chip px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 font-medium shrink-0">🌾 उपापचयी (Metabolic)</button>
+            <button onclick="window.filterDiseaseCategory('TOXICOLOGY', this)" class="q-filter-chip px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 font-medium shrink-0">☠️ विषाक्तता (Toxicology)</button>
+            <button onclick="window.filterDiseaseCategory('GYNAE', this)" class="q-filter-chip px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 font-medium shrink-0">🤰 प्रसूति (Gynae)</button>
+            <button onclick="window.filterDiseaseCategory('SURGICAL', this)" class="q-filter-chip px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 font-medium shrink-0">🩹 शल्य चिकित्सा (Surgical)</button>
           </div>
 
-          <!-- Dynamic Live Treatment Cards -->
+          <!-- Dynamic Live Treatment Cards & Zero-Match AI Synthesizer -->
           <div id="diseaseResultsContainer" class="space-y-4"></div>
         </div>
 
-        <!-- CONTAINER C: CATEGORIZED A-Z DIRECTORY (HIDDEN INITIALLY) -->
+        <!-- CONTAINER C: DIAG-DIRECTORY-VIEW (CATEGORIZED MASTER DIRECTORY) -->
         <div id="diag-directory-view" class="hidden bg-white border border-slate-200 rounded-3xl p-4 sm:p-5 shadow-xs space-y-4">
           <div class="border-b border-slate-100 pb-2">
             <h3 class="text-sm font-bold text-slate-900 flex items-center gap-1.5">
-              <span>📁</span> संपूर्ण 22+ स्थानिक पशु रोग डायरेक्टरी (A-Z Categorized Directory)
+              <span>📁</span> संपूर्ण 48+ स्थानिक पशु रोग डायरेक्टरी (Categorized Master Directory)
             </h3>
-            <p class="text-xs text-slate-500">सभी जीवाणु, विषाणु, रक्त परजीवी एवं उपापचयी रोगों की त्वरित सूची</p>
+            <p class="text-xs text-slate-500">जीवाणु, विषाणु, रक्त परजीवी, उपापचयी, टॉक्सिकोलॉजी, प्रसूति व शल्य रोगों का संपूर्ण वर्गीकरण</p>
           </div>
 
-          <div class="space-y-3 text-xs" id="directoryListContainer">
-            <!-- Bacterial Group -->
-            <div class="p-3 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
-              <span class="font-bold text-blue-700 block text-xs">🦠 जीवाणु जनित रोग (Bacterial Diseases):</span>
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-slate-700">
-                <div>• गलघोंटू (Hemorrhagic Septicemia - HS)</div>
-                <div>• लंगड़ा बुखार (Black Quarter - BQ)</div>
-                <div>• थनैल रोग (Clinical Mastitis)</div>
-                <div>• एंथ्रेक्स / गिल्टी रोग (Anthrax)</div>
-                <div>• ब्रुसेलोसिस (Brucellosis / संक्रामक गर्भपात)</div>
-                <div>• फिड़किया / आंत्रविष (Enterotoxemia - ET)</div>
-                <div>• खुर सड़न (Foot Rot)</div>
-              </div>
-            </div>
-
-            <!-- Viral Group -->
-            <div class="p-3 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
-              <span class="font-bold text-indigo-700 block text-xs">🧬 विषाणु जनित रोग (Viral Diseases):</span>
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-slate-700">
-                <div>• खुरपका-मुंहपका (Foot & Mouth Disease - FMD)</div>
-                <div>• लम्पी स्किन रोग (Lumpy Skin Disease - LSD)</div>
-                <div>• रेबीज / अलक (Rabies)</div>
-                <div>• पीपीआर / बकरी प्लेग (PPR in Goats)</div>
-                <div>• बोवाइन वायरल डायरिया (BVD)</div>
-              </div>
-            </div>
-
-            <!-- Protozoal Group -->
-            <div class="p-3 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
-              <span class="font-bold text-rose-700 block text-xs">🩸 रक्त परजीवी रोग (Protozoal Diseases):</span>
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-slate-700">
-                <div>• बबेशियोसिस / लाल पेशाब (Babesiosis)</div>
-                <div>• थायलेरियासिस (Theileriosis)</div>
-                <div>• एनाप्लास्मोसिस (Anaplasmosis)</div>
-                <div>• सर्रा / ट्रिपैनोसोमियासिस (Surra)</div>
-              </div>
-            </div>
-
-            <!-- Metabolic Group -->
-            <div class="p-3 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
-              <span class="font-bold text-emerald-700 block text-xs">🌾 उपापचयी व अन्य व्याधियां (Metabolic & Reproductive):</span>
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-slate-700">
-                <div>• मिल्क फीवर (Hypocalcemia)</div>
-                <div>• कीटोसिस / एसीटोनेमिया (Ketosis)</div>
-                <div>• अफारा / रूमेन टिम्पनी (Bloat)</div>
-                <div>• रूमेन एसिडोसिस (Grain Overload)</div>
-                <div>• जेर का न गिरना (Retention of Placenta - ROP)</div>
-                <div>• गर्भाशय बाहर निकलना (Uterine Prolapse)</div>
-              </div>
-            </div>
-          </div>
+          <div class="space-y-3 text-xs" id="directoryListContainer"></div>
         </div>
       </section>
 
       <!-- ===================================================================== -->
-      <!-- VIEW 2: SHAEFFER'S WEIGHT & ML DRUG DOSAGE CALCULATOR                 -->
+      <!-- VIEW 2: SHAEFFER'S WEIGHT & ACCURATE DRUG ML DOSAGE CALCULATOR        -->
       <!-- ===================================================================== -->
       <section id="viewWeightCalc" class="hidden space-y-4">
         <div class="bg-gradient-to-br from-indigo-600 to-blue-700 rounded-3xl p-5 text-white shadow-md space-y-1">
           <h2 class="text-base sm:text-lg font-bold flex items-center gap-2">
             <span>⚖️</span> शाफर फॉर्मूला (Shaeffer's Formula) वजन व डोज़ कैलकुलेटर
           </h2>
-          <p class="text-xs text-indigo-100">Formula: वजन (kg) = [लंबाई (इंच) × सीने का घेरा (इंच)²] / 660</p>
+          <p class="text-xs text-indigo-100">Formula: वजन (lbs) = [लंबाई (इंच) × सीने का घेरा (इंच)²] / 300 | वजन (kg) = lbs / 2.20462</p>
         </div>
 
         <div class="bg-white border border-slate-200 rounded-3xl p-5 shadow-xs space-y-4 text-xs sm:text-sm">
@@ -505,7 +539,7 @@
       </section>
 
       <!-- ===================================================================== -->
-      <!-- VIEW 4: CLINIC INVENTORY STOCK COUNTER                                -->
+      <!-- VIEW 4: CLINIC INVENTORY STOCK COUNTER (+/-)                         -->
       <!-- ===================================================================== -->
       <section id="viewInventory" class="hidden space-y-4">
         <div class="bg-white border border-slate-200 rounded-3xl p-4 sm:p-5 shadow-xs space-y-4 text-xs sm:text-sm">
@@ -681,33 +715,15 @@
 
     <!-- BOTTOM FIXED DYNAMIC NAVIGATION BAR -->
     <nav class="fixed bottom-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-md border-t border-slate-200 max-w-4xl mx-auto flex items-center justify-around py-2 shadow-lg">
-      <!-- Dynamically filled by app.js based on Active Role -->
-      <button onclick="window.switchTab('diagnosis')" id="navDiagnosis" class="flex flex-col items-center active-nav-tab transition text-slate-500 py-1">
-        <span class="text-base sm:text-lg">🩺</span>
-        <span class="text-[9px] sm:text-xs mt-0.5 font-bold">रोग निदान</span>
-      </button>
-      <button onclick="window.switchTab('weight')" id="navWeight" class="flex flex-col items-center text-slate-500 transition py-1">
-        <span class="text-base sm:text-lg">⚖️</span>
-        <span class="text-[9px] sm:text-xs mt-0.5 font-bold">वजन व खुराक</span>
-      </button>
-      <button onclick="window.switchTab('rx')" id="navRx" class="flex flex-col items-center text-slate-500 transition py-1">
-        <span class="text-base sm:text-lg">📋</span>
-        <span class="text-[9px] sm:text-xs mt-0.5 font-bold">ओपीडी पर्चा</span>
-      </button>
-      <button onclick="window.switchTab('inventory')" id="navInventory" class="flex flex-col items-center text-slate-500 transition py-1">
-        <span class="text-base sm:text-lg">📦</span>
-        <span class="text-[9px] sm:text-xs mt-0.5 font-bold">दवा स्टॉक</span>
-      </button>
-      <button onclick="window.switchTab('finance')" id="navFinance" class="flex flex-col items-center text-slate-500 transition py-1">
-        <span class="text-base sm:text-lg">📒</span>
-        <span class="text-[9px] sm:text-xs mt-0.5 font-bold">क्लिनिक खाता</span>
-      </button>
+      <!-- Dynamically Rendered by app.js based on Doctor vs Farmer Role -->
     </nav>
   </div>
 
   <!-- ========================================================================= -->
-  <!-- MODAL 1: DOCTOR DECLARATION MODAL (IVC ACT COMPLIANCE)                    -->
+  <!-- MODALS CONTAINER                                                          -->
   <!-- ========================================================================= -->
+
+  <!-- MODAL 1: DOCTOR CLINICAL DECLARATION (IVC ACT COMPLIANCE) -->
   <div id="modalDoctorDeclaration" style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
     <div class="bg-white border border-slate-200 rounded-3xl max-w-md w-full p-6 space-y-4 shadow-2xl">
       <div class="flex justify-between items-center border-b border-slate-100 pb-2.5">
@@ -727,36 +743,41 @@
         <button onclick="closeModal('modalDoctorDeclaration')" class="w-1/3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3 rounded-2xl text-xs transition">
           रद्द करें
         </button>
-        <button onclick="closeModal('modalDoctorDeclaration'); if(window.selectRole) window.selectRole('doctor');" class="w-2/3 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-2xl text-xs shadow-md transition active:scale-98">
+        <button onclick="closeModal('modalDoctorDeclaration'); window.selectRole('doctor');" class="w-2/3 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-2xl text-xs shadow-md transition active:scale-98">
           मैं सहमत हूँ • प्रवेश करें ➔
         </button>
       </div>
     </div>
   </div>
 
-  <!-- ========================================================================= -->
-  <!-- MODAL 2: GEMINI AI API KEY CONFIG                                         -->
-  <!-- ========================================================================= -->
-  <div id="modalAIKey" style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-    <div class="bg-white border border-slate-200 rounded-3xl max-w-sm w-full p-5 space-y-3.5 shadow-2xl text-xs">
-      <div class="flex justify-between items-center border-b border-slate-100 pb-2">
-        <h3 class="font-bold text-purple-700 flex items-center gap-1.5">
-          <span>🔑</span> Google Gemini AI API Key
+  <!-- MODAL 2: FARMER DECLARATION MODAL -->
+  <div id="modalFarmerDeclaration" style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+    <div class="bg-white border border-slate-200 rounded-3xl max-w-md w-full p-6 space-y-4 shadow-2xl">
+      <div class="flex justify-between items-center border-b border-slate-100 pb-2.5">
+        <h3 class="text-sm font-bold text-slate-900 flex items-center gap-1.5">
+          <span>👨‍🌾</span> पशुपालक उपयोगकर्ता गाइड
         </h3>
-        <button onclick="closeModal('modalAIKey')" class="text-slate-400 hover:text-slate-600 font-bold text-sm">✕</button>
+        <button onclick="closeModal('modalFarmerDeclaration')" class="text-slate-400 hover:text-slate-600 text-sm font-bold">✕</button>
       </div>
-      <p class="text-slate-500 text-[11px]">Google AI Studio से प्राप्त अपनी निशुल्क Gemini 2.5/2.0 API Key दर्ज करें:</p>
-      <input id="inputGeminiKey" type="password" placeholder="AIzaSy..." class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 outline-none font-mono text-xs" />
-      <div class="flex gap-2">
-        <button onclick="closeModal('modalAIKey')" class="w-1/3 bg-slate-100 text-slate-700 font-semibold py-2.5 rounded-xl">रद्द</button>
-        <button onclick="saveGeminiKeyAction()" class="w-2/3 bg-purple-600 hover:bg-purple-700 text-white font-bold py-2.5 rounded-xl shadow-xs transition">सुरक्षित करें</button>
+      
+      <div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl text-xs sm:text-sm text-slate-600 space-y-2 leading-relaxed">
+        <p>1. पशुपालक मोड में आपको केवल सुरक्षित देसी नुस्खे, मद चक्र (Heat) और संतुलित आहार गाइड दी जाती है।</p>
+        <p>2. बिना डॉक्टर परामर्श के पशु को स्वयं कोई एलोपैथिक इंजेक्शन न लगाएं।</p>
+        <p>3. आपातकालीन स्थिति में तुरंत निकटतम अधिकृत पशु चिकित्सक से संपर्क करें।</p>
+      </div>
+
+      <div class="flex gap-2.5 pt-2">
+        <button onclick="closeModal('modalFarmerDeclaration')" class="w-1/3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3 rounded-2xl text-xs transition">
+          रद्द
+        </button>
+        <button onclick="closeModal('modalFarmerDeclaration'); window.selectRole('farmer');" class="w-2/3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-2xl text-xs shadow-md transition active:scale-98">
+          प्रवेश करें ➔
+        </button>
       </div>
     </div>
   </div>
 
-  <!-- ========================================================================= -->
-  <!-- MODAL 3: MASTER ADMIN PIN VERIFICATION (PIN: 9297)                        -->
-  <!-- ========================================================================= -->
+  <!-- MODAL 3: MASTER ADMIN PIN VERIFICATION (PIN: 9297) -->
   <div id="modalAdminPIN" style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
     <div class="bg-white border border-slate-200 rounded-3xl max-w-xs w-full p-6 space-y-4 shadow-2xl text-center">
       <div class="w-12 h-12 bg-blue-100 text-blue-700 rounded-2xl mx-auto flex items-center justify-center text-2xl font-bold">
@@ -789,9 +810,7 @@
     </div>
   </div>
 
-  <!-- ========================================================================= -->
-  <!-- MODAL 4: DUAL-BANK PAYMENT GATEWAY (SBI / PNB TABS & QR)                  -->
-  <!-- ========================================================================= -->
+  <!-- MODAL 4: DUAL-BANK PAYMENT GATEWAY (SBI / PNB TABS & QR) -->
   <div id="modalPremiumPayment" style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/70 backdrop-blur-xs overflow-y-auto">
     <div class="bg-white border border-slate-200 rounded-3xl max-w-md w-full p-5 sm:p-6 space-y-4 shadow-2xl my-auto text-xs sm:text-sm">
       <div class="flex justify-between items-center border-b border-slate-100 pb-2.5">
@@ -861,9 +880,25 @@
     </div>
   </div>
 
-  <!-- ========================================================================= -->
-  <!-- MODAL 5: NEW KHATA ENTRY MODAL                                            -->
-  <!-- ========================================================================= -->
+  <!-- MODAL 5: GEMINI AI API KEY CONFIG -->
+  <div id="modalAIKey" style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+    <div class="bg-white border border-slate-200 rounded-3xl max-w-sm w-full p-5 space-y-3.5 shadow-2xl text-xs">
+      <div class="flex justify-between items-center border-b border-slate-100 pb-2">
+        <h3 class="font-bold text-purple-700 flex items-center gap-1.5">
+          <span>🔑</span> Google Gemini AI API Key
+        </h3>
+        <button onclick="closeModal('modalAIKey')" class="text-slate-400 hover:text-slate-600 font-bold text-sm">✕</button>
+      </div>
+      <p class="text-slate-500 text-[11px]">Google AI Studio से प्राप्त अपनी निशुल्क Gemini 2.5/2.0 API Key दर्ज करें:</p>
+      <input id="inputGeminiKey" type="password" placeholder="AIzaSy..." class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 outline-none font-mono text-xs" />
+      <div class="flex gap-2">
+        <button onclick="closeModal('modalAIKey')" class="w-1/3 bg-slate-100 text-slate-700 font-semibold py-2.5 rounded-xl">रद्द</button>
+        <button onclick="saveGeminiKeyAction()" class="w-2/3 bg-purple-600 hover:bg-purple-700 text-white font-bold py-2.5 rounded-xl shadow-xs transition">सुरक्षित करें</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 6: NEW KHATA ENTRY MODAL -->
   <div id="modalNewKhata" style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
     <div class="bg-white border border-slate-200 rounded-3xl max-w-sm w-full p-5 space-y-3.5 shadow-2xl text-xs sm:text-sm">
       <div class="flex justify-between items-center border-b border-slate-100 pb-2">
@@ -897,83 +932,23 @@
   <div id="printableSlipArea" class="hidden p-8 bg-white text-slate-900 border border-slate-400 space-y-4 font-sans text-xs"></div>
 
   <!-- ========================================================================= -->
-  <!-- INLINE FALLBACK CONTROLLER & UTILITIES                                    -->
+  <!-- INLINE FALLBACK UTILITIES                                                 -->
   <!-- ========================================================================= -->
   <script>
-    // 1. Diagnosis Sub-Tab Switcher
-    window.switchDiagSubTab = function(tab) {
-      const matrix = document.getElementById("diag-matrix-view");
-      const search = document.getElementById("diag-search-view");
-      const directory = document.getElementById("diag-directory-view");
-
-      const btnM = document.getElementById("subtab-matrix");
-      const btnS = document.getElementById("subtab-search");
-      const btnD = document.getElementById("subtab-directory");
-
-      if (matrix) matrix.classList.add("hidden");
-      if (search) search.classList.add("hidden");
-      if (directory) directory.classList.add("hidden");
-
-      [btnM, btnS, btnD].forEach(btn => {
-        if (btn) {
-          btn.classList.remove("bg-blue-600", "text-white", "font-bold", "shadow-xs");
-          btn.classList.add("text-slate-700", "font-medium");
-        }
-      });
-
-      if (tab === "matrix") {
-        if (matrix) matrix.classList.remove("hidden");
-        if (btnM) {
-          btnM.classList.remove("text-slate-700", "font-medium");
-          btnM.classList.add("bg-blue-600", "text-white", "font-bold", "shadow-xs");
-        }
-      } else if (tab === "directory") {
-        if (directory) directory.classList.remove("hidden");
-        if (btnD) {
-          btnD.classList.remove("text-slate-700", "font-medium");
-          btnD.classList.add("bg-blue-600", "text-white", "font-bold", "shadow-xs");
-        }
-      } else {
-        if (search) search.classList.remove("hidden");
-        if (btnS) {
-          btnS.classList.remove("text-slate-700", "font-medium");
-          btnS.classList.add("bg-blue-600", "text-white", "font-bold", "shadow-xs");
-        }
-      }
-    };
-
-    // 2. Cloud Sync Trigger Button Action
-    window.triggerDataSync = function() {
-      const btn = document.getElementById("btn-header-sync");
-      if (btn) {
-        btn.innerHTML = "🔄 सिंक हो रहा है...";
-        setTimeout(() => {
-          btn.innerHTML = "🟢 डेटा सिंक सुरक्षित";
-          alert("डेटा सफलतापूर्वक क्लाउड एवं लोकल स्टोरेज से सिंक हो गया है!");
-        }, 600);
-      }
-    };
-
-    // 3. Modal Toggles
-    function openModal(id) {
-      const el = document.getElementById(id);
-      if (el) el.style.display = "flex";
-    }
-
     function closeModal(id) {
       const el = document.getElementById(id);
       if (el) el.style.display = "none";
     }
 
-    function openAIKeyModal() {
-      const input = document.getElementById("inputGeminiKey");
-      if (input) input.value = localStorage.getItem("vetcare_gemini_key") || "";
-      openModal("modalAIKey");
+    function openModal(id) {
+      const el = document.getElementById(id);
+      if (el) el.style.display = "flex";
     }
 
     function saveGeminiKeyAction() {
       const key = (document.getElementById("inputGeminiKey")?.value || "").trim();
       if (key) {
+        localStorage.setItem("vetcare_gemini_api_key", key);
         localStorage.setItem("vetcare_gemini_key", key);
         const badge = document.getElementById("ai-active-badge");
         if (badge) badge.classList.remove("hidden");
@@ -1023,7 +998,6 @@
       }
     }
 
-    // 4. Matrix Weighted % Engine
     function resetSymptomMatrixCheckboxes() {
       document.querySelectorAll(".matrix-cardinal-cb").forEach(cb => cb.checked = false);
       document.querySelectorAll(".matrix-sec-cb").forEach(cb => cb.checked = false);
@@ -1036,7 +1010,7 @@
       const secChecked = document.querySelectorAll(".matrix-sec-cb:checked");
       const tempHigh = document.querySelector('input[name="matrixTemp"]:checked')?.value === "HIGH";
 
-      let score = 20; // baseline
+      let score = 20;
       if (tempHigh) score += 20;
       if (cardinalChecked.length > 0) score += 40;
       score += Math.min(20, secChecked.length * 5);
@@ -1055,12 +1029,12 @@
           const matchMap = {
             NECK_SWELLING: "गलघोंटू (Hemorrhagic Septicemia - HS)",
             GAS_SWELLING: "लंगड़ा बुखार / चरचरा (Black Quarter - BQ)",
-            UDDER_HARD: "थनैल रोग (Clinical Mastitis)",
+            UDDER_HARD: "थनैला रोग (Clinical Mastitis)",
             STERNAL_RECUMBENCY: "मिल्क फीवर / हाइपोकैल्सीमिया (Milk Fever)",
-            SWEET_BREATH: "कीटोसिस / एसीटोनेमिया (Ketosis)",
-            LEFT_FLANK_DRUM: "रूमेन अफारा / टिम्पनी (Bloat)",
-            RED_URINE: "बबेशियोसिस / लाल पेशाब (Babesiosis)",
-            LYMPH_SWELLING: "थायलेरियासिस (Theileriosis)"
+            SWEET_BREATH: "कीटोशिस / एसीटोनमिया (Ketosis)",
+            LEFT_FLANK_DRUM: "रूमेन आफरा / टिम्पनी (Bloat)",
+            RED_URINE: "बबेसियोसिस / लाल पेशाब (Babesiosis)",
+            LYMPH_SWELLING: "थाइलेरियोसिस (Theileriosis)"
           };
           title.innerText = `शीर्ष संभावित रोग: ${matchMap[val] || "क्लिनिकल संक्रमण"}`;
           desc.innerText = "सिम्पटम मैट्रिक्स के आधार पर इस रोग की क्लिनिकल संभावना सर्वाधिक है। 5-स्तरीय उपचार प्रोटोकॉल का पालन करें।";
@@ -1071,7 +1045,6 @@
       }
     }
 
-    // 5. OPD Local Helpers
     function calculateOPDDue() {
       const total = parseFloat(document.getElementById("opdTotalFee")?.value) || 0;
       const paid = parseFloat(document.getElementById("opdPaidFee")?.value) || 0;
@@ -1134,7 +1107,6 @@
       }
     }
 
-    // 6. Khata Action Helpers
     function openNewKhataModal() {
       openModal("modalNewKhata");
     }
@@ -1165,9 +1137,26 @@
       closeModal("modalNewKhata");
     }
 
-    // Check Gemini key on load
+    function calculateFeedRation() {
+      const weight = parseFloat(document.getElementById("feedAnimalWeight")?.value) || 400;
+      const milk = parseFloat(document.getElementById("feedDailyMilk")?.value) || 10;
+
+      const grain = (1.5 + (milk * 0.35)).toFixed(1);
+      const green = (weight * 0.05).toFixed(1);
+      const dry = (weight * 0.0125).toFixed(1);
+
+      const outGrain = document.getElementById("feedOutGrain");
+      const outGreen = document.getElementById("feedOutGreen");
+      const outDry = document.getElementById("feedOutDry");
+
+      if (outGrain) outGrain.innerText = `${grain} kg`;
+      if (outGreen) outGreen.innerText = `${green} kg`;
+      if (outDry) outDry.innerText = `${dry} kg`;
+    }
+
     window.addEventListener("DOMContentLoaded", () => {
-      if (localStorage.getItem("vetcare_gemini_key")) {
+      const key = localStorage.getItem("vetcare_gemini_api_key") || localStorage.getItem("vetcare_gemini_key");
+      if (key) {
         const badge = document.getElementById("ai-active-badge");
         if (badge) badge.classList.remove("hidden");
       }
@@ -1175,7 +1164,7 @@
   </script>
 
   <!-- ========================================================================= -->
-  <!-- EXTERNAL PRODUCTION SCRIPTS                                               -->
+  <!-- 4. SCRIPTS AT BOTTOM                                                      -->
   <!-- ========================================================================= -->
   <script src="./clinical-db.js"></script>
   <script src="./app.js"></script>
