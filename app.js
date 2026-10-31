@@ -1,21 +1,21 @@
 /**
- * Vetcare AI OS - Enterprise Clinical & Smart Dairy Assistant
+ * Vetcare AI OS - Enterprise Clinical Decision Support System
  * Core Architecture & Controller Engine (app.js)
  * 
- * Standards:
- * - Pure Vanilla JS (ES6+)
+ * 2026 Engine Upgrades:
+ * - Resilient Multi-Model Gemini 2026 API Pipeline (gemini-2.0-flash / gemini-2.5-flash / gemini-2.0-flash-lite)
+ * - Automatic Model Discovery Fallback via ListModels
+ * - Zero-Match Quick Search Auto-AI Fallback Engine
  * - Zero-Glitch Singleton Session Timer Management
- * - Strict Role-Based Dynamic Navigation
- * - Sub-Tab Clinical Switching Matrix
- * - Multi-Model Gemini 2026 Fallback Pipeline with Abortifacient Guard
- * - Offline-First LocalStorage Vault
+ * - Abortifacient Clinical Safety Guard (Pregnancy Red Alert)
+ * - Strict Role-Based Dynamic UI & Navbar Isolation
  */
 
 // ============================================================================
-// 1. ENTERPRISE CONFIGURATION & SECURE CREDENTIALS
+// 1. ENTERPRISE CONFIGURATION & VERIFIED FINANCIAL VAULT
 // ============================================================================
 const VETCARE_CONFIG = {
-  version: "5.0.1",
+  version: "6.0.0-2026.PROD",
   adminPin: "9297",
   payeeName: "Vetcare Services",
   beneficiary: "Mr. Rahul",
@@ -32,13 +32,13 @@ const VETCARE_CONFIG = {
     ifsc: "PUNB0668700"
   },
   ai: {
-    models: ["gemini-2.0-flash", "gemini-2.5-flash"],
-    timeoutMs: 12000
+    candidateModels: ["gemini-2.0-flash", "gemini-2.5-flash", "gemini-2.0-flash-lite"],
+    timeoutMs: 14000
   }
 };
 
 // ============================================================================
-// 2. 7-LANGUAGE LOCALIZATION ENGINE (I18N)
+// 2. MULTI-LANGUAGE LOCALIZATION ENGINE (7 LANGUAGES)
 // ============================================================================
 const I18N_DICT = {
   hi: {
@@ -50,7 +50,8 @@ const I18N_DICT = {
     sessionExpired: "आपका 60-मिनट का सत्र समाप्त हो गया है। कृपया पुनः लॉगिन करें।",
     tagadaSent: "व्हाट्सएप तगादा संदेश तैयार किया गया।",
     confirmDelete: "क्या आप इस रिकॉर्ड को हटाना चाहते हैं?",
-    pregnancyAlert: "🚨 गंभीर चेतावनी: गाभिन पशुओं में Dexamethasone निषेध है (गर्भपात का खतरा)! इसके स्थान पर Isoflupredone Acetate का उपयोग करें।"
+    pregnancyAlert: "🚨 गंभीर चेतावनी: गाभिन पशुओं में Dexamethasone निषेध है (गर्भपात का खतरा)! इसके स्थान पर Isoflupredone Acetate का उपयोग करें।",
+    aiGenerating: "Google Gemini AI से क्लिनिकल रिपोर्ट तैयार की जा रही है..."
   },
   en: {
     docRoleTitle: "Clinical Mode (Registered Vet Practitioner)",
@@ -61,7 +62,8 @@ const I18N_DICT = {
     sessionExpired: "Your 60-minute active session has expired. Please log in again.",
     tagadaSent: "WhatsApp payment reminder initialized.",
     confirmDelete: "Are you sure you want to delete this record?",
-    pregnancyAlert: "🚨 CRITICAL ALERT: Dexamethasone is contraindicated in pregnant animals (causes abortion)! Use Isoflupredone Acetate instead."
+    pregnancyAlert: "🚨 CRITICAL ALERT: Dexamethasone is contraindicated in pregnant animals (causes abortion)! Use Isoflupredone Acetate instead.",
+    aiGenerating: "Generating Clinical Diagnosis & Protocol via Google Gemini AI..."
   },
   hinglish: {
     docRoleTitle: "Clinical Mode (Registered Vet Doctor)",
@@ -72,7 +74,8 @@ const I18N_DICT = {
     sessionExpired: "Aapka 60-minute ka session khatam ho gaya hai. Dobara login karein.",
     tagadaSent: "WhatsApp Tagada dispatch ho gaya.",
     confirmDelete: "Kya aap is record ko delete karna chahte hain?",
-    pregnancyAlert: "🚨 WARNING: Gabhin pashu ko Dexamethasone bilkul na dein (abortion ho sakta hai)! Isoflupredone dein."
+    pregnancyAlert: "🚨 WARNING: Gabhin pashu ko Dexamethasone bilkul na dein (abortion ho sakta hai)! Isoflupredone dein.",
+    aiGenerating: "Google Gemini AI se report generate ho rahi hai..."
   },
   pa: {
     docRoleTitle: "ਕਲੀਨਿਕਲ ਮੋਡ (ਅਧਿਕਾਰਤ ਵੈਟਰਨਰੀ ਡਾਕਟਰ)",
@@ -83,7 +86,8 @@ const I18N_DICT = {
     sessionExpired: "ਤੁਹਾਡਾ 60 ਮਿੰਟ ਦਾ ਸੈਸ਼ਨ ਸਮਾਪਤ ਹੋ ਗਿਆ ਹੈ।",
     tagadaSent: "ਵਟਸਐਪ ਤਗਾਦਾ ਭੇਜਿਆ ਗਿਆ।",
     confirmDelete: "ਕੀ ਤੁਸੀਂ ਇਸਨੂੰ ਹਟਾਉਣਾ ਚਾਹੁੰਦੇ ਹੋ?",
-    pregnancyAlert: "🚨 ਚੇਤਾਵਨੀ: ਗੱਭਣ ਪਸ਼ੂਆਂ ਨੂੰ Dexamethasone ਨਾ ਦਿਓ! Isoflupredone ਦੀ ਵਰਤੋਂ ਕਰੋ।"
+    pregnancyAlert: "🚨 ਚੇਤਾਵਨੀ: ਗੱਭਣ ਪਸ਼ੂਆਂ ਨੂੰ Dexamethasone ਨਾ ਦਿਓ! Isoflupredone ਦੀ ਵਰਤੋਂ ਕਰੋ।",
+    aiGenerating: "Gemini AI ਦੁਆਰਾ ਕਲੀਨਿਕਲ ਰਿਪੋਰਟ ਤਿਆਰ ਕੀਤੀ ਜਾ ਰਹੀ ਹੈ..."
   },
   mr: {
     docRoleTitle: "क्लिनिकल मोड (अधिकृत पशुवैद्यक)",
@@ -94,7 +98,8 @@ const I18N_DICT = {
     sessionExpired: "तुमचे ६० मिनिटांचे सत्र संपले आहे. कृपया पुन्हा लॉगिन करा.",
     tagadaSent: "व्हॉट्सॲप स्मरणपत्र पाठवले.",
     confirmDelete: "तुम्हाला हे रेकॉर्ड हटवायचे आहे का?",
-    pregnancyAlert: "🚨 धोक्याची सूचना: गाभण जनावरांमध्ये Dexamethasone वापरू नका! Isoflupredone वापरा."
+    pregnancyAlert: "🚨 धोक्याची सूचना: गाभण जनावरांमध्ये Dexamethasone वापरू नका! Isoflupredone वापरा.",
+    aiGenerating: "Google Gemini AI क्लिनिकल अहवाल तयार करत आहे..."
   },
   gu: {
     docRoleTitle: "ક્લિનિકલ મોડ (રજિસ્ટર્ડ વેટરનરી ડૉક્ટર)",
@@ -105,7 +110,8 @@ const I18N_DICT = {
     sessionExpired: "તમારું 60 મિનિટનું સત્ર સમાપ્ત થયું છે.",
     tagadaSent: "વોટ્સએપ રીમાઇન્ડર મોકલ્યું.",
     confirmDelete: "શું તમે આ રેકોર્ડ કાઢી નાખવા માંગો છો?",
-    pregnancyAlert: "🚨 ચેતવણી: ગાભણ પશુઓને Dexamethasone ન આપો! Isoflupredone વાપરો."
+    pregnancyAlert: "🚨 ચેતવણી: ગાભણ પશુઓને Dexamethasone ન આપો! Isoflupredone વાપરો.",
+    aiGenerating: "Google Gemini AI દ્વારા રિપોર્ટ તૈયાર થઈ રહ્યો છે..."
   },
   bn: {
     docRoleTitle: "ক্লিনিক্যাল মোড (ভেটেরিনারি ডাক্তার)",
@@ -116,7 +122,8 @@ const I18N_DICT = {
     sessionExpired: "আপনার ৬০ মিনিটের সেশন শেষ হয়েছে।",
     tagadaSent: "হোয়াটসঅ্যাপ তাগাদা পাঠানো হয়েছে।",
     confirmDelete: "আপনি কি এটি মুছে ফেলতে চান?",
-    pregnancyAlert: "🚨 সতর্কতা: গর্ভবতী পশুকে Dexamethasone দেবেন না! Isoflupredone ব্যবহার করুন।"
+    pregnancyAlert: "🚨 সতর্কতা: গর্ভবতী পশুকে Dexamethasone দেবেন না! Isoflupredone ব্যবহার করুন।",
+    aiGenerating: "Google Gemini AI দ্বারা রিপোর্ট তৈরি করা হচ্ছে..."
   }
 };
 
@@ -127,8 +134,17 @@ function getI18n(key, fallback = "") {
   return langObj[key] || fallback;
 }
 
+function escapeHtml(str) {
+  return (str || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 // ============================================================================
-// 3. MASTER CLINICAL DISEASE REPOSITORY (22+ PROFILES WITH 5-TIER PROTOCOL)
+// 3. MASTER EVIDENCE-BASED CLINICAL DATABASE (22+ PROFILES)
 // ============================================================================
 const MASTER_CLINICAL_DB = [
   {
@@ -264,20 +280,18 @@ const MASTER_CLINICAL_DB = [
 ];
 
 // ============================================================================
-// 4. PERSISTENT APPLICATION STATE ENGINE
+// 4. STORAGE VAULT STATE CONTROLLER
 // ============================================================================
 let AppState = {
   activeRole: null, // 'doctor' | 'farmer'
   currentTab: 'diagnosis',
   currentDiagSubTab: 'search',
   khataRecords: [],
-  clinicStock: [],
-  geminiKey: ""
+  clinicStock: []
 };
 
 function loadStorageVault() {
   try {
-    AppState.geminiKey = localStorage.getItem("vetcare_gemini_key") || "";
     AppState.khataRecords = JSON.parse(localStorage.getItem("vetcare_khata_records") || "[]");
     AppState.clinicStock = JSON.parse(localStorage.getItem("vetcare_clinic_stock") || "[]");
 
@@ -355,7 +369,205 @@ window.initSessionTimer = function() {
 };
 
 // ============================================================================
-// 6. DIAGNOSIS 3 SUB-TABS SWITCHING LOGIC
+// 6. RESILIENT 2026 GEMINI API ENGINE WITH AUTO-DISCOVERY & FALLBACK
+// ============================================================================
+window.callGeminiClinicalAI = async function(promptText) {
+  // Support both key names for 100% backward/forward template compatibility
+  const apiKey = localStorage.getItem('vetcare_gemini_api_key') || localStorage.getItem('vetcare_gemini_key');
+  if (!apiKey) {
+    alert("कृपया पहले '⚙️ AI Key' बटन पर क्लिक करके अपनी Google API Key दर्ज करें!");
+    if (window.openAiKeyModal) window.openAiKeyModal();
+    else if (window.openAIKeyModal) window.openAIKeyModal();
+    return null;
+  }
+
+  const candidateModels = VETCARE_CONFIG.ai.candidateModels;
+  let lastError = null;
+
+  // 1. Direct candidate model attempt
+  for (const model of candidateModels) {
+    try {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-goog-api-key': apiKey
+        },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: promptText }] }]
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (text) return text;
+      } else {
+        const errData = await response.json().catch(() => ({}));
+        lastError = errData.error?.message || response.statusText;
+        console.warn(`Model ${model} returned error: ${lastError}`);
+      }
+    } catch (err) {
+      lastError = err.message;
+      console.warn(`Model ${model} network error: ${lastError}`);
+    }
+  }
+
+  // 2. Automatic Discovery Fallback via ListModels
+  try {
+    const listRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`, {
+      headers: { 'x-goog-api-key': apiKey }
+    });
+    if (listRes.ok) {
+      const listData = await listRes.json();
+      const validModel = listData.models?.find(m => 
+        m.supportedGenerationMethods && m.supportedGenerationMethods.includes('generateContent')
+      );
+      if (validModel) {
+        const modelName = validModel.name.startsWith('models/') ? validModel.name : `models/${validModel.name}`;
+        const directUrl = `https://generativelanguage.googleapis.com/v1beta/${modelName}:generateContent?key=${apiKey}`;
+        const finalRes = await fetch(directUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-goog-api-key': apiKey
+          },
+          body: JSON.stringify({ contents: [{ parts: [{ text: promptText }] }] })
+        });
+        if (finalRes.ok) {
+          const finalData = await finalRes.json();
+          const text = finalData.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (text) return text;
+        }
+      }
+    }
+  } catch (discoveryErr) {
+    console.warn("Discovery fallback failed:", discoveryErr);
+  }
+
+  throw new Error(lastError || "AI मॉडल से संपर्क नहीं हो सका। कृपया अपनी इंटरनेट कनेक्टिविटी और API Key जांचें।");
+};
+
+// ============================================================================
+// 7. ZERO-MATCH LIVE AI TREATMENT GENERATOR & AUTO-RENDERER
+// ============================================================================
+window.generateAITreatmentPlan = async function(query) {
+  const container = document.getElementById("diseaseResultsContainer");
+  if (!container) return;
+
+  const currentStatusText = getI18n("aiGenerating", "Google Gemini AI से क्लिनिकल रिपोर्ट तैयार की जा रही है...");
+  container.innerHTML = `
+    <div class="p-8 text-center bg-white border border-purple-200 rounded-3xl shadow-md space-y-4">
+      <div class="w-12 h-12 mx-auto border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin"></div>
+      <p class="text-xs sm:text-sm font-bold text-purple-900">${currentStatusText}</p>
+      <p class="text-[11px] text-slate-500 font-mono">Query: "${escapeHtml(query)}" • Evaluating 5-Tier Differential Protocols</p>
+    </div>
+  `;
+
+  const prompt = `Act as an Expert Veterinary Surgeon.
+The user searched for animal clinical signs / disease: "${query}".
+No exact match was found in the internal database.
+
+Generate a comprehensive clinical profile with 5 structured treatment tiers.
+Format your output EXACTLY as follows:
+
+NAME: [Disease Name in Hindi & English]
+CATEGORY: [BACTERIAL / VIRAL / PROTOZOAL / METABOLIC / PARASITIC]
+TEMP: [Expected Body Temperature in °F]
+CARDINAL: [Primary Cardinal Symptoms]
+TIER1: [Tier 1: Drug of Choice / Primary Antibiotic with dosage in mg/kg and route]
+TIER2: [Tier 2: NSAID / Anti-inflammatory & Pain Management]
+TIER3: [Tier 3: Antihistaminic & Supportive Fluid Therapy]
+TIER4: [Tier 4: Safe Herbal / Desi Remedy & Management]
+TIER5: [Tier 5: Critical Precautions & Contraindications - MUST explicitly note whether Dexamethasone is safe or contraindicated in pregnancy]
+
+Keep each field on a single concise line.`;
+
+  try {
+    const aiText = await window.callGeminiClinicalAI(prompt);
+    if (!aiText) return;
+
+    // Parse structured AI output
+    function extractField(key, fallback = "") {
+      const regex = new RegExp(`^${key}:\\s*(.*)$`, "m");
+      const match = aiText.match(regex);
+      return match ? match[1].trim() : fallback;
+    }
+
+    const name = extractField("NAME", query);
+    const category = extractField("CATEGORY", "AI DIAGNOSIS");
+    const temp = extractField("TEMP", "102 - 104°F");
+    const cardinal = extractField("CARDINAL", query);
+    const tier1 = extractField("TIER1", "Inj. Ceftriaxone 10mg/kg I/M 3-5 days");
+    const tier2 = extractField("TIER2", "Inj. Melonex Plus 15-20ml I/M");
+    const tier3 = extractField("TIER3", "Inj. Avil 10ml I/M + Fluids");
+    const tier4 = extractField("TIER4", "स्वच्छ जल, सुपाच्य चारा एवं विश्राम दें।");
+    const tier5 = extractField("TIER5", "गाभिन पशुओं में Dexamethasone न दें (Isoflupredone का प्रयोग करें)।");
+
+    container.innerHTML = `
+      <div class="bg-gradient-to-br from-purple-50/50 via-white to-indigo-50/40 border-2 border-purple-300 rounded-3xl p-4 sm:p-5 shadow-lg space-y-3.5">
+        <div class="flex justify-between items-start gap-2 border-b border-purple-100 pb-2.5">
+          <div>
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <span class="text-[10px] bg-purple-600 text-white font-bold px-2 py-0.5 rounded-full">✨ AI उत्पन्न क्लिनिकल रिपोर्ट</span>
+              <span class="text-[10px] bg-purple-100 text-purple-800 font-bold px-2 py-0.5 rounded-full">${category}</span>
+            </div>
+            <h3 class="text-sm sm:text-base font-black text-slate-900 mt-1">${name}</h3>
+          </div>
+          <span class="text-[11px] font-bold text-rose-600 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded-xl shrink-0">🌡️ ${temp}</span>
+        </div>
+
+        <p class="text-xs text-slate-700 leading-relaxed"><strong class="text-slate-900">🚨 कार्डिनल लक्षण:</strong> ${cardinal}</p>
+
+        <!-- Structured 5-Tier Treatment Table -->
+        <div class="space-y-1.5 text-xs bg-white/80 p-3 rounded-2xl border border-purple-200 font-sans shadow-xs">
+          <div class="p-2 bg-purple-50/60 rounded-xl border border-purple-200">
+            <span class="text-[10px] font-black text-purple-800 uppercase block tracking-wider">Tier 1: ड्रग ऑफ चॉइस / मुख्य एंटीबायोटिक</span>
+            <p class="text-slate-800 font-bold mt-0.5">${tier1}</p>
+          </div>
+          <div class="p-2 bg-emerald-50/60 rounded-xl border border-emerald-200">
+            <span class="text-[10px] font-black text-emerald-800 uppercase block tracking-wider">Tier 2: दर्द व सूजन निवारक (NSAID)</span>
+            <p class="text-slate-800 font-medium mt-0.5">${tier2}</p>
+          </div>
+          <div class="p-2 bg-blue-50/60 rounded-xl border border-blue-200">
+            <span class="text-[10px] font-black text-blue-800 uppercase block tracking-wider">Tier 3: एंटीहिस्टामिनिक व सपोर्टिव थेरेपी</span>
+            <p class="text-slate-800 font-medium mt-0.5">${tier3}</p>
+          </div>
+          <div class="p-2 bg-amber-50/60 rounded-xl border border-amber-200">
+            <span class="text-[10px] font-black text-amber-800 uppercase block tracking-wider">Tier 4: घरेलू हर्बल व सहायक नुस्खा</span>
+            <p class="text-slate-800 font-medium mt-0.5">${tier4}</p>
+          </div>
+          <div class="p-2 bg-rose-50 rounded-xl border border-rose-300">
+            <span class="text-[10px] font-black text-rose-700 uppercase block tracking-wider">Tier 5: क्लिनिकल सावधानियां व मतभेद</span>
+            <p class="text-rose-900 font-bold mt-0.5">${tier5}</p>
+          </div>
+        </div>
+
+        <div class="flex gap-2 pt-1">
+          <button onclick="window.loadIntoOPDSlip('${escapeHtml(name)}', '${escapeHtml(tier1)}\\n${escapeHtml(tier2)}\\n${escapeHtml(tier3)}')" class="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-bold py-2.5 rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-sm transition">
+            <span>📝 ओपीडी पर्चे में लोड करें</span> <span>→</span>
+          </button>
+          <button onclick="window.renderClinicalDiseaseCards(MASTER_CLINICAL_DB)" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-3 py-2.5 rounded-xl text-xs transition">
+            ↺ रीसेट
+          </button>
+        </div>
+      </div>
+    `;
+  } catch (error) {
+    container.innerHTML = `
+      <div class="p-6 text-center bg-rose-50 border border-rose-200 rounded-3xl space-y-2">
+        <p class="text-xs font-bold text-rose-800">AI विश्लेषण विफल रहा: ${escapeHtml(error.message)}</p>
+        <button onclick="window.renderClinicalDiseaseCards(MASTER_CLINICAL_DB)" class="text-xs bg-white border border-rose-300 text-rose-700 font-bold px-3 py-1.5 rounded-xl">
+          डेटाबेस पर वापस जाएं
+        </button>
+      </div>
+    `;
+  }
+};
+
+// ============================================================================
+// 8. DIAGNOSIS 3 SUB-TABS SWITCHING LOGIC
 // ============================================================================
 window.switchDiagSubTab = function(tabName) {
   AppState.currentDiagSubTab = tabName;
@@ -372,7 +584,6 @@ window.switchDiagSubTab = function(tabName) {
   if (searchView) searchView.classList.toggle("hidden", tabName !== "search");
   if (dirView) dirView.classList.toggle("hidden", tabName !== "directory");
 
-  // Reset tab button states
   [tabMatrix, tabSearch, tabDir].forEach(btn => {
     if (btn) {
       btn.classList.remove("bg-blue-600", "text-white", "shadow", "font-bold");
@@ -392,7 +603,7 @@ window.switchDiagSubTab = function(tabName) {
 };
 
 // ============================================================================
-// 7. DATA SYNC & BACKUP LOGIC
+// 9. DATA SYNC & BACKUP LOGIC
 // ============================================================================
 window.triggerDataSync = function() {
   const isOnline = navigator.onLine;
@@ -412,7 +623,7 @@ window.triggerDataSync = function() {
 };
 
 // ============================================================================
-// 8. STRICT ROLE SEPARATION & DYNAMIC NAVBAR RENDERING
+// 10. STRICT ROLE SEPARATION & DYNAMIC NAVBAR RENDERING
 // ============================================================================
 window.selectRole = function(role) {
   localStorage.setItem("vetcare_registered_role", role);
@@ -442,22 +653,18 @@ window.applyRoleState = function(role) {
   renderDynamicBottomNavbar(role);
 
   if (role === "doctor") {
-    // Hide farmer containers
     toggleContainerVisibility("viewBreeding", false);
     toggleContainerVisibility("viewFeed", false);
     toggleContainerVisibility("viewFarmerRemedies", false);
 
-    // Switch default tab to Diagnosis
     window.switchTab("diagnosis");
     window.switchDiagSubTab("search");
   } else {
-    // Hide doctor containers
     toggleContainerVisibility("viewDiagnosis", false);
     toggleContainerVisibility("viewWeightCalc", false);
     toggleContainerVisibility("viewRx", false);
     toggleContainerVisibility("viewInventory", false);
 
-    // Switch default tab to Farmer Remedies
     window.switchTab("farmer_remedies");
   }
 };
@@ -565,7 +772,6 @@ window.switchTab = function(tabId) {
     }
   }
 
-  // Trigger content-specific rendering
   if (tabId === "diagnosis") {
     window.switchDiagSubTab(AppState.currentDiagSubTab || "search");
   } else if (tabId === "farmer_remedies") {
@@ -578,14 +784,22 @@ window.switchTab = function(tabId) {
 };
 
 // ============================================================================
-// 9. DISEASE SEARCH & CARD RENDERERS (WITH PREGNANCY GUARD)
+// 11. DISEASE SEARCH ENGINE & ZERO-MATCH TRIGGER
 // ============================================================================
 function renderClinicalDiseaseCards(diseases) {
   const container = document.getElementById("diseaseResultsContainer");
   if (!container) return;
 
   if (!diseases || diseases.length === 0) {
-    container.innerHTML = `<div class="p-6 text-center text-slate-400 text-xs">कोई क्लिनिकल रिकॉर्ड नहीं मिला।</div>`;
+    const rawSearch = (document.getElementById("unifiedDiseaseSearchInput")?.value || "").trim();
+    container.innerHTML = `
+      <div class="p-6 text-center space-y-3 bg-white border border-slate-200 rounded-3xl shadow-xs">
+        <p class="text-xs text-slate-500 font-medium">स्थानीय डेटाबेस में "<strong>${escapeHtml(rawSearch)}</strong>" से संबंधित कोई रोग नहीं मिला।</p>
+        <button onclick="window.generateAITreatmentPlan('${escapeHtml(rawSearch)}')" class="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold py-2.5 px-4 rounded-xl text-xs shadow-md transition active:scale-95 flex items-center justify-center gap-1.5 mx-auto">
+          <span>⚡ Google Gemini AI से लाइव इलाज तैयार करवाएं</span>
+        </button>
+      </div>
+    `;
     return;
   }
 
@@ -619,16 +833,16 @@ function renderClinicalDiseaseCards(diseases) {
           <p class="text-slate-800 font-medium mt-0.5">${d.tier4}</p>
         </div>
         <div class="p-2 bg-rose-50 rounded-xl border border-rose-200">
-          <span class="text-[10px] font-black text-rose-700 uppercase block tracking-wider">Tier 5: क्लिनिकल सावधानियां व मतभेद (Contraindications)</span>
+          <span class="text-[10px] font-black text-rose-700 uppercase block tracking-wider">Tier 5: क्लिनिकल सावधानियां व मतभेद</span>
           <p class="text-rose-900 font-bold mt-0.5">${d.tier5}</p>
         </div>
       </div>
 
       <div class="flex gap-2 pt-1">
-        <button onclick="window.loadIntoOPDSlip('${d.nameHindi}', '${d.tier1}\\n${d.tier2}\\n${d.tier3}')" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-sm transition">
+        <button onclick="window.loadIntoOPDSlip('${escapeHtml(d.nameHindi)}', '${escapeHtml(d.tier1)}\\n${escapeHtml(d.tier2)}\\n${escapeHtml(d.tier3)}')" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-sm transition">
           <span>📝 ओपीडी पर्चे में भरें</span> <span>→</span>
         </button>
-        <button onclick="window.consultGeminiDifferential('${d.nameHindi}', '${d.cardinal}')" class="bg-purple-50 hover:bg-purple-100 text-purple-700 font-bold border border-purple-200 px-3 py-2.5 rounded-xl text-xs transition">
+        <button onclick="window.consultGeminiDifferential('${escapeHtml(d.nameHindi)}', '${escapeHtml(d.cardinal)}')" class="bg-purple-50 hover:bg-purple-100 text-purple-700 font-bold border border-purple-200 px-3 py-2.5 rounded-xl text-xs transition">
           🤖 AI कंसल्ट
         </button>
       </div>
@@ -682,7 +896,7 @@ window.filterDiseaseCategory = function(cat, btn) {
 };
 
 // ============================================================================
-// 10. SHAEFFER'S WEIGHT & ACCURATE DRUG DOSAGE ENGINE
+// 12. SHAEFFER'S WEIGHT & ACCURATE DRUG DOSAGE ENGINE
 // ============================================================================
 window.calculateShaefferDosage = function() {
   const lenInput = document.getElementById("calcLengthInches");
@@ -691,7 +905,7 @@ window.calculateShaefferDosage = function() {
   const length = parseFloat(lenInput ? lenInput.value : 60) || 60;
   const girth = parseFloat(girthInput ? girthInput.value : 70) || 70;
 
-  // Formula: Weight in kg = (Length in inches * Girth in inches^2) / 660
+  // Formula: Body Weight in kg = (Length in inches * Girth in inches^2) / 660
   const weightKg = Math.round((length * Math.pow(girth, 2)) / 660);
   const weightLbs = Math.round(weightKg * 2.20462);
 
@@ -712,7 +926,7 @@ window.calculateShaefferDosage = function() {
 };
 
 // ============================================================================
-// 11. DIGITAL OPD PRESCRIPTION & 1-CLICK WHATSAPP DISPATCH
+// 13. DIGITAL OPD PRESCRIPTION & 1-CLICK WHATSAPP DISPATCH
 // ============================================================================
 window.loadIntoOPDSlip = function(diseaseName, drugText) {
   const diagInput = document.getElementById("opdDiagnosis");
@@ -773,7 +987,7 @@ window.dispatchOPDWhatsApp = function() {
 };
 
 // ============================================================================
-// 12. CLINIC INVENTORY COUNTER
+// 14. CLINIC INVENTORY COUNTER
 // ============================================================================
 window.renderClinicStock = function() {
   const container = document.getElementById("stockListContainer");
@@ -830,7 +1044,7 @@ window.openNewStockModal = function() {
 };
 
 // ============================================================================
-// 13. KHATA LEDGER & 1-CLICK WHATSAPP TAGADA
+// 15. KHATA LEDGER & 1-CLICK WHATSAPP TAGADA
 // ============================================================================
 window.renderKhataLedger = function() {
   const container = document.getElementById("khataListContainer");
@@ -911,51 +1125,8 @@ window.removeKhataRecord = function(index) {
 };
 
 // ============================================================================
-// 14. MODERN 2026 GEMINI API PIPELINE WITH MULTI-MODEL FALLBACK
+// 16. LIVE GEMINI CLINICAL CONSULTANT TRIGGER
 // ============================================================================
-window.callGeminiClinicalAI = async function(promptText) {
-  const apiKey = localStorage.getItem("vetcare_gemini_key") || "";
-  if (!apiKey) {
-    alert("कृपया ऊपर दिए गए ⚙️ AI Key बटन पर क्लिक करके Google AI Studio से प्राप्त Gemini API Key दर्ज करें!");
-    return null;
-  }
-
-  const models = VETCARE_CONFIG.ai.models;
-  let finalResult = null;
-
-  for (const model of models) {
-    try {
-      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), VETCARE_CONFIG.ai.timeoutMs);
-
-      const response = await fetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        signal: controller.signal,
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: promptText }] }]
-        })
-      });
-
-      clearTimeout(timeoutId);
-
-      if (response.ok) {
-        const data = await response.json();
-        const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (text) {
-          finalResult = text;
-          break; // Model successfully answered
-        }
-      }
-    } catch (err) {
-      console.warn(`Model ${model} request failed, attempting next fallback...`, err);
-    }
-  }
-
-  return finalResult;
-};
-
 window.consultGeminiDifferential = async function(diseaseName, symptoms) {
   const prompt = `You are a Senior Veterinary Clinical Consultant.
 Case:
@@ -973,13 +1144,16 @@ CRITICAL SAFETY RULE: Warn explicitly if any abortifacient drug (e.g. Dexamethas
   const originalText = btn ? btn.innerText : "";
   if (btn) btn.innerText = "विचार कर रहे हैं... 🤖";
 
-  const aiReply = await window.callGeminiClinicalAI(prompt);
-  if (btn) btn.innerText = originalText;
+  try {
+    const aiReply = await window.callGeminiClinicalAI(prompt);
+    if (btn) btn.innerText = originalText;
 
-  if (aiReply) {
-    alert(`🤖 AI क्लिनिकल विभेदक रिपोर्ट:\n\n${aiReply}`);
-  } else {
-    alert("Gemini AI सर्वर से संपर्क नहीं हो सका। कृपया अपनी इंटरनेट कनेक्टिविटी व API Key की जांच करें।");
+    if (aiReply) {
+      alert(`🤖 AI क्लिनिकल विभेदक रिपोर्ट:\n\n${aiReply}`);
+    }
+  } catch (err) {
+    if (btn) btn.innerText = originalText;
+    alert(`Gemini AI त्रुटि: ${err.message}`);
   }
 };
 
@@ -991,7 +1165,7 @@ window.dispatchEmergencyWhatsApp = function() {
 };
 
 // ============================================================================
-// 15. LANGUAGE HOOK
+// 17. LANGUAGE ENGINE HOOK
 // ============================================================================
 window.changeLanguage = function(lang) {
   currentLang = lang;
@@ -1002,13 +1176,13 @@ window.changeLanguage = function(lang) {
 };
 
 // ============================================================================
-// 16. SYSTEM BOOTSTRAPPER & EVENT DISPATCHER
+// 18. INITIALIZATION BOOTSTRAPPER & EVENT DISPATCHER
 // ============================================================================
 function initVetcareOS() {
   loadStorageVault();
   window.initSessionTimer();
 
-  // Attach search listener defensively
+  // Attach search listener defensively with zero-match live AI fallback trigger
   const searchInput = document.getElementById("unifiedDiseaseSearchInput");
   if (searchInput) {
     searchInput.addEventListener("input", function(e) {
