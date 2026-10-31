@@ -1,10 +1,10 @@
-// Vetcare AI OS - Core Logic Engine (2026 Production)
+// Vetcare AI OS - Unified Production Engine (2026 Stable)
 
 // ============================================================================
 // 1. ENTERPRISE CONFIGURATION & VERIFIED FINANCIAL VAULT
 // ============================================================================
 const VETCARE_CONFIG = {
-  version: "7.5.0-2026.PROD",
+  version: "8.0.0-2026.PROD",
   adminPin: "9297",
   payeeName: "Vetcare Services",
   beneficiary: "Mr. Rahul",
@@ -21,7 +21,7 @@ const VETCARE_CONFIG = {
     ifsc: "PUNB0668700"
   },
   ai: {
-    activeModel: "gemini-2.5-flash"
+    modernModels: ["gemini-2.5-flash", "gemini-2.5-flash-lite"]
   }
 };
 
@@ -129,9 +129,9 @@ function escapeHtml(str) {
 // 3. PERSISTENT APPLICATION STATE & STORAGE ENGINE
 // ============================================================================
 let AppState = {
-  activeRole: null, // 'doctor' | 'farmer'
-  currentTab: 'diagnosis',
-  currentDiagSubTab: 'search',
+  activeRole: null,
+  currentTab: "diagnosis",
+  currentDiagSubTab: "search",
   khataRecords: [],
   clinicStock: []
 };
@@ -175,7 +175,7 @@ function persistStockVault() {
 }
 
 // ============================================================================
-// 4. SINGLETON GLITCH-FREE 60-MINUTE SESSION TIMER
+// 4. 60-MINUTE GLITCH-FREE SINGLETON SESSION TIMER
 // ============================================================================
 let sessionTimerInterval = null;
 
@@ -191,7 +191,7 @@ window.initSessionTimer = function() {
     localStorage.setItem("vetcare_session_start", sessionStart);
   }
 
-  const totalDuration = 60 * 60 * 1000; // 60 minutes in milliseconds
+  const totalDuration = 60 * 60 * 1000;
 
   function updateClock() {
     const elapsed = Date.now() - parseInt(sessionStart, 10);
@@ -221,45 +221,51 @@ window.initSessionTimer = function() {
 };
 
 // ============================================================================
-// 5. DIRECT GOOGLE GEMINI 2.5 FLASH API CALLER
+// 5. ACTIVE 2026 GEMINI API ENGINE (GEMINI 2.5 FLASH / FLASH-LITE)
 // ============================================================================
 window.callGeminiClinicalAI = async function(promptText) {
-  const apiKey = localStorage.getItem('vetcare_gemini_api_key') || localStorage.getItem('vetcare_gemini_key');
+  const apiKey = localStorage.getItem("vetcare_gemini_api_key") || localStorage.getItem("vetcare_gemini_key");
   if (!apiKey) {
-    alert("कृपया पहले '⚙️ AI Key' बटन पर क्लिक करके अपनी Google API Key दर्ज करें!");
+    alert("कृपया पहले '⚙️ AI Key' बटन दबाकर अपनी Google API Key दर्ज करें!");
     if (window.openAiKeyModal) window.openAiKeyModal();
     else if (window.openAIKeyModal) window.openAIKeyModal();
     return null;
   }
 
-  const targetUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
-  try {
-    const response = await fetch(targetUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-goog-api-key': apiKey
-      },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: promptText }] }]
-      })
-    });
+  const modernModels = VETCARE_CONFIG.ai.modernModels;
+  let lastError = null;
 
-    if (response.ok) {
-      const data = await response.json();
-      return data.candidates?.[0]?.content?.parts?.[0]?.text;
-    } else {
-      const err = await response.json().catch(() => ({}));
-      throw new Error(err.error?.message || response.statusText);
+  for (const model of modernModels) {
+    try {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-goog-api-key": apiKey
+        },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: promptText }] }]
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (text) return text;
+      } else {
+        const errData = await response.json().catch(() => ({}));
+        lastError = errData.error?.message || response.statusText;
+      }
+    } catch (err) {
+      lastError = err.message;
     }
-  } catch (e) {
-    console.error("Gemini 2.5 Flash direct call failed:", e);
-    throw e;
   }
+  throw new Error(lastError || "Google Gemini AI मॉडल से संपर्क नहीं हो सका।");
 };
 
 // ============================================================================
-// 6. UNIVERSAL AI FALLBACK & CLINICAL REPORT RENDERER
+// 6. UNIVERSAL AI DISEASE SYNTHESIZER & CLEAN RENDERER
 // ============================================================================
 window.generateAITreatmentPlan = async function(queryText) {
   const container = document.getElementById("diseaseResultsContainer");
@@ -275,8 +281,8 @@ window.generateAITreatmentPlan = async function(queryText) {
   `;
 
   const prompt = `Act as an Expert Veterinary Systems Architect & Senior Clinical Pharmacologist.
-The user is diagnosing an animal condition with clinical signs: "${queryText}".
-Generate an exhaustive, scientifically rigorous clinical profile using Google Gemini 2.5 Flash with 5 structured treatment tiers and a 4-stage progression timeline.
+Diagnose animal condition with clinical signs: "${queryText}".
+Generate an exhaustive, scientifically rigorous clinical profile using Google Gemini with 5 structured treatment tiers and a 4-stage progression timeline.
 
 Format your output EXACTLY as follows:
 
@@ -330,7 +336,7 @@ Keep each field on its own single line.`;
           <div>
             <div class="flex items-center gap-1.5 flex-wrap">
               <span class="text-[10px] bg-purple-600 text-white font-bold px-2 py-0.5 rounded-full">✨ Gemini 2.5 Flash रिपोर्ट</span>
-              <span class="text-[10px] bg-purple-100 text-purple-800 font-bold px-2 py-0.5 rounded-full">${category}</span>
+              <span class="text-[10px] bg-purple-100 text-purple-800 font-bold px-2 py-0.5 rounded-full">${escapeHtml(category)}</span>
               ${isSteroidContraindicated ? '<span class="text-[10px] bg-rose-600 text-white font-bold px-2 py-0.5 rounded-full animate-pulse">🚨 गाभिन स्टेरॉयड निषेध</span>' : ''}
             </div>
             <h3 class="text-sm sm:text-base font-black text-slate-900 mt-1">${escapeHtml(name)}</h3>
@@ -338,7 +344,6 @@ Keep each field on its own single line.`;
           <span class="text-[11px] font-bold text-rose-600 bg-rose-50 border border-rose-200 px-2.5 py-1 rounded-xl shrink-0">🌡️ ${escapeHtml(temp)}</span>
         </div>
 
-        <!-- High-Visibility Pregnancy Red Alert Banner -->
         <div class="p-3 bg-rose-50 border-2 border-rose-300 rounded-2xl flex items-start gap-2.5 text-rose-900 text-xs">
           <span class="text-xl shrink-0">⚠️</span>
           <div>
@@ -349,7 +354,6 @@ Keep each field on its own single line.`;
 
         <p class="text-xs text-slate-700 leading-relaxed"><strong class="text-slate-900">🚨 कार्डिनल लक्षण:</strong> ${escapeHtml(cardinal)}</p>
 
-        <!-- 5-Tier Treatment Matrix Table -->
         <div class="space-y-2 text-xs font-sans">
           <div class="p-2.5 bg-white rounded-xl border border-blue-200 shadow-xs">
             <span class="text-[10px] font-black text-blue-700 uppercase block tracking-wider">Tier 1: एलोपैथिक इंजेक्शन (Allopathic Injections)</span>
@@ -373,7 +377,6 @@ Keep each field on its own single line.`;
           </div>
         </div>
 
-        <!-- 4-Stage Trajectory & Prognosis Timeline -->
         <div class="p-3 bg-slate-50 border border-slate-200 rounded-2xl space-y-1.5 text-[11px] text-slate-700">
           <strong class="text-xs text-slate-900 block font-bold">⏱️ रोग प्रगति व रिकवरी की 4-स्तरीय रूपरेखा (Clinical Stages):</strong>
           <div>• <strong>स्टेज 1 (प्रारंभिक):</strong> ${escapeHtml(stage1)}</div>
@@ -405,7 +408,7 @@ Keep each field on its own single line.`;
 };
 
 // ============================================================================
-// 7. DIAGNOSIS 3 SUB-TABS SWITCHING LOGIC
+// 7. DIAGNOSIS 3-SUBTAB SYSTEM
 // ============================================================================
 window.switchDiagSubTab = function(tabName) {
   AppState.currentDiagSubTab = tabName;
@@ -443,7 +446,7 @@ window.switchDiagSubTab = function(tabName) {
 };
 
 // ============================================================================
-// 8. STRICT ROLE SEPARATION (DOCTOR VS FARMER ISOLATION)
+// 8. STRICT DOCTOR VS. FARMER BOTTOM NAVIGATION
 // ============================================================================
 window.selectRole = function(role) {
   localStorage.setItem("vetcare_registered_role", role);
@@ -639,7 +642,7 @@ function renderClinicalDiseaseCards(diseases) {
         <div class="flex justify-between items-start gap-2 border-b border-slate-100 pb-2.5">
           <div>
             <div class="flex items-center gap-1.5">
-              <span class="text-[10px] bg-blue-100 text-blue-800 font-bold px-2 py-0.5 rounded-full uppercase">${d.category || 'Clinical'}</span>
+              <span class="text-[10px] bg-blue-100 text-blue-800 font-bold px-2 py-0.5 rounded-full uppercase">${escapeHtml(d.category || 'Clinical')}</span>
               ${d.contraindicatedSteroids ? '<span class="text-[9px] bg-rose-600 text-white font-bold px-1.5 py-0.2 rounded">स्टेरॉयड निषेध</span>' : ''}
             </div>
             <h3 class="text-sm sm:text-base font-black text-slate-900 mt-1">${escapeHtml(name)}</h3>
@@ -743,7 +746,7 @@ function renderCategorizedDirectory() {
 
   container.innerHTML = Object.keys(categories).map(key => {
     const item = categories[key];
-    if (item.list.length === 0) return '';
+    if (item.list.length === 0) return "";
     return `
       <div class="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
         <span class="font-bold text-slate-900 block text-xs">${item.title}</span>
@@ -949,28 +952,31 @@ window.renderKhataLedger = function() {
     return;
   }
 
-  container.innerHTML = AppState.khataRecords.map((item, idx) => `
-    <div class="flex items-center justify-between p-3.5 rounded-2xl border ${item.type === 'PAID' ? 'bg-emerald-50/70 border-emerald-200' : 'bg-rose-50/70 border-rose-200'}">
-      <div>
-        <strong class="text-xs font-black text-slate-900 block">${escapeHtml(item.farmerName)}</strong>
-        <span class="text-[11px] text-slate-600 font-mono">${escapeHtml(item.phone || '-')}</span>
-        <p class="text-[10px] text-slate-500 mt-0.5">${escapeHtml(item.note || '')} • ${escapeHtml(item.date)}</p>
-      </div>
-      <div class="text-right space-y-1">
-        <span class="text-xs font-black block ${item.type === 'PAID' ? 'text-emerald-700' : 'text-rose-700'}">
-          ${item.type === 'PAID' ? '+ ₹' : '- ₹'}${item.amount}
-        </span>
-        <div class="flex items-center gap-1 justify-end">
-          ${item.type === 'DUE' && (item.phone || '').replace(/\D/g, '').length >= 10 ? `
-            <button onclick="window.sendKhataWhatsAppTagada(${idx})" class="text-[10px] bg-rose-600 hover:bg-rose-700 text-white font-bold px-2 py-0.5 rounded-md shadow-xs">
-              तगादा 💬
-            </button>
-          ` : ''}
-          <button onclick="window.removeKhataRecord(${idx})" class="text-[10px] text-slate-400 hover:text-rose-600 font-bold ml-1">✕</button>
+  container.innerHTML = AppState.khataRecords.map((item, idx) => {
+    const farmerDisplay = item.farmerName || item.name || "अज्ञात किसान";
+    return `
+      <div class="flex items-center justify-between p-3.5 rounded-2xl border ${item.type === 'PAID' ? 'bg-emerald-50/70 border-emerald-200' : 'bg-rose-50/70 border-rose-200'}">
+        <div>
+          <strong class="text-xs font-black text-slate-900 block">${escapeHtml(farmerDisplay)}</strong>
+          <span class="text-[11px] text-slate-600 font-mono">${escapeHtml(item.phone || '-')}</span>
+          <p class="text-[10px] text-slate-500 mt-0.5">${escapeHtml(item.note || '')} • ${escapeHtml(item.date || '')}</p>
+        </div>
+        <div class="text-right space-y-1">
+          <span class="text-xs font-black block ${item.type === 'PAID' ? 'text-emerald-700' : 'text-rose-700'}">
+            ${item.type === 'PAID' ? '+ ₹' : '- ₹'}${item.amount}
+          </span>
+          <div class="flex items-center gap-1 justify-end">
+            ${item.type === 'DUE' && (item.phone || '').replace(/\D/g, '').length >= 10 ? `
+              <button onclick="window.sendKhataWhatsAppTagada(${idx})" class="text-[10px] bg-rose-600 hover:bg-rose-700 text-white font-bold px-2 py-0.5 rounded-md shadow-xs">
+                तगादा 💬
+              </button>
+            ` : ''}
+            <button onclick="window.removeKhataRecord(${idx})" class="text-[10px] text-slate-400 hover:text-rose-600 font-bold ml-1">✕</button>
+          </div>
         </div>
       </div>
-    </div>
-  `).join("");
+    `;
+  }).join("");
 };
 
 window.sendKhataWhatsAppTagada = function(index) {
@@ -983,8 +989,9 @@ window.sendKhataWhatsAppTagada = function(index) {
     return;
   }
 
+  const farmerDisplay = item.farmerName || item.name || "किसान";
   const msg = `*📢 VETCARE क्लिनिक बकाया भुगतान स्मरण पत्र*\n\n` +
-              `नमस्ते *${item.farmerName}* जी,\n` +
+              `नमस्ते *${farmerDisplay}* जी,\n` +
               `आपके क्लिनिक/डेयरी खाते का कुल बकाया *₹${item.amount}* है (${item.note || 'पशु चिकित्सा परामर्श'}).\n\n` +
               `कृपया निम्न अधिकृत खाते में शीघ्र भुगतान करने का कष्ट करें:\n` +
               `🏛️ *Payee:* ${VETCARE_CONFIG.payeeName} (${VETCARE_CONFIG.beneficiary})\n` +
@@ -1029,7 +1036,7 @@ window.triggerDataSync = function() {
 // 15. LIVE GEMINI CLINICAL CONSULTANT TRIGGER
 // ============================================================================
 window.consultGeminiDifferential = async function(diseaseName, symptoms) {
-  const prompt = `You are a Senior Veterinary Clinical Consultant using Google Gemini 2.5 Flash.
+  const prompt = `You are a Senior Veterinary Clinical Consultant using Google Gemini.
 Case:
 Suspected Disease: ${diseaseName}
 Key Cardinal Symptoms: ${symptoms}
@@ -1050,7 +1057,7 @@ CRITICAL SAFETY RULE: Warn explicitly if any abortifacient drug (e.g. Dexamethas
     if (btn) btn.innerText = originalText;
 
     if (aiReply) {
-      alert(`🤖 Gemini 2.5 Flash क्लिनिकल विभेदक रिपोर्ट:\n\n${aiReply}`);
+      alert(`🤖 Gemini AI क्लिनिकल विभेदक रिपोर्ट:\n\n${aiReply}`);
     }
   } catch (err) {
     if (btn) btn.innerText = originalText;
@@ -1083,7 +1090,6 @@ function initVetcareOS() {
   loadStorageVault();
   window.initSessionTimer();
 
-  // Attach search listener with universal AI fallback
   const searchInput = document.getElementById("unifiedDiseaseSearchInput");
   if (searchInput) {
     searchInput.addEventListener("input", function(e) {
@@ -1097,7 +1103,7 @@ function initVetcareOS() {
         const filtered = db.filter(item => {
           const nameHi = (item.nameHi || item.nameHindi || "").toLowerCase();
           const nameEn = (item.nameEn || "").toLowerCase();
-          const cardinal = (item.cardinal || "").toLowerCase();
+          const cardinal = (item.cardinal || (Array.isArray(item.cardinalSigns) ? item.cardinalSigns.join(" ") : "")).toLowerCase();
           return nameHi.includes(q) || nameEn.includes(q) || cardinal.includes(q);
         });
         renderClinicalDiseaseCards(filtered);
@@ -1105,7 +1111,6 @@ function initVetcareOS() {
     });
   }
 
-  // Restore registered role or display role selector
   const savedRole = localStorage.getItem("vetcare_registered_role");
   if (savedRole === "doctor" || savedRole === "farmer") {
     window.applyRoleState(savedRole);
@@ -1117,7 +1122,6 @@ function initVetcareOS() {
   }
 }
 
-// DomContentLoaded Safe Anchor
 if (document.readyState === "loading") {
   document.addEventListener("DOMContentLoaded", initVetcareOS);
 } else {
