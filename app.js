@@ -1,10 +1,10 @@
-// Vetcare AI OS - Unified Production Engine (2026 Stable)
+// Vetcare AI OS - Unified Production Engine (2026 Production)
 
 // ============================================================================
 // 1. ENTERPRISE CONFIGURATION & VERIFIED FINANCIAL VAULT
 // ============================================================================
 const VETCARE_CONFIG = {
-  version: "8.0.0-2026.PROD",
+  version: "8.5.0-2026.PROD",
   adminPin: "9297",
   payeeName: "Vetcare Services",
   beneficiary: "Mr. Rahul",
@@ -21,7 +21,7 @@ const VETCARE_CONFIG = {
     ifsc: "PUNB0668700"
   },
   ai: {
-    modernModels: ["gemini-2.5-flash", "gemini-2.5-flash-lite"]
+    activeModels: ["gemini-3.8-flash", "gemini-3.5-flash", "gemini-2.5-flash"]
   }
 };
 
@@ -38,7 +38,7 @@ const I18N_DICT = {
     sessionExpired: "आपका 60-मिनट का सत्र समाप्त हो गया है। कृपया पुनः लॉगिन करें।",
     confirmDelete: "क्या आप इस रिकॉर्ड को हटाना चाहते हैं?",
     pregnancyAlert: "🚨 गंभीर चेतावनी: गाभिन पशुओं में Dexamethasone निषेध है (गर्भपात का खतरा)! इसके स्थान पर Isoflupredone Acetate का उपयोग करें।",
-    aiGenerating: "Google Gemini AI से लाइव इलाज तैयार किया जा रहा है..."
+    aiGenerating: "Google Gemini 3.8 AI से लाइव वैज्ञानिक इलाज तैयार किया जा रहा है..."
   },
   en: {
     docRoleTitle: "Clinical Mode (Registered Vet Practitioner)",
@@ -49,7 +49,7 @@ const I18N_DICT = {
     sessionExpired: "Your 60-minute active session has expired. Please log in again.",
     confirmDelete: "Are you sure you want to delete this record?",
     pregnancyAlert: "🚨 CRITICAL ALERT: Dexamethasone is contraindicated in pregnant animals (causes abortion)! Use Isoflupredone Acetate instead.",
-    aiGenerating: "Generating Live Treatment Protocol via Google Gemini AI..."
+    aiGenerating: "Generating Live Scientific Protocol via Google Gemini 3.8 AI..."
   },
   hinglish: {
     docRoleTitle: "Clinical Mode (Registered Vet Doctor)",
@@ -60,7 +60,7 @@ const I18N_DICT = {
     sessionExpired: "Aapka 60-minute ka session khatam ho gaya hai. Dobara login karein.",
     confirmDelete: "Kya aap is record ko delete karna chahte hain?",
     pregnancyAlert: "🚨 WARNING: Gabhin pashu ko Dexamethasone bilkul na dein (abortion ho sakta hai)! Isoflupredone dein.",
-    aiGenerating: "Google Gemini AI se live ilaj taiyar ho raha hai..."
+    aiGenerating: "Google Gemini 3.8 AI se live ilaj taiyar ho raha hai..."
   },
   pa: {
     docRoleTitle: "ਕਲੀਨਿਕਲ ਮੋਡ (ਅਧਿਕਾਰਤ ਵੈਟਰਨਰੀ ਡਾਕਟਰ)",
@@ -71,7 +71,7 @@ const I18N_DICT = {
     sessionExpired: "ਤੁਹਾਡਾ 60 ਮਿੰਟ ਦਾ ਸੈਸ਼ਨ ਸਮਾਪਤ ਹੋ ਗਿਆ ਹੈ।",
     confirmDelete: "ਕੀ ਤੁਸੀਂ ਇਸਨੂੰ ਹਟਾਉਣਾ ਚਾਹੁੰਦੇ ਹੋ?",
     pregnancyAlert: "🚨 ਚੇਤਾਵਨੀ: ਗੱਭਣ ਪਸ਼ੂਆਂ ਨੂੰ Dexamethasone ਨਾ ਦਿਓ! Isoflupredone ਦੀ ਵਰਤੋਂ ਕਰੋ।",
-    aiGenerating: "Gemini AI ਦੁਆਰਾ ਇਲਾਜ ਤਿਆਰ ਕੀਤਾ ਜਾ ਰਿਹਾ ਹੈ..."
+    aiGenerating: "Gemini 3.8 AI ਦੁਆਰਾ ਇਲਾਜ ਤਿਆਰ ਕੀਤਾ ਜਾ ਰਿਹਾ ਹੈ..."
   },
   mr: {
     docRoleTitle: "क्लिनिकल मोड (अधिकृत पशुवैद्यक)",
@@ -82,7 +82,7 @@ const I18N_DICT = {
     sessionExpired: "तुमचे ६० मिनिटांचे सत्र संपले आहे. कृपया पुन्हा लॉगिन करा.",
     confirmDelete: "तुम्हाला हे रेकॉर्ड हटवायचे आहे का?",
     pregnancyAlert: "🚨 धोक्याची सूचना: गाभण जनावरांमध्ये Dexamethasone वापरू नका! Isoflupredone वापरा.",
-    aiGenerating: "Google Gemini AI द्वारे उपचार तयार केले जात आहेत..."
+    aiGenerating: "Google Gemini 3.8 AI द्वारे उपचार तयार केले जात आहेत..."
   },
   gu: {
     docRoleTitle: "ક્લિનિકલ મોડ (રજિસ્ટર્ડ વેટરનરી ડૉક્ટર)",
@@ -93,7 +93,7 @@ const I18N_DICT = {
     sessionExpired: "તમારું 60 મિનિટનું સત્ર સમાપ્ત થયું છે.",
     confirmDelete: "શું તમે આ રેકોર્ડ કાઢી નાખવા માંગો છો?",
     pregnancyAlert: "🚨 ચેતવણી: ગાભણ પશુઓને Dexamethasone ન આપો! Isoflupredone વાપરો.",
-    aiGenerating: "Google Gemini AI સારવાર પ્રોટોકોલ તૈયાર કરી રહ્યું છે..."
+    aiGenerating: "Google Gemini 3.8 AI સારવાર પ્રોટોકોલ તૈયાર કરી રહ્યું છે..."
   },
   bn: {
     docRoleTitle: "ক্লিনিক্যাল মোড (ভেটেরিনারি ডাক্তার)",
@@ -104,7 +104,7 @@ const I18N_DICT = {
     sessionExpired: "আপনার ৬০ মিনিটের সেশন শেষ হয়েছে।",
     confirmDelete: "আপনি কি এটি মুছে ফেলতে চান?",
     pregnancyAlert: "🚨 সতর্কতা: গর্ভবতী পশুকে Dexamethasone দেবেন না! Isoflupredone ব্যবহার করুন।",
-    aiGenerating: "Google Gemini AI চিকিৎসা প্রস্তুত করছে..."
+    aiGenerating: "Google Gemini 3.8 AI চিকিৎসা প্রস্তুত করছে..."
   }
 };
 
@@ -221,7 +221,7 @@ window.initSessionTimer = function() {
 };
 
 // ============================================================================
-// 5. ACTIVE 2026 GEMINI API ENGINE (GEMINI 2.5 FLASH / FLASH-LITE)
+// 5. ACTIVE GOOGLE GEMINI 3.8 MODEL ENGINE WITH AUTO-DISCOVERY FALLBACK
 // ============================================================================
 window.callGeminiClinicalAI = async function(promptText) {
   const apiKey = localStorage.getItem("vetcare_gemini_api_key") || localStorage.getItem("vetcare_gemini_key");
@@ -232,10 +232,10 @@ window.callGeminiClinicalAI = async function(promptText) {
     return null;
   }
 
-  const modernModels = VETCARE_CONFIG.ai.modernModels;
+  const activeModels = VETCARE_CONFIG.ai.activeModels;
   let lastError = null;
 
-  for (const model of modernModels) {
+  for (const model of activeModels) {
     try {
       const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
       const response = await fetch(url, {
@@ -261,7 +261,39 @@ window.callGeminiClinicalAI = async function(promptText) {
       lastError = err.message;
     }
   }
-  throw new Error(lastError || "Google Gemini AI मॉडल से संपर्क नहीं हो सका।");
+
+  // Automatic Model Discovery Fallback via ListModels
+  try {
+    const listRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`, {
+      headers: { "x-goog-api-key": apiKey }
+    });
+    if (listRes.ok) {
+      const listData = await listRes.json();
+      const validModel = listData.models?.find(m => 
+        m.supportedGenerationMethods && m.supportedGenerationMethods.includes("generateContent")
+      );
+      if (validModel) {
+        const directUrl = `https://generativelanguage.googleapis.com/v1beta/${validModel.name}:generateContent?key=${apiKey}`;
+        const finalRes = await fetch(directUrl, {
+          method: "POST",
+          headers: { 
+            "Content-Type": "application/json",
+            "x-goog-api-key": apiKey
+          },
+          body: JSON.stringify({ contents: [{ parts: [{ text: promptText }] }] })
+        });
+        if (finalRes.ok) {
+          const finalData = await finalRes.json();
+          const text = finalData.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (text) return text;
+        }
+      }
+    }
+  } catch (discoveryErr) {
+    console.warn("Discovery fallback failed:", discoveryErr);
+  }
+
+  throw new Error(lastError || "Google Gemini 3.8 मॉडल से संपर्क नहीं हो सका। कृपया API Key जांचें।");
 };
 
 // ============================================================================
@@ -271,18 +303,18 @@ window.generateAITreatmentPlan = async function(queryText) {
   const container = document.getElementById("diseaseResultsContainer");
   if (!container) return;
 
-  const currentStatusText = getI18n("aiGenerating", "Google Gemini AI से लाइव इलाज तैयार किया जा रहा है...");
+  const currentStatusText = getI18n("aiGenerating", "Google Gemini 3.8 AI से लाइव वैज्ञानिक इलाज तैयार किया जा रहा है...");
   container.innerHTML = `
     <div class="p-8 text-center bg-white border border-purple-200 rounded-3xl shadow-md space-y-4">
       <div class="w-12 h-12 mx-auto border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin"></div>
       <p class="text-xs sm:text-sm font-bold text-purple-900">${currentStatusText}</p>
-      <p class="text-[11px] text-slate-500 font-mono">लक्षण: "${escapeHtml(queryText)}" • Model: gemini-2.5-flash (5-Tier Protocol)</p>
+      <p class="text-[11px] text-slate-500 font-mono">लक्षण: "${escapeHtml(queryText)}" • Mandated Active: gemini-3.8-flash (5-Tier Protocol)</p>
     </div>
   `;
 
   const prompt = `Act as an Expert Veterinary Systems Architect & Senior Clinical Pharmacologist.
-Diagnose animal condition with clinical signs: "${queryText}".
-Generate an exhaustive, scientifically rigorous clinical profile using Google Gemini with 5 structured treatment tiers and a 4-stage progression timeline.
+The user is diagnosing an animal condition with clinical signs: "${queryText}".
+Generate an exhaustive, scientifically rigorous clinical profile using Google Gemini 3.8 Flash with 5 structured treatment tiers and a 4-stage progression timeline.
 
 Format your output EXACTLY as follows:
 
@@ -335,7 +367,7 @@ Keep each field on its own single line.`;
         <div class="flex justify-between items-start gap-2 border-b border-purple-100 pb-2.5">
           <div>
             <div class="flex items-center gap-1.5 flex-wrap">
-              <span class="text-[10px] bg-purple-600 text-white font-bold px-2 py-0.5 rounded-full">✨ Gemini 2.5 Flash रिपोर्ट</span>
+              <span class="text-[10px] bg-purple-600 text-white font-bold px-2 py-0.5 rounded-full">✨ Gemini 3.8 Flash रिपोर्ट</span>
               <span class="text-[10px] bg-purple-100 text-purple-800 font-bold px-2 py-0.5 rounded-full">${escapeHtml(category)}</span>
               ${isSteroidContraindicated ? '<span class="text-[10px] bg-rose-600 text-white font-bold px-2 py-0.5 rounded-full animate-pulse">🚨 गाभिन स्टेरॉयड निषेध</span>' : ''}
             </div>
@@ -398,7 +430,7 @@ Keep each field on its own single line.`;
   } catch (error) {
     container.innerHTML = `
       <div class="p-6 text-center bg-rose-50 border border-rose-200 rounded-3xl space-y-2">
-        <p class="text-xs font-bold text-rose-800">Gemini 2.5 Flash विश्लेषण विफल: ${escapeHtml(error.message)}</p>
+        <p class="text-xs font-bold text-rose-800">Gemini 3.8 Flash विश्लेषण विफल: ${escapeHtml(error.message)}</p>
         <button onclick="window.renderClinicalDiseaseCards(getActiveDiseaseDatabase())" class="text-xs bg-white border border-rose-300 text-rose-700 font-bold px-3 py-1.5 rounded-xl">
           डेटाबेस पर वापस जाएं
         </button>
@@ -620,7 +652,7 @@ function renderClinicalDiseaseCards(diseases) {
       <div class="p-6 text-center space-y-3 bg-white border border-slate-200 rounded-3xl shadow-xs">
         <p class="text-xs text-slate-500 font-medium">स्थानीय डेटाबेस में "<strong>${escapeHtml(rawSearch)}</strong>" से संबंधित कोई रोग नहीं मिला।</p>
         <button onclick="window.generateAITreatmentPlan('${escapeHtml(rawSearch)}')" class="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold py-3 px-5 rounded-xl text-xs sm:text-sm shadow-md transition active:scale-95 flex items-center justify-center gap-1.5 mx-auto">
-          <span>⚡ Google Gemini AI से लाइव इलाज तैयार करवाएं</span>
+          <span>⚡ Google Gemini AI से लाइव वैज्ञानिक इलाज तैयार करवाएं</span>
         </button>
       </div>
     `;
