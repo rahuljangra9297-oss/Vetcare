@@ -4,7 +4,7 @@
 // 1. ENTERPRISE CONFIGURATION & VERIFIED FINANCIAL VAULT
 // ============================================================================
 const VETCARE_CONFIG = {
-  version: "8.5.0-2026.PROD",
+  version: "9.0.0-2026.PROD",
   adminPin: "9297",
   payeeName: "Vetcare Services",
   beneficiary: "Mr. Rahul",
@@ -21,7 +21,7 @@ const VETCARE_CONFIG = {
     ifsc: "PUNB0668700"
   },
   ai: {
-    activeModels: ["gemini-3.8-flash", "gemini-3.5-flash", "gemini-2.5-flash"]
+    activeModels: ["gemini-3.8-flash", "gemini-3.5-flash"]
   }
 };
 
@@ -221,9 +221,9 @@ window.initSessionTimer = function() {
 };
 
 // ============================================================================
-// 5. ACTIVE GOOGLE GEMINI 3.8 MODEL ENGINE WITH AUTO-DISCOVERY FALLBACK
+// 5. GOOGLE GEMINI 3.8 ACTIVE API ENGINE (MULTI-PURPOSE & REPRODUCTION SPECIALIST)
 // ============================================================================
-window.callGeminiClinicalAI = async function(promptText) {
+window.callGeminiClinicalAI = async function(promptText, specializedType = "general") {
   const apiKey = localStorage.getItem("vetcare_gemini_api_key") || localStorage.getItem("vetcare_gemini_key");
   if (!apiKey) {
     alert("कृपया पहले '⚙️ AI Key' बटन दबाकर अपनी Google API Key दर्ज करें!");
@@ -232,10 +232,18 @@ window.callGeminiClinicalAI = async function(promptText) {
     return null;
   }
 
-  const activeModels = VETCARE_CONFIG.ai.activeModels;
+  let systemPrompt = "";
+  if (specializedType === "reproduction") {
+    systemPrompt = "You are an Animal Reproduction & Artificial Insemination Specialist. Analyze cervical tone, follicular/CL palpation, semen handling (thawing at 37°C for 30s), and formulate Repeat Breeder Protocols (Ovsynch, Co-Synch, PRID, CIDR, double A.I., uterine wash). Format output strictly in structured Markdown tables with exact drug names, doses, routes, and timing.";
+  } else {
+    systemPrompt = "You are Chief Veterinary Pharmacologist. Output treatments in standardized Markdown Tables: Emergency Injections [क्र.सं., श्रेणी, जेनेरिक साल्ट, लोकप्रिय ब्रांड, अनुमानित MRP, डोज़ व रूट, गर्भावस्था सुरक्षा, चिकित्सीय उद्देश्य], Oral Medicines, Ayurvedic, Homeopathic, Desi remedies, and 4-Stage Trajectory timeline. Include explicit Pregnancy Red Alert.";
+  }
+
+  const fullPrompt = `${systemPrompt}\n\nCase / Disease / Signs: ${promptText}`;
+  const models = VETCARE_CONFIG.ai.activeModels;
   let lastError = null;
 
-  for (const model of activeModels) {
+  for (const model of models) {
     try {
       const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
       const response = await fetch(url, {
@@ -245,7 +253,7 @@ window.callGeminiClinicalAI = async function(promptText) {
           "x-goog-api-key": apiKey
         },
         body: JSON.stringify({
-          contents: [{ parts: [{ text: promptText }] }]
+          contents: [{ parts: [{ text: fullPrompt }] }]
         })
       });
 
@@ -257,8 +265,8 @@ window.callGeminiClinicalAI = async function(promptText) {
         const errData = await response.json().catch(() => ({}));
         lastError = errData.error?.message || response.statusText;
       }
-    } catch (err) {
-      lastError = err.message;
+    } catch (e) {
+      lastError = e.message;
     }
   }
 
@@ -276,11 +284,11 @@ window.callGeminiClinicalAI = async function(promptText) {
         const directUrl = `https://generativelanguage.googleapis.com/v1beta/${validModel.name}:generateContent?key=${apiKey}`;
         const finalRes = await fetch(directUrl, {
           method: "POST",
-          headers: { 
+          headers: {
             "Content-Type": "application/json",
             "x-goog-api-key": apiKey
           },
-          body: JSON.stringify({ contents: [{ parts: [{ text: promptText }] }] })
+          body: JSON.stringify({ contents: [{ parts: [{ text: fullPrompt }] }] })
         });
         if (finalRes.ok) {
           const finalData = await finalRes.json();
@@ -297,7 +305,167 @@ window.callGeminiClinicalAI = async function(promptText) {
 };
 
 // ============================================================================
-// 6. UNIVERSAL AI DISEASE SYNTHESIZER & CLEAN RENDERER
+// 6. BUILT-IN MARKDOWN TABLE TO PROFESSIONAL HTML RENDERER
+// ============================================================================
+function renderMarkdownToHtml(markdown) {
+  if (!markdown) return "";
+
+  const lines = markdown.split("\n");
+  let html = "";
+  let inTable = false;
+  let tableHeaderParsed = false;
+  let tableRows = [];
+
+  function flushTable() {
+    if (tableRows.length === 0) return "";
+    let tableHtml = '<div class="overflow-x-auto my-3 border border-slate-200 rounded-2xl shadow-xs bg-white">';
+    tableHtml += '<table class="min-w-full text-xs text-left divide-y divide-slate-200">';
+
+    tableRows.forEach((row, idx) => {
+      if (idx === 0) {
+        tableHtml += '<thead class="bg-slate-100 font-bold text-slate-800"><tr>';
+        row.forEach(cell => {
+          tableHtml += `<th class="px-3 py-2.5 border-b border-slate-200 whitespace-nowrap">${escapeHtml(cell)}</th>`;
+        });
+        tableHtml += '</tr></thead><tbody class="divide-y divide-slate-100 bg-white">';
+      } else {
+        tableHtml += '<tr class="hover:bg-slate-50/70 transition">';
+        row.forEach(cell => {
+          let cellText = cell.trim();
+          let badge = cellText;
+
+          // Pregnancy safety badge styling
+          if (/सुरक्षित|safe|yes|हाँ/i.test(cellText) && !/निषेध|unsafe|not safe|no|नहीं/i.test(cellText)) {
+            badge = `<span class="bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full text-[10px] inline-block">${escapeHtml(cellText)}</span>`;
+          } else if (/निषेध|unsafe|contraindicated|खतरा|गर्भपात|contraindication|not safe|no|नहीं/i.test(cellText)) {
+            badge = `<span class="bg-rose-600 text-white font-bold px-2 py-0.5 rounded-full text-[10px] inline-block animate-pulse">${escapeHtml(cellText)}</span>`;
+          } else {
+            badge = escapeHtml(cellText);
+          }
+
+          tableHtml += `<td class="px-3 py-2 text-slate-700 font-medium">${badge}</td>`;
+        });
+        tableHtml += '</tr>';
+      }
+    });
+
+    tableHtml += '</tbody></table></div>';
+    tableRows = [];
+    inTable = false;
+    tableHeaderParsed = false;
+    return tableHtml;
+  }
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+
+    // Markdown Table detection
+    if (line.startsWith("|") && line.endsWith("|")) {
+      const cells = line.slice(1, -1).split("|").map(c => c.trim());
+
+      // Skip markdown divider line |---|---|
+      if (cells.every(c => /^[-:]+$/.test(c))) {
+        tableHeaderParsed = true;
+        continue;
+      }
+
+      inTable = true;
+      tableRows.push(cells);
+      continue;
+    } else if (inTable) {
+      html += flushTable();
+    }
+
+    // Markdown Headers
+    if (line.startsWith("### ")) {
+      html += `<h4 class="font-bold text-sm text-slate-900 mt-3 mb-1 flex items-center gap-1.5"><span class="text-blue-600">▪</span> ${escapeHtml(line.slice(4))}</h4>`;
+    } else if (line.startsWith("## ")) {
+      html += `<h3 class="font-black text-base text-slate-900 mt-4 mb-2 pb-1 border-b border-slate-200">${escapeHtml(line.slice(3))}</h3>`;
+    } else if (line.startsWith("# ")) {
+      html += `<h2 class="font-black text-lg text-blue-900 mt-4 mb-2">${escapeHtml(line.slice(2))}</h2>`;
+    } else if (line.startsWith("- ") || line.startsWith("* ")) {
+      html += `<div class="text-xs text-slate-700 ml-3 my-0.5 flex items-start gap-1"><span class="text-slate-400">•</span><span>${escapeHtml(line.slice(2))}</span></div>`;
+    } else if (line.length > 0) {
+      // Pregnancy Alert detection in prose
+      if (/pregnancy alert|गर्भपात|dexamethasone|isoflupredone|red alert/i.test(line)) {
+        html += `<div class="p-3 my-2 bg-rose-50 border-2 border-rose-300 rounded-2xl text-rose-900 text-xs flex items-start gap-2 shadow-xs">
+          <span class="text-xl shrink-0">🚨</span>
+          <div><strong class="font-black block uppercase tracking-wider text-[11px]">वैधानिक सुरक्षा निर्देश (Pregnancy Safety Alert):</strong>
+          <p class="mt-0.5 font-medium leading-relaxed">${escapeHtml(line)}</p></div>
+        </div>`;
+      } else {
+        html += `<p class="text-xs text-slate-700 my-1 leading-relaxed">${escapeHtml(line)}</p>`;
+      }
+    }
+  }
+
+  if (inTable) {
+    html += flushTable();
+  }
+
+  return html;
+}
+
+// ============================================================================
+// 7. DEDICATED REPRODUCTION & A.I. SPECIALIST ENGINE (DOCTOR PORTAL)
+// ============================================================================
+window.analyzeReproductionAI = async function(findings) {
+  const container = document.getElementById("reproductionOutputContainer") || document.getElementById("diseaseResultsContainer");
+  if (!container) return;
+
+  const currentStatusText = "Google Gemini 3.8 द्वारा प्रजनन व सीमन प्रोटोकॉल तैयार किया जा रहा है...";
+  container.innerHTML = `
+    <div class="p-8 text-center bg-white border border-rose-200 rounded-3xl shadow-md space-y-4">
+      <div class="w-12 h-12 mx-auto border-4 border-rose-200 border-t-rose-600 rounded-full animate-spin"></div>
+      <p class="text-xs sm:text-sm font-bold text-rose-900">${currentStatusText}</p>
+      <p class="text-[11px] text-slate-500 font-mono">Case: "${escapeHtml(findings)}" • Ovsynch / Repeat Breeding Protocols</p>
+    </div>
+  `;
+
+  try {
+    const rawMarkdown = await window.callGeminiClinicalAI(findings, "reproduction");
+    if (!rawMarkdown) return;
+
+    const renderedHtml = renderMarkdownToHtml(rawMarkdown);
+
+    container.innerHTML = `
+      <div class="bg-gradient-to-br from-rose-50/70 via-white to-pink-50/40 border-2 border-rose-300 rounded-3xl p-4 sm:p-5 shadow-lg space-y-4">
+        <div class="flex justify-between items-start gap-2 border-b border-rose-100 pb-2.5">
+          <div>
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <span class="text-[10px] bg-rose-600 text-white font-bold px-2.5 py-0.5 rounded-full">🧬 A.I. & Reproduction Specialist</span>
+              <span class="text-[10px] bg-rose-100 text-rose-800 font-bold px-2 py-0.5 rounded-full">Gemini 3.8 Flash</span>
+            </div>
+            <h3 class="text-sm sm:text-base font-black text-slate-900 mt-1">पशु प्रजनन, मद व रिपीट ब्रीडिंग विशेषज्ञ विश्लेषण</h3>
+          </div>
+          <button onclick="window.renderClinicalDiseaseCards(getActiveDiseaseDatabase())" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-3 py-1.5 rounded-xl transition">
+            ↺ बंद करें
+          </button>
+        </div>
+
+        <div class="prose max-w-none text-xs text-slate-800">
+          ${renderedHtml}
+        </div>
+
+        <div class="p-3 bg-amber-50 border border-amber-200 rounded-2xl text-[11px] text-amber-900">
+          <strong>⚠️ सीमन थॉइंग निर्देश (Thawing Rule):</strong> 37°C गुनगुने पानी में 30 सेकंड तक स्ट्रॉ रखें, साफ टिशू से पोंछें, हवा से बचाएं व 5 मिनट के भीतर गर्भाशय बॉडी में सीमन छोड़ें।
+        </div>
+      </div>
+    `;
+  } catch (error) {
+    container.innerHTML = `
+      <div class="p-6 text-center bg-rose-50 border border-rose-200 rounded-3xl space-y-2">
+        <p class="text-xs font-bold text-rose-800">A.I. विशेषज्ञ रिपोर्ट विफल: ${escapeHtml(error.message)}</p>
+        <button onclick="window.renderClinicalDiseaseCards(getActiveDiseaseDatabase())" class="text-xs bg-white border border-rose-300 text-rose-700 font-bold px-3 py-1.5 rounded-xl">
+          डेटाबेस पर वापस जाएं
+        </button>
+      </div>
+    `;
+  }
+};
+
+// ============================================================================
+// 8. UNIVERSAL AI DISEASE SYNTHESIZER & ZERO-MATCH HANDLER
 // ============================================================================
 window.generateAITreatmentPlan = async function(queryText) {
   const container = document.getElementById("diseaseResultsContainer");
@@ -308,121 +476,38 @@ window.generateAITreatmentPlan = async function(queryText) {
     <div class="p-8 text-center bg-white border border-purple-200 rounded-3xl shadow-md space-y-4">
       <div class="w-12 h-12 mx-auto border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin"></div>
       <p class="text-xs sm:text-sm font-bold text-purple-900">${currentStatusText}</p>
-      <p class="text-[11px] text-slate-500 font-mono">लक्षण: "${escapeHtml(queryText)}" • Mandated Active: gemini-3.8-flash (5-Tier Protocol)</p>
+      <p class="text-[11px] text-slate-500 font-mono">लक्षण: "${escapeHtml(queryText)}" • Model: gemini-3.8-flash (Standardized 5-Tier Tables)</p>
     </div>
   `;
 
-  const prompt = `Act as an Expert Veterinary Systems Architect & Senior Clinical Pharmacologist.
-The user is diagnosing an animal condition with clinical signs: "${queryText}".
-Generate an exhaustive, scientifically rigorous clinical profile using Google Gemini 3.8 Flash with 5 structured treatment tiers and a 4-stage progression timeline.
-
-Format your output EXACTLY as follows:
-
-NAME: [Disease Name in Hindi & English]
-CATEGORY: [BACTERIAL / VIRAL / PROTOZOAL / METABOLIC / TOXICOLOGY / GYNAE / SURGICAL]
-TEMP: [Expected Body Temperature in °F]
-CARDINAL: [Primary Cardinal Symptoms]
-CONTRAINDICATED_STEROIDS: [YES or NO - Specify YES if Dexamethasone/Flumethasone causes abortion in pregnant ruminants]
-TIER1_INJ: [Tier 1: Allopathic Injections - Drug of Choice with precise dose in mg/kg, route, and duration]
-TIER2_ORAL: [Tier 2: Oral Bolus / Liquid Therapies & NSAID pain control]
-TIER3_AYURVEDIC: [Tier 3: Ayurvedic Formulations & Natural Extracts]
-TIER4_HOMEOPATHIC: [Tier 4: Homeopathic Remedies with Potencies & Dropper Frequency]
-TIER5_DESI: [Tier 5: Safe Traditional Desi Remedies, management & biosecurity]
-PREGNANCY_ALERT: [High-visibility warning regarding steroid contraindications, abortion risks, or safe alternatives like Isoflupredone]
-STAGE1: [Stage 1: Prodromal signs, positive recovery signs vs negative deterioration]
-STAGE2: [Stage 2: Established signs, positive recovery signs vs negative deterioration]
-STAGE3: [Stage 3: Severe signs, positive recovery signs vs negative deterioration]
-STAGE4: [Stage 4: Critical/Terminal signs, positive recovery signs vs negative deterioration]
-
-Keep each field on its own single line.`;
-
   try {
-    const aiText = await window.callGeminiClinicalAI(prompt);
-    if (!aiText) return;
+    const rawMarkdown = await window.callGeminiClinicalAI(queryText, "general");
+    if (!rawMarkdown) return;
 
-    function extractField(key, fallback = "") {
-      const regex = new RegExp(`^${key}:\\s*(.*)$`, "m");
-      const match = aiText.match(regex);
-      return match ? match[1].trim() : fallback;
-    }
-
-    const name = extractField("NAME", queryText);
-    const category = extractField("CATEGORY", "AI SYNTHESIZED PROTOCOL");
-    const temp = extractField("TEMP", "102 - 104°F");
-    const cardinal = extractField("CARDINAL", queryText);
-    const isSteroidContraindicated = extractField("CONTRAINDICATED_STEROIDS", "YES").toUpperCase().includes("YES");
-    const tier1 = extractField("TIER1_INJ", "Inj. Ceftriaxone 10mg/kg I/M 3-5 days");
-    const tier2 = extractField("TIER2_ORAL", "Bolus Melonex Plus 2 बोलस सुबह-शाम + Probiotics");
-    const tier3 = extractField("TIER3_AYURVEDIC", "वासावलेह + गिलोय स्वरस 50ml दिन में दो बार");
-    const tier4 = extractField("TIER4_HOMEOPATHIC", "Aconite 200C + Bryonia 200C (15 बूंदें दिन में 3 बार)");
-    const tier5 = extractField("TIER5_DESI", "हल्दी, काली मिर्च, पुराना गुड़ एवं सुपाच्य दलिया");
-    const pregnancyAlert = extractField("PREGNANCY_ALERT", "गाभिन पशुओं में Dexamethasone निषेध है; Isoflupredone का प्रयोग करें।");
-    const stage1 = extractField("STAGE1", "शुरुआती सुस्ती व हल्का बुखार।");
-    const stage2 = extractField("STAGE2", "लक्षणों का स्पष्ट होना व चारा छोड़ना।");
-    const stage3 = extractField("STAGE3", "गंभीर स्थिति व बैठने में लाचारी।");
-    const stage4 = extractField("STAGE4", "क्रिटिकल शॉक व जीवन संकट।");
+    const renderedTablesHtml = renderMarkdownToHtml(rawMarkdown);
 
     container.innerHTML = `
       <div class="bg-gradient-to-br from-purple-50/60 via-white to-indigo-50/40 border-2 border-purple-300 rounded-3xl p-4 sm:p-5 shadow-lg space-y-4">
         <div class="flex justify-between items-start gap-2 border-b border-purple-100 pb-2.5">
           <div>
             <div class="flex items-center gap-1.5 flex-wrap">
-              <span class="text-[10px] bg-purple-600 text-white font-bold px-2 py-0.5 rounded-full">✨ Gemini 3.8 Flash रिपोर्ट</span>
-              <span class="text-[10px] bg-purple-100 text-purple-800 font-bold px-2 py-0.5 rounded-full">${escapeHtml(category)}</span>
-              ${isSteroidContraindicated ? '<span class="text-[10px] bg-rose-600 text-white font-bold px-2 py-0.5 rounded-full animate-pulse">🚨 गाभिन स्टेरॉयड निषेध</span>' : ''}
+              <span class="text-[10px] bg-purple-600 text-white font-bold px-2 py-0.5 rounded-full">✨ Gemini 3.8 वैज्ञानिक प्रोटोकॉल</span>
+              <span class="text-[10px] bg-purple-100 text-purple-800 font-bold px-2 py-0.5 rounded-full">5-Tier Standard Schema</span>
             </div>
-            <h3 class="text-sm sm:text-base font-black text-slate-900 mt-1">${escapeHtml(name)}</h3>
+            <h3 class="text-sm sm:text-base font-black text-slate-900 mt-1">${escapeHtml(queryText)}</h3>
           </div>
-          <span class="text-[11px] font-bold text-rose-600 bg-rose-50 border border-rose-200 px-2.5 py-1 rounded-xl shrink-0">🌡️ ${escapeHtml(temp)}</span>
+          <button onclick="window.renderClinicalDiseaseCards(getActiveDiseaseDatabase())" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-3 py-1.5 rounded-xl transition">
+            ↺ डेटाबेस सूची
+          </button>
         </div>
 
-        <div class="p-3 bg-rose-50 border-2 border-rose-300 rounded-2xl flex items-start gap-2.5 text-rose-900 text-xs">
-          <span class="text-xl shrink-0">⚠️</span>
-          <div>
-            <strong class="font-black block uppercase tracking-wider text-[11px]">वैधानिक सुरक्षा निर्देश (Pregnancy Safety Alert):</strong>
-            <p class="mt-0.5 font-medium leading-relaxed">${escapeHtml(pregnancyAlert)}</p>
-          </div>
-        </div>
-
-        <p class="text-xs text-slate-700 leading-relaxed"><strong class="text-slate-900">🚨 कार्डिनल लक्षण:</strong> ${escapeHtml(cardinal)}</p>
-
-        <div class="space-y-2 text-xs font-sans">
-          <div class="p-2.5 bg-white rounded-xl border border-blue-200 shadow-xs">
-            <span class="text-[10px] font-black text-blue-700 uppercase block tracking-wider">Tier 1: एलोपैथिक इंजेक्शन (Allopathic Injections)</span>
-            <p class="text-slate-800 font-bold mt-0.5">${escapeHtml(tier1)}</p>
-          </div>
-          <div class="p-2.5 bg-white rounded-xl border border-emerald-200 shadow-xs">
-            <span class="text-[10px] font-black text-emerald-700 uppercase block tracking-wider">Tier 2: ओरल दवाएं व दर्द निवारक (Oral Bolus & NSAIDs)</span>
-            <p class="text-slate-800 font-medium mt-0.5">${escapeHtml(tier2)}</p>
-          </div>
-          <div class="p-2.5 bg-white rounded-xl border border-amber-200 shadow-xs">
-            <span class="text-[10px] font-black text-amber-700 uppercase block tracking-wider">Tier 3: आयुर्वेदिक व हर्बल औषधियां (Ayurvedic Formulations)</span>
-            <p class="text-slate-800 font-medium mt-0.5">${escapeHtml(tier3)}</p>
-          </div>
-          <div class="p-2.5 bg-white rounded-xl border border-indigo-200 shadow-xs">
-            <span class="text-[10px] font-black text-indigo-700 uppercase block tracking-wider">Tier 4: होम्योपैथिक औषधियां (Homeopathic Remedies)</span>
-            <p class="text-slate-800 font-medium mt-0.5">${escapeHtml(tier4)}</p>
-          </div>
-          <div class="p-2.5 bg-white rounded-xl border border-teal-200 shadow-xs">
-            <span class="text-[10px] font-black text-teal-700 uppercase block tracking-wider">Tier 5: सिद्ध पारंपरिक देसी नुस्खे (Desi Remedies & Biosecurity)</span>
-            <p class="text-slate-800 font-medium mt-0.5">${escapeHtml(tier5)}</p>
-          </div>
-        </div>
-
-        <div class="p-3 bg-slate-50 border border-slate-200 rounded-2xl space-y-1.5 text-[11px] text-slate-700">
-          <strong class="text-xs text-slate-900 block font-bold">⏱️ रोग प्रगति व रिकवरी की 4-स्तरीय रूपरेखा (Clinical Stages):</strong>
-          <div>• <strong>स्टेज 1 (प्रारंभिक):</strong> ${escapeHtml(stage1)}</div>
-          <div>• <strong>स्टेज 2 (मध्यम):</strong> ${escapeHtml(stage2)}</div>
-          <div>• <strong>स्टेज 3 (गंभीर):</strong> ${escapeHtml(stage3)}</div>
-          <div>• <strong>स्टेज 4 (क्रिटिकल):</strong> ${escapeHtml(stage4)}</div>
+        <div class="prose max-w-none text-xs text-slate-800">
+          ${renderedTablesHtml}
         </div>
 
         <div class="flex gap-2 pt-1">
-          <button onclick="window.loadIntoOPDSlip('${escapeHtml(name)}', '${escapeHtml(tier1)}\\n${escapeHtml(tier2)}')" class="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-bold py-2.5 rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-sm transition">
+          <button onclick="window.loadIntoOPDSlip('${escapeHtml(queryText)}', 'Gemini 3.8 AI Synthesized Treatment loaded.')" class="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-bold py-2.5 rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-sm transition">
             <span>📝 ओपीडी पर्चे में लोड करें</span> <span>→</span>
-          </button>
-          <button onclick="window.renderClinicalDiseaseCards(getActiveDiseaseDatabase())" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-3 py-2.5 rounded-xl text-xs transition">
-            ↺ डेटाबेस सूची
           </button>
         </div>
       </div>
@@ -440,7 +525,7 @@ Keep each field on its own single line.`;
 };
 
 // ============================================================================
-// 7. DIAGNOSIS 3-SUBTAB SYSTEM
+// 9. DIAGNOSIS 3-SUBTAB SYSTEM
 // ============================================================================
 window.switchDiagSubTab = function(tabName) {
   AppState.currentDiagSubTab = tabName;
@@ -478,7 +563,7 @@ window.switchDiagSubTab = function(tabName) {
 };
 
 // ============================================================================
-// 8. STRICT DOCTOR VS. FARMER BOTTOM NAVIGATION
+// 10. STRICT DOCTOR VS. FARMER BOTTOM NAVIGATION
 // ============================================================================
 window.selectRole = function(role) {
   localStorage.setItem("vetcare_registered_role", role);
@@ -639,7 +724,7 @@ window.switchTab = function(tabId) {
 };
 
 // ============================================================================
-// 9. DISEASE SEARCH & CARD RENDERERS
+// 11. CLINICAL DISEASE CARD RENDERERS
 // ============================================================================
 function renderClinicalDiseaseCards(diseases) {
   const container = document.getElementById("diseaseResultsContainer");
@@ -811,7 +896,7 @@ window.filterDiseaseCategory = function(cat, btn) {
 };
 
 // ============================================================================
-// 10. SHAEFFER'S WEIGHT & ACCURATE DRUG ML DOSAGE CALCULATOR
+// 12. SHAEFFER'S WEIGHT & ACCURATE DRUG ML DOSAGE CALCULATOR
 // ============================================================================
 window.calculateShaefferDosage = function() {
   const lenInput = document.getElementById("calcLengthInches");
@@ -820,8 +905,7 @@ window.calculateShaefferDosage = function() {
   const length = parseFloat(lenInput ? lenInput.value : 60) || 60;
   const girth = parseFloat(girthInput ? girthInput.value : 70) || 70;
 
-  // Formula: Weight in lbs = (Length * Girth^2) / 300
-  // Weight in kg = Weight in lbs / 2.20462
+  // Shaeffer's Formula: Weight in lbs = (Length * Girth^2) / 300 | Weight in kg = Weight in lbs / 2.20462
   const weightLbs = Math.round((length * Math.pow(girth, 2)) / 300);
   const weightKg = Math.round(weightLbs / 2.20462);
 
@@ -842,7 +926,7 @@ window.calculateShaefferDosage = function() {
 };
 
 // ============================================================================
-// 11. DIGITAL OPD PRESCRIPTION & 1-CLICK WHATSAPP DISPATCH
+// 13. DIGITAL OPD PRESCRIPTION & 1-CLICK WHATSAPP DISPATCH
 // ============================================================================
 window.loadIntoOPDSlip = function(diseaseName, drugText) {
   const diagInput = document.getElementById("opdDiagnosis");
@@ -870,7 +954,7 @@ window.dispatchOPDWhatsApp = function() {
     return;
   }
 
-  // Abortifacient Steroid Safety Guard
+  // Abortifacient Steroid Safety Guard Check
   const isPregnant = (pregnancy || "").toLowerCase().includes("गाभिन") || (pregnancy || "").toLowerCase().includes("pregnant");
   const hasDexa = (rx || "").toLowerCase().includes("dexa");
 
@@ -903,7 +987,7 @@ window.dispatchOPDWhatsApp = function() {
 };
 
 // ============================================================================
-// 12. CLINIC INVENTORY COUNTER (+/-)
+// 14. CLINIC INVENTORY COUNTER (+/-)
 // ============================================================================
 window.renderClinicStock = function() {
   const container = document.getElementById("stockListContainer");
@@ -960,7 +1044,7 @@ window.openNewStockModal = function() {
 };
 
 // ============================================================================
-// 13. KHATA LEDGER & 1-CLICK WHATSAPP TAGADA
+// 15. KHATA LEDGER & 1-CLICK WHATSAPP TAGADA
 // ============================================================================
 window.renderKhataLedger = function() {
   const container = document.getElementById("khataListContainer");
@@ -1045,7 +1129,7 @@ window.removeKhataRecord = function(index) {
 };
 
 // ============================================================================
-// 14. DATA SYNC & CLOUD BACKUP LOGIC
+// 16. DATA SYNC & CLOUD BACKUP LOGIC
 // ============================================================================
 window.triggerDataSync = function() {
   const isOnline = navigator.onLine;
@@ -1065,7 +1149,7 @@ window.triggerDataSync = function() {
 };
 
 // ============================================================================
-// 15. LIVE GEMINI CLINICAL CONSULTANT TRIGGER
+// 17. LIVE GEMINI CLINICAL CONSULTANT TRIGGER
 // ============================================================================
 window.consultGeminiDifferential = async function(diseaseName, symptoms) {
   const prompt = `You are a Senior Veterinary Clinical Consultant using Google Gemini.
@@ -1085,7 +1169,7 @@ CRITICAL SAFETY RULE: Warn explicitly if any abortifacient drug (e.g. Dexamethas
   if (btn) btn.innerText = "विचार कर रहे हैं... 🤖";
 
   try {
-    const aiReply = await window.callGeminiClinicalAI(prompt);
+    const aiReply = await window.callGeminiClinicalAI(prompt, "general");
     if (btn) btn.innerText = originalText;
 
     if (aiReply) {
@@ -1105,7 +1189,7 @@ window.dispatchEmergencyWhatsApp = function() {
 };
 
 // ============================================================================
-// 16. LANGUAGE ENGINE HOOK
+// 18. LANGUAGE ENGINE HOOK
 // ============================================================================
 window.changeLanguage = function(lang) {
   currentLang = lang;
@@ -1116,7 +1200,7 @@ window.changeLanguage = function(lang) {
 };
 
 // ============================================================================
-// 17. SYSTEM BOOTSTRAPPER & INITIAL LOAD GUARD
+// 19. SYSTEM BOOTSTRAPPER & INITIAL LOAD GUARD
 // ============================================================================
 function initVetcareOS() {
   loadStorageVault();
