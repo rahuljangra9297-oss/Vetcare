@@ -1,2282 +1,1161 @@
-// Vetcare AI OS - Master Database (2026 Production)
-// Principal Veterinary Pharmacologist & Database Architect Grade
-// Evidence-Based Veterinary Clinical Database & Pharmacopeia
+// Vetcare AI OS - Master Clinical Engine (Part 1: Core, Drugs, Vax & Farmer DB)
 
 (function (root) {
   "use strict";
 
   /* =========================================================================
-     1. COMPREHENSIVE VETERINARY DRUGS PHARMACOPEIA (dual pricing, 35+ core drugs)
+     1. ORGAN-BASED SYMPTOMS MATRIX (window.VETCARE_SYMPTOMS_BY_ORGAN)
      ========================================================================= */
-  const MEDICINES_DB = [
-    {
-      id: "med_ceftiofur_1g",
-      salt: "Ceftiofur Sodium Sterile Powder 1g",
-      category: "Antibiotic",
-      ethicalBrand: { name: "Xyrofur 1g / Naxcel", company: "Intas / Zoetis", approxMrp: 460 },
-      genericOption: { name: "Ceftiofur Sodium Inj 1g (KVS/Vet Generic)", approxMrp: 185 },
-      doseRate: "1.1 to 2.2 mg/kg body weight, SID for 3 to 5 days",
-      route: "Intramuscular (I/M) / Subcutaneous (S/C)",
-      pregnancySafe: true,
-      withdrawalPeriod: "Milk: 0 hours, Meat: 4 days",
-      indications: "तीव्र गलघोंटू (HS), ब्रोंकोप्यूमोनिया, प्रसवोत्तर तीव्र मेट्राइटिस एवं एक्यूट इंटरडिजिटल नेक्रोबैसिलोसिस (खुर सड़न)।",
-      contraindications: "सेफालोस्पोरिन या बीटा-लैक्टम प्रतिसंवेदनशील पशुओं में वर्जित।"
-    },
-    {
-      id: "med_enrofloxacin_100ml",
-      salt: "Enrofloxacin Injection 100 mg/ml (10%)",
-      category: "Antibiotic",
-      ethicalBrand: { name: "Baytril 10% / Fortivir", company: "Bayer / Virbac", approxMrp: 380 },
-      genericOption: { name: "Enrocin / Enro Vet 100ml", approxMrp: 160 },
-      doseRate: "5 mg/kg body weight (5 ml प्रति 100 kg वजन), SID 3-5 दिन",
-      route: "Deep Intramuscular (I/M) / Slow I/V",
-      pregnancySafe: false,
-      withdrawalPeriod: "Milk: 7 days (84 hours), Meat: 14 days",
-      indications: "गंभीर थनैला (Coliform Mastitis), एंटेराइटिस, बछड़ों में निमोनिया एवं सेकेंडरी बैक्टीरियल संक्रमण।",
-      contraindications: "गर्भावस्था की पहली तिमाही में अत्यधिक प्रयोग से बचें; बढ़ते नवजात बछड़ों में आर्टिकुलर कार्टिलेज विकृति की संभावना।"
-    },
-    {
-      id: "med_ceftriaxone_tazo_4500",
-      salt: "Ceftriaxone Sodium + Tazobactam Sodium (3000 mg + 500 mg / 4000 mg + 500 mg)",
-      category: "Antibiotic",
-      ethicalBrand: { name: "Intacef Tazo 4.5g", company: "Intas Pharmaceuticals", approxMrp: 495 },
-      genericOption: { name: "Cef-Tazo Vet 4.5g (Generic)", approxMrp: 210 },
-      doseRate: "10 mg/kg body weight (Ceftriaxone घटक अनुसार) प्रत्येक 24 घंटे",
-      route: "Intramuscular (I/M) / Intravenous (I/V)",
-      pregnancySafe: true,
-      withdrawalPeriod: "Milk: 3 days, Meat: 7 days",
-      indications: "जटिल थनैला (Acute Clinical Mastitis), ब्रोंकोप्यूमोनिया, पाइमेट्रा, गंभीर पेरिटोनिटिस व सेप्टीसीमिया।",
-      contraindications: "गंभीर वृक्क विफलता (Severe Renal Failure) में डोज़ दर समायोजित करें।"
-    },
-    {
-      id: "med_amoxicillin_sulbactam_4500",
-      salt: "Amoxicillin Sodium + Sulbactam Sodium 4.5g (3000 mg + 1500 mg)",
-      category: "Antibiotic",
-      ethicalBrand: { name: "Amoxirum Forte 4.5g", company: "Virbac Animal Health", approxMrp: 430 },
-      genericOption: { name: "Moxvet-S 4.5g (Generic)", approxMrp: 175 },
-      doseRate: "7-10 mg/kg body weight, SID/BID 3 दिन",
-      route: "Intramuscular (I/M) / Intravenous (I/V)",
-      pregnancySafe: true,
-      withdrawalPeriod: "Milk: 60 hours, Meat: 8 days",
-      indications: "लंगड़ा बुखार (BQ), गलघोंटू, घाव संक्रमण, यूटराइन इन्फेक्शन व प्रसव उपरांत सेप्सिस।",
-      contraindications: "पेनिसिलिन से अतिसंवेदनशील पशुओं में एनाफिलेक्सिस का जोखिम।"
-    },
-    {
-      id: "med_oxytetracycline_la",
-      salt: "Oxytetracycline 2-Pyrrolidone formulation 200 mg/ml (Long Acting)",
-      category: "Antibiotic",
-      ethicalBrand: { name: "Terramycin / Oxy-LA 100ml", company: "Zoetis / Zydus", approxMrp: 310 },
-      genericOption: { name: "Oxytetracycline LA 100ml (Jan Aushadhi Vet)", approxMrp: 130 },
-      doseRate: "20 mg/kg body weight (1 ml प्रति 10 kg) एकल खुराक, 72 घंटे प्रभाव",
-      route: "Deep Intramuscular (एक स्थान पर 10-15 ml से अधिक न लगाएं)",
-      pregnancySafe: false,
-      withdrawalPeriod: "Milk: 7 days, Meat: 21 days",
-      indications: "एनाप्लास्मोसिस, थायलेरियासिस (द्वितीयक), संक्रामक केराटाइटिस (Pink Eye), काउपॉक्स व फुट-रॉट।",
-      contraindications: "अंतिम गर्भावस्था में दांतों/हड्डियों के विरुपण का खतरा; तीव्र हेपेटिक या रीनल रोग।"
-    },
-    {
-      id: "med_procaine_penicillin",
-      salt: "Procaine Penicillin G 20,00,000 IU + Penicillin G Sodium 20,00,000 IU (Fortified)",
-      category: "Antibiotic",
-      ethicalBrand: { name: "Pronapen / Bistrepen 40 Lac", company: "Pfizer / Zydus", approxMrp: 85 },
-      genericOption: { name: "Fortified Procaine Penicillin 40L", approxMrp: 38 },
-      doseRate: "10,000 to 20,000 IU/kg body weight, SID 3-5 दिन",
-      route: "Strictly Deep Intramuscular (I/M)",
-      pregnancySafe: true,
-      withdrawalPeriod: "Milk: 3 days, Meat: 5 days",
-      indications: "लंगड़ा बुखार (Black Quarter - BQ), टेटनस प्रोफाइलैक्सिस, स्ट्रेप्टोकोकल थनैला व नेक्रोटिक घाव।",
-      contraindications: "कदापि शिरा मार्ग (I/V) से न दें। पेनिसिलिन एलर्जी।"
-    },
-    {
-      id: "med_gentamicin_100ml",
-      salt: "Gentamicin Sulphate Injection 40 mg/ml or 100 mg/ml",
-      category: "Antibiotic",
-      ethicalBrand: { name: "Gentacin / Garasent 100ml", company: "Virbac / MSD", approxMrp: 125 },
-      genericOption: { name: "Gentamicin Inj 100ml (Generic)", approxMrp: 55 },
-      doseRate: "4-5 mg/kg body weight, SID या विभाजित खुराकों में",
-      route: "Intramuscular (I/M) / Slow I/V / Intrauterine",
-      pregnancySafe: false,
-      withdrawalPeriod: "Milk: 4 days, Meat: 30 days",
-      indications: "ग्राम-नेगेटिव एंटरिक संक्रमण, एस्चेरिचिया कोलाई सेप्टीसीमिया, मेट्राइटिस (इंट्रा-यूटराइन)।",
-      contraindications: "नेफ्रोटॉक्सिक व ओटोटॉक्सिक; निर्जलित पशुओं (Dehydration) में पूर्णतः वर्जित।"
-    },
-    {
-      id: "med_meloxicam_paracetamol",
-      salt: "Meloxicam (5 mg/ml) + Paracetamol (150 mg/ml) Injection",
-      category: "NSAID",
-      ethicalBrand: { name: "Melonex Plus 100ml", company: "Intas Pharmaceuticals", approxMrp: 215 },
-      genericOption: { name: "Melox-P Vet 100ml (Generic)", approxMrp: 95 },
-      doseRate: "0.5 mg/kg Meloxicam (15-20 ml प्रति 350-400 kg गाय/भैंस)",
-      route: "Deep Intramuscular (I/M)",
-      pregnancySafe: true,
-      withdrawalPeriod: "Milk: 2 days, Meat: 5 days",
-      indications: "तीव्र ज्वर (104-106°F), थनैला की सूजन, लंगड़ापन, चोट, मस्कुलोस्केलेटल दर्द व प्रसव उपरांत दर्द।",
-      contraindications: "गैस्ट्रिक अल्सर, निर्जलीकरण, हाइपोवोल्मिया या रीनल इनसफिशिएंसी।"
-    },
-    {
-      id: "med_flunixin_meglumine",
-      salt: "Flunixin Meglumine Injection 50 mg/ml",
-      category: "NSAID",
-      ethicalBrand: { name: "Megludyne / Finadyne 100ml", company: "Virbac / MSD Animal Health", approxMrp: 540 },
-      genericOption: { name: "Flunixin Vet 100ml", approxMrp: 240 },
-      doseRate: "1.1 to 2.2 mg/kg body weight (2 ml प्रति 45 kg), SID 1-3 दिन",
-      route: "Intravenous (I/V Preferable) / Intramuscular (I/M)",
-      pregnancySafe: true,
-      withdrawalPeriod: "Milk: 36 hours, Meat: 4 days",
-      indications: "एंडोटॉक्सिक शॉक, तीव्र पेट दर्द (Colic), एक्यूट पल्मोनरी सिंड्रोम, टॉक्सिक थनैला।",
-      contraindications: "इंट्रा-आर्टेरियल इंजेक्शन कदापि न दें; नेफ्रोटॉक्सिसिटी के कारण डिहाइड्रेटेड पशुओं में सावधानी।"
-    },
-    {
-      id: "med_ketoprofen_100ml",
-      salt: "Ketoprofen Injection 100 mg/ml (10%)",
-      category: "NSAID",
-      ethicalBrand: { name: "Ketovet / Ketofen 100ml", company: "Merial / Boehringer", approxMrp: 320 },
-      genericOption: { name: "Ketoprofen Inj 100ml (Generic)", approxMrp: 140 },
-      doseRate: "3 mg/kg body weight (1 ml प्रति 33 kg वजन) SID 3 दिन",
-      route: "Intramuscular (I/M) / Intravenous (I/V)",
-      pregnancySafe: true,
-      withdrawalPeriod: "Milk: 0 hours, Meat: 4 days",
-      indications: "ब्याने के तुरंत बाद का प्रसव दर्द, अर्थराइटिस, सूजन, सुरक्षित एंटीपायरेटिक।",
-      contraindications: "सक्रिय गैस्ट्रोइंटेस्टाइनल रक्तस्राव एवं थक्कारोधी दवाओं के साथ उपयोग न करें।"
-    },
-    {
-      id: "med_tolfenamic_acid",
-      salt: "Tolfenamic Acid Injection 40 mg/ml or 80 mg/ml",
-      category: "NSAID",
-      ethicalBrand: { name: "Maxxtol 100ml", company: "Ceva / Intas", approxMrp: 440 },
-      genericOption: { name: "Tolfa Vet 100ml", approxMrp: 195 },
-      doseRate: "2 mg/kg body weight (1 ml/20kg for 4% solution) रिपीट 48 घंटे बाद",
-      route: "Deep Intramuscular (I/M) / Slow I/V",
-      pregnancySafe: true,
-      withdrawalPeriod: "Milk: 24 hours, Meat: 7 days",
-      indications: "तीव्र रेस्पिरेटरी डिसीज (BRD), एक्यूट मास्टाइटिस में सूजन एवं प्रोस्टाग्लैंडीन अवरोधन।",
-      contraindications: "कार्डियक, हेपेटिक या रीनल डैमेज वाले पशुओं में प्रतिबंधित।"
-    },
-    {
-      id: "med_diminazene_aceturate",
-      salt: "Diminazene Aceturate (70 mg/ml) + Phenazone / Antipyrine (375 mg/ml)",
-      category: "Antiprotozoal",
-      ethicalBrand: { name: "Berenil RTU 30ml / 90ml", company: "MSD Animal Health", approxMrp: 290 },
-      genericOption: { name: "Diminazene Inj 30ml (Generic)", approxMrp: 120 },
-      doseRate: "3.5 mg/kg body weight (1 ml प्रति 20 kg); ट्रिपैनोसोमा में 7 mg/kg तक",
-      route: "Deep Intramuscular (I/M strictly, gluteal region)",
-      pregnancySafe: true,
-      withdrawalPeriod: "Milk: 3 days, Meat: 21 days",
-      indications: "बबेशियोसिस (Babesiosis / लाल पेशाब) एवं सर्रा रोग (Trypanosomiasis)।",
-      contraindications: "ओवरडोज से सीएनएस विषाक्तता (अटेक्सिया, कंपकंपी) हो सकती है; ऊंटों में संवेदनशीलता।"
-    },
-    {
-      id: "med_buparvaquone",
-      salt: "Buparvaquone Injection 50 mg/ml",
-      category: "Antiprotozoal",
-      ethicalBrand: { name: "Butalex 20ml / Zubion", company: "Virbac / Intas", approxMrp: 1450 },
-      genericOption: { name: "Buparva Vet 20ml (Generic)", approxMrp: 680 },
-      doseRate: "2.5 mg/kg body weight (1 ml प्रति 20 kg शरीर भार), एकल खुराक",
-      route: "Strictly Deep Intramuscular in neck muscles",
-      pregnancySafe: true,
-      withdrawalPeriod: "Milk: 48 hours, Meat: 42 days",
-      indications: "थायलेरियासिस (Theileria annulata - पूर्वी तटीय बुखार / टिक्स जनित रोग)।",
-      contraindications: "शिरा मार्ग (I/V) या त्वचा के नीचे (S/C) कदापि न दें; एक जगह 10 ml से अधिक न लगाएं।"
-    },
-    {
-      id: "med_quinapyramine_salts",
-      salt: "Quinapyramine Sulphate + Methylsulphate (Triquin Powder)",
-      category: "Antiprotozoal",
-      ethicalBrand: { name: "Triquin 2.5g / Antrycide Pro-salt", company: "MSD / Virbac", approxMrp: 240 },
-      genericOption: { name: "Quina-S Vet 2.5g", approxMrp: 95 },
-      doseRate: "Curative: 3 to 5 mg/kg; 2.5g vial dissolved in 15 ml sterile water (1 ml per 30-40 kg)",
-      route: "Subcutaneous (S/C) exclusively",
-      pregnancySafe: false,
-      withdrawalPeriod: "Meat: 21 days, Milk: 5 days",
-      indications: "सर्रा रोग (Trypanosoma evansi - Surra) का पूर्ण उन्मूलन एवं रोगनिरोधक सुरक्षा।",
-      contraindications: "इंट्रावीनस कदापि न लगाएं। अतिसंवेदनशीलता, कंपकंपी या गिरना हो सकता है।"
-    },
-    {
-      id: "med_buserelin_acetate",
-      salt: "Buserelin Acetate Injection 0.0042 mg/ml (GnRH Analogue)",
-      category: "Hormone",
-      ethicalBrand: { name: "Gynarich 5ml / Receptal", company: "Intas / MSD Animal Health", approxMrp: 280 },
-      genericOption: { name: "Buserelin Vet 5ml", approxMrp: 130 },
-      doseRate: "गाय/भैंस: 2.5 से 5 ml (10-20 mcg); ए.आई. के समय अथवा पुटीय अंडाशय (Cystic Ovary) में",
-      route: "Intramuscular (I/M) / Intravenous",
-      pregnancySafe: true,
-      withdrawalPeriod: "Milk: Nil, Meat: Nil",
-      indications: "ओव्यूलेशन प्रेरण, डिंबग्रंथि पुटी (Follicular Cyst), विलंबित ओव्यूलेशन, रिपीट ब्रीडर सिंड्रोम।",
-      contraindications: "संक्रमित गर्भाशय (Pyometra) में जब तक मवाद न निकले तब तक ओव्यूलेशन उत्प्रेरण न करें।"
-    },
-    {
-      id: "med_cloprostenol_sodium",
-      salt: "Cloprostenol Sodium Injection 250 mcg/ml (PGF2-alpha Analogue)",
-      category: "Hormone",
-      ethicalBrand: { name: "Pragma 2ml / Lutalyse / Iliren", company: "Intas / Zoetis", approxMrp: 210 },
-      genericOption: { name: "Cloprostenol Vet 2ml", approxMrp: 90 },
-      doseRate: "500 mcg (2 ml) एकल खुराक",
-      route: "Intramuscular (I/M)",
-      pregnancySafe: false,
-      withdrawalPeriod: "Milk: Nil, Meat: 24 hours",
-      indications: "मद चक्र समकालन (Estrus Synchronization), ममीकृत भ्रूण निष्कासन, ल्यूटियल सिस्ट, पाइमेट्रा निकासी।",
-      contraindications: "गाभिन पशुओं में पूर्णतः वर्जित (गर्भपात कारक); अस्थमा पीड़ित ऑपरेटर सावधानी से बरतें।"
-    },
-    {
-      id: "med_hydroxyprogesterone",
-      salt: "Hydroxyprogesterone Caproate Injection 250 mg/ml or 750 mg/3ml",
-      category: "Hormone",
-      ethicalBrand: { name: "Proluton Depot / Duraprogen", company: "Zydus / Cadila", approxMrp: 260 },
-      genericOption: { name: "Prog-Caproate 3ml", approxMrp: 110 },
-      doseRate: "250 से 500 mg I/M प्रत्येक 7 से 10 दिन पर गर्भ सुरक्षा हेतु",
-      route: "Deep Intramuscular (I/M)",
-      pregnancySafe: true,
-      withdrawalPeriod: "Milk: Nil, Meat: 48 hours",
-      indications: "आदतन गर्भपात (Habitual Abortion), गर्भाशय ग्रीवा दुर्बलता, प्रारंभिक भ्रूण मृत्यु से बचाव।",
-      contraindications: "प्रसव प्रारंभ होने के समय या मृत भ्रूण उपस्थिति में न दें।"
-    },
-    {
-      id: "med_calcium_borogluconate_cbg",
-      salt: "Calcium Borogluconate 25% + Magnesium & Phosphorus (Mifex Formulation)",
-      category: "Metabolic & Calcium",
-      ethicalBrand: { name: "Mifex 450ml / Calborol", company: "Novartis / Elanco", approxMrp: 295 },
-      genericOption: { name: "CBG with Mg & P 450ml", approxMrp: 140 },
-      doseRate: "250 से 450 ml; 2/3 भाग धीमी गति से I/V + 1/3 भाग S/C",
-      route: "Intravenous (Slow I/V warmed to body temp) & Subcutaneous",
-      pregnancySafe: true,
-      withdrawalPeriod: "Milk: Nil, Meat: Nil",
-      indications: "मिल्क फीवर (Hypocalcemia), एक्लम्पसिया, डाउपर काउ सिंड्रोम, प्रसव उपरांत दुर्बलता।",
-      contraindications: "तीव्र गति से शिरा में चढ़ाने पर कार्डियक अरेस्ट (Cardiac Arrest) की संभावना; ऑस्कल्टेशन अनिवार्य।"
-    },
-    {
-      id: "med_toldimphos_sodium",
-      salt: "Toldimphos Sodium 200 mg/ml Injection (Organic Phosphorus)",
-      category: "Metabolic & Calcium",
-      ethicalBrand: { name: "Tonophosphan 30ml", company: "Intervet / MSD Animal Health", approxMrp: 220 },
-      genericOption: { name: "Phospho-Vet 30ml (Generic)", approxMrp: 90 },
-      doseRate: "10 ml प्रति 300-400 kg शरीर भार, I/M या धीमी I/V, 3-5 दिन",
-      route: "Intramuscular (I/M) / Slow I/V / Subcutaneous",
-      pregnancySafe: true,
-      withdrawalPeriod: "Milk: Nil, Meat: Nil",
-      indications: "पोस्ट-पार्टुरिएंट हीमोग्लोबिन्यूरिया (PPH), रिपीट ब्रीडिंग, रिकेट्स, मेटाबोलिक दुर्बलता।",
-      contraindications: "हाइपरफॉस्फेटेमिया में वर्जित।"
-    },
-    {
-      id: "med_tribivet_b_complex",
-      salt: "Vitamin B1 (Thiamine 33.3mg) + B6 (Pyridoxine 16.6mg) + B12 (Cyanocobalamin 83.3mcg) per ml",
-      category: "Supportive & Fluids",
-      ethicalBrand: { name: "Tribivet 100ml", company: "Intas Pharmaceuticals", approxMrp: 185 },
-      genericOption: { name: "Neuro-B Vet 100ml", approxMrp: 80 },
-      doseRate: "10 ml बड़े पशुओं में, 3-5 ml छोटे पशुओं में, दैनिक 3-5 दिन",
-      route: "Intramuscular (I/M) / Slow I/V",
-      pregnancySafe: true,
-      withdrawalPeriod: "Milk: Nil, Meat: Nil",
-      indications: "पोलियोएन्सेफेलोमलेशिया (PEM), नर्वस विकार, सर्रा, कीटोसिस एवं रूमेन अक्रियता।",
-      contraindications: "विशिष्ट प्रतिषेध नहीं; अनुशंसित मात्रा में पूर्णतः सुरक्षित।"
-    },
-    {
-      id: "med_belamyl_liver_extract",
-      salt: "Highly Purified Liver Extract + Vitamin B-Complex with Choline Chloride",
-      category: "Supportive & Fluids",
-      ethicalBrand: { name: "Belamyl 100ml", company: "Zydus AH", approxMrp: 190 },
-      genericOption: { name: "Liv-Vet Complex 100ml", approxMrp: 85 },
-      doseRate: "5 to 10 ml I/M वैकल्पिक दिनों में",
-      route: "Deep Intramuscular (I/M) strictly",
-      pregnancySafe: true,
-      withdrawalPeriod: "Milk: Nil, Meat: Nil",
-      indications: "हेपेटाइटिस, भूख न लगना (Off-feed), डिबिल्टी, एनीमिया, दीर्घावधि एंटीबायोटिक उपचार के बाद।",
-      contraindications: "कदापि शिरा मार्ग (I/V) से न दें।"
-    },
-    {
-      id: "med_dextrose_25_500ml",
-      salt: "Dextrose Anhydrous 25% w/v Hypertonic Solution",
-      category: "Supportive & Fluids",
-      ethicalBrand: { name: "Dextrose 25% 500ml Vet", company: "Claris / Wockhardt", approxMrp: 65 },
-      genericOption: { name: "D25 Infusion 500ml", approxMrp: 32 },
-      doseRate: "500 से 1000 ml I/V आवश्यकतानुसार",
-      route: "Intravenous (I/V) under aseptic condition",
-      pregnancySafe: true,
-      withdrawalPeriod: "Milk: Nil, Meat: Nil",
-      indications: "कीटोसिस (Ketosis), हाइपोग्लाइसीमिया, तीव्र कमजोरी, हेपेटिक ग्लाइकोजन क्षरण।",
-      contraindications: "गंभीर डिहाइड्रेशन जिसमें इलेक्ट्रोलाइट लॉस हो (पहले आइसोटोनिक फ्लूइड दें)।"
-    },
-    {
-      id: "med_ringers_lactate_rl",
-      salt: "Compound Sodium Lactate Injection (Ringer's Lactate) IP",
-      category: "Supportive & Fluids",
-      ethicalBrand: { name: "RL Vet Infusion 1000ml", company: "Baxter / Parenteral Drugs", approxMrp: 85 },
-      genericOption: { name: "RL Infusion 1000ml (Generic)", approxMrp: 40 },
-      doseRate: "10 से 20 ml/kg body weight (2 से 5 लीटर तीव्र डिहाइड्रेशन में)",
-      route: "Intravenous (I/V) Infusion",
-      pregnancySafe: true,
-      withdrawalPeriod: "Milk: Nil, Meat: Nil",
-      indications: "अतिसार (Diarrhea), डिहाइड्रेशन, लैक्टिक एसिडोसिस रहित हाइपोवोल्मिया, शॉक, टॉक्सिमिया।",
-      contraindications: "गंभीर रूमेन लैक्टिक एसिडोसिस में सोडियम बाइकार्बोनेट युक्त तरल प्राथमिकता है।"
-    },
-    {
-      id: "med_albendazole_susp",
-      salt: "Albendazole Micronized Suspension 25 mg/ml (2.5%)",
-      category: "Anthelmintic",
-      ethicalBrand: { name: "Albomar 1000ml / Valbazen", company: "Virbac / Pfizer", approxMrp: 440 },
-      genericOption: { name: "Alben-Vet 1000ml", approxMrp: 190 },
-      doseRate: "Roundworms: 5-7.5 mg/kg (60-90 ml per 300kg); Liver Flukes: 10 mg/kg (120 ml per 300kg)",
-      route: "Oral Drench",
-      pregnancySafe: false,
-      withdrawalPeriod: "Milk: 3 days, Meat: 14 days",
-      indications: "पेट के कीड़े (Nematodes), फीताकृमि (Tapeworms) एवं वयस्क लिवर फ्लूक (Fasciola)।",
-      contraindications: "गर्भावस्था के प्रथम 45 दिनों में भ्रूणीय विकृति (Teratogenic) के जोखिम हेतु वर्जित।"
-    },
-    {
-      id: "med_fenbendazole_3000",
-      salt: "Fenbendazole Bolus 3000 mg",
-      category: "Anthelmintic",
-      ethicalBrand: { name: "Panacur 3g", company: "MSD Animal Health", approxMrp: 95 },
-      genericOption: { name: "Fen-Vet 3g Bolus", approxMrp: 42 },
-      doseRate: "5 to 7.5 mg/kg body weight (1 बोलस प्रति 400-500 kg पशु)",
-      route: "Oral Bolus",
-      pregnancySafe: true,
-      withdrawalPeriod: "Milk: Nil (or 24 hrs), Meat: 8 days",
-      indications: "गाभिन पशुओं में सुरक्षित कृमिनाशक; फेफड़ों के कीड़े, आंतों के गोलकृमि व सिस्ट।",
-      contraindications: "अतिसंवेदनशीलता का अभाव; निर्धारित खुराक में अत्यंत सुरक्षित।"
-    },
-    {
-      id: "med_ivermectin_inj",
-      salt: "Ivermectin Injection 10 mg/ml (1% w/v)",
-      category: "Anthelmintic",
-      ethicalBrand: { name: "Hitek 10ml / Neomec 10ml", company: "Virbac / Intas", approxMrp: 135 },
-      genericOption: { name: "Iver-Vet 1% 10ml", approxMrp: 55 },
-      doseRate: "0.2 mg/kg body weight (1 ml प्रति 50 kg शरीर भार), एकल खुराक",
-      route: "Strictly Subcutaneous (S/C)",
-      pregnancySafe: true,
-      withdrawalPeriod: "Milk: 28 days (दूधारू पशुओं में सावधानी), Meat: 28 days",
-      indications: "अंतः व बाह्य परजीवी: जूं, चिचड़ी, खुरपका उपरांत मैगट घाव, आंतों के कीड़े।",
-      contraindications: "कदापि शिरा या मांसपेशी मार्ग से न दें। लेक्टेटिंग पशुओं में जहां दूध मानव उपभोग में तुरंत जाए।"
-    },
-    {
-      id: "med_levamisole_oxyclozanide",
-      salt: "Levamisole HCl (1.5% or 3%) + Oxyclozanide (3% or 6%) Suspension",
-      category: "Anthelmintic",
-      ethicalBrand: { name: "Nilzan 1000ml", company: "Virbac Animal Health", approxMrp: 580 },
-      genericOption: { name: "Oxy-Leva Vet 1000ml", approxMrp: 260 },
-      doseRate: "Oxyclozanide 10-15 mg/kg + Levamisole 5-7.5 mg/kg (Approx 15-20 ml per 50 kg)",
-      route: "Oral Drench",
-      pregnancySafe: true,
-      withdrawalPeriod: "Milk: 3 days, Meat: 14 days",
-      indications: "लिवर फ्लूक (Fascioliasis), एम्फिस्टोमियासिस एवं फेफड़े तथा पेट के कीड़े।",
-      contraindications: "अंगूर/ऑर्गेनोफॉस्फेट्स के साथ 14 दिन तक न दें; अतिसार पीड़ित पशु में इलेक्ट्रोलाइट्स दें।"
-    },
-    {
-      id: "med_amitraz_liquid",
-      salt: "Amitraz Liquid Solution 12.5% w/v E.C.",
-      category: "Ectoparasiticide",
-      ethicalBrand: { name: "Taktic 50ml / Ridmange", company: "MSD / Virbac", approxMrp: 195 },
-      genericOption: { name: "Ami-Tick 50ml", approxMrp: 85 },
-      doseRate: "2 to 4 ml प्रति 1 लीटर स्वच्छ पानी में घोलकर बाह्य छिड़काव/स्प्रे",
-      route: "External Wash / Spray (Do not inject)",
-      pregnancySafe: true,
-      withdrawalPeriod: "Meat: 7 days, Milk: 48 hours",
-      indications: "चिचड़ी (Ticks), जूं (Lice), मेंज (Mange - Sarcoptic/Psoroptic) का पूर्ण सफाया।",
-      contraindications: "घोड़ों में पूर्णतः वर्जित (इम्पैक्शन कोलिक कारक); पशु को चाटने न दें जब तक सूख न जाए।"
-    },
-    {
-      id: "med_deltamethrin_liquid",
-      salt: "Deltamethrin Liquid 1.25% w/v",
-      category: "Ectoparasiticide",
-      ethicalBrand: { name: "Butox 50ml / 250ml", company: "MSD Animal Health", approxMrp: 145 },
-      genericOption: { name: "Delta-Vet 50ml", approxMrp: 65 },
-      doseRate: "2 ml प्रति 1 लीटर पानी में मिलाकर पशु आवास व शरीर पर छिड़काव",
-      route: "Topical Bath / Spray",
-      pregnancySafe: true,
-      withdrawalPeriod: "Meat: 3 days, Milk: 24 hours",
-      indications: "चिचड़ी, मक्खी, पिस्सू, जुएं नियंत्रण व बाह्य परजीवी रोगनिरोध।",
-      contraindications: "मछली पालन तालाबों के निकट न बहाएं (मछलियों के लिए अत्यधिक विषैला)।"
-    },
-    {
-      id: "med_himalayan_batisa",
-      salt: "Herbal Rumenotoric, Carminative, Prebiotic Feed Supplement Formula",
-      category: "Rumen Buffer & Digestive",
-      ethicalBrand: { name: "Himalayan Batisa / Bioboost Bolus", company: "Indian Herbs / Zydus", approxMrp: 110 },
-      genericOption: { name: "Rumen Booster Powder 100g", approxMrp: 45 },
-      doseRate: "50-100 ग्राम गुड़ के साथ मिलाकर दिन में दो बार अथवा 2-4 बोलस प्रतिदिन",
-      route: "Oral Electuary / Bolus",
-      pregnancySafe: true,
-      withdrawalPeriod: "Nil",
-      indications: "एनोरेक्सिया (भूख न लगना), रूमेन अक्रियता, अपच, बदहजमी, जुगाली बंद होना।",
-      contraindications: "गंभीर इसोफेजियल चोक में जब तक रुकावट दूर न हो।"
-    },
-    {
-      id: "med_sodium_bicarbonate",
-      salt: "Sodium Bicarbonate Powder IP (Rumen Buffer)",
-      category: "Rumen Buffer & Digestive",
-      ethicalBrand: { name: "Bufzone / Sodabicarb 500g", company: "Intas / Standard Pharma", approxMrp: 65 },
-      genericOption: { name: "Meetha Soda IP 500g", approxMrp: 30 },
-      doseRate: "50 से 100 ग्राम ओरल गुनगुने पानी में; गंभीर एसिडोसिस में 5% सॉल्यूशन I/V",
-      route: "Oral Drench / Intravenous (as sterile infusion)",
-      pregnancySafe: true,
-      withdrawalPeriod: "Nil",
-      indications: "रूमेन लैक्टिक एसिडोसिस (Grain Overload - दाना धप पड़ना), खट्टी डकारें, पीएच गिरना।",
-      contraindications: "रूमेन एल्केलोसिस (यूरिया पॉइजनिंग) में पूर्णतः वर्जित।"
-    },
-    {
-      id: "med_propylene_glycol",
-      salt: "Propylene Glycol Liquid (Glucogenic Precursor)",
-      category: "Metabolic & Calcium",
-      ethicalBrand: { name: "Ketofast / Gluco-Vet 500ml", company: "Virbac / Zydus", approxMrp: 310 },
-      genericOption: { name: "Propylene Glycol Tech 500ml", approxMrp: 140 },
-      doseRate: "200 ml दिन में दो बार 2 दिन, फिर 100 ml दैनिक 3 दिन",
-      route: "Oral Drench",
-      pregnancySafe: true,
-      withdrawalPeriod: "Nil",
-      indications: "क्लिनिकल व सब-क्लिनिकल कीटोसिस, ग्लूकोज की कमी, ब्याने बाद ऊर्जा संकट।",
-      contraindications: "फेफड़ों में जाने (Aspiration) से बचाएं; पशु की गर्दन स्वाभाविक स्थिति में रखकर पिलाएं।"
-    },
-    {
-      id: "med_dicyclomine_spasmo",
-      salt: "Dicyclomine Hydrochloride (10 mg/ml) + Pitofenone + Fenpiverinium",
-      category: "NSAID",
-      ethicalBrand: { name: "Spasmo-Vet 30ml / Baralgan", company: "Intas / Sanofi Vet", approxMrp: 110 },
-      genericOption: { name: "Dicyclo-Vet 30ml", approxMrp: 48 },
-      doseRate: "10 से 15 ml बड़े पशुओं में, 2-3 ml बछड़े/भेड़/बकरी में",
-      route: "Intramuscular (I/M) strictly",
-      pregnancySafe: true,
-      withdrawalPeriod: "Meat: 3 days, Milk: 48 hours",
-      indications: "पेट दर्द (Spasmodic Colic), आंतों में मरोड़, मूत्रमार्ग का संकुचन व डायरिया क्रैम्प्स।",
-      contraindications: "रूमेनल एटोनी (Rumen Atony) व ग्लूकोमा में लंबे समय तक न दें।"
-    },
-    {
-      id: "med_isoflupredone_acetate",
-      salt: "Isoflupredone Acetate Sterile Suspension 2 mg/ml (Corticosteroid)",
-      category: "Supportive & Fluids",
-      ethicalBrand: { name: "Predef 2X 10ml / Vetacortyl", company: "Zoetis / Virbac", approxMrp: 165 },
-      genericOption: { name: "Isoflu-Vet 10ml", approxMrp: 75 },
-      doseRate: "10 से 20 mg (5 से 10 ml) एकल खुराक I/M",
-      route: "Deep Intramuscular (I/M)",
-      pregnancySafe: true,
-      withdrawalPeriod: "Milk: 72 hours, Meat: 7 days",
-      indications: "गाभिन पशुओं में सुरक्षित स्टेरॉयड; कीटोसिस, मस्कुलोस्केलेटल सूजन, एनाफिलेक्सिस।",
-      contraindications: "अनियंत्रित बैक्टीरियल संक्रमण में बिना एंटीबायोटिक कवर के न दें।"
-    },
-    {
-      id: "med_chlorpheniramine_maleate",
-      salt: "Chlorpheniramine Maleate Injection 10 mg/ml (Antihistaminic)",
-      category: "Supportive & Fluids",
-      ethicalBrand: { name: "Avil 100ml / Zeet Vet", company: "Sanofi / Alembic", approxMrp: 130 },
-      genericOption: { name: "CPM Vet 100ml", approxMrp: 55 },
-      doseRate: "0.5 mg/kg body weight (10 ml प्रति बड़े पशु में), IM",
-      route: "Intramuscular (I/M)",
-      pregnancySafe: true,
-      withdrawalPeriod: "Milk: 24 hours, Meat: 3 days",
-      indications: "एलर्जिक प्रतिक्रियाएं, दवा रिएक्शन, कीड़े का काटना, पल्मोनरी एडिमा, थनैला सपोर्ट।",
-      contraindications: "सीएनएस डिप्रेशन; सुस्ती उत्पन्न कर सकता है।"
-    }
-  ];
-
-  /* =========================================================================
-     2. VACCINATION KNOWLEDGE BASE (All Core Livestock Vaccines)
-     ========================================================================= */
-  const VACCINATION_DB = [
-    {
-      id: "vac_hs_alum",
-      diseaseName: "गलघोंटू (Hemorrhagic Septicemia - HS)",
-      species: ["गाय", "भैंस"],
-      targetAge: "6 माह व उससे अधिक उम्र के सभी पशु",
-      season: "मानसून पूर्व (मई - जून)",
-      route: "Subcutaneous (S/C)",
-      dose: "Alum precipitated: 5 ml; Oil Adjuvant: 2-3 ml",
-      boosterFrequency: "वार्षिक (प्रतिवर्ष वर्षा ऋतु से पूर्व)"
-    },
-    {
-      id: "vac_bq",
-      diseaseName: "लंगड़ा बुखार (Black Quarter - BQ)",
-      species: ["गाय", "भैंस (मुख्यतः युवा पशु 6 माह से 2 वर्ष)"],
-      targetAge: "6 माह से ऊपर",
-      season: "मानसून पूर्व (मई - जून)",
-      route: "Subcutaneous (S/C)",
-      dose: "5 ml per animal",
-      boosterFrequency: "वार्षिक (प्रतिवर्ष नियमित)"
-    },
-    {
-      id: "vac_fmd_oil",
-      diseaseName: "खुरपका-मुंहपका (Foot and Mouth Disease - FMD)",
-      species: ["गाय", "भैंस", "भेड़", "बकरी", "सूअर"],
-      targetAge: "4 माह की उम्र से प्रारंभ",
-      season: "वर्ष में दो बार (सितंबर-अक्टूबर एवं फरवरी-मार्च)",
-      route: "Deep Intramuscular (I/M)",
-      dose: "Cattle/Buffalo: 2-3 ml; Sheep/Goat: 1 ml",
-      boosterFrequency: "प्राथमिक टीकाकरण के 1 माह बाद बूस्टर, फिर प्रत्येक 6 माह पर"
-    },
-    {
-      id: "vac_lsd_goatpox",
-      diseaseName: "गांठदार त्वचा रोग (Lumpy Skin Disease - LSD)",
-      species: ["गाय", "भैंस"],
-      targetAge: "4 माह से ऊपर के स्वस्थ पशु",
-      season: "ग्रीष्म ऋतु (मच्छर-मक्खी प्रसार से पूर्व, मार्च-अप्रैल)",
-      route: "Subcutaneous (S/C)",
-      dose: "Goat Pox Vaccine (Uttarkashi strain) 1 ml (Homologous / Heterologous)",
-      boosterFrequency: "वार्षिक"
-    },
-    {
-      id: "vac_brucellosis_s19",
-      diseaseName: "ब्रूसीलोसिस (Brucellosis - S19 / RB51)",
-      species: ["केवल मादा गोवंश एवं भैंस की बछड़ियां"],
-      targetAge: "4 से 8 माह की आयु की मादा बछड़ी (Calfhood vaccination)",
-      season: "वर्षभर (उम्र अनुसार)",
-      route: "Subcutaneous (S/C)",
-      dose: "2 ml (Cotton Strain 19 / RB51)",
-      boosterFrequency: "जीवन में केवल एक बार (नर पशुओं एवं 8 माह से बड़े पशुओं में वर्जित)"
-    },
-    {
-      id: "vac_ppr_goat",
-      diseaseName: "पीपीआर - बकरी प्लेग (Peste des Petits Ruminants)",
-      species: ["भेड़", "बकरी"],
-      targetAge: "3 माह की आयु से ऊपर",
-      season: "शरद ऋतु या शीत ऋतु प्रारंभ (अक्टूबर-नवंबर)",
-      route: "Subcutaneous (S/C)",
-      dose: "1 ml per animal",
-      boosterFrequency: "प्रत्येक 3 वर्ष में एक बार (Long lasting immunity)"
-    },
-    {
-      id: "vac_enterotoxaemia_et",
-      diseaseName: "फिड़किया / आंत्रविषक्तता (Enterotoxaemia - ET)",
-      species: ["भेड़", "बकरी"],
-      targetAge: "4 माह से ऊपर",
-      season: "नई घास/मानसून से पूर्व (मई-जून)",
-      route: "Subcutaneous (S/C)",
-      dose: "2.5 ml per animal",
-      boosterFrequency: "वार्षिक (पहला टीका लगने के 2-3 सप्ताह बाद बूस्टर)"
-    },
-    {
-      id: "vac_anthrax_spore",
-      diseaseName: "एंथ्रेक्स (Anthrax Spore Vaccine - Sterne Strain)",
-      species: ["गाय", "भैंस", "भेड़", "बकरी", "घोड़ा"],
-      targetAge: "6 माह से ऊपर (केवल स्थानिक/एंडेमिक क्षेत्रों में)",
-      season: "गर्मी के अंत में (जुलाई)",
-      route: "Subcutaneous (S/C)",
-      dose: "Cattle/Horse: 1 ml; Sheep/Goat: 0.5 ml",
-      boosterFrequency: "वार्षिक (केवल प्रकोप प्रवण इलाकों में)"
-    },
-    {
-      id: "vac_rabies_inactivated",
-      diseaseName: "रेबीज (Rabies Cell Culture Vaccine - Raksharab)",
-      species: ["गाय", "भैंस", "कुत्ता", "बिल्ली", "घोड़ा"],
-      targetAge: "3 माह बाद (या काटने के तुरंत बाद पोस्ट-बाइट)",
-      season: "वर्षभर आवश्यकतानुसार",
-      route: "Subcutaneous (S/C) / Intramuscular",
-      dose: "1 ml per dose (Post-bite schedule: Day 0, 3, 7, 14, 28, 90)",
-      boosterFrequency: "प्रोफाइलैक्टिक: वार्षिक"
-    },
-    {
-      id: "vac_theileriosis_rakshavac",
-      diseaseName: "थायलेरियासिस (Rakshavac-T - Theileria annulata Schizont)",
-      species: ["क्रॉस-ब्रीड एवं विदेशी गायें"],
-      targetAge: "2 माह से अधिक उम्र के बछड़े व गायें",
-      season: "चिचड़ी के मौसम से पूर्व (फरवरी-मार्च)",
-      route: "Subcutaneous (S/C)",
-      dose: "3 ml per animal",
-      boosterFrequency: "जीवन में एक बार या 3 वर्ष बाद"
-    }
-  ];
-
-  /* =========================================================================
-     3. MASTER 48+ DISEASE DIRECTORY (Evidence-based, 5-tier therapies)
-     ========================================================================= */
-  const DISEASE_DB = [
-    {
-      id: "DIS_01_HS",
-      nameHindi: "गलघोंटू (Hemorrhagic Septicemia)",
-      nameEnglish: "Hemorrhagic Septicemia (Pasteurellosis)",
-      category: "Bacterial",
-      organAffected: "Respiratory & Subcutaneous Neck",
-      cardinalSigns: "गले, जबड़े और गलकंबल में गर्म, कठोर व दर्दनाक सूजन, तेज बुखार (105-107°F), सांस लेते समय घुर्र-घुर्र की आवाज एवं जीभ बाहर निकलना।",
-      temperatureExpected: "105.0 - 107.0 °F",
-      labTests: [
-        { testName: "रक्त स्मीयर जांच (Blood Smear)", sample: "पेरिफेरल ब्लड", expectedResult: "Gram-ve, बाइपोलर स्टेनिंग वाले Pasteurella multocida बेसिली" },
-        { testName: "एडिमैटस फ्लुइड कल्चर", sample: "गले की सूजन का स्राव", expectedResult: "शुद्ध बैक्टीरियल कॉलोनी विकास" }
-      ],
-      treatments: {
-        injections: [
-          "Inj. Ceftiofur Sodium 1g: 1-2 mg/kg body wt I/M SID 3 दिन",
-          "Inj. Flunixin Meglumine (Megludyne): 2.2 mg/kg I/V तुरंत",
-          "Inj. Isoflupredone Acetate 10ml I/M (गाभिन में सुरक्षित)",
-          "Inj. Avil (Chlorpheniramine) 10ml I/M"
-        ],
-        oral: ["Bolus Melonex Plus 2 बोलस बीडी", "Electrolyte पानी निरंतर"],
-        ayurveda: ["हल्दी चूर्ण 50g + काली मिर्च 10g + शुद्ध घी 100g दिन में दो बार"],
-        homeopathy: ["Belladonna 200C + Arsenicum Album 200C (प्रत्येक 2 घंटे पर 10 बूंद)"],
-        desiRemedy: "100 ग्राम सरसों का तेल + 15 ग्राम देशी कपूर + 25 ग्राम हल्दी गर्म करके गले की सूजन पर गुनगुना लेप करें।"
-      },
-      stages: {
-        incubation: "1 से 3 दिन",
-        prodromal: "सुस्ती, चारा छोड़ना, हल्का तापमान वृद्धि (103°F)",
-        clinical: "अति-तीव्र सूजन, डिस्पेनिया (श्वसन कष्ट), घुर्राहट, 106°F तापमान",
-        convalescent: "उपचार उपरांत 5-7 दिनों में श्वसन सामान्य, सूजन का मंद अवशोषण"
-      }
-    },
-    {
-      id: "DIS_02_BQ",
-      nameHindi: "लंगड़ा बुखार / चरचरा (Black Quarter)",
-      nameEnglish: "Black Quarter (Clostridial Myositis)",
-      category: "Bacterial",
-      organAffected: "Musculoskeletal (Heavy Musculature)",
-      cardinalSigns: "पुट्ठे, कंधे या जांघ की भारी मांसपेशियों में गर्म दर्दनाक सूजन जो बाद में ठंडी और सुन्न हो जाती है; दबाने पर चर्र-चर्र (Crepitation) की ध्वनि।",
-      temperatureExpected: "104.5 - 106.0 °F",
-      labTests: [
-        { testName: "मसल एस्पिरेट माइक्रोस्कोपी", sample: "सूजन का काला बदबूदार स्राव", expectedResult: "Clostridium chauvoei ग्राम पॉजिटिव स्पोर-युक्त छड़" },
-        { testName: "फ्लोरोसेंट एंटीबॉडी टेस्ट (FAT)", sample: "मांसपेशी बायोप्सी", expectedResult: "विशिष्ट एंटीजन फ्लोरेसेंस" }
-      ],
-      treatments: {
-        injections: [
-          "Inj. Procaine Penicillin 40 Lac IU I/M BID 5 दिन",
-          "सूजन के चारों ओर पेरी-फोकल क्रिस्टलीय पेनिसिलिन इन्फिल्ट्रेशन",
-          "Inj. Melonex Plus 15-20ml I/M दर्द व बुखार निवारणार्थ",
-          "Inj. Tribivet 10ml I/M तंत्रिका व ऊतक पुनरुद्धार हेतु"
-        ],
-        oral: ["पेनिसिलिन V बोलस (उपलब्धता पर) या सल्फा बोलस"],
-        ayurveda: ["नीम पत्र क्वाथ + त्रिफला क्वाथ से घाव प्रक्षालन"],
-        homeopathy: ["Arnica Montana 200C + Rhus Tox 200C"],
-        desiRemedy: "नीम के काढ़े में फिटकरी डालकर सिकाई करें; चीरा लगाकर 3% हाइड्रोजन परॉक्साइड से सफाई (वायुरोधी बैक्टीरिया नष्ट करने हेतु)।"
-      },
-      stages: {
-        incubation: "1 से 5 दिन",
-        prodromal: "पशु का अचानक लंगड़ाना, उच्च ज्वर, कंपकंपी",
-        clinical: "मांसपेशियों में गैस युक्त चर्र-चर्र सूजन, त्वचा का काला पड़ना",
-        convalescent: "गंभीर मामलों में ऊतक नेक्रोसिस उपरांत स्वस्थ होने में 2-3 सप्ताह"
-      }
-    },
-    {
-      id: "DIS_03_FMD",
-      nameHindi: "खुरपका-मुंहपका (Foot and Mouth Disease)",
-      nameEnglish: "Foot and Mouth Disease (Aphtae Epizooticae)",
-      category: "Viral",
-      organAffected: "Oral Mucosa, Feet & Teats",
-      cardinalSigns: "जीभ, मसूड़ों व तालु पर फफोले (वेसिकल्स), मुंह से लगातार तारदार चिपचिपी लार टपकना, खुरों के बीच छाले व अत्यधिक लंगड़ापन।",
-      temperatureExpected: "104.0 - 105.5 °F (शुरुआती 48 घंटे)",
-      labTests: [
-        { testName: "RT-PCR", sample: "वेसिकुलर फ्लूइड या उपकला ऊतक", expectedResult: "Picorna Aphthovirus आरएनए पॉजिटिव" },
-        { testName: "एंटीजन डिटेक्शन ELISA", sample: "ओरल स्वैब", expectedResult: "Serotype O, A, or Asia-1 की पुष्टि" }
-      ],
-      treatments: {
-        injections: [
-          "Inj. Intacef (Ceftriaxone) 3g I/M SID 3 दिन (द्वितीयक संक्रमण रोक)",
-          "Inj. Melonex Plus 15ml I/M (तीव्र दर्द व सूजन नियंत्रण)",
-          "Inj. Avil 10ml I/M",
-          "Inj. Conciplex / Tribivet 10ml I/M (म्यूकोसा हीलिंग)"
-        ],
-        oral: ["Masticare powder / Vitamin A, D3, E supplements 10-15 दिन"],
-        ayurveda: ["हल्दी, घी और बोरिक एसिड का पेस्ट मुंह में लेप करें"],
-        homeopathy: ["Mercurius Solubilis 200C + Variolinum 200C"],
-        desiRemedy: "मुंह को 1% फिटकरी अथवा पोटाश (KMNO4) के हल्के गुलाबी पानी से दिन में 3 बार धोएं। खुरों को फिनाइल पानी से साफ कर नारियल तेल में कपूर मिलाकर लगाएं।"
-      },
-      stages: {
-        incubation: "2 से 8 दिन",
-        prodromal: "तेज बुखार, सुस्ती, दूध उत्पादन में अचानक 80% गिरावट",
-        clinical: "छालों का फटना, कच्चा लाल घाव, लार का लच्छेदार गिरना, खुर घाव",
-        convalescent: "पैनटिंग सिंड्रोम (गर्मी न सह पाना), खुर विकृति, स्वस्थ होने में 15-30 दिन"
-      }
-    },
-    {
-      id: "DIS_04_MASTITIS_ACUTE",
-      nameHindi: "तीव्र थनैला रोग (Acute Clinical Mastitis)",
-      nameEnglish: "Acute Clinical Mastitis",
-      category: "Bacterial",
-      organAffected: "Mammary Glands (Udder)",
-      cardinalSigns: "अयन/थन में अत्यधिक लालिमा, गर्म दर्दनाक सूजन, पत्थर जैसा कड़ापन; दूध का रंग बदलकर पीला पानी, रक्त या गाढ़े थक्के (छिछड़े) बन जाना।",
-      temperatureExpected: "103.5 - 105.0 °F",
-      labTests: [
-        { testName: "कैलिफोर्निया मास्टाइटिस टेस्ट (CMT)", sample: "दूध का नमूना", expectedResult: "गाढ़ा जिलेटिन जेल बनना (+++)" },
-        { testName: "मिल्क कल्चर व एंटीबायोटिक सेंसिटिविटी (ABST)", sample: "असेप्टिक मिल्क", expectedResult: "Staph. aureus, Strep. agalactiae या E. coli संवर्धन" }
-      ],
-      treatments: {
-        injections: [
-          "Inj. Intacef Tazo 4.5g I/V or I/M SID 3-5 दिन",
-          "Inj. Flunixin Meglumine 15ml I/V (टॉक्सिन और दर्द निवारण)",
-          "Inj. Serratiopeptidase (फाइब्रिनोलायटिक)",
-          "इंट्रामैमरी ट्यूब: Pendistrin SH अथवा Cefoperazone ट्यूब थन खाली करके चढ़ाएं"
-        ],
-        oral: ["Trisodium Citrate पाउडर 30g दैनिक 5 दिन (दूध का pH सामान्य करने)", "विटामिन E व सेलेनियम बोलस"],
-        ayurveda: ["एलोवेरा 250g + हल्दी 50g + चूना 15g पेस्ट दिन में 3 बार अयन पर"],
-        homeopathy: ["Phytolacca 200C + Bryonia Alba 200C + Silicea 30C"],
-        desiRemedy: "नीम के गर्म पानी से अयन की धीरे-धीरे सिकाई करें। सारा दूषित दूध निकाल कर जमीन में गहरा गाड़ दें।"
-      },
-      stages: {
-        incubation: "12 से 48 घंटे",
-        prodromal: "दूध में छोटे छिछड़े, थन के आधार पर हल्की गर्मी",
-        clinical: "पूरा क्वार्टर सूज कर कठोर, दूध बंद, केवल बदबूदार सीरम या रक्त",
-        convalescent: "फाइब्रोसिस का जोखिम; समय पर इलाज से 7-10 दिन में सुधार"
-      }
-    },
-    {
-      id: "DIS_05_SUBCLINICAL_MASTITIS",
-      nameHindi: "अव्यक्त / छुपा थनैला (Subclinical Mastitis)",
-      nameEnglish: "Subclinical Mastitis",
-      category: "Bacterial",
-      organAffected: "Mammary Epithelium",
-      cardinalSigns: "अयन पर कोई बाह्य सूजन या लक्षण नहीं, परंतु दूध उत्पादन में 15-30% कमी, स्वाद खारा एवं सोमैटिक सेल काउंट (SCC) में भारी वृद्धि।",
-      temperatureExpected: "सामान्य (101.5 - 102.5 °F)",
-      labTests: [
-        { testName: "सोमैटिक सेल काउंट (SCC)", sample: "दूध", expectedResult: "> 5,00,000 सेल्स प्रति मिलीलीटर" },
-        { testName: "इलेक्ट्रिकल कंडक्टिविटी टेस्ट", sample: "क्वार्टर मिल्क", expectedResult: "उच्च विद्युत चालकता (> 6.5 mS/cm)" }
-      ],
-      treatments: {
-        injections: ["Inj. Levamisole 5 ml S/C (इम्यूनोमॉड्यूलेटर के रूप में एकल खुराक)"],
-        oral: ["Trisodium Citrate 30g दैनिक 7 दिन", "पॉवडर Masticare / Mastilep 50g बीडी"],
-        ayurveda: ["शतावरी चूर्ण 50g + अश्वगंधा 30g दूध ग्रंथियों की शक्ति हेतु"],
-        homeopathy: ["Thuja 200C + Calcarea Fluorica 6X"],
-        desiRemedy: "प्रत्येक दुहने के बाद थनों को 0.5% पोविडोन आयोडीन घोल में डुबोएं (Post-milking teat dip)।"
-      },
-      stages: {
-        incubation: "परिवर्तनशील (हफ्तों से महीनों)",
-        prodromal: "अस्पष्ट दूध गिरावट",
-        clinical: "लगातार सब-ऑप्टिमल फैट/एसएनएफ, छिपी हुई आर्थिक क्षति",
-        convalescent: "ड्राई काउ थेरेपी उपरांत अगले ब्यात में पूर्ण मुक्ति"
-      }
-    },
-    {
-      id: "DIS_06_MILK_FEVER",
-      nameHindi: "मिल्क फीवर / हाइपोकैल्सीमिया (Milk Fever)",
-      nameEnglish: "Parturient Hypocalcemia (Milk Fever)",
-      category: "Metabolic",
-      organAffected: "Neuromuscular & Skeletal Muscle",
-      cardinalSigns: "ब्याने के 24-72 घंटे में पशु का बैठ जाना, गर्दन को अपनी कोख की ओर मोड़कर रखना (S-curved posture), शरीर व कान बिल्कुल ठंडे, थर्मामीटर से कम ताप।",
-      temperatureExpected: "सब-नॉर्मल (< 99.0 - 100.0 °F)",
-      labTests: [
-        { testName: "सीरम कुल कैल्शियम", sample: "सीरम / क्लॉट ब्लड", expectedResult: "< 5.5 mg/dL (सामान्य: 8.5-10.5 mg/dL)" },
-        { testName: "सीरम इनऑर्गेनिक फास्फोरस", sample: "सीरम", expectedResult: "अक्सर साथ में हाइपोफॉस्फेटेमिया (< 3.0 mg/dL)" }
-      ],
-      treatments: {
-        injections: [
-          "Calcium Borogluconate 25% (Mifex) 450ml: 300ml धीमी I/V (हार्ट रेट मॉनिटर करें) + 150ml S/C",
-          "Inj. Tonophosphan 10ml I/M (फास्फोरस सपोर्ट)",
-          "Inj. Tribivet 10ml I/M"
-        ],
-        oral: ["होश में आने के बाद Cal-Up / Ostovet Gel 300g ट्यूब प्रति 12 घंटे 2 बार"],
-        ayurveda: ["सहजन (Moringa) पत्ती चूर्ण 100g दैनिक ब्याने के बाद"],
-        homeopathy: ["Calcarea Phosphorica 30C + Belladonna 30C"],
-        desiRemedy: "चेतावनी: अचेत या बैठे पशु को जबरन तरल नाल कदापि न दें (ड्रेंचिंग निमोनिया का खतरा)। पशु को पुआल पर बैठाएं व पैरों की मालिश करें।"
-      },
-      stages: {
-        incubation: "ब्याने के तुरंत पूर्व या 48 घंटे बाद",
-        prodromal: "मांसपेशियों में कंपकंपी, पिछले पैरों में लड़खड़ाहट, कान ठंडे",
-        clinical: "स्टर्नल रिकम्बेंसी (गर्दन मोड़कर बैठना), आंख की पुतली फैली हुई, अचेतनता",
-        convalescent: "कैल्शियम चढ़ाने के 20 मिनट में गोबर करना, पेशाब व उठकर खड़े होना"
-      }
-    },
-    {
-      id: "DIS_07_KETOSIS",
-      nameHindi: "कीटोसिस / एसीटोनेमिया (Ketosis)",
-      nameEnglish: "Acetonemia / Bovine Ketosis",
-      category: "Metabolic",
-      organAffected: "Hepatic & Energy Metabolism",
-      cardinalSigns: "सांस, मूत्र व दूध से मीठी मीठी एसीटोन (क्लोरोफॉर्म जैसी) महक, दाना खाने से पूर्ण इंकार पर केवल सूखा भूसा खाना, अचानक दूध सूखना और तीव्र वजन घटना।",
-      temperatureExpected: "सामान्य (101.0 - 102.5 °F)",
-      labTests: [
-        { testName: "मूत्र रोथेरा टेस्ट (Rothera's Test)", sample: "मूत्र", expectedResult: "गहरा बैंगनी रिंग (+++ कीटोन बॉडीज)" },
-        { testName: "रक्त बीटा-हाइड्रॉक्सीब्यूटायरेट (BHBA)", sample: "होल ब्लड", expectedResult: "> 1.4 mmol/L (सब-क्लिनिकल), > 3.0 mmol/L (क्लिनिकल)" }
-      ],
-      treatments: {
-        injections: [
-          "Dextrose 25% 1000ml I/V (शीघ्र ऊर्जा आपूर्ति)",
-          "Inj. Isoflupredone Acetate 10ml I/M (ग्लूकोनियोजेनेसिस प्रेरण)",
-          "Inj. Tribivet 10ml I/M (विटामिन B12 कोएंजाइम हेतु)",
-          "Inj. Belamyl 10ml I/M (लिवर सुरक्षा)"
-        ],
-        oral: ["Propylene Glycol 200ml बीडी 2 दिन, फिर 100ml ओडी 3 दिन", "Niacinamide (Vitamin B3) बोलस 6g दैनिक"],
-        ayurveda: ["कालमेघ चूर्ण 30g + कुटकी 10g लिवर उत्तेजन हेतु"],
-        homeopathy: ["Lycopodium 200C + Chelidonium Majus 30C"],
-        desiRemedy: "250 ग्राम गुड़ + 50 मिली सरसों का तेल + 20 ग्राम सोंठ मिलाकर दिन में दो बार 4 दिन तक खिलाएं।"
-      },
-      stages: {
-        incubation: "ब्याने के 2 से 6 सप्ताह बाद (पीक लेक्टेशन)",
-        prodromal: "दाना खाने में नखरे, दूध में हल्की गिरावट, रूमेन गति मंद",
-        clinical: "मीठी सांस, सूखी लीद, अत्यधिक दुर्बलता, कभी-कभी पागलों जैसी नर्वस हरकतें",
-        convalescent: "ग्लूकोज थेरेपी के 48 घंटे में दाना खाना पुनः प्रारंभ"
-      }
-    },
-    {
-      id: "DIS_08_BLOAT",
-      nameHindi: "अफारा / आध्मान (Bloat / Tympany)",
-      nameEnglish: "Ruminal Tympany (Frothy & Free-gas Bloat)",
-      category: "Metabolic",
-      organAffected: "Rumen & Reticulum",
-      cardinalSigns: "बायाँ पेट ढोलक की भांति अत्यधिक फूल जाना, बाएं फ्लैंक पर थपकी मारने पर खोखली टिमपैनिक ध्वनि, सांस लेने में अत्यंत कष्ट, जीभ बाहर निकालना व बेचैनी।",
-      temperatureExpected: "सामान्य अथवा नर्वस बेचैनी से हल्का बढ़ा (102.0 - 103.5 °F)",
-      labTests: [
-        { testName: "रूमेन फ्लुइड एस्पिरेशन व पीएच", sample: "रूमेन द्रव", expectedResult: "झागदार हरा द्रव, पीएच 5.5 - 6.0 (लेग्यूम ब्लोट में)" }
-      ],
-      treatments: {
-        injections: [
-          "Inj. Spasmo-Vet (Dicyclomine) 15ml I/M (ऐंठन निवारण)",
-          "Inj. Belamyl 10ml I/M",
-          "आपातकाल में बाएं फ्लैंक पर ट्रोकार एवं कैनुला (Trocar & Cannula) चुभोकर गैस निकालें"
-        ],
-        oral: [
-          "Tympol / Bloatosil liquid 100ml सीधे नाल द्वारा",
-          "लिक्विड पैराफिन या वनस्पति तेल 300-500ml (झाग तोड़ने हेतु)"
-        ],
-        ayurveda: ["हिंग्वाष्टक चूर्ण 50g + काला नमक 50g गुनगुने पानी में"],
-        homeopathy: ["Colocynthis 200C + Carbo Vegetabilis 200C + Nux Vomica 200C"],
-        desiRemedy: "50 मिली शुद्ध तारपीन का तेल + 300 मिली मीठा (सरसों) तेल + 15 ग्राम शुद्ध हींग अच्छी तरह मिलाकर पिलाएं। मुंह में आड़ी लकड़ी बांधें।"
-      },
-      stages: {
-        incubation: "आहार खाने के 30 मिनट से 4 घंटे भीतर",
-        prodromal: "बार-बार उठना-बैठना, पेट की तरफ देखना, लात मारना",
-        clinical: "बायां फ्लैंक कशेरुकाओं से ऊपर फूलना, सायनोसिस (जीभ नीली पड़ना), घुटन",
-        convalescent: "गैस निष्कासन के उपरांत रूमेन टॉनिक से 2-3 दिन में सामान्यीकरण"
-      }
-    },
-    {
-      id: "DIS_09_THEILERIOSIS",
-      nameHindi: "थायलेरियासिस / चिचड़ी बुखार (Theileriosis)",
-      nameEnglish: "Bovine Theileriosis (Theileria annulata)",
-      category: "Protozoal",
-      organAffected: "Lymph Nodes & Red Blood Cells",
-      cardinalSigns: "कंधे के आगे की लिम्फ नोड (Prescapular Lymph Node) में कठोर सूजन, लगातार तेज बुखार (105-106°F), सांस तेज चलना, आंखों में पीलापन/खून के धब्बे व रक्तहीनता।",
-      temperatureExpected: "105.0 - 106.5 °F",
-      labTests: [
-        { testName: "लिम्फ नोड बायोप्सी स्मीयर (Giemsa)", sample: "लिम्फ नोड एस्पिरेट", expectedResult: "लिम्फोसाइट्स में कोच के नीले पिंड (Koch's Blue Bodies - Schizonts)" },
-        { testName: "ब्लड स्मीयर जांच", sample: "पेरिफेरल ब्लड", expectedResult: "आरबीसी के अंदर अंगूठी (Signet Ring) जैसे पिरोप्लाज्म" }
-      ],
-      treatments: {
-        injections: [
-          "Inj. Buparvaquone (Butalex / Zubion) 2.5 mg/kg (1 ml/20kg) Deep I/M एकल खुराक",
-          "Inj. Oxytetracycline LA (20 mg/kg) I/M (द्वितीयक रोगाणु व सपोर्ट)",
-          "Inj. Melonex Plus 15ml I/M",
-          "Inj. Feritas (Iron Sorbitol) 10ml I/M (एनीमिया सुधार हेतु)"
-        ],
-        oral: ["टॉनिक Sharkoferrol / Ferikind 50ml दैनिक", "Shark Liver Oil"],
-        ayurveda: ["पुनर्नवा मंडूर 20g + गिलोय क्वाथ 100ml रक्तवर्द्धन हेतु"],
-        homeopathy: ["China 200C + Ferrum Metallicum 30C"],
-        desiRemedy: "पशु के शरीर से सभी चिचड़ियां हटाएं। नीम की पत्तियों के उबले पानी से नहलाएं। चिचड़ी नियंत्रण हेतु आवास पर साइपरमेथ्रिन छिड़कें।"
-      },
-      stages: {
-        incubation: "10 से 21 दिन (चिचड़ी काटने के बाद)",
-        prodromal: "तेज ज्वर, प्रेस्कैपुलर नोड्स का बढ़ना, भूख न लगना",
-        clinical: "अत्यधिक रक्ताल्पता, सांस फूलना, खाँसी, आंखों से पानी, पीलिया",
-        convalescent: "उपचार के 48 घंटे में बुखार उतरना; हीमोग्लोबिन सुधार में 3-4 सप्ताह"
-      }
-    },
-    {
-      id: "DIS_10_BABESIOSIS",
-      nameHindi: "बबेशियोसिस / लाल पेशाब (Babesiosis / Red Water)",
-      nameEnglish: "Bovine Babesiosis (Tick Fever / Redwater)",
-      category: "Protozoal",
-      organAffected: "Erythrocytes (RBCs) & Kidneys",
-      cardinalSigns: "गहरा लाल या कॉफी के रंग का पेशाब (Hemoglobinuria), तेज बुखार (105-106°F), श्लेष्मा झिल्लियों का पहले पीला और फिर सफेद पड़ जाना, तेज धड़कन।",
-      temperatureExpected: "105.0 - 106.5 °F",
-      labTests: [
-        { testName: "गीमसा ब्लड स्मीयर", sample: "कान की नस का रक्त (Capillary Blood)", expectedResult: "RBCs में नाशपाती के आकार के जोड़े परजीवी (Babesia bigemina)" },
-        { testName: "मूत्र जांच", sample: "मूत्र", expectedResult: "हीमोग्लोबिन्यूरिया पॉजिटिव, आरबीसी अनुपस्थित (इंट्रावैस्कुलर हेमोलिसिस)" }
-      ],
-      treatments: {
-        injections: [
-          "Inj. Diminazene Aceturate (Berenil) 3.5 mg/kg Deep I/M gluteal region",
-          "Inj. Melonex Plus 15ml I/M",
-          "Inj. Feritas / Imferon 10ml I/M",
-          "Dextrose Normal Saline (DNS) 2-3 लीटर I/V (किडनी फ्लशिंग हेतु)"
-        ],
-        oral: ["विटामिन C चूर्ण 10g दैनिक", "अमोनियम क्लोराइड (मूत्र अम्लीकरण)"],
-        ayurveda: ["गिलोय रस 100ml + आंवला चूर्ण 50g दैनिक"],
-        homeopathy: ["Crotalus Horridus 200C + Phosphorus 200C"],
-        desiRemedy: "पशु को ठंडे स्थान पर रखें। ताजे गन्ने का रस या मिश्री-गुड़ का ठंडा पानी पिलाएं। शारीरिक श्रम बिल्कुल न कराएं।"
-      },
-      stages: {
-        incubation: "7 से 14 दिन",
-        prodromal: "105°F बुखार, रूंआं खड़ा होना, सुस्ती",
-        clinical: "कॉफी रंग का पेशाब, गंभीर हेमोलिटिक एनीमिया, पीलिया",
-        convalescent: "बेरेनिल के 24 घंटे में पेशाब का रंग साफ होना; रिकवरी 10-15 दिन"
-      }
-    },
-    {
-      id: "DIS_11_ANAPLASMOSIS",
-      nameHindi: "एनाप्लास्मोसिस / पीलिया बुखार (Anaplasmosis)",
-      nameEnglish: "Bovine Anaplasmosis (Gall Sickness)",
-      category: "Bacterial",
-      organAffected: "RBCs, Liver & Gall Bladder",
-      cardinalSigns: "अत्यधिक पीलिया (आंखों, योनि व मसूड़ों में गहरा पीलापन), गंभीर एनीमिया, तेज बुखार, परंतु पेशाब कभी लाल नहीं होता (No Hemoglobinuria); सूखा कठोर गोबर।",
-      temperatureExpected: "104.0 - 105.5 °F",
-      labTests: [
-        { testName: "ब्लड स्मीयर स्टेनिंग", sample: "पेरिफेरल ब्लड", expectedResult: "आरबीसी की परिधि पर गहरे बिंदु (Anaplasma marginale Bodies)" },
-        { testName: "सीरम बिलीरुबिन", sample: "सीरम", expectedResult: "अनकॉन्जुगेटेड एवं कॉन्जुगेटेड दोनों बिलीरुबिन में तीव्र वृद्धि" }
-      ],
-      treatments: {
-        injections: [
-          "Inj. Oxytetracycline LA 20 mg/kg (1 ml/10kg) Deep I/M (48-72 घंटे बाद रिपीट)",
-          "Inj. Melonex Plus 15ml I/M",
-          "Inj. Belamyl 10ml I/M (लिवर स्टिमुलेशन)",
-          "Inj. Feritas 10ml I/M"
-        ],
-        oral: ["Liv-52 liquid 100ml बीडी", "लिक्विड पैराफिन 300ml (कब्ज निवारण हेतु)"],
-        ayurveda: ["भूमि आंवला (Phyllanthus niruri) पंचांग 50g पीसकर पिलाएं"],
-        homeopathy: ["Chelidonium Majus 200C + Chionanthus 30C"],
-        desiRemedy: "250 ग्राम गिलोय का काढ़ा + 50 ग्राम हल्दी + 100 ग्राम पुराना गुड़ दिन में दो बार दें। हरे चारे की मात्रा बढ़ाएं।"
-      },
-      stages: {
-        incubation: "3 से 6 सप्ताह",
-        prodromal: "हल्का ज्वर, दूध में मंद गिरावट, सुस्ती",
-        clinical: "तीव्र पीलिया, अत्यधिक रक्ताल्पता, सांस का तेज चलना, शुष्क गोबर",
-        convalescent: "ऑक्सीटेट्रासाइक्लिन से परजीवी दमन; रक्त बनने में 4-6 सप्ताह"
-      }
-    },
-    {
-      id: "DIS_12_TRYPANOSOMIASIS",
-      nameHindi: "सर्रा रोग (Surra / Trypanosomiasis)",
-      nameEnglish: "Trypanosomiasis (Surra)",
-      category: "Protozoal",
-      organAffected: "Central Nervous System & Blood",
-      cardinalSigns: "चक्कर काटना, दीवार से सिर टिका कर खड़े रहना, पागलों जैसी हरकतें, रुक-रुक कर आने वाला बुखार (Intermittent Fever), पेट के निचले हिस्से व अंडकोष में सूजन।",
-      temperatureExpected: "103.0 - 106.0 °F (रुक-रुक कर ज्वर)",
-      labTests: [
-        { testName: "वेट ब्लड फिल्म (Wet Blood Mount)", sample: "ताजा कैपिलरी रक्त", expectedResult: "आरबीसी के मध्य तेजी से छटपटाते हुए Trypanosoma evansi" },
-        { testName: "गीमसा ब्लड स्मीयर", sample: "थिन/थिक ब्लड स्मीयर", expectedResult: "लंबे फ्लैगेलेटेड ट्रिपैनोसोम प्रोटोजोआ" }
-      ],
-      treatments: {
-        injections: [
-          "Inj. Triquin (Quinapyramine Sulphate + Methylsulphate) 2.5g घोल बनाकर S/C strictly",
-          "Inj. Tribivet (B1, B6, B12) 15ml I/M तंत्रिका क्षति से बचाव हेतु",
-          "Inj. Melonex Plus 15ml I/M",
-          "Inj. Dextrose 25% 500ml I/V (हाइपोग्लाइसीमिया निवारण)"
-        ],
-        oral: ["Sharkoferrol tonic 50ml दैनिक", "भूख वर्धक पाचन चूर्ण"],
-        ayurveda: ["शंखपुष्पी व ब्राह्मी चूर्ण 30g तंत्रिका शक्ति हेतु"],
-        homeopathy: ["Arsenicum Album 200C + Nux Vomica 200C"],
-        desiRemedy: "मक्खियों (Tabanus Flies) से बचाव करें। पशु को अंधेरे, शांत व हवादार कमरे में रखें ताकि दौरे न आएं।"
-      },
-      stages: {
-        incubation: "1 से 2 सप्ताह",
-        prodromal: "रुक-रुक कर बुखार, आंखों से अत्यधिक आंसू, सुस्ती",
-        clinical: "गोल-गोल घूमना, अंधापन, उत्तेजना, एनसारका (निचले अंगों में जलभराव)",
-        convalescent: "समय पर ट्राइक्विन मिलने पर 1 सप्ताह में नर्वस लक्षण शांत"
-      }
-    },
-    {
-      id: "DIS_13_LUMPY_SKIN_DISEASE",
-      nameHindi: "गांठदार त्वचा रोग (Lumpy Skin Disease - LSD)",
-      nameEnglish: "Lumpy Skin Disease (Neethling Poxvirus)",
-      category: "Viral",
-      organAffected: "Integumentary & Lymphatic System",
-      cardinalSigns: "संपूर्ण शरीर की त्वचा पर 2 से 5 सेमी व्यास की गोल कठोर गांठें (Nodules), पैरों व गलकंबल में भारी सूजन, तेज बुखार, नाक व आंख से स्राव और लंगड़ापन।",
-      temperatureExpected: "104.0 - 106.0 °F",
-      labTests: [
-        { testName: "रियल-टाइम पीसीआर (qPCR)", sample: "त्वचा की पपड़ी या नोड्यूल बायोप्सी", expectedResult: "Capripoxvirus DNA पॉजिटिव पुष्टि" }
-      ],
-      treatments: {
-        injections: [
-          "Inj. Ceftiofur Sodium 1g I/M SID 3-5 दिन (द्वितीयक बैक्टीरियल घाव रोकने)",
-          "Inj. Melonex Plus 15ml I/M दर्द व सूजन हेतु",
-          "Inj. Avil 10ml I/M",
-          "Inj. Ivermectin 10ml S/C (मैगट से बचाव व इम्यून सपोर्ट)"
-        ],
-        oral: ["विटामिन C (Ascorbic acid) पाउडर 10g दैनिक", "Masticare powder / Zinc supplements"],
-        ayurveda: ["हल्दी, काली मिर्च, तुलसी, दालचीनी, गुड़ का काढ़ा दिन में दो बार"],
-        homeopathy: ["Variolinum 200C + Thuja Occidentalis 200C + Silicea 200C"],
-        desiRemedy: "घावों पर नीम तेल + कपूर + हल्दी का गाढ़ा लेप लगाएं। मक्खियों से बचाव हेतु कपूर का धुआं करें।"
-      },
-      stages: {
-        incubation: "4 से 14 दिन",
-        prodromal: "तेज ज्वर (105°F), लिम्फ नोड्स में भारी सूजन, आंख-नाक से स्राव",
-        clinical: "त्वचा पर सैकड़ों कठोर गांठें, नोड्यूल्स का फटना, अल्सर, पैरों में सूजन",
-        convalescent: "पपड़ी (Scabs) गिरना; पूर्ण त्वचा स्वस्थ होने में 1 से 3 माह"
-      }
-    },
-    {
-      id: "DIS_14_ANTHRAX",
-      nameHindi: "एंथ्रेक्स / गिल्टी रोग (Anthrax)",
-      nameEnglish: "Anthrax (Splenic Fever)",
-      category: "Bacterial",
-      organAffected: "Spleen & Systemic Circulation",
-      cardinalSigns: "अचानक बिना लक्षण के आकस्मिक मृत्यु; प्राकृतिक छिद्रों (नाक, मुंह, गुदा, योनि) से बिना जमा हुआ डामर जैसा काला रक्त रिसना; शव में अकड़न (Rigor Mortis) न होना।",
-      temperatureExpected: "106.0 - 107.5 °F (मृत्यु से चंद घंटे पूर्व)",
-      labTests: [
-        { testName: "पॉलीक्रोम मेथिलीन ब्लू स्टेनिंग (M'Fadyean Test)", sample: "कान की नस का रक्त स्मीयर", expectedResult: "गुलाबी कैप्सूल से घिरे चौकोर छोर वाले नीले बेसिली (Bacillus anthracis)" }
-      ],
-      treatments: {
-        injections: [
-          "अति-आपातकाल (यदि जीवित हो): Inj. Procaine Penicillin 40-80 Lac IU I/V & I/M BID",
-          "Inj. Oxytetracycline 10 mg/kg I/V",
-          "Inj. Anthrax Anti-serum (यदि उपलब्ध हो)"
-        ],
-        oral: ["सख्त वर्जित (पशु चंद घंटों में दम तोड़ देता है)"],
-        ayurveda: ["लागू नहीं"],
-        homeopathy: ["Anthracinum 200C (केवल प्रोफिलैक्सिस हेतु)"],
-        desiRemedy: "चेतावनी: एंथ्रेक्स पीड़ित पशु के शव को कभी न चीरें (No Post-mortem)। 6-8 फीट गहरे गड्ढे में चूना डालकर गाड़ें।"
-      },
-      stages: {
-        incubation: "1 से 3 दिन",
-        prodromal: "अत्यधिक तेज बुखार, बेचैनी, तेज श्वास",
-        clinical: "ऐंठन, लड़खड़ाहट, पतन, छिद्रों से काला रक्त, तीव्र मृत्यु (Peracute death)",
-        convalescent: "प्रायः मृत्यु दर 90-95%"
-      }
-    },
-    {
-      id: "DIS_15_ENTEROTOXAEMIA",
-      nameHindi: "फिड़किया / आंत्रविषक्तता (Enterotoxaemia - ET)",
-      nameEnglish: "Enterotoxaemia (Pulpy Kidney Disease)",
-      category: "Bacterial",
-      organAffected: "Intestines, Kidneys & Brain",
-      cardinalSigns: "अचानक अत्यधिक दाना या हरी घास खाने बाद बकरी/भेड़ का जमीन पर गिरना, सिर पीछे की ओर खींचना (Opisthotonos), झागदार मुंह व पेट दर्द से चीखना।",
-      temperatureExpected: "103.0 - 105.0 °F (बाद में सब-नॉर्मल)",
-      labTests: [
-        { testName: "इंटेस्टाइनल कंटेंट स्मीयर", sample: "इलियम सामग्री", expectedResult: "विशाल संख्या में Clostridium perfringens Type D ग्राम+ रॉड्स" },
-        { testName: "मूत्र ग्लूकोज जांच (Glucosuria)", sample: "मूत्र", expectedResult: "तीव्र ग्लाइकोसुरिया (+++ शुगर)" }
-      ],
-      treatments: {
-        injections: [
-          "Inj. Clostridium perfringens Type D Antitoxin (यदि उपलब्ध हो)",
-          "Inj. Crystalline Penicillin 20 Lac IU I/V + I/M",
-          "Inj. Spasmo-Vet 5ml I/M",
-          "Inj. Dexamethasone 2ml I/M (शॉक निवारण हेतु)"
-        ],
-        oral: ["Activated Charcoal पाउडर 50g + Kaolin पानी में घोलकर"],
-        ayurveda: ["ईसबगोल की भूसी 30g छाछ के साथ"],
-        homeopathy: ["Belladonna 200C + Nux Vomica 200C"],
-        desiRemedy: "तुरंत दाना-बांटा बंद करें। मीठा सोडा 10 ग्राम + हींग 2 ग्राम गुनगुने पानी में नाल से दें।"
-      },
-      stages: {
-        incubation: "कुछ घंटे से 1 दिन",
-        prodromal: "झुंड से अलग होना, सुस्ती, हल्का अफारा",
-        clinical: "दौरे पड़ना, सिर पीछे मुड़ना, दांत पीसना, तीव्र मृत्यु (2-12 घंटे)",
-        convalescent: "बचे हुए पशुओं में किडनी नरम (Pulpy) हो जाती है"
-      }
-    },
-    {
-      id: "DIS_16_PPR",
-      nameHindi: "पीपीआर / बकरी प्लेग (PPR)",
-      nameEnglish: "Peste des Petits Ruminants (Goat Plague)",
-      category: "Viral",
-      organAffected: "Gastrointestinal & Respiratory Tract",
-      cardinalSigns: "मुंह के अंदर गंदे बदबूदार छाले व सफेद परत, आंखों व नाक से गाढ़ा मवाद जैसा स्राव, तेज बुखार (105°F), अत्यंत बदबूदार काले-हरे पतले दस्त एवं निमोनिया।",
-      temperatureExpected: "104.5 - 106.0 °F",
-      labTests: [
-        { testName: "सैंडविच ELISA / RT-PCR", sample: "ओरल व नेजल स्वैब", expectedResult: "Morbillivirus PPRV एंटीजन पॉजिटिव" }
-      ],
-      treatments: {
-        injections: [
-          "Inj. Enrofloxacin (5 mg/kg) I/M SID 4 दिन (सेकेंडरी बैक्टीरिया रोकने)",
-          "Inj. Melonex Plus 2-3ml I/M",
-          "Inj. Avil 2ml I/M",
-          "Dextrose Normal Saline 200-500ml I/V or S/C (डिहाइड्रेशन से बचाव)"
-        ],
-        oral: ["Bolus Biotrim (Sulphadiazine + Trimethoprim) 1/2 बोलस बीडी", "Oral ORS निरंतर"],
-        ayurveda: ["मुलेठी चूर्ण 10g + शहद मुंह के छालों हेतु"],
-        homeopathy: ["Mercurius Corrosivus 200C + Arsenicum Album 200C"],
-        desiRemedy: "मुंह को सुहागा (Borax) भुना हुआ शहद में मिलाकर दिन में 3 बार साफ करें। बकरी को ठंड से बचाएं।"
-      },
-      stages: {
-        incubation: "3 से 6 दिन",
-        prodromal: "अचानक 106°F बुखार, आंखें लाल, स्राव बहना",
-        clinical: "मुंह में सड़ांध, नेक्रोटिक छाले, अतिसार, निर्जलीकरण, सांस फूलना",
-        convalescent: "बचने वाले पशुओं में आजीवन प्रतिरक्षा, स्वस्थ होने में 2-3 सप्ताह"
-      }
-    },
-    {
-      id: "DIS_17_BRUCELLOSIS",
-      nameHindi: "ब्रूसीलोसिस / संक्रामक गर्भपात (Brucellosis)",
-      nameEnglish: "Brucellosis (Bangs Disease / Contagious Abortion)",
-      category: "Bacterial",
-      organAffected: "Pregnant Uterus & Placenta",
-      cardinalSigns: "गर्भावस्था के अंतिम त्रैमास (विशेषकर 7वें से 9वें माह) में अचानक गर्भपात, जेर का बुरी तरह अटक जाना (ROP), भूरे-पीले बदबूदार स्राव व बांझपन।",
-      temperatureExpected: "सामान्य अथवा गर्भपात के समय हल्का बढ़ा (102.5 - 103.5 °F)",
-      labTests: [
-        { testName: "रोज बंगाल प्लेट टेस्ट (RBPT)", sample: "सीरम", expectedResult: "एंटीजन एग्ग्लूटिनेशन क्लंपिंग (+++)" },
-        { testName: "मिल्क रिंग टेस्ट (MRT)", sample: "कच्चा मिश्रित दूध", expectedResult: "दूध की मलाई पर नीली रिंग बनना" }
-      ],
-      treatments: {
-        injections: [
-          "क्लिनिकल इरेडिकेशन कठिन; आर्थिक पशुओं में: Inj. Streptomycin 1g + Oxytetracycline LA 20 mg/kg",
-          "हार्मोनल एवं सपोर्टिव चिकित्सा"
-        ],
-        oral: ["गर्भाशय शोधक काढ़े (Uterine tonics) निरंतर"],
-        ayurveda: ["लोध्र, अशोक छाल व शतावरी क्वाथ"],
-        homeopathy: ["Sabina 200C + Sepia 200C"],
-        desiRemedy: "सावधानी: यह रोग जूनोटिक (इंसानों में फैलने वाला) है। गर्भपात भ्रूण व जेर को दस्ताने पहनकर चूने के साथ दफनाएं।"
-      },
-      stages: {
-        incubation: "2 सप्ताह से 5 माह",
-        prodromal: "अयन का समय से पहले विकसित होना, योनि से स्राव",
-        clinical: "7-8 माह पर गर्भपात, कोटिलेडन्स का नेक्रोटिक पीला चमड़े जैसा होना",
-        convalescent: "पशु आजीवन वाहक (Carrier) बन सकता है"
-      }
-    },
-    {
-      id: "DIS_18_EPHEMERAL_FEVER",
-      nameHindi: "तीन दिनी बुखार / अकड़हा (Bovine Ephemeral Fever)",
-      nameEnglish: "Bovine Ephemeral Fever (Three-day Sickness)",
-      category: "Viral",
-      organAffected: "Joints, Muscles & Vascular Endothelium",
-      cardinalSigns: "अचानक तेज बुखार (105-106°F), चारों पैरों में बारी-बारी तेज अकड़न व लंगड़ापन, पशु का जमीन पर बैठ जाना, आंखों से पानी व 3 दिन में स्वतः ठीक होना।",
-      temperatureExpected: "104.5 - 106.0 °F (Biphasic fever)",
-      labTests: [
-        { testName: "रक्त परीक्षण (Hematology)", sample: "EDTA रक्त", expectedResult: "गंभीर न्यूट्रोफिलिया एवं तीव्र लिंफोपेनिया" }
-      ],
-      treatments: {
-        injections: [
-          "Inj. Melonex Plus 20ml I/M SID 3 दिन (दर्द व सूजन रोधी)",
-          "Inj. Megludyne (Flunixin) 15ml I/V",
-          "Inj. Mifex 450ml I/V (अस्थायी हाइपोकैल्सीमिया निवारण हेतु)",
-          "Inj. Tribivet 10ml I/M"
-        ],
-        oral: ["कैल्शियम जेल 300g ट्यूब", "Paracetamol बोलस"],
-        ayurveda: ["दशमूल क्वाथ 100ml जोड़ों के दर्द हेतु"],
-        homeopathy: ["Rhus Tox 200C + Bryonia Alba 200C + Eupatorium Perf 200C"],
-        desiRemedy: "पशु को गीली जमीन पर न रखें। पैरों की सिकाई करें। जबरन चलाने का प्रयास न करें।"
-      },
-      stages: {
-        incubation: "2 से 4 दिन",
-        prodromal: "अचानक तेज बुखार, दूध का पूर्णतः सूख जाना",
-        clinical: "पैरों में असहनीय अकड़न, बैठ जाना, गर्दन झुकाना (3 दिन)",
-        convalescent: "तीसरे-चौथे दिन चमत्कारिक रूप से उठकर खड़ा होना व चारा खाना"
-      }
-    },
-    {
-      id: "DIS_19_RABIES",
-      nameHindi: "रेबीज / अलर्क रोग (Bovine Rabies)",
-      nameEnglish: "Rabies (Hydrophobia / Dumb Rabies)",
-      category: "Viral",
-      organAffected: "Central Nervous System (Brain)",
-      cardinalSigns: "असामान्य रंभाना (गले से कर्कश सीटी जैसी आवाज), लगातार लार टपकना, आक्रामकता या स्तब्धता (Dumb form), बार-बार पेशाब का प्रयास, पक्षाघात व मृत्यु।",
-      temperatureExpected: "सामान्य अथवा उत्तेजना के समय हल्का बढ़ा (102.5 - 104.0 °F)",
-      labTests: [
-        { testName: "डायरेक्ट फ्लोरोसेंट एंटीबॉडी (dFAT)", sample: "मस्तिष्क ऊतक (Post-mortem)", expectedResult: "नेग्री बॉडीज (Negri Bodies) एवं वायरल एंटीजन की पुष्टि" }
-      ],
-      treatments: {
-        injections: [
-          "क्लिनिकल लक्षण प्रकट होने के बाद कोई उपचार संभव नहीं (100% प्राणघातक)",
-          "काटने के तुरंत बाद (Day 0, 3, 7, 14, 28) पोस्ट-बाइट रैबीज वैक्सीन (Raksharab) अनिवार्य"
-        ],
-        oral: ["सख्त वर्जित (पशु निगलने में असमर्थ होता है)"],
-        ayurveda: ["अनुपयुक्त"],
-        homeopathy: ["Lyssin 200C / Hydrophobinum (केवल बचाव हेतु)"],
-        desiRemedy: "पशु को तुरंत मजबूत लोहे की जंजीर से अन्य पशुओं व मनुष्यों से दूर बांधें। मुंह में हाथ डालने की गलती कदापि न करें।"
-      },
-      stages: {
-        incubation: "2 सप्ताह से 6 माह (काटने के स्थान की दूरी अनुसार)",
-        prodromal: "व्यवहार परिवर्तन, बेचैनी, आंखें चौड़ी",
-        clinical: "फ्यूरियस या डम्ब रूप, रंभाना, लार, लकवा, सांस रुकना",
-        convalescent: "लक्षण दिखने के 3 से 7 दिनों में अनिवार्य मृत्यु"
-      }
-    },
-    {
-      id: "DIS_20_TETANUS",
-      nameHindi: "धनुस्तंभ / टेटनस (Tetanus)",
-      nameEnglish: "Tetanus (Lockjaw)",
-      category: "Bacterial",
-      organAffected: "Neuromuscular Junctions",
-      cardinalSigns: "पूरे शरीर में लकड़ी जैसा कड़ापन (Wooden Horse Posture), जबड़ा भिंच जाना (Lockjaw), तीसरी पलक का आंख के ऊपर बार-बार चढ़ना, कान खड़े व पूंछ सीधी।",
-      temperatureExpected: "सामान्य अथवा मस्कुलर स्पाज्म के कारण बढ़ा हुआ (102.0 - 104.0 °F)",
-      labTests: [
-        { testName: "घाव स्मीयर जांच", sample: "गहरे घाव की खुरचन", expectedResult: "ड्रमस्टिक (Drumstick) के आकार के Clostridium tetani स्पोर्स" }
-      ],
-      treatments: {
-        injections: [
-          "Tetanus Antitoxin (TAT) 50,000 to 1,00,000 IU I/V & घाव के चारों ओर",
-          "Inj. Crystalline Penicillin 40 Lac IU I/V QID 5 दिन",
-          "Inj. Diazepam / Chlorpromazine (मांसपेशी ढीली करने व सिडेशन हेतु)",
-          "Inj. Melonex 15ml I/M"
-        ],
-        oral: ["सख्त वर्जित (जबड़ा बंद होने के कारण)"],
-        ayurveda: ["लागू नहीं"],
-        homeopathy: ["Hypericum Perforatum 200C + Ledum Palustre 200C + Nux Vomica 200C"],
-        desiRemedy: "मूल घाव को खोजें, उसे खोलकर 3% हाइड्रोजन परॉक्साइड और टिंचर आयोडीन से अच्छी तरह धोएं। पशु को शांत, अंधेरे कमरे में रखें।"
-      },
-      stages: {
-        incubation: "5 दिन से 3 सप्ताह",
-        prodromal: "हल्की अकड़न, तीसरी पलक का फड़कना",
-        clinical: "लकड़ी का घोड़ा जैसी स्थिति, जबड़ा बंद, आवाज व रोशनी से तीव्र ऐंठन",
-        convalescent: "गंभीर मामलों में श्वसन पक्षाघात से मृत्यु; रिकवरी में 4-6 सप्ताह"
-      }
-    },
-    {
-      id: "DIS_21_COLIC",
-      nameHindi: "पेट दर्द / शूल (Bovine / Equine Colic)",
-      nameEnglish: "Spasmodic & Impaction Colic",
-      category: "Gastrointestinal",
-      organAffected: "Abomasum, Caecum & Intestines",
-      cardinalSigns: "पशु का बार-बार पेट की ओर लात मारना, उठना-बैठना, जमीन पर लोटना, पसीना आना, कराहना, पीठ ऊपर धनुष की भांति तानना व गोबर न करना।",
-      temperatureExpected: "सामान्य (101.5 - 102.5 °F)",
-      labTests: [
-        { testName: "रेक्टल पाल्पेशन (गुदा परीक्षण)", sample: "रेक्टम", expectedResult: "आंतों में गैस, सूखा कठोर गोबर या डिस्टेंशन" }
-      ],
-      treatments: {
-        injections: [
-          "Inj. Spasmo-Vet (Dicyclomine) 15-20ml I/M (ऐंठन शूल में)",
-          "Inj. Flunixin Meglumine 15ml I/V (तीव्र आंत दर्द शमन)",
-          "Inj. Belamyl 10ml I/M",
-          "DNS / RL 2 से 3 लीटर I/V (इंटेस्टाइनल हाइड्रेशन)"
-        ],
-        oral: ["लिक्विड पैराफिन 1 लीटर (इम्पैक्शन में)", "मैग्नीशियम सल्फेट (एप्सम साल्ट) 400g पानी में"],
-        ayurveda: ["अजवाइन 50g + काला नमक 30g + हींग 10g का काढ़ा"],
-        homeopathy: ["Colocynthis 200C + Magnesia Phosphorica 200C + Nux Vomica 200C"],
-        desiRemedy: "गुनगुने पानी में साबुन का झाग बनाकर गुदा में एनीमा (Enema) दें ताकि अटका हुआ सूखा गोबर बाहर निकल सके।"
-      },
-      stages: {
-        incubation: "अवरोध या स्पैज्म के कुछ घंटों में",
-        prodromal: "बेचैनी, बार-बार पेशाब का झूठा प्रयास, पूंछ हिलाना",
-        clinical: "तीव्र छटपटाहट, जमीन पर लोटना, दर्द से आंखें फटी होना",
-        convalescent: "गोबर व गैस निष्कासन उपरांत तुरंत राहत"
-      }
-    },
-    {
-      id: "DIS_22_RETENTION_OF_PLACENTA",
-      nameHindi: "जेर का अटकना (Retention of Placenta - ROP)",
-      nameEnglish: "Retention of Fetal Membranes (RFM / ROP)",
-      category: "Obstetric",
-      organAffected: "Post-partum Uterus & Cotyledons",
-      cardinalSigns: "प्रसव के 8 से 12 घंटे बीत जाने के उपरांत भी जेर का गर्भाशय से बाहर न गिरना; योनि से बदबूदार सड़ा हुआ मांसल झिल्लीदार टुकड़ा लटकना।",
-      temperatureExpected: "सामान्य अथवा गर्भाशय संक्रमण होने पर बढ़ा (102.5 - 104.0 °F)",
-      labTests: [
-        { testName: "योनि एवं गर्भाशय परीक्षण", sample: "वेजाइनल डिस्चार्ज", expectedResult: "नेक्रोटिक प्लेसेंटल ऊतक व प्यूट्रीफाइड दुर्गंध" }
-      ],
-      treatments: {
-        injections: [
-          "Inj. Cloprostenol (Pragma) 2ml I/M (गर्भाशय संकुचन हेतु)",
-          "Inj. Amoxicillin-Sulbactam 4.5g I/M SID 3 दिन (मेट्राइटिस रोकथाम)",
-          "Inj. Melonex Plus 15ml I/M",
-          "Inj. Tonophosphan 10ml I/M + Calcium Borogluconate 200ml S/C"
-        ],
-        oral: ["Uterotone / Exapar liquid 100ml बीडी 5 दिन", "गुड़ व सोंठ काढ़ा"],
-        ayurveda: ["उलटकंबल (Abroma augusta) छाल रस 100ml"],
-        homeopathy: ["Sepia 200C + Pulsatilla 200C + Secale Cornutum 30C"],
-        desiRemedy: "1 किलो बांस के ताजे पत्ते उबालकर 250 ग्राम गुड़ मिलाकर पिलाएं। कभी भी जबरन हाथ डालकर जेर न खींचें (रक्तस्राव व गर्भाशय फटने का खतरा)।"
-      },
-      stages: {
-        incubation: "प्रसव उपरांत 8-12 घंटे",
-        prodromal: "जेर का आधा लटकना, पूंछ बार-बार उठाना",
-        clinical: "सड़न, बदबूदार मवाद, दूध घटना, सेप्टिक मेट्राइटिस का जोखिम",
-        convalescent: "दवाओं द्वारा गर्भाशय की सफाई उपरांत 7-10 दिन में सुधार"
-      }
-    },
-    {
-      id: "DIS_23_PROLAPSE",
-      nameHindi: "फूल दिखाना / प्रोलैप्स (Uterine / Vaginal Prolapse)",
-      nameEnglish: "Vaginal / Uterine Prolapse",
-      category: "Obstetric",
-      organAffected: "Cervix, Vagina & Gravid Uterus",
-      cardinalSigns: "बैठने पर योनि मार्ग से लाल-गुलाबी फुटबॉल जैसा मांसल अंग बाहर आना (Vaginal) अथवा ब्याने के तुरंत बाद पूरा गर्भाशय उल्टे थैले जैसा बाहर लटक जाना (Uterine)।",
-      temperatureExpected: "सामान्य अथवा आघात/शॉक में सब-नॉर्मल (99.0 - 102.5 °F)",
-      labTests: [
-        { testName: "प्रत्यक्ष क्लिनिकल निरीक्षण", sample: "प्रोलेप्सड मास", expectedResult: "कोटिलेडन्स युक्त गर्भाशय या वेजाइनल म्यूकोसा" }
-      ],
-      treatments: {
-        injections: [
-          "एपीड्यूरल एनेस्थीसिया: 2% Lignocaine Hydrochloride 5-8 ml (दर्द व जोर लगाना बंद करने)",
-          "Inj. Intacef Tazo 4.5g I/M (गंभीर संक्रमण निवारण)",
-          "Inj. Melonex 15ml I/M",
-          "Inj. Mifex 450ml I/V (मांसपेशियों की टोन बढ़ाने हेतु)"
-        ],
-        oral: ["Pro-Cal gel", "कब्ज निवारक चोकर दलिया"],
-        ayurveda: ["लोध्र व माजूफल चूर्ण संकुचन हेतु"],
-        homeopathy: ["Sepia 200C + Podophyllum 200C + Lilium Tigrinum 30C"],
-        desiRemedy: "बाहर निकले अंग को ठंडे फिटकरी या बर्फ के पानी से धोएं। ऊपर चीनी/बूरा छिड़कें (एडिमा कम करने)। अंग को वापस अंदर करके रस्सी का छींका (Truss) बांधें।"
-      },
-      stages: {
-        incubation: "प्रसव पूर्व अंतिम माह अथवा प्रसव के 24 घंटे भीतर",
-        prodromal: "बैठने पर योनि से हल्का उभार, लगातार जोर मारना (Tenismus)",
-        clinical: "संपूर्ण गर्भाशय बाहर, म्यूकोसा का फटना, गंदगी व संक्रमण",
-        convalescent: "उचित रिपोजिशन व टांके (Buhner's suture) से 10-14 दिन में स्वस्थ"
-      }
-    },
-    {
-      id: "DIS_24_DOWNER_COW",
-      nameHindi: "डाउपर काउ सिंड्रोम (Downer Cow Syndrome)",
-      nameEnglish: "Downer Cow Syndrome",
-      category: "Metabolic",
-      organAffected: "Musculoskeletal & Pelvic Nerves",
-      cardinalSigns: "कैल्शियम की दो बोतल चढ़ाने के बाद भी पशु का उठने में असमर्थ होना; पशु सचेत रहता है, चारा-पानी खाता है परंतु पिछले पैरों में दुर्बलता से खड़ा नहीं हो पाता।",
-      temperatureExpected: "सामान्य (101.0 - 102.5 °F)",
-      labTests: [
-        { testName: "सीरम क्रिएटिन काइनेज (CK)", sample: "सीरम", expectedResult: "मांसपेशियों के डैमेज के कारण तीव्र वृद्धि (> 5000 IU/L)" },
-        { testName: "सीरम पोटेशियम व फास्फोरस", sample: "सीरम", expectedResult: "हाइपोकैलिमिया या हाइपोफॉस्फेटेमिया" }
-      ],
-      treatments: {
-        injections: [
-          "Inj. Tonophosphan 15ml I/V & I/M",
-          "Inj. Tribivet (B1, B6, B12) 15ml I/M दैनिक 7 दिन",
-          "Inj. Melonex 15ml I/M (इस्केमिक मसल पेन रोकने)",
-          "Mifex 200ml S/C (कैल्शियम बैलेंस)"
-        ],
-        oral: ["Potassium Chloride 50g दैनिक", "विटामिन ई एवं सेलेनियम पाउडर"],
-        ayurveda: ["अश्वगंधा चूर्ण 50g + कौंच बीज 30g तंत्रिका शक्ति हेतु"],
-        homeopathy: ["Causticum 200C + Arnica 200C + Conium 200C"],
-        desiRemedy: "पशु को हर 4-6 घंटे में एक करवट से दूसरी करवट पलटें। नीचे मोटा पुआल या बालू रेत बिछाएं। काउ-लिफ्टर (Cow Lifter) से दिन में दो बार सहारा देकर खड़ा करें।"
-      },
-      stages: {
-        incubation: "मिल्क फीवर या प्रसव आघात के 24-48 घंटे बाद",
-        prodromal: "उठने की असफल चेष्टा, घुटनों के बल चलना",
-        clinical: "क्रीपर या अलर्ट डाउपर स्थिति, पिछले पैरों में पक्षाघात",
-        convalescent: "सघन नर्सिंग केयर से 1 से 3 सप्ताह में रिकवरी"
-      }
-    },
-    {
-      id: "DIS_25_PNEUMONIA_BRD",
-      nameHindi: "श्वसन तंत्र संक्रमण / निमोनिया (Bovine Respiratory Disease)",
-      nameEnglish: "Bronchopneumonia / Calf Pneumonia",
-      category: "Bacterial",
-      organAffected: "Lungs, Bronchi & Trachea",
-      cardinalSigns: "तेज सांस चलना (हांफना), सीने से घुर्र-घुर्र या सीटी जैसी आवाज (Wheezing/Rales), बलगमयुक्त खांसी, नाक से पीला मवाद जैसा स्राव व तेज बुखार।",
-      temperatureExpected: "104.0 - 105.5 °F",
-      labTests: [
-        { testName: "चेस्ट ऑस्कल्टेशन (स्टेथोस्कोप)", sample: "फेफड़े (Thorax)", expectedResult: "क्रेपिटेशन, ब्रोंकियल सांस ध्वनि व फ्रिक्शन रब" },
-        { testName: "नेजल स्वैब कल्चर", sample: "गहरा नेजल स्राव", expectedResult: "Mannheimia haemolytica / Pasteurella संवर्धन" }
-      ],
-      treatments: {
-        injections: [
-          "Inj. Ceftiofur Sodium 1g I/M SID 4 दिन अथवा Inj. Enrofloxacin 10%",
-          "Inj. Flunixin Meglumine 15ml I/V (फेफड़ों की सूजन व फाइब्रिन कम करने)",
-          "Inj. Avil 10ml I/M",
-          "Inj. Mucolite / Bromhexine 10ml I/M (बलगम पतला करने)"
-        ],
-        oral: ["Kaf-Go / Pulmo-Care सिरप 50ml बीडी", "विटामिन A टॉनिक"],
-        ayurveda: ["अडूसा (वासा) पत्र रस 50ml + पिप्पली चूर्ण 10g + शहद"],
-        homeopathy: ["Antimonium Tartaricum 200C + Bryonia Alba 200C"],
-        desiRemedy: "पशु बाड़े में नीलगिरी (Eucalyptus) तेल या अजवाइन और कपूर की भाप (Steam) दें। पशु को ठंडी हवा के झोंकों से बचाएं।"
-      },
-      stages: {
-        incubation: "2 से 7 दिन",
-        prodromal: "सूखी खांसी, नाक से पानी, भूख न लगना",
-        clinical: "हांफना, बलगमयुक्त घुर्राहट, पसलियां चलना, सिर आगे खींचकर सांस लेना",
-        convalescent: "एंटीबायोटिक उपचार से 7-10 दिनों में फेफड़े सामान्य"
-      }
-    },
-    {
-      id: "DIS_26_CALF_SCOURS",
-      nameHindi: "बछड़ों में सफेद अतिसार (Calf Scours / Colibacillosis)",
-      nameEnglish: "Calf Scours (E. coli / Rotaviral Diarrhea)",
-      category: "Bacterial",
-      organAffected: "Neonatal Intestines & Systemic Hydration",
-      cardinalSigns: "नवजात बछड़ों में पानी जैसा सफेद-पीला बदबूदार दस्त, आंखें अंदर धंस जाना, त्वचा की लोच (Skin Turgor) खत्म होना, शरीर ठंडा पड़ना व दूध पीने से मना करना।",
-      temperatureExpected: "103.0 - 104.5 °F (गंभीर डिहाइड्रेशन में सब-नॉर्मल < 100°F)",
-      labTests: [
-        { testName: "फेकल स्मीयर व कल्चर", sample: "मल (Feces)", expectedResult: "E. coli (K99+ एंटीजन) अथवा रोटावायरस संवर्धन" }
-      ],
-      treatments: {
-        injections: [
-          "Inj. Amikacin (5 mg/kg) I/M or Enrofloxacin 2.5 ml I/M",
-          "Inj. Melonex 1.5ml I/M",
-          "Inj. Tribivet 2ml I/M",
-          "Dextrose Normal Saline 500-1000ml I/V या S/C (जीवन रक्षक)"
-        ],
-        oral: ["Bolus Biotrim 1/2 बोलस बीडी", "Electral / ORS घोल 1-2 लीटर दिनभर"],
-        ayurveda: ["बेलगिरी चूर्ण 15g + ईसबगोल 10g छाछ में घोलकर"],
-        homeopathy: ["Podophyllum 200C + Arsenicum Album 200C + Veratrum Album 30C"],
-        desiRemedy: "मां का दूध तुरंत आधा करें। ओआरएस का पानी हर 2 घंटे पर पिलाएं। 1 चम्मच चायपत्ती का उबला पानी ठंडा करके उसमें आधा नींबू निचोड़कर दें।"
-      },
-      stages: {
-        incubation: "12 से 36 घंटे",
-        prodromal: "दूध न पीना, पेट में गुड़गुड़ाहट, सुस्ती",
-        clinical: "तीव्र दस्त, गंभीर डिहाइड्रेशन, उठने में असमर्थ, ठंडा शरीर",
-        convalescent: "फ्लूइड थेरेपी से 3-5 दिन में आंतों का पुनरुद्धार"
-      }
-    },
-    {
-      id: "DIS_27_FOOT_ROT",
-      nameHindi: "खुर सड़न / पूति खुर (Foot Rot)",
-      nameEnglish: "Infectious Pododermatitis (Foot Rot)",
-      category: "Bacterial",
-      organAffected: "Interdigital Skin & Hoof Matrix",
-      cardinalSigns: "दोनों खुरों के बीच की चमड़ी का फटना, अत्यधिक दुर्गंधयुक्त मवाद, खुर में भयंकर सूजन व दर्द, पशु का पैर ऊपर उठाकर चलना व चरने न जाना।",
-      temperatureExpected: "102.5 - 104.0 °F",
-      labTests: [
-        { testName: "स्मीयर माइक्रोस्कोपी", sample: "खुर के बीच का मवाद", expectedResult: "Fusobacterium necrophorum एवं Dichelobacter nodosus रॉड्स" }
-      ],
-      treatments: {
-        injections: [
-          "Inj. Ceftiofur Sodium 1g I/M SID 3 दिन अथवा Oxytetracycline LA 15ml I/M",
-          "Inj. Melonex Plus 15ml I/M (अति-दर्द व सूजन निवारण)",
-          "Inj. Avil 10ml I/M"
-        ],
-        oral: ["Zinc Sulphate बोलस (खुर की हीलिंग हेतु)"],
-        ayurveda: ["नीम तेल + करंज तेल + गंधक मलहम"],
-        homeopathy: ["Silicea 200C + Hepar Sulphuris 200C"],
-        desiRemedy: "खुर को 5% कॉपर सल्फेट (नीला थोथा) या पोटाश के घोल से धोएं। सड़े ऊतक काटकर साफ करें। उस पर बोरिक एसिड व नेफथलीन पाउडर बांधें।"
-      },
-      stages: {
-        incubation: "3 से 5 दिन",
-        prodromal: "खुर के बीच हल्की लाली, लंगड़ाहट प्रारंभ",
-        clinical: "गहरा नेक्रोटिक अल्सर, दुर्गंधित स्राव, खुर का विकृत होना",
-        convalescent: "एंटीबायोटिक व ड्रेसिंग से 10-15 दिन में खुर का स्वस्थ होना"
-      }
-    },
-    {
-      id: "DIS_28_GRASS_TETANY",
-      nameHindi: "घास की टिटैनी / हाइपोमैग्नीसीमिया (Grass Tetany)",
-      nameEnglish: "Hypomagnesemic Tetany (Grass Tetany)",
-      category: "Metabolic",
-      organAffected: "Neuromuscular Synapses",
-      cardinalSigns: "हरी रसीली घास चरने के बाद अचानक अत्यधिक उत्तेजना, आंखों की पुतलियां फड़कना, कान खड़े, मांसपेशियों में तीव्र मरोड़ व जमीन पर गिरकर झटके आना।",
-      temperatureExpected: "सामान्य अथवा ऐंठन के कारण अत्यधिक बढ़ा (103.0 - 105.0 °F)",
-      labTests: [
-        { testName: "सीरम मैग्नीशियम", sample: "सीरम / विट्रियस ह्यूमर", expectedResult: "< 1.0 mg/dL (सामान्य: 1.8 - 2.4 mg/dL)" }
-      ],
-      treatments: {
-        injections: [
-          "Magnesium Sulphate 20% solution (100-200ml S/C strictly)",
-          "Inj. Mifex (Calcium with Magnesium) 400ml अत्यंत धीमी गति से I/V",
-          "Inj. Diazepam 5-10ml I/M (ऐंठन शांत करने हेतु)"
-        ],
-        oral: ["Magnesium Oxide 50g दैनिक दाने में मिलाकर"],
-        ayurveda: ["लागू नहीं"],
-        homeopathy: ["Cuprum Metallicum 200C + Cicuta Virosa 200C"],
-        desiRemedy: "अचानक रसीली नाइट्रोजन/पोटैशियम युक्त घास बंद करें। पशु को सूखा भूसा और चोकर खिलाएं।"
-      },
-      stages: {
-        incubation: "रसीले चारे के 2 से 7 दिन बाद",
-        prodromal: "कान फड़कना, सतर्क दृष्टि, चलने में अकड़न",
-        clinical: "कन्वल्शन (झटके), पैडलिंग मूवमेंट (हवा में पैर मारना), कोमा",
-        convalescent: "मैग्नीशियम इंजेक्शन के 30 मिनट में ऐंठन से मुक्ति"
-      }
-    },
-    {
-      id: "DIS_29_POST_PARTURIENT_HEMOGLOBINURIA",
-      nameHindi: "ब्याने के बाद लाल पेशाब (PPH)",
-      nameEnglish: "Post-Parturient Hemoglobinuria (PPH)",
-      category: "Metabolic",
-      organAffected: "RBC Fragility & Phosphorus Metabolism",
-      cardinalSigns: "ब्याने के 2 से 4 सप्ताह बाद बिना बुखार के कॉफी या गहरा लाल पेशाब आना, गंभीर रक्ताल्पता (एनीमिया), दूध का सूखना व पीलिया (चिचड़ी रहित)।",
-      temperatureExpected: "सामान्य (101.0 - 102.5 °F)",
-      labTests: [
-        { testName: "सीरम अकार्बनिक फास्फोरस", sample: "सीरम", expectedResult: "< 1.5 - 2.0 mg/dL (गंभीर हाइपोफॉस्फेटेमिया)" },
-        { testName: "ब्लड स्मीयर", sample: "रक्त", expectedResult: "हेमोपैरासाइट्स (बबेशिया) पूर्णतः अनुपस्थित" }
-      ],
-      treatments: {
-        injections: [
-          "Inj. Tonophosphan (Toldimphos Sodium) 15-20ml I/V एवं 10ml I/M 4 दिन",
-          "Sodium Acid Phosphate 60-80g आई/वी ड्रिप में घोलकर धीमी गति से",
-          "Inj. Feritas 10ml I/M",
-          "DNS 2 लीटर I/V"
-        ],
-        oral: ["Sodium Acid Phosphate पाउडर 60g बीडी 5 दिन", "Sharcoferrol tonic"],
-        ayurveda: ["आंवला 50g + गिलोय 50g दैनिक"],
-        homeopathy: ["Phosphorus 200C + China 200C"],
-        desiRemedy: "250 ग्राम पिसा हुआ उड़द का आटा + 50 ग्राम मीठा सोडा + 100 ग्राम गुड़ की कांजी बनाकर पिलाएं। बरसीम व क्रूसीफेरी हरा चारा तुरंत बंद करें।"
-      },
-      stages: {
-        incubation: "ब्याने के 15 से 30 दिन बाद",
-        prodromal: "दूध घटना, हल्का पीलापन, सुस्ती",
-        clinical: "गहरा कॉफी पेशाब, 10-15% पैक्ड सेल वॉल्यूम (PCV), अत्यधिक कमजोरी",
-        convalescent: "फास्फोरस थेरेपी के 3 दिन में पेशाब सामान्य; रिकवरी 15 दिन"
-      }
-    },
-    {
-      id: "DIS_30_ACIDOSIS",
-      nameHindi: "रूमेन अम्लता / दाना धप पड़ना (Lactic Acidosis)",
-      nameEnglish: "Acute Rumen Lactic Acidosis (Grain Overload)",
-      category: "Metabolic",
-      organAffected: "Rumen Microflora & Systemic pH",
-      cardinalSigns: "अत्यधिक गेहूं, चावल या दाना खाने के बाद रूमेन में पानी भर जाना (Splashy Rumen), खट्टा बदबूदार पतला दस्त, तापमान गिरना, लड़खड़ाहट व डिहाइड्रेशन।",
-      temperatureExpected: "सब-नॉर्मल (< 100.0 °F) अथवा सामान्य",
-      labTests: [
-        { testName: "रूमेन फ्लुइड pH जांच", sample: "रूमेन द्रव", expectedResult: "pH 4.0 - 5.0 (तीव्र लैक्टिक एसिडोसिस), प्रोटोजोआ मृत" }
-      ],
-      treatments: {
-        injections: [
-          "Sodium Bicarbonate 5% sterile solution I/V (एसिडोसिस रिवर्स करने)",
-          "Inj. Tribivet (Thiamine B1) 15ml I/V (लैक्टिक एसिड मेटाबॉलिज्म)",
-          "Inj. Flunixin Meglumine 15ml I/V (टॉक्सिन शॉक रोकने)",
-          "Inj. Belamyl 10ml I/M"
-        ],
-        oral: ["Sodium Bicarbonate (मीठा सोडा) 100-150g गुनगुने पानी में", "Antacid suspension (Magnesium hydroxide) 500ml"],
-        ayurveda: ["सौंफ 50g + मिश्री 50g का शरबत"],
-        homeopathy: ["Nux Vomica 200C + Carbo Veg 200C + Antimonium Crudum 200C"],
-        desiRemedy: "आपातकाल में रूमेन लैवाज (Stomach Tube डालकर पानी भरना व दाना बाहर निकालना)। स्वस्थ पशु का 2 लीटर रूमेन द्रव (Rumen Cud) छानकर पिलाएं।"
-      },
-      stages: {
-        incubation: "अनाज खाने के 6 से 12 घंटे बाद",
-        prodromal: "सुस्ती, जुगाली बंद, पेट में छप-छप पानी की आवाज",
-        clinical: "खट्टा दस्त, लड़खड़ाहट, जमीन पर बैठना, गंभीर निर्जलीकरण, कोमा",
-        convalescent: "रूमेन फ्लोरा पुनर्स्थापना (Cud Transfaunation) से 4-7 दिन में सुधार"
-      }
-    },
-    {
-      id: "DIS_31_ALKALOSIS",
-      nameHindi: "रूमेन क्षारीयता / यूरिया विषाक्तता (Rumen Alkalosis)",
-      nameEnglish: "Rumen Alkalosis (Urea Toxicity)",
-      category: "Metabolic",
-      organAffected: "Rumen & Nervous System",
-      cardinalSigns: "यूरिया या अत्यधिक सड़ा हुआ प्रोटीन खाने के बाद तेज बेचैनी, मुंह से अत्यधिक झागदार लार, मांसपेशियों में कंपकंपी, तेज सांस, रूमेन का pH 8 से ऊपर जाना।",
-      temperatureExpected: "सामान्य अथवा मस्कुलर ट्रेमर्स से बढ़ा (102.5 - 104.0 °F)",
-      labTests: [
-        { testName: "रूमेन फ्लुइड pH", sample: "रूमेन द्रव", expectedResult: "pH > 7.5 - 8.5 (अत्यधिक क्षारीय), अमोनिया गंध" }
-      ],
-      treatments: {
-        injections: [
-          "Inj. Spasmo-Vet 15ml I/M",
-          "Inj. Tribivet 10ml I/M",
-          "Calcium Borogluconate 200ml S/C (टेटेनी से बचाव)",
-          "DNS 2-3 लीटर I/V"
-        ],
-        oral: ["सिरका (Acetic acid 5%) 1 से 2 लीटर + 2-3 लीटर ठंडा पानी तुरंत ओरल drench"],
-        ayurveda: ["नींबू रस 500ml पानी में घोलकर"],
-        homeopathy: ["Aceticum Acidum 200C + Camphora 200C"],
-        desiRemedy: "तुरंत 1 से 2 बोतल जामुन या गन्ने का सिरका ठंडे पानी में मिलाकर नाल से पिलाएं ताकि रूमेन की अमोनिया न्यूट्रलाइज हो सके।"
-      },
-      stages: {
-        incubation: "यूरिया खाने के 15 से 45 मिनट भीतर (अति-तीव्र)",
-        prodromal: "बेचैनी, डकार आना, मांसपेशियों में कंपकंपी",
-        clinical: "झागदार लार, पेट फूलना, चक्कर, सांस का रुकना, पतन",
-        convalescent: "सिरका समय पर मिलने पर 2-4 घंटे में संकट मुक्त"
-      }
-    },
-    {
-      id: "DIS_32_IBR",
-      nameHindi: "संक्रामक गोजातीय राइनोट्रैकाइटिस (IBR)",
-      nameEnglish: "Infectious Bovine Rhinotracheitis (Red Nose)",
-      category: "Viral",
-      organAffected: "Upper Respiratory Tract & Conjunctiva",
-      cardinalSigns: "नाक के नथुने अंदर से अत्यधिक लाल (Red Nose), नाक व आंखों से गंभीर मवाद जैसा स्राव बहना, तेज बुखार (105°F), श्वसन कष्ट, खाँसी व गर्भपात।",
-      temperatureExpected: "104.5 - 106.0 °F",
-      labTests: [
-        { testName: "पीसीआर (PCR) / ELISA", sample: "नेजल स्वैब / सीरम", expectedResult: "Bovine Herpesvirus-1 (BHV-1) पॉजिटिव पुष्टि" }
-      ],
-      treatments: {
-        injections: [
-          "Inj. Ceftiofur Sodium 1g I/M SID 4 दिन (सेकेंडरी बैक्टीरिया रोकथाम)",
-          "Inj. Flunixin Meglumine 15ml I/V (श्वसन सूजन निवारण)",
-          "Inj. Avil 10ml I/M",
-          "Inj. Conciplex / Vit-A 10ml I/M"
-        ],
-        oral: ["विटामिन C चूर्ण 10g दैनिक", "Kaf-Go सिरप 50ml बीडी"],
-        ayurveda: ["तुलसी, वासा व मुलेठी का काढ़ा शहद मिलाकर"],
-        homeopathy: ["Aconitum Napellus 200C + Euphrasia 200C"],
-        desiRemedy: "नाक के लाल नथुनों पर ग्लिसरीन व बोरिक एसिड का लेप करें। आंखों को बोरिक लोशन से धोएं।"
-      },
-      stages: {
-        incubation: "3 से 7 दिन",
-        prodromal: "अचानक तेज बुखार, आंख-नाक से पानी, डिप्रेशन",
-        clinical: "नथुनों पर नेक्रोटिक झिल्ली, रेड नोज, डिस्पेनिया, गर्भपात",
-        convalescent: "वायरल चरण 10-14 दिन; पशु में वायरस आजीवन सुप्त (Latent) रहता है"
-      }
-    },
-    {
-      id: "DIS_33_ACTINOMYCOSIS",
-      nameHindi: "जबड़े की हड्डी का रोग / लंपी जॉ (Actinomycosis)",
-      nameEnglish: "Actinomycosis (Lumpy Jaw)",
-      category: "Bacterial",
-      organAffected: "Mandible & Maxilla Bones",
-      cardinalSigns: "निचले जबड़े की हड्डी पर पत्थर जैसी अत्यंत कठोर, दर्दहीन, अचल सूजन; बाद में छिद्र बनकर पीला चिपचिपा मवाद निकलना जिसमें सल्फर जैसे दाने (Sulphur Granules) हों।",
-      temperatureExpected: "सामान्य (101.5 - 102.5 °F)",
-      labTests: [
-        { testName: "मवाद का सूक्ष्मदर्शी परीक्षण", sample: "सल्फर ग्रेन्यूल्स", expectedResult: "ग्राम पॉजिटिव फिलामेंटस रॉड्स व क्लब-शेप बैक्टीरिया (Actinomyces bovis)" }
-      ],
-      treatments: {
-        injections: [
-          "Inj. Streptomycin 2.5g to 5g I/M SID 10-14 दिन",
-          "Inj. Sodium Iodide 10% solution (1g per 12kg) I/V एकल खुराक, 10 दिन बाद दोहराएं",
-          "Inj. Melonex 15ml I/M"
-        ],
-        oral: ["Potassium Iodide 5-10g दैनिक मुख से 2 सप्ताह (आयोडीन विषाक्तता तक)"],
-        ayurveda: ["कचनार गुग्गुलु 5 बोलस बीडी (अस्थि विद्रधि हेतु)"],
-        homeopathy: ["Hekla Lava 3X / 6X + Silicea 200C + Symphytum 200C"],
-        desiRemedy: "खुले फिस्टुला को टिंचर आयोडीन में भिगोई गॉज पट्टी से पैक करें। कठोर चारा बंद कर दलिया दें।"
-      },
-      stages: {
-        incubation: "महीनों में धीरे-धीरे विकसित",
-        prodromal: "जबड़े पर छोटी कठोर गिल्टी, चबाने में हल्का संकोच",
-        clinical: "हड्डी का विरुपण, दांत हिलना, मवाद के फिस्टुला, वजन घटना",
-        convalescent: "हड्डी की विकृति स्थाई रह सकती है; संक्रमण शांत होने में 1 माह"
-      }
-    },
-    {
-      id: "DIS_34_ACTINOBACILLOSIS",
-      nameHindi: "काष्ठ जीभ / लकड़ी जैसी जीभ (Wooden Tongue)",
-      nameEnglish: "Actinobacillosis (Wooden Tongue)",
-      category: "Bacterial",
-      organAffected: "Tongue & Soft Tissues of Pharynx",
-      cardinalSigns: "जीभ का सूजकर लकड़ी की भांति सख्त व मोटी हो जाना, जीभ मुंह से बाहर लटकना, छूने पर कड़ापन, मुंह से निरंतर लार बहना व चारा चबाने में असमर्थता।",
-      temperatureExpected: "सामान्य अथवा हल्का बढ़ा (102.0 - 103.5 °F)",
-      labTests: [
-        { testName: "बायोप्सी एवं मवाद स्मीयर", sample: "जीभ का स्राव", expectedResult: "Gram-negative pleomorphic bacilli (Actinobacillus lignieresii)" }
-      ],
-      treatments: {
-        injections: [
-          "Inj. Sodium Iodide 10% (1g/12kg body wt) I/V अत्यंत धीमी गति से",
-          "Inj. Oxytetracycline LA 20 mg/kg I/M SID 3-5 दिन",
-          "Inj. Melonex Plus 15ml I/M"
-        ],
-        oral: ["Potassium Iodide पाउडर 5g दैनिक ओरल 10 दिन"],
-        ayurveda: ["त्रिफला व हल्दी का लेप जीभ पर"],
-        homeopathy: ["Mercurius Bin Iodatus 30C + Kali Iodatum 200C"],
-        desiRemedy: "जीभ को 1% फिटकरी के गुनगुने पानी से दिन में दो बार साफ करें। पशु को मुलायम दलिया व हरा चारा काटकर खिलाएं।"
-      },
-      stages: {
-        incubation: "1 से 3 सप्ताह",
-        prodromal: "लार गिरना, जीभ हिलाने में संकोच",
-        clinical: "जीभ का कठोर काठ बनना, अल्सर, मुंह बंद न हो पाना, भुखमरी",
-        convalescent: "सोडियम आयोडाइड चिकित्सा के 48 घंटे में जीभ मुलायम होना शुरू"
-      }
-    },
-    {
-      id: "DIS_35_TRP_HARDWARE",
-      nameHindi: "हार्डवेयर रोग / सुई चुभना (TRP)",
-      nameEnglish: "Traumatic Reticuloperitonitis (TRP / Hardware Disease)",
-      category: "Mechanical",
-      organAffected: "Reticulum, Peritoneum & Pericardium",
-      cardinalSigns: "लोहे की तार या कील निगलने से रेटिकुलम में छेद; पशु का पीठ सिकोड़कर धनुष जैसा खड़ा होना, कोहनी बाहर फैलाना, दबाव देने पर दर्द से कराहना (Grunt test positive)।",
-      temperatureExpected: "102.5 - 104.0 °F (पेरिटोनिटिस में)",
-      labTests: [
-        { testName: "विदर्स पिंच टेस्ट (Withers Pinch Test)", sample: "पीठ की त्वचा दबाना", expectedResult: "पशु का पीठ नीचे झुकाने से इंकार व कराहना (Grunt)" },
-        { testName: "मेटल डिटेक्टर जांच", sample: "रेटिकुलर क्षेत्र", expectedResult: "विदेशी धातु वस्तु की उपस्थिति का बीप संकेत" }
-      ],
-      treatments: {
-        injections: [
-          "Inj. Ceftriaxone-Tazobactam 4.5g I/M SID 5 दिन (पेरिटोनिटिस नियंत्रण)",
-          "Inj. Melonex 15ml I/M",
-          "Inj. Belamyl 10ml I/M",
-          "सर्जरी: रूमिनोटॉमी (Ruminotomy) द्वारा धातु निकालना"
-        ],
-        oral: ["पेट में चुंबक (Rumen Magnet) निगलवाना", "लिक्विड पैराफिन"],
-        ayurveda: ["लागू नहीं"],
-        homeopathy: ["Arnica Montana 200C + Hepar Sulph 200C + Silicea (चेतावनी: सिलिशिया न दें यदि धातु फंसी हो)"],
-        desiRemedy: "पशु के अगले पैरों को पिछले पैरों की तुलना में 6 से 8 इंच ऊंचे चबूतरे पर बांधें ताकि धातु फेफड़ों व दिल की ओर न चुभे।"
-      },
-      stages: {
-        incubation: "तार चुभने के 24-48 घंटे बाद",
-        prodromal: "अचानक दूध घटना, हल्का अफारा, चलने में सतर्कता",
-        clinical: "कराहना, आर्च्ड बैक (धनुषाकार पीठ), जुगुलर पल्स, पेरीकार्डाइटिस",
-        convalescent: "रूमिनोटॉमी अथवा चुंबक द्वारा 1-2 सप्ताह में स्थिरीकरण"
-      }
-    },
-    {
-      id: "DIS_36_METRITIS_PYOMETRA",
-      nameHindi: "गर्भाशय शोध / मवाद पड़ना (Metritis / Pyometra)",
-      nameEnglish: "Septic Metritis & Pyometra",
-      category: "Obstetric",
-      organAffected: "Uterine Endometrium & Myometrium",
-      cardinalSigns: "योनि से लगातार बदबूदार सफेद, पीला या मटमैला मवाद बहना, बार-बार पूंछ उठाना, भूख न लगना, दूध में कमी व बार-बार मद (Heat) में न आना।",
-      temperatureExpected: "102.5 - 104.0 °F (एक्यूट मेट्राइटिस में); पायोमेट्रा में सामान्य",
-      labTests: [
-        { testName: "रेक्टल पाल्पेशन", sample: "गर्भाशय", expectedResult: "गर्भाशय के सींगों का असमान आकार, द्रव से भरा होना, डोनट जैसी अनुभूति" },
-        { testName: "यूटराइन डिस्चार्ज साइटोलॉजी", sample: "मवाद", expectedResult: "अत्यधिक न्यूट्रोफिल्स व बैक्टीरिया" }
-      ],
-      treatments: {
-        injections: [
-          "Inj. Cloprostenol (Pragma) 2ml I/M (सर्विक्स खोलने व मवाद निकालने हेतु)",
-          "Inj. Ceftriaxone-Tazobactam 4.5g I/M SID 3-5 दिन",
-          "Inj. Melonex Plus 15ml I/M",
-          "इंट्रा-यूटराइन: Utrovet / Lixen IU (Cephalexin) गर्भाशय खाली होने के बाद"
-        ],
-        oral: ["Uterotone liquid 100ml बीडी 5 दिन", "Sepia बोलस"],
-        ayurveda: ["उलटकंबल, लोध्र व नीम छाल का काढ़ा"],
-        homeopathy: ["Pulsatilla 200C + Sepia 200C + Silicea 30C"],
-        desiRemedy: "250 ग्राम पुराना गुड़ + 50 ग्राम अजवाइन + 20 ग्राम सोंठ + 25 ग्राम हल्दी का काढ़ा 5 दिन तक रोज सुबह खाली पेट पिलाएं।"
-      },
-      stages: {
-        incubation: "प्रसव के 5 दिन से 4 सप्ताह भीतर",
-        prodromal: "योनि से मटमैला बदबूदार पानी रिसना",
-        clinical: "प्रचुर मवाद, कॉर्पस ल्यूटियम का बना रहना (पायोमेट्रा), बांझपन",
-        convalescent: "पीजीएफ2-अल्फा से मवाद निकासी उपरांत 2-3 चक्रों में गर्भाशय शुद्ध"
-      }
-    },
-    {
-      id: "DIS_37_REPEAT_BREEDING",
-      nameHindi: "बार-बार फिरना (Repeat Breeding Syndrome)",
-      nameEnglish: "Repeat Breeding Syndrome",
-      category: "Reproductive",
-      organAffected: "Ovaries, Oviduct & Endometrium",
-      cardinalSigns: "गाय/भैंस का प्रत्येक 21 दिन पर नियमित मद में आना, स्वस्थ दिखना, अच्छी गुणवत्ता के सीमन से ए.आई. के बावजूद गर्भधारण न होना (3 या अधिक बार)।",
-      temperatureExpected: "सामान्य (101.5 - 102.5 °F)",
-      labTests: [
-        { testName: "गर्भाशय स्राव जांच (White Side Test)", sample: "मद की तार (Cervical Mucus)", expectedResult: "5% NaOH से गर्म करने पर पीला रंग (सब-क्लिनिकल एंडोमेट्राइटिस)" },
-        { testName: "ट्रांस-रेक्टल अल्ट्रासोनोग्राफी (USG)", sample: "अंडाशय व गर्भाशय", expectedResult: "ओव्यूलेशन विफलता या ल्यूटियल अपर्याप्तता" }
-      ],
-      treatments: {
-        injections: [
-          "ए.आई. (A.I.) के समय: Inj. Buserelin Acetate (Gynarich / Receptal) 2.5ml I/M",
-          "ए.आई. के 4-6 दिन बाद: Inj. Duraprogen (Hydroxyprogesterone) 500mg I/M",
-          "यदि सब-क्लिनिकल मेट्राइटिस हो: मद में Inj. Gentamicin 4ml Intrauterine"
-        ],
-        oral: ["Chelated Mineral Mixture 50g दैनिक", "Bolus Fertisule / CoFeCu"],
-        ayurveda: ["शिवलिंगी बीज चूर्ण 10g + पुत्रजीवक 10g दैनिक"],
-        homeopathy: ["Folliculinum 200C + Pulsatilla 200C + Aletris Farinosa Q"],
-        desiRemedy: "सीमन डलवाने के सही समय का पालन: 'सुबह मद में आए तो शाम को सीमन, शाम को आए तो अगली सुबह (AM-PM Rule)'। मद की तार शीशे जैसी पारदर्शी होनी चाहिए।"
-      },
-      stages: {
-        incubation: "प्रत्येक 18-24 दिन पर पुनरावृत्ति",
-        prodromal: "सामान्य मद लक्षण परंतु गर्भाशय में सूक्ष्म सूजन",
-        clinical: "निषेचन विफलता अथवा प्रारंभिक भ्रूण मृत्यु (Early Embryonic Death)",
-        convalescent: "हार्मोनल व खनिज चिकित्सा उपरांत सफल गर्भधारण"
-      }
-    },
-    {
-      id: "DIS_38_FOLLICULAR_CYST",
-      nameHindi: "पुटीय अंडाशय / कामोन्माद (Follicular Cyst)",
-      nameEnglish: "Cystic Ovarian Disease (Nymphomania)",
-      category: "Reproductive",
-      organAffected: "Graafian Follicles (Ovary)",
-      cardinalSigns: "गाय का बार-बार या लगातार मद के लक्षण दिखाना (Nymphomania), सांड की भांति दूसरे पशुओं पर चढ़ना, रंभाना, पुट्ठे के लिगामेंट्स ढीले पड़ जाना व पूंछ उठी रहना।",
-      temperatureExpected: "सामान्य (101.5 - 102.5 °F)",
-      labTests: [
-        { testName: "रेक्टल पाल्पेशन / USG", sample: "अंडाशय", expectedResult: "अंडाशय पर 2.5 सेमी से बड़ा, पतली दीवार वाला पुटीय पिंड (> 10 दिन तक स्थायी)" }
-      ],
-      treatments: {
-        injections: [
-          "Inj. Buserelin Acetate (GnRH) 5ml (20 mcg) I/M एकल खुराक अथवा",
-          "Inj. Chorionic Gonadotrophin (hCG / Chorulon) 3000 to 5000 IU I/V",
-          "9 दिन बाद: Inj. Cloprostenol 2ml I/M (ल्यूटिनाइज्ड सिस्ट को तोड़ने)"
-        ],
-        oral: ["Minfa Gold / Chelated खनिज मिश्रण 50g दैनिक"],
-        ayurveda: ["अशोक छाल क्वाथ 100ml"],
-        homeopathy: ["Platinum Metallicum 200C + Apis Mellifica 200C + Lachesis 200C"],
-        desiRemedy: "पुटी को हाथ से दबाकर फोड़ने (Manual Rupture) की गलती कदापि न करें (रक्तस्राव व ओवेरियन एडहेशन का खतरा)। संतुलित मिनरल दें।"
-      },
-      stages: {
-        incubation: "ब्याने के 30 से 60 दिन बाद",
-        prodromal: "मद चक्र का अनियमित होना (कम अंतराल पर मद)",
-        clinical: "लगातार हीट में रहना, नम्फोमेनिया, पेल्विक लिगामेंट्स का धंसना",
-        convalescent: "जीएनआरएच चिकित्सा के 10-14 दिन में सामान्य चक्र बहाली"
-      }
-    },
-    {
-      id: "DIS_39_LUTEAL_CYST",
-      nameHindi: "ल्यूटियल सिस्ट / मदहीनता (Luteal Cyst)",
-      nameEnglish: "Luteal Cyst (Cystic Corpora Lutea)",
-      category: "Reproductive",
-      organAffected: "Corpus Luteum (Ovary)",
-      cardinalSigns: "गाय या भैंस का लंबे समय तक मद (Heat) में बिल्कुल न आना (Anoestrus), शांत रहना, अंडाशय पर मोटी दीवार वाली पुटी का स्थायी रूप से बने रहना।",
-      temperatureExpected: "सामान्य (101.5 - 102.5 °F)",
-      labTests: [
-        { testName: "रेक्टल अल्ट्रासाउंड (USG)", sample: "अंडाशय", expectedResult: "मोटी ल्यूटिनाइज्ड दीवार (> 3mm) वाली गुहा युक्त सिस्ट" },
-        { testName: "दूध प्रोजेस्टेरोन परीक्षण", sample: "दूध", expectedResult: "लगातार उच्च प्रोजेस्टेरोन स्तर (> 5 ng/ml)" }
-      ],
-      treatments: {
-        injections: [
-          "Inj. Cloprostenol Sodium (PGF2-alpha - Pragma / Lutalyse) 2ml I/M",
-          "48 से 72 घंटे में सिस्ट घुलकर पशु सामान्य मद में आएगा",
-          "मद आने पर: Inj. Receptal 2.5ml I/M ए.आई. के समय"
-        ],
-        oral: ["Bolus Cyclomin / Janova 2 बोलस दैनिक 2 दिन"],
-        ayurveda: ["कपासिया (बिनौला) गिरी + सौंठ"],
-        homeopathy: ["Sepia 200C + Pulsatilla 200C"],
-        desiRemedy: "अंकुरित गेहूं 250 ग्राम प्रतिदिन 10 दिन तक खिलाएं (विटामिन E प्राकृतिक स्रोत)।"
-      },
-      stages: {
-        incubation: "प्रसव उपरांत 2 से 4 माह",
-        prodromal: "समय पर मद में न आना",
-        clinical: "पूर्ण मदहीनता (True Anoestrus), गर्भाशय में शिथिलता",
-        convalescent: "पीजीएफ2-अल्फा इंजेक्शन के 3-4 दिन में मद प्राकट्य"
-      }
-    },
-    {
-      id: "DIS_40_RINGWORM",
-      nameHindi: "दाद / रिंगवर्म (Ringworm / Dermatophytosis)",
-      nameEnglish: "Dermatophytosis (Ringworm)",
-      category: "Fungal",
-      organAffected: "Skin, Hair Follicles (Face & Neck)",
-      cardinalSigns: "आंखों के चारों ओर, चेहरे व गर्दन पर गोल-गोल, बिना बालों वाले, सफेद-भूरे पपड़ीदार चकत्ते (Asbestos-like crusts); खुजली नगण्य या हल्की होना।",
-      temperatureExpected: "सामान्य (101.5 - 102.5 °F)",
-      labTests: [
-        { testName: "KOH माउंट माइक्रोस्कोपी", sample: "चकत्ते के बाल व त्वचा खुरचन", expectedResult: "10% KOH में फंगल हाइफी व आर्थ्रोस्पोर्स की उपस्थिति" },
-        { testName: "वुड्स लैंप परीक्षण", sample: "संक्रमित त्वचा", expectedResult: "हरा प्रतिदीप्ति फ्लोरेसेंस (Microsporum में)" }
-      ],
-      treatments: {
-        injections: [
-          "Inj. Ivermectin 1ml/50kg S/C (सपोर्ट हेतु)",
-          "Inj. Conciplex / Vit-A 10ml I/M (उपकला पुनर्जनन हेतु)"
-        ],
-        oral: ["Griseofulvin पाउडर (गंभीर बछड़ों में)"],
-        ayurveda: ["नीम तेल + शुद्ध गंधक + कपूर मलहम"],
-        homeopathy: ["Tellurium 200C + Chrysarobinum 30C + Bacillinum 200C"],
-        desiRemedy: "चकत्तों की पपड़ी को साबुन पानी से रगड़कर साफ करें। उस पर टिंचर आयोडीन या सैलिसिलिक एसिड मलहम दिन में दो बार लगाएं।"
-      },
-      stages: {
-        incubation: "1 से 4 सप्ताह",
-        prodromal: "बालों का झड़ना, गोल छोटे चकत्ते",
-        clinical: "एस्बेस्टस जैसी मोटी राख रंग की पपड़ी, चकत्तों का विस्तार",
-        convalescent: "पपड़ी हटना, 4-8 सप्ताह में नए बालों का उगना"
-      }
-    },
-    {
-      id: "DIS_41_MANGE",
-      nameHindi: "खाज-खुजली / मेंज (Mange / Scabies)",
-      nameEnglish: "Mange (Sarcoptic / Psoroptic Acariasis)",
-      category: "Parasitic",
-      organAffected: "Epidermis & Dermis",
-      cardinalSigns: "गर्दन, पूंछ के आधार व जांघों पर असहनीय खुजली, पशु का खंभों से रगड़ना, त्वचा का चमड़े जैसा मोटा, झुर्रीदार व बालों से रहित हो जाना; पपड़ी जमना।",
-      temperatureExpected: "सामान्य (101.5 - 102.5 °F)",
-      labTests: [
-        { testName: "गहरी त्वचा खुरचन (Deep Skin Scraping)", sample: "रक्त निकलने तक खुरचन", expectedResult: "10% KOH में Sarcoptes scabiei अथवा Psoroptes माइट्स" }
-      ],
-      treatments: {
-        injections: [
-          "Inj. Ivermectin 1% (1 ml per 50 kg) Subcutaneous strictly, 14 दिन बाद दोहराएं",
-          "Inj. Avil 10ml I/M (असहनीय खुजली शमन)"
-        ],
-        oral: ["सल्फर युक्त चूर्ण"],
-        ayurveda: ["करंज तेल (Karanj oil) + कपूर बाह्य मालिश"],
-        homeopathy: ["Psorinum 200C + Sulphur 200C + Graphites 200C"],
-        desiRemedy: "अमित्रराज (Amitraz 12.5%) 2-4 मिली प्रति लीटर पानी में घोलकर पूरे शरीर पर ब्रश से लगाएं। पशु को चाटने न दें। 7 दिन बाद दोहराएं।"
-      },
-      stages: {
-        incubation: "10 से 14 दिन",
-        prodromal: "हल्की खुजली, छोटे लाल दाने",
-        clinical: "गंभीर खाल का मोटा होना, फटना, असहनीय खुजली से जख्म",
-        convalescent: "माइट्स खात्मे के उपरांत 3-4 सप्ताह में त्वचा का कोमल होना"
-      }
-    },
-    {
-      id: "DIS_42_LIVER_FLUKE",
-      nameHindi: "लिवर फ्लूक / यकृत पर्णकृमि (Fascioliasis)",
-      nameEnglish: "Fascioliasis (Liver Fluke Disease)",
-      category: "Parasitic",
-      organAffected: "Liver, Bile Ducts & Portal System",
-      cardinalSigns: "जबड़े के नीचे पानी की थैली जैसी लटकती सूजन (Bottle Jaw / Submandibular Edema), पुराना पतला दस्त, अत्यधिक कमजोरी, पीलिया व वजन घटना (विशेषकर नहर किनारे चरने वाले पशु)।",
-      temperatureExpected: "सामान्य (101.5 - 102.5 °F)",
-      labTests: [
-        { testName: "गोबर अवसादन परीक्षण (Sedimentation)", sample: "ताजा गोबर", expectedResult: "सुनहरे-भूरे रंग के ढक्कनदार (Operculated) Fasciola gigantica अंडे" },
-        { testName: "सीरम एल्ब्यूमिन व बिलीरुबिन", sample: "सीरम", expectedResult: "गंभीर हाइपोएल्ब्यूमिनेमिया (< 2.0 g/dL)" }
-      ],
-      treatments: {
-        injections: [
-          "Inj. Closantel (10 mg/kg) S/C अथवा Nitroxynil (10 mg/kg) S/C",
-          "Inj. Feritas 10ml I/M (एनीमिया रिकवरी)",
-          "Inj. Belamyl 10ml I/M (लिवर फंक्शन बहाली)"
-        ],
-        oral: ["Oxyclozanide + Levamisole (Nilzan) 15-20ml प्रति 50kg मुख द्वारा", "Triclabendazole 12 mg/kg"],
-        ayurveda: ["वायविडंग (Vidanga) 30g + कालमेघ 30g चूर्ण"],
-        homeopathy: ["Lycopodium 200C + Chelidonium Majus 30C"],
-        desiRemedy: "पशु को तालाब/नहर के दलदली किनारों पर न चरने दें (घोंघे/Snails मध्यस्थ पोषक हैं)। ताजी हरी घास सुखाकर खिलाएं।"
-      },
-      stages: {
-        incubation: "सिस्ट निगलने के 6 से 12 सप्ताह बाद",
-        prodromal: "धीमी कमजोरी, भूख में अनियमितता",
-        clinical: "बॉटल जॉ (जबड़े नीचे सूजन), एनीमिया, पीलापन, जलशोथ",
-        convalescent: "फ्लूसाइड दवा के बाद 2-3 सप्ताह में बॉटल जॉ का अवशोषण"
-      }
-    },
-    {
-      id: "DIS_43_AMPHISTOMIASIS",
-      nameHindi: "पेट के पिठुए कृमि (Amphistomiasis)",
-      nameEnglish: "Paramphistomosis (Immature Amphistomiasis)",
-      category: "Parasitic",
-      organAffected: "Duodenum & Rumen Papillae",
-      cardinalSigns: "अपरिपक्व कृमियों द्वारा ग्रहणी में छेद; भयंकर बदबूदार पानी जैसा खूनी दस्त, जबड़े के नीचे सूजन (Bottle jaw), निर्जलीकरण व बिना बुखार पशु का बैठ जाना।",
-      temperatureExpected: "सामान्य अथवा सब-नॉर्मल (< 101.0 °F)",
-      labTests: [
-        { testName: "गोबर सूक्ष्मदर्शी जांच", sample: "पतला दस्त", expectedResult: "हजारों की संख्या में गुलाबी रंग के अपरिपक्व एम्फिस्टोम कृमि तैरते हुए" }
-      ],
-      treatments: {
-        injections: [
-          "Inj. Melonex 15ml I/M",
-          "Inj. Tribivet 10ml I/M",
-          "Dextrose Normal Saline 2 से 3 लीटर I/V (गंभीर डिहाइड्रेशन रोकने)"
-        ],
-        oral: ["Oxyclozanide drench (Nilzan) 15 mg/kg body weight (3 दिन बाद पुनः दोहराएं)"],
-        ayurveda: ["कुटज छाल क्वाथ 100ml दस्त रोकने हेतु"],
-        homeopathy: ["Merc Cor 200C + Cinchona 200C"],
-        desiRemedy: "चावल की कांजी में नमक व ईसबगोल की भूसी मिलाकर दिन में 3 बार पिलाएं। घोंघा नियंत्रण हेतु कॉपर सल्फेट का छिड़काव।"
-      },
-      stages: {
-        incubation: "3 से 6 सप्ताह",
-        prodromal: "हल्की सुस्ती, भूख में कमी",
-        clinical: "अति-तीव्र दस्त, गंभीर रक्ताल्पता, हाइपोप्रोटीनीमिया, बोतल जबड़ा",
-        convalescent: "ऑक्सीक्लोजेनाइड से कृमि निष्कासन उपरांत 10-15 दिन में सामान्य"
-      }
-    },
-    {
-      id: "DIS_44_TAPEWORM",
-      nameHindi: "फीताकृमि संक्रमण (Cestodiasis / Monieziasis)",
-      nameEnglish: "Monieziasis (Tapeworm Infection in Calves)",
-      category: "Parasitic",
-      organAffected: "Small Intestines (Calves & Lambs)",
-      cardinalSigns: "बछड़ों व मेमनों के गोबर में सफेद चावल के दाने या फीते जैसे खंड (Proglottids) निकलना, पेट मटके जैसा फूलना (Pot-bellied), सूखा खुरदुरा रूंआं व वृद्धि रुकना।",
-      temperatureExpected: "सामान्य (101.5 - 102.5 °F)",
-      labTests: [
-        { testName: "गोबर परीक्षण", sample: "गोबर", expectedResult: "Moniezia expansa / benedeni के त्रिकोणीय या चौकोर अंडे" }
-      ],
-      treatments: {
-        injections: ["Inj. Tribivet 5ml I/M", "Inj. Belamyl 5ml I/M"],
-        oral: [
-          "Albendazole 10% suspension (7.5 to 10 mg/kg) मुख द्वारा अथवा",
-          "Praziquantel / Niclosamide bolus (100 mg/kg)"
-        ],
-        ayurveda: ["पलाश के बीज (Palash beej) चूर्ण 10g खाली पेट"],
-        homeopathy: ["Cina 200C + Teucrium 200C + Granatum Q"],
-        desiRemedy: "कद्दू के बीज (Pumpkin seeds) पीसकर 50 ग्राम सुबह खाली पेट 3 दिन तक दें (प्राकृतिक फीताकृमि नाशक)।"
-      },
-      stages: {
-        incubation: "माइट्स खाने के 30 से 45 दिन बाद",
-        prodromal: "धीमी वृद्धि, अपच",
-        clinical: "गोबर में फीते के टुकड़े, मटका पेट, डायरिया, आंतों में रुकावट",
-        convalescent: "कृमिनाशक के 24 घंटे में फीताकृमि का पूर्ण निष्कासन"
-      }
-    },
-    {
-      id: "DIS_45_HAEMONCHOSIS",
-      nameHindi: "तार कृमि / पेट के गोलकृमि (Haemonchosis)",
-      nameEnglish: "Haemonchosis (Barber's Pole Worm)",
-      category: "Parasitic",
-      organAffected: "Abomasum & Blood Stream",
-      cardinalSigns: "भेड़, बकरियों व बछड़ों में अत्यधिक रक्ताल्पता (आंखों व मसूड़ों का सफेद कागज जैसा होना), जबड़े नीचे सूजन, बिना दस्त के भीषण दुर्बलता व अचानक मौत।",
-      temperatureExpected: "सामान्य (101.5 - 102.5 °F)",
-      labTests: [
-        { testName: "FAMACHA आई कलर चार्ट स्कोर", sample: "आंख की निचली कंजंक्टिवा", expectedResult: "स्कोर 4 या 5 (गंभीर रक्ताल्पता - सफेद म्यूकोसा)" },
-        { testName: "फेकल एग काउंट (McMaster)", sample: "गोबर", expectedResult: "> 2000 EPG (Eggs Per Gram - Haemonchus contortus)" }
-      ],
-      treatments: {
-        injections: [
-          "Inj. Closantel 10% (10 mg/kg) S/C strictly",
-          "Inj. Ivermectin 1ml/50kg S/C",
-          "Inj. Feritas 5-10ml I/M (आयरन थेरेपी)"
-        ],
-        oral: ["Levamisole drench 7.5 mg/kg अथवा Fenbendazole 10 mg/kg"],
-        ayurveda: ["बायबिडंग चूर्ण 20g + नीम पत्ती काढ़ा"],
-        homeopathy: ["Ferrum Metallicum 200C + China 200C"],
-        desiRemedy: "चराई का समय बदलें (सुबह ओस के समय घास पर कीड़े ऊपर चढ़ते हैं, धूप निकलने के बाद ही चराएं)।"
-      },
-      stages: {
-        incubation: "लार्वा चरने के 14 से 21 दिन बाद",
-        prodromal: "कमजोरी, ऊन/बाल झड़ना",
-        clinical: "सफेद आंखें, जबड़े नीचे पानी की थैली, गंभीर रक्ताल्पता, मृत्यु",
-        convalescent: "डिवर्मिंग के उपरांत आयरन व प्रोटीन से 1 माह में स्वास्थ्य लाभ"
-      }
-    },
-    {
-      id: "DIS_46_NITRATE_TOXICITY",
-      nameHindi: "नाइट्रेट-नाइट्राइट विषाक्तता (Nitrate Toxicity)",
-      nameEnglish: "Nitrate / Nitrite Poisoning",
-      category: "Toxic",
-      organAffected: "Hemoglobin (Methemoglobinemia)",
-      cardinalSigns: "अत्यधिक यूरिया खाद युक्त हरा चारा (जई/बाजरा) खाने के बाद रक्त का रंग चॉकलेट जैसा भूरा होना (Chocolate brown blood), दम घुटना, कंपकंपी व अचानक गिरना।",
-      temperatureExpected: "सामान्य अथवा सब-नॉर्मल (< 101.0 °F)",
-      labTests: [
-        { testName: "रक्त रंग दृश्य परीक्षण", sample: "जुगुलर रक्त", expectedResult: "हवा में रखने पर भी रक्त का रंग चॉकलेटी भूरा (Methemoglobin)" }
-      ],
-      treatments: {
-        injections: [
-          "एंटीडोट: Methylene Blue 1% solution (1 to 2 mg/kg body weight) I/V अत्यंत धीमी गति से",
-          "Inj. Dextrose 25% 1000ml I/V",
-          "Inj. Ascorbic Acid (Vitamin C) 10-20ml I/V (एंटीऑक्सीडेंट रिडक्शन)"
-        ],
-        oral: ["Mineral oil 1 लीटर ओरल (अवशोषण धीमा करने)"],
-        ayurveda: ["लागू नहीं"],
-        homeopathy: ["Carbo Veg 200C + Camphora 200C"],
-        desiRemedy: "पशु को तुरंत छाया में लिटाएं। किसी भी प्रकार का संदेहास्पद चारा तुरंत हटा दें। ताजा ठंडा पानी उपलब्ध कराएं।"
-      },
-      stages: {
-        incubation: "चारा खाने के 1 से 4 घंटे भीतर (अति-तीव्र)",
-        prodromal: "तेज सांस, लार गिरना, बेचैनी",
-        clinical: "सायनोसिस, चॉकलेटी रक्त, अनियंत्रित कंपकंपी, एस्फिक्सिया (दम घुटना)",
-        convalescent: "मेथिलीन ब्लू इंजेक्शन के 15-30 मिनट में चमत्कारिक सुधार"
-      }
-    },
-    {
-      id: "DIS_47_CYANIDE_TOXICITY",
-      nameHindi: "धुरिन / साइनाइड विषाक्तता (Cyanide / HCN Toxicity)",
-      nameEnglish: "Hydrocyanic Acid (HCN) / Prussic Acid Toxicity",
-      category: "Toxic",
-      organAffected: "Cellular Cytochrome Oxidase & Respiration",
-      cardinalSigns: "सूखे के बाद नई फूटी कच्ची ज्वार (Chari) खाने के 15 मिनट में रक्त का रंग सुर्ख चेरी लाल (Cherry-red blood) होना, सांस फूलना, मुंह से बादाम जैसी गंध, आंखें फटी रहना व मौत।",
-      temperatureExpected: "सामान्य अथवा सब-नॉर्मल",
-      labTests: [
-        { testName: "पिकरेट पेपर टेस्ट (Guignard Test)", sample: "रूमेन सामग्री", expectedResult: "पीला पेपर गहरा ईंट जैसा लाल होना (HCN गैस की पुष्टि)" }
-      ],
-      treatments: {
-        injections: [
-          "विशिष्ट एंटीडोट: Sodium Nitrite 3% (1 ml/5kg) I/V तत्पश्चात Sodium Thiosulphate 25% (1.5 ml/kg) I/V",
-          "Inj. Coramine / Nikethamide (श्वसन उत्तेजक)",
-          "Inj. Dextrose 25% 500ml I/V"
-        ],
-        oral: ["Sodium Thiosulphate 30-50g ओरल पानी में"],
-        ayurveda: ["लागू नहीं"],
-        homeopathy: ["Hydrocyanicum Acidum 30C"],
-        desiRemedy: "500 ग्राम पुराना गुड़ तुरंत पानी में घोलकर पिलाएं (गुड़ का ग्लूकोज साइनाइड को साइनोहाइड्रिन में बदलकर विषैला प्रभाव घटाता है)।"
-      },
-      stages: {
-        incubation: "कच्ची ज्वार चरने के 10 से 30 मिनट भीतर",
-        prodromal: "अत्यधिक उत्तेजना, पुतलियों का फैलना, लार",
-        clinical: "चेरी लाल रक्त, हांफना, आक्षेप (दौरे), श्वासावरोध, 1-2 घंटे में पतन",
-        convalescent: "एंटीडोट मिलने पर तुरंत स्वस्थ; अन्यथा 90% मृत्यु दर"
-      }
-    },
-    {
-      id: "DIS_48_CCPP",
-      nameHindi: "संक्रामक बकरी फुफ्फुस शोथ (CCPP)",
-      nameEnglish: "Contagious Caprine Pleuropneumonia (CCPP)",
-      category: "Bacterial",
-      organAffected: "Lungs & Pleural Cavity (Goats)",
-      cardinalSigns: "बकरियों में लगातार दर्दनाक सूखी खाँसी, सांस लेते समय घुर्र-घुर्र की स्पष्ट आवाज, नाक से गाढ़ा पीला स्राव, मुंह खोलकर हांफना व अत्यधिक उच्च ज्वर (105-107°F)।",
-      temperatureExpected: "105.0 - 107.0 °F",
-      labTests: [
-        { testName: "प्लूरल फ्लूइड पीसीआर", sample: "छाती का द्रव (Pleural Fluid)", expectedResult: "Mycoplasma capricolum subsp. capripneumoniae पुष्टि" }
-      ],
-      treatments: {
-        injections: [
-          "Inj. Tylosin Tartrate (10 mg/kg) I/M SID 3-5 दिन अथवा",
-          "Inj. Oxytetracycline LA 20 mg/kg I/M (एकल खुराक)",
-          "Inj. Melonex Plus 2-3ml I/M",
-          "Inj. Avil 2ml I/M"
-        ],
-        oral: ["Kaf-Go सिरप 20ml बीडी"],
-        ayurveda: ["कंटोकारी क्वाथ 30g + अडूसा रस"],
-        homeopathy: ["Bryonia Alba 200C + Phosphorus 200C"],
-        desiRemedy: "संक्रमित बकरियों को तुरंत स्वस्थ रेवड़ से अलग करें। बाड़े में अजवाइन व नीम का धुआं करें।"
-      },
-      stages: {
-        incubation: "6 से 14 दिन",
-        prodromal: "तेज बुखार, सुस्ती, चारा छोड़ना",
-        clinical: "दर्दनाक खाँसी, जीभ बाहर निकाल कर सांस लेना, प्लूरल रिसाव",
-        convalescent: "माइकोप्लाज्मा रोधी दवा से 7-10 दिन में फेफड़े सामान्य"
-      }
-    },
-    {
-      id: "DIS_49_SWINE_FEVER",
-      nameHindi: "स्वाइन फीवर / शूकर ज्वर (Classical Swine Fever)",
-      nameEnglish: "Classical Swine Fever (Hog Cholera)",
-      category: "Viral",
-      organAffected: "Reticuloendothelial & Vasculature (Swine)",
-      cardinalSigns: "सूअरों में तेज बुखार (106-107°F), कान, पेट, जांघों व थूथन की त्वचा पर बैंगनी-लाल चकत्ते (Cyanotic purple skin), आंखों से मवाद, कब्ज के बाद दस्त व लड़खड़ाहट।",
-      temperatureExpected: "105.5 - 107.5 °F",
-      labTests: [
-        { testName: "एंटीजन डिटेक्शन ELISA / RT-PCR", sample: "होल ब्लड / टॉन्सिल ऊतक", expectedResult: "Pestivirus RNA पॉजिटिव" }
-      ],
-      treatments: {
-        injections: [
-          "विशिष्ट एंटीवायरल उपचार अनुपलब्ध; सहायक: Inj. Ceftiofur 3 mg/kg I/M",
-          "Inj. Paracetamol + Melonex I/M",
-          "Inj. Tribivet 5ml I/M"
-        ],
-        oral: ["इलेक्ट्रोलाइट व विटामिन C पानी में निरंतर"],
-        ayurveda: ["नीम, गिलोय व चिरायता का काढ़ा"],
-        homeopathy: ["Baptisia Tinctoria 200C + Crotalus Horridus 200C"],
-        desiRemedy: "आवास को 2% कास्टिक सोडा (Sodium Hydroxide) के घोल से रोगाणुमुक्त करें। बीमार सूअर को तुरंत अलग करें।"
-      },
-      stages: {
-        incubation: "3 से 9 दिन",
-        prodromal: "अत्यधिक तेज ज्वर, एक दूसरे के ऊपर चढ़कर सोना (Huddling)",
-        clinical: "बैंगनी त्वचा, ल्यूकोपेनिया, अंधापन, ऐंठन, मृत्यु (80-90%)",
-        convalescent: "क्रॉनिक मामलों में बटन अल्सर (Button Ulcers in Colon)"
-      }
-    },
-    {
-      id: "DIS_50_HYDROGEN_CYANIDE_WEED",
-      nameHindi: "गाजर घास / खरपतवार विषाक्तता (Parthenium Dermatitis & Toxicity)",
-      nameEnglish: "Parthenium Weed Toxicity",
-      category: "Toxic",
-      organAffected: "Skin, Liver & Kidney Function",
-      cardinalSigns: "गाजर घास चरने से थूथन, अयन व पेट के नीचे भीषण खुजली, छाले, त्वचा की पपड़ी उखड़ना, अत्यधिक लार बहना, कड़वा दूध व लिवर की क्षति।",
-      temperatureExpected: "सामान्य अथवा द्वितीयक संक्रमण में हल्का बढ़ा",
-      labTests: [
-        { testName: "सीरम ट्रांसएमिनेज (AST, ALT)", sample: "सीरम", expectedResult: "हेपेटोटॉक्सिसिटी के कारण उच्च लिवर एंजाइम्स" }
-      ],
-      treatments: {
-        injections: [
-          "Inj. Isoflupredone Acetate 10ml I/M (एलर्जी व शोथ निवारण)",
-          "Inj. Avil 10ml I/M दैनिक 4 दिन",
-          "Inj. Belamyl 10ml I/M (लिवर सुरक्षा)"
-        ],
-        oral: ["Liv-52 liquid 100ml बीडी", "Toxiroak / Toxibind पाउडर"],
-        ayurveda: ["मंजिष्ठा क्वाथ 50ml रक्तशोधन हेतु"],
-        homeopathy: ["Rhus Tox 200C + Mezereum 200C"],
-        desiRemedy: "पशु चरागाह से गाजर घास को उखाड़कर नष्ट करें। प्रभावित त्वचा पर नारियल तेल में कपूर व कत्था मिलाकर लगाएं।"
-      },
-      stages: {
-        incubation: "घास चरने के 2 से 5 दिन बाद",
-        prodromal: "मुंह व थूथन पर लाली, दूध का स्वाद कड़वा होना",
-        clinical: "एलोपेसिया (बाल उड़ना), त्वचा में दरारें, डिप्रेशन, वजन घटना",
-        convalescent: "चारा बदलने व लिवर टॉनिक से 2-3 सप्ताह में रिकवरी"
-      }
-    }
-  ];
-
-  /* =========================================================================
-     4. ORGAN-BASED SYMPTOM MATRIX (Systematic Clinical Navigation)
-     ========================================================================= */
-  const SYMPTOMS_BY_ORGAN = {
-    respiratory: {
-      labelHindi: "श्वसन तंत्र (फेफड़े, गला व नाक)",
-      symptoms: [
-        { code: "DYSPNEA_STRIDOR", nameHindi: "गले में सूजन व घुर्र-घुर्र की आवाज (Stridor)", cardinalFor: ["DIS_01_HS"] },
-        { code: "COUGH_WHEEZE", nameHindi: "बलगमयुक्त खांसी, हांफना व सीने में घरघराहट", cardinalFor: ["DIS_25_PNEUMONIA_BRD", "DIS_48_CCPP"] },
-        { code: "RED_NOSE_DISCHARGE", nameHindi: "नथुने अंदर से लाल व मवाद जैसा स्राव", cardinalFor: ["DIS_32_IBR"] },
-        { code: "CHERRY_RED_ASPHYXIA", nameHindi: "चेरी लाल रक्त व तीव्र घुटन (सुर्ख जीभ)", cardinalFor: ["DIS_47_CYANIDE_TOXICITY"] }
-      ]
-    },
-    digestive_rumen: {
-      labelHindi: "पाचन तंत्र (रूमेन, आमाशय व आंतें)",
-      symptoms: [
-        { code: "DRUM_TYMPANY", nameHindi: "बायाँ पेट ढोलक की तरह फूलना (अफारा / Bloat)", cardinalFor: ["DIS_08_BLOAT"] },
-        { code: "SWEET_BREATH_OFFFEED", nameHindi: "सांस से मीठी गंध व सूखा भूसा खाना (कीटोसिस)", cardinalFor: ["DIS_07_KETOSIS"] },
-        { code: "SPLASHY_SOUR_SCOURS", nameHindi: "दाना खाने बाद पेट में छप-छप पानी व खट्टा दस्त", cardinalFor: ["DIS_30_ACIDOSIS"] },
-        { code: "COLIC_KICKING", nameHindi: "पेट की ओर लात मारना व जमीन पर लोटना (शूल)", cardinalFor: ["DIS_21_COLIC"] },
-        { code: "FOUL_DIARRHEA_CALF", nameHindi: "नवजात बछड़े में सफेद-पीला बदबूदार दस्त", cardinalFor: ["DIS_26_CALF_SCOURS"] },
-        { code: "BOTTLE_JAW_EDEMA", nameHindi: "जबड़े के नीचे पानी की थैली जैसी लटकती सूजन", cardinalFor: ["DIS_42_LIVER_FLUKE", "DIS_43_AMPHISTOMIASIS"] },
-        { code: "HARDWARE_GRUNT", nameHindi: "धनुषाकार पीठ, चलने में सतर्कता व कराहना", cardinalFor: ["DIS_35_TRP_HARDWARE"] }
-      ]
-    },
-    mammary_udder: {
-      labelHindi: "अयन व थन (Mammary Glands)",
-      symptoms: [
-        { code: "HOT_HARD_SWELLING", nameHindi: "थन में पत्थर जैसा कड़ापन, गर्म सूजन व दर्द", cardinalFor: ["DIS_04_MASTITIS_ACUTE"] },
-        { code: "CLOTS_BLOOD_MILK", nameHindi: "दूध में खून, गाढ़े छिछड़े अथवा पीला सीरम", cardinalFor: ["DIS_04_MASTITIS_ACUTE"] },
-        { code: "DROP_YIELD_HIGH_SCC", nameHindi: "दूध में बिना सूजन 20% कमी व स्वाद खारा", cardinalFor: ["DIS_05_SUBCLINICAL_MASTITIS"] }
-      ]
-    },
-    reproductive_genital: {
-      labelHindi: "प्रजनन एवं गर्भाशय (Reproductive / Obstetric)",
-      symptoms: [
-        { code: "STERNAL_COLD_BODY", nameHindi: "ब्याने बाद गर्दन मोड़कर बैठना व शरीर ठंडा पड़ना", cardinalFor: ["DIS_06_MILK_FEVER"] },
-        { code: "HANGING_PLACENTA", nameHindi: "प्रसव के 8-12 घंटे बाद भी जेर बाहर लटकना", cardinalFor: ["DIS_22_RETENTION_OF_PLACENTA"] },
-        { code: "PROTRUDING_ORGAN", nameHindi: "योनि या गर्भाशय का मांसल भाग बाहर निकलना", cardinalFor: ["DIS_23_PROLAPSE"] },
-        { code: "PURULENT_DISCHARGE", nameHindi: "योनि से बदबूदार मवाद बहना (पायोमेट्रा)", cardinalFor: ["DIS_36_METRITIS_PYOMETRA"] },
-        { code: "REPEAT_CONCEPTION_FAIL", nameHindi: "3 या अधिक बार सीमन उपरांत गर्भ न ठहरना", cardinalFor: ["DIS_37_REPEAT_BREEDING"] },
-        { code: "NYMPHOMANIA_BULLING", nameHindi: "लगातार मद में रहना व सांड जैसी हरकतें", cardinalFor: ["DIS_38_FOLLICULAR_CYST"] },
-        { code: "LATE_TERM_ABORTION", nameHindi: "अंतिम तिमाही (7-9 माह) में संक्रामक गर्भपात", cardinalFor: ["DIS_17_BRUCELLOSIS"] }
-      ]
-    },
-    musculoskeletal_hoof: {
-      labelHindi: "अस्थि, मांसपेशी व खुर (Musculoskeletal & Locomotor)",
-      symptoms: [
-        { code: "CREPITUS_GAS_SWELLING", nameHindi: "मांसल पुट्ठे में गैस भरी सूजन (चर्र-चर्र आवाज)", cardinalFor: ["DIS_02_BQ"] },
-        { code: "INTERDIGITAL_FOUL_PUS", nameHindi: "खुरों के बीच सड़ांध, दुर्गंधयुक्त मवाद व लंगड़ाहट", cardinalFor: ["DIS_27_FOOT_ROT"] },
-        { code: "WOODEN_HORSE_LOCKJAW", nameHindi: "पूरा शरीर लकड़ी जैसा कड़ा व जबड़ा भिंच जाना", cardinalFor: ["DIS_20_TETANUS"] },
-        { code: "ALERT_DOWNER_CREEPER", nameHindi: "कैल्शियम बाद भी न उठ पाना (सचेत डाउनर)", cardinalFor: ["DIS_24_DOWNER_COW"] },
-        { code: "THREE_DAY_STIFFNESS", nameHindi: "अचानक जोड़ों में तीव्र अकड़न (3 दिनी बुखार)", cardinalFor: ["DIS_18_EPHEMERAL_FEVER"] },
-        { code: "LUMPY_JAW_BONE", nameHindi: "निचले जबड़े की हड्डी पर पत्थर जैसी अचल सूजन", cardinalFor: ["DIS_33_ACTINOMYCOSIS"] },
-        { code: "WOODEN_HARD_TONGUE", nameHindi: "जीभ का सूजकर लकड़ी जैसी सख्त हो जाना", cardinalFor: ["DIS_34_ACTINOBACILLOSIS"] }
-      ]
-    },
-    nervous_system: {
-      labelHindi: "तंत्रिका तंत्र एवं मस्तिष्क (Nervous & Behavioral)",
-      symptoms: [
-        { code: "CIRCLING_HEAD_PRESSING", nameHindi: "दीवार से सिर दबाना व गोल चक्कर काटना (सर्रा)", cardinalFor: ["DIS_12_TRYPANOSOMIASIS"] },
-        { code: "ABNORMAL_BELLOWING_SALIVA", nameHindi: "गले से असामान्य रंभाना, लार व पक्षाघात", cardinalFor: ["DIS_19_RABIES"] },
-        { code: "OPISTHOTONOS_CONVULSION", nameHindi: "सिर पीछे की ओर खींचना व तीव्र मरोड़", cardinalFor: ["DIS_15_ENTEROTOXAEMIA"] },
-        { code: "GRASS_TETANY_TWITCHING", nameHindi: "हरी घास बाद आंखें फड़कना व आक्षेप (दौरे)", cardinalFor: ["DIS_28_GRASS_TETANY"] }
-      ]
-    },
-    circulatory_hemic: {
-      labelHindi: "रक्त एवं परिसंचरण तंत्र (Circulatory & Blood)",
-      symptoms: [
-        { code: "RED_COFFEE_URINE_FEVER", nameHindi: "कॉफी/लाल पेशाब व 105°F तेज बुखार (बबेशिया)", cardinalFor: ["DIS_10_BABESIOSIS"] },
-        { code: "RED_URINE_NO_FEVER", nameHindi: "ब्याने बाद बिना बुखार कॉफी रंग का पेशाब (PPH)", cardinalFor: ["DIS_29_POST_PARTURIENT_HEMOGLOBINURIA"] },
-        { code: "PRESUDO_LYMPH_SWELLING", nameHindi: "कंधे की लिम्फ नोड में सूजन व रक्तहीनता", cardinalFor: ["DIS_09_THEILERIOSIS"] },
-        { code: "SEVERE_JAUNDICE_NO_HEMOGLOBINURIA", nameHindi: "अत्यधिक पीलिया बिना लाल पेशाब के (एनाप्लाज्मा)", cardinalFor: ["DIS_11_ANAPLASMOSIS"] },
-        { code: "TAR_BLOOD_NO_CLOT", nameHindi: "प्राकृतिक छेदों से काला बिना जमा खून रिसना", cardinalFor: ["DIS_14_ANTHRAX"] },
-        { code: "CHOCOLATE_BROWN_BLOOD", nameHindi: "चॉकलेटी भूरा रक्त व तेज घुटन (नाइट्रेट विष)", cardinalFor: ["DIS_46_NITRATE_TOXICITY"] }
-      ]
-    },
-    integumentary_skin: {
-      labelHindi: "त्वचा, बाल व श्लेष्मा (Skin & Mucosa)",
-      symptoms: [
-        { code: "FMD_VESICLES_DROOLING", nameHindi: "मुंह व खुरों में छाले तथा तारदार लार टपकना", cardinalFor: ["DIS_03_FMD"] },
-        { code: "LUMPY_NODULES_SKIN", nameHindi: "शरीर पर 2-5 सेमी की गोल कठोर गांठें (नोड्यूल)", cardinalFor: ["DIS_13_LUMPY_SKIN_DISEASE"] },
-        { code: "ASBESTOS_CIRCULAR_CRUSTS", nameHindi: "आंखों व गर्दन पर गोल राख जैसी पपड़ी (दाद)", cardinalFor: ["DIS_40_RINGWORM"] },
-        { code: "INTENSE_PRURITUS_THICK_SKIN", nameHindi: "असहनीय खुजली व चमड़ी का हाथी जैसा मोटा होना", cardinalFor: ["DIS_41_MANGE"] },
-        { code: "PURPLE_SKIN_CYANOSIS_SWINE", nameHindi: "कान व पेट पर बैंगनी-लाल चकत्ते (स्वाइन फीवर)", cardinalFor: ["DIS_49_SWINE_FEVER"] },
-        { code: "ORAL_EROSION_GOAT_DIARRHEA", nameHindi: "बकरी के मुंह में बदबूदार छाले व काला दस्त", cardinalFor: ["DIS_16_PPR"] }
-      ]
-    }
+  root.VETCARE_SYMPTOMS_BY_ORGAN = {
+    eyes: [
+      { id: "EYE_LACRIMATION", hi: "आंखों से लगातार पानी/आंसू बहना", en: "Excessive lacrimation", significance: "Catarrhal inflammation, foreign body or early systemic pyrexia" },
+      { id: "EYE_CORNEAL_OPACITY", hi: "आंख की पुतली पर सफेदी/धुंधलापन (Blue Eye)", en: "Corneal opacity / Keratitis", significance: "Characteristic of Theileriosis, Moraxella or advanced trauma" },
+      { id: "EYE_JAUNDICE", hi: "आंख के श्लेष्म का गहरा पीला होना (Icterus)", en: "Icteric / Yellow sclera & conjunctiva", significance: "Hepatic breakdown or intravascular hemolysis (Anaplasmosis/Babesiosis)" },
+      { id: "EYE_PALLOR", hi: "आंख के श्लेष्म का चीनी मिट्टी जैसा सफेद होना (Severe Anemia)", en: "Porcelain white conjunctiva", significance: "Critical erythrocyte loss (Haemonchosis, Babesiosis, acute hemorrhage)" },
+      { id: "EYE_CONGESTION", hi: "आंखों का गहरा लाल व रक्त संकुलित होना (Congested)", en: "Deeply injected / Congested episcleral vessels", significance: "High fever, toxemia, acute septicemia (HS, Anthrax)" },
+      { id: "EYE_SUNKEN", hi: "आंखों का गड्ढे में धंस जाना (Severe Dehydration)", en: "Enophthalmos / Sunken eyeballs", significance: "Fluid loss >8-10% of body weight (Calf scours, severe enteritis)" },
+      { id: "EYE_THIRD_EYELID_PROLAPSE", hi: "तीसरी पलक का बाहर झपकना/दिखना (Haw Flash)", en: "Protrusion of nictitating membrane", significance: "Tetanospasmin neurotoxicity (Tetanus pathognomonic sign)" }
+    ],
+    skin_coat: [
+      { id: "SKIN_NODULES", hi: "त्वचा पर 10-50 मिमी की कठोर गोल गांठें (Nodules)", en: "Firm circumscribed cutaneous nodules", significance: "Lumpy Skin Disease (Capripox), Urticaria, or Hypoderma" },
+      { id: "SKIN_CREPITATING_SWELLING", hi: "कंधे/पुट्ठे पर छूने पर चर्र-चर्र बोलने वाली गैसदार सूजन", en: "Crepitant emphysematous muscular swelling", significance: "Clostridial myonecrosis (Black Quarter / Clostridium chauvoei)" },
+      { id: "SKIN_DEW_LAP_EDEMA", hi: "गलकंबल, जबड़े व सीने के नीचे गर्म दर्दनाक सूजन", en: "Submandibular, brisket and dewlap edema", significance: "Pasteurellosis (HS) or Congestive Heart Failure / TRP" },
+      { id: "SKIN_TICKS", hi: "शरीर, कान व जांघों पर अत्यधिक किलनी/चिचड़ी (Ticks)", en: "Heavy tick infestation (Hyalomma / Rhipicephalus)", significance: "Vector risk for Theileria, Babesia, and Anaplasma" },
+      { id: "SKIN_PETECHIAE", hi: "त्वचा व श्लेष्मा पर पिन के आकार के लाल रक्तबिंदु धब्बे", en: "Petechial and ecchymotic hemorrhages", significance: "Purpura hemorrhagica, septicemia, severe thrombocytopenia" },
+      { id: "SKIN_COLD_EXTREMITIES", hi: "कान, सींग, पैर व थन का बर्फ जैसा ठंडा पड़ना", en: "Hypothermia of ears, horns and distal limbs", significance: "Peripheral vasoconstriction in circulatory shock or Milk Fever" },
+      { id: "SKIN_ALOPECIA_CRUSTS", hi: "बाल झड़ना, त्वचा पर पपड़ीदार खुरंड व खुजली (Scabs)", en: "Alopecia with thick crusting and pruritus", significance: "Sarcoptic / Psoroptic Mange or Dermatophytosis (Ringworm)" }
+    ],
+    udder_teats: [
+      { id: "UDDER_HOT_HARD", hi: "अयन/थन अत्यंत गर्म, लाल, कठोर एवं असहनीय दर्द", en: "Udder swollen, hot, hyperemic and acutely tender", significance: "Acute parenchymatous mastitis (Staph, Strep, Coliform)" },
+      { id: "UDDER_COLD_GANGRENOUS", hi: "थन नीला-काला, ठंडा, सुन्न एवं दुर्गंधयुक्त सीरम रिसाव", en: "Cyanotic, cold, anesthetic gangrenous mastitis", significance: "Staphylococcus aureus alpha-toxin or Clostridial necrosis" },
+      { id: "UDDER_CLOTS_BLOOD", hi: "दूध में गाढ़े छिछड़े, थक्के, मवाद या ताजा खून आना", en: "Milk containing clots, flakes, purulent shreds or blood", significance: "Active alveolar vascular and epithelial breakdown" },
+      { id: "UDDER_WATERY_SECRETION", hi: "दूध बंद होकर केवल पानी जैसा पतला पीला सीरम आना", en: "Serous, straw-colored watery milk secretion", significance: "Severe acute coliform mastitis (E. coli / Klebsiella)" },
+      { id: "UDDER_FIBROSIS", hi: "थन के अंदर स्थायी पत्थर जैसी कठोर गांठ (Fibrosis)", en: "Chronic parenchymal induration / corded teat canal", significance: "End-stage chronic mastitis with loss of secretory tissue" },
+      { id: "UDDER_TEAT_CRACKS", hi: "थन पर दर्दनाक चीरे, दरारें या फफोले (Teat erosions)", en: "Teat fissures, papules, vesicular erosions", significance: "FMD, Cowpox, Pseudo-cowpox or severe milking trauma" }
+    ],
+    urine: [
+      { id: "URINE_COFFEE_RED", hi: "गहरे कॉफी, वाइन या लाल-भूरे रंग का पेशाब (Hemoglobinuria)", en: "Port-wine / Dark reddish-brown urine (Hemoglobinuria)", significance: "Intravascular hemolysis (Babesiosis, Post-parturient Hemoglobinuria)" },
+      { id: "URINE_FRANK_BLOOD", hi: "पेशाब में ताजा थक्केदार लाल खून आना (Hematuria)", en: "Frank whole blood and clots in urine (Hematuria)", significance: "Enzootic hematuria (Bracken fern toxicity), Cystitis, Pyelonephritis" },
+      { id: "URINE_ANURIA", hi: "पेशाब पूरी तरह बंद होना या दर्द के साथ बूंद-बूंद टपकना", en: "Complete anuria, stranguria, or constant dribbling", significance: "Urolithiasis (water belly / urethral calculus), ruptured bladder" },
+      { id: "URINE_KETONE_SWEET", hi: "पेशाब व सांस से मीठी क्लोरोफॉर्म सदृश गंध (Acetone)", en: "Sweetish fruity chloroform odor of acetone", significance: "Negative energy balance, lipolysis, Ketosis (Acetonemia)" },
+      { id: "URINE_TURBID_PUS", hi: "पेशाब मटमैला, गाढ़ा और मवादयुक्त होना (Pyuria)", en: "Cloudy urine with mucus flakes, sediment and pus", significance: "Corynebacterium renale (Contagious Bovine Pyelonephritis)" }
+    ],
+    dung: [
+      { id: "DUNG_WATERY_FOUL", hi: "अत्यधिक बदबूदार, पीला या भूरा पिचकारी जैसा दस्त", en: "Profuse projectile watery fetid diarrhea", significance: "Salmonellosis, Colibacillosis, acute intestinal enterotoxemia" },
+      { id: "DUNG_BLOODY_MUCOID", hi: "गोबर में ताजा लाल खून के थक्के, आंव व आंत की झिल्ली", en: "Dysentery with mucus shreds and frank blood clots", significance: "Coccidiosis (Eimeria), acute BVD mucosal disease, Coronaviral enteritis" },
+      { id: "DUNG_TAR_BLACK", hi: "डामर जैसा काला, चिपचिपा व बदबूदार गोबर (Melena)", en: "Tarry black sticky feces (Melena)", significance: "Bleeding in upper GI tract (Abomasal ulcer, severe hemorrhagic abomasitis)" },
+      { id: "DUNG_PIPE_STEM", hi: "बिना जोर लगाए लगातार पतली नाली की तरह बहता गोबर", en: "Continuous homogenous pipe-stream watery diarrhea", significance: "Johne's Disease (Paratuberculosis / MAP infection)" },
+      { id: "DUNG_HARD_DRY_MUCUS", hi: "सूखा, काला, कड़ा गोबर जिस पर सफेद कफ/श्लेष्म की परत हो", en: "Scanty, hard, dry fecal balls coated with mucus glaze", significance: "Omasal impaction, Simple indigestion, dehydration, acute Anaplasmosis" }
+    ],
+    temperature: [
+      { id: "TEMP_HYPERPYREXIA", hi: "अति तीव्र ज्वर (105.0°F - 108.0°F)", en: "Hyperpyrexia (>105.0°F)", significance: "Hyper-acute bacterial/protozoal invasion (HS, Anthrax, Theileria, Babesia)" },
+      { id: "TEMP_MODERATE_FEVER", hi: "मध्यम ज्वर (103.0°F - 104.8°F)", en: "Moderate pyrexia (103.0°F - 104.8°F)", significance: "Systemic viral response (FMD, LSD, BEF) or local focal abscesses" },
+      { id: "TEMP_NORMAL", hi: "सामान्य शारीरिक तापमान (101.0°F - 102.5°F)", en: "Euthermic / Normal range (101.0°F - 102.5°F)", significance: "Metabolic or mechanical non-inflammatory conditions" },
+      { id: "TEMP_SUBNORMAL", hi: "निम्न तापमान / शरीर का ठंडा पड़ना (<100.0°F)", en: "Hypothermia / Subnormal temperature (<100.0°F)", significance: "Circulatory collapse, Milk Fever, terminal septic/endotoxic shock" }
+    ],
+    rumen_abdomen: [
+      { id: "RUMEN_LEFT_DRUM", hi: "बायाँ पेट (कोख) ढोलक की भांति अत्यधिक फूला व तना हुआ", en: "Severe left paralumbar fossa distention (Tympany)", significance: "Primary frothy bloat (legumes) or secondary obstructive free-gas bloat" },
+      { id: "RUMEN_ATONY", hi: "रूमेन की चाल/हलचल पूर्णतया बंद होना (0/2 min)", en: "Complete ruminal hypomotility or total atony", significance: "Vagus indigestion, metabolic acidosis, hypocalcemia, peritonitis" },
+      { id: "RUMEN_FLUID_SPLASH", hi: "बाईं कोख हिलाने पर पेट में पानी की छप-छप आवाज़ (Splashing)", en: "Fluid sloshing on succussion / ballottement", significance: "Lactic acidosis (Grain overload), abomasal volvulus" },
+      { id: "RUMEN_COLIC_SIGNS", hi: "पेट की ओर लात मारना, बार-बार उठना-बैठना व कराहना", en: "Belly kicking, groaning, treading, rolling (Visceral Colic)", significance: "Intestinal intussusception, acute bloat, renal calculi, torsion" }
+    ],
+    respiration: [
+      { id: "RESP_GRUNTING_MOAN", hi: "सांस छोड़ते समय घुर-घुर की तेज आवाज व दर्द भरी कराह (Grunt)", en: "Expiratory grunting, stridor and moaning", significance: "Painful thoracic pleuritis, Reticuloperitonitis (TRP), tracheal edema" },
+      { id: "RESP_OPEN_MOUTH", hi: "गर्दन फैलाकर जीभ बाहर निकाल हांफना (Air Hunger)", en: "Orthopneic stance with open-mouth panting", significance: "Severe hypoxia, pulmonary edema, consolidated pneumonia, heat stroke" },
+      { id: "RESP_FROTHY_DISCHARGE", hi: "नाक व मुंह से प्रचुर झागदार या खून मिला स्राव", en: "Frothy, blood-tinged or mucopurulent nasal discharge", significance: "Acute pulmonary edema, aspiration pneumonia, terminal asphyxia" },
+      { id: "RESP_PAROXYSMAL_COUGH", hi: "लगातार सूखी या बलगमयुक्त कष्टकारी खांसी", en: "Deep paroxysmal, painful or moist cough", significance: "Bovine Respiratory Disease (BRD), Dictyocaulus (Lungworm), IBR" }
+    ],
+    nervous_locomotion: [
+      { id: "NERV_STERNAL_RECUMBENCY", hi: "गर्दन मोड़कर पुट्ठों पर बैठना व खड़ा न हो पाना (S-Curve)", en: "Sternal recumbency with lateral head tuck into flank", significance: "Hypocalcemia (Milk Fever pathognomonic posture)" },
+      { id: "NERV_OPISTHOTONOS", hi: "सिर पीछे की ओर मुड़ना, गर्दन अकड़ना व दांत पीसना", en: "Opisthotonos, star-gazing posture and jaw champing", significance: "Polioencephalomalacia (B1 deficiency), Enterotoxemia, Lead toxicity" },
+      { id: "NERV_CIRCLING_HEADPRESS", hi: "एक ही दिशा में गोल घूमना व दीवार से सिर टकराना", en: "Unilateral circling and compulsive head pressing", significance: "Listeriosis, Surra (Trypanosomiasis), Coenurosis, hepatic encephalopathy" },
+      { id: "NERV_AGGRESSION_HYDRO", hi: "बिना कारण आक्रामक होना, रंभाना व काल्पनिक वस्तुओं पर झपटना", en: "Furious delirium, aimless bellowing, exaggerated tenesmus", significance: "Bovine Rabies, nervous acetonemia, hypomagnesemic tetany" },
+      { id: "NERV_POSTERIOR_PARALYSIS", hi: "पिछले पैरों की दुर्बलता, लड़खड़ाहट व उठने में असमर्थ (Paraplegia)", en: "Posterior ataxia, knuckling of fetlocks, paraplegia", significance: "Maternal obstetrical paralysis (Obturator nerve), Spinal trauma" }
+    ]
   };
 
   /* =========================================================================
-     5. FARMER HOME REMEDIES (Scientific Traditional Herbal Formulations)
+     2. COMPREHENSIVE VETERINARY DRUGS PHARMACOPEIA (window.VETCARE_MEDICINES_DB)
      ========================================================================= */
-  const FARMER_ORGAN_REMEDIES = [
+  root.VETCARE_MEDICINES_DB = [
     {
-      condition: "थनैल रोग (Mastitis) - प्रारंभिक सूजन व छिछड़े",
-      organSystem: "Mammary / Udder",
-      recipe: "घृतकुमारी (Aloe vera) गूदा 250 ग्राम + शुद्ध हल्दी पाउडर 50 ग्राम + खाने का चूना 15 ग्राम।",
-      preparationMethod: "एलोवेरा, हल्दी और चूने को सिलबट्टे पर अच्छी तरह पीसकर लाल-नारंगी रंग का चिकना पेस्ट बनाएं। इसमें 50 मिली नारियल या तिल का तेल मिलाएं।",
-      dosageAdministration: "दूध को पूर्णतः दुहकर बाहर निकालने के उपरांत पूरे अयन व थन पर दिन में 3 से 4 बार अच्छी तरह लेप करें। 5 दिन तक जारी रखें।",
-      precautions: "थन के अंदर लेप न डालें। यदि थन से मवाद या खून आ रहा हो तो तुरंत पशु चिकित्सक से एंटीबायोटिक लगवाएं।"
+      id: "DRUG_CEFTIOFUR_SODIUM",
+      salt: "Ceftiofur Sodium Sterile Powder (1000 mg/vial)",
+      category: "Antibiotic",
+      ethicalBrand: { name: "Xyrofur 1 gm", company: "Intas Pharmaceuticals", approxMrp: 440.00 },
+      genericOption: { name: "Ceftio-Vet 1 gm", approxMrp: 185.00 },
+      doseRate: "1.1 to 2.2 mg/kg body weight (1 to 2 ml reconstituted per 50 kg)",
+      route: "Intramuscular (I/M) or Subcutaneous (S/C)",
+      pregnancySafe: true,
+      withdrawalPeriod: { milk: "Zero days (0 hours)", meat: "4 days" },
+      indications: ["Acute Hemorrhagic Septicemia (HS)", "Bovine Respiratory Disease (BRD)", "Acute Interdigital Necrobacillosis (Foot Rot)", "Acute Postpartum Metritis"],
+      contraindications: ["Known hypersensitivity to cephalosporins or beta-lactam antibiotics", "Do not administer intravenously in rapid bolus"]
     },
     {
-      condition: "अफारा / पेट में गैस (Tympany / Bloat)",
-      organSystem: "Digestive / Rumen",
-      recipe: "सरसों या अलसी का तेल 300 मिली + शुद्ध तारपीन का तेल (Turpentine oil) 40 मिली + शुद्ध हींग 15 ग्राम + काला नमक 30 ग्राम।",
-      preparationMethod: "हींग को तवे पर हल्का भूनकर पीस लें। इसे काले नमक व तारपीन के तेल के साथ सरसों के तेल में अच्छी तरह फेंटकर इमल्शन बनाएं।",
-      dosageAdministration: "नाल (Drenching bottle) द्वारा पशु की जीभ पकड़े बिना धीरे-धीरे एक बार में पिलाएं। आवश्यकता पड़ने पर 4 घंटे बाद दोहराएं।",
-      precautions: "पशु की गर्दन ज्यादा ऊंची न उठाएं ताकि तेल श्वासनली में न जाए। मुंह में लकड़ी की खपच्ची बांधें ताकि लार गिरे और डकार आए।"
+      id: "DRUG_CEFTRIAXONE_TAZOBACTAM",
+      salt: "Ceftriaxone Sodium (3000 mg) + Tazobactam Sodium (375 mg)",
+      category: "Antibiotic",
+      ethicalBrand: { name: "Intacef Tazo 3375 mg", company: "Intas Pharmaceuticals", approxMrp: 495.00 },
+      genericOption: { name: "Tazo-Ceff 3.375 gm", approxMrp: 195.00 },
+      doseRate: "7 to 10 mg/kg body weight (Reconstitute with 20 ml sterile WFI)",
+      route: "Intramuscular (I/M) or Slow Intravenous (I/V)",
+      pregnancySafe: true,
+      withdrawalPeriod: { milk: "7 days (14 milkings)", meat: "28 days" },
+      indications: ["Severe Acute Clinical & Toxic Mastitis", "Bronchopneumonia & Pleuritis", "Septic Metritis & Pyometra", "Post-operative prophylaxis in laparotomy/C-section"],
+      contraindications: ["Concurrent administration with calcium-containing intravenous infusions (causes precipitate crystals in lungs and kidneys)"]
     },
     {
-      condition: "खुरपका-मुंहपका (FMD) - मुंह व जीभ के छाले",
-      organSystem: "Oral Mucosa",
-      recipe: "भुना हुआ सुहागा (Borax powder) 20 ग्राम + शुद्ध शहद 100 ग्राम + नारियल तेल 50 मिली।",
-      preparationMethod: "सुहागे को तवे पर खील होने तक भूनें, फिर बारीक पीसकर शहद और नारियल तेल में मिलाकर गाढ़ा मलहम तैयार करें।",
-      dosageAdministration: "मुंह को 1% फिटकरी के पानी से धोने के बाद साफ सूती कपड़े से जीभ व मसूड़ों के छालों पर दिन में 3 बार हल्के हाथ से लगाएं।",
-      precautions: "पशु को कठोर सूखा भूसा न दें। मुलायम हरी घास अथवा आटे की पतली लपसी बनाकर खिलाएं।"
+      id: "DRUG_ENROFLOXACIN",
+      salt: "Enrofloxacin Injectable Solution 100 mg/ml (10%)",
+      category: "Antibiotic",
+      ethicalBrand: { name: "Floxidin 10% (100 ml)", company: "Virbac Animal Health", approxMrp: 310.00 },
+      genericOption: { name: "Enrocin 10% (100 ml)", approxMrp: 120.00 },
+      doseRate: "5 mg/kg body weight (5 ml per 100 kg body weight)",
+      route: "Deep Intramuscular (I/M) or Slow Intravenous (I/V)",
+      pregnancySafe: false,
+      withdrawalPeriod: { milk: "84 hours (7 milkings)", meat: "14 days" },
+      indications: ["Colibacillosis & Severe Calf Scours", "Contagious Bovine Pleuropneumonia", "Mycoplasmal Mastitis & Arthritis", "Secondary bacterial infections in Viral diseases"],
+      contraindications: ["Growing young calves (induces articular cartilage arthropathy)", "Late gestation in dairy cows", "Horses and dogs in skeletal growth phase"]
     },
     {
-      condition: "ब्याने के बाद जेर की रुकावट (Retention of Placenta - ROP)",
-      organSystem: "Reproductive / Uterus",
-      recipe: "हरे बांस की ताजी पत्तियां 1 किग्रा + पुराना गुड़ 300 ग्राम + अजवाइन 50 ग्राम + सोंठ 30 ग्राम।",
-      preparationMethod: "बांस की पत्तियों को 3 लीटर पानी में तब तक उबालें जब तक पानी 1.5 लीटर न रह जाए। फिर उसमें गुड़, सोंठ और कुटी अजवाइन मिलाएं।",
-      dosageAdministration: "गुनगुना काढ़ा प्रसव के 6-8 घंटे बाद एक बार में पिलाएं। 6 घंटे बाद पुनः दोहरा सकते हैं।",
-      precautions: "लटकती जेर पर भारी ईंट या पत्थर न बांधें और न ही हाथ से जबरन खींचे, अन्यथा गर्भाशय बाहर आ सकता है।"
+      id: "DRUG_OXYTETRACYCLINE_LA",
+      salt: "Oxytetracycline Dihydrate (Long Acting) 200 mg/ml",
+      category: "Antibiotic",
+      ethicalBrand: { name: "Terramycin LA (30 ml)", company: "Zoetis Animal Health", approxMrp: 260.00 },
+      genericOption: { name: "Oxysteclin LA (30 ml)", approxMrp: 98.00 },
+      doseRate: "20 mg/kg body weight (1 ml per 10 kg body weight single shot)",
+      route: "Strictly Deep Intramuscular (Deep I/M) at multiple divided sites",
+      pregnancySafe: false,
+      withdrawalPeriod: { milk: "10 days (20 milkings)", meat: "28 days" },
+      indications: ["Anaplasmosis (Gall Sickness)", "Pneumonic Pasteurellosis", "Black Quarter (early stages)", "Infectious Bovine Keratoconjunctivitis (Pink Eye)"],
+      contraindications: ["Pregnancy (causes skeletal retardation & permanent yellow-brown tooth staining)", "Severe hepatic or renal insufficiency", "Never administer I/V in LA formulation"]
     },
     {
-      condition: "सांस की घुर्राहट, खांसी व सर्दी-जुकाम (Respiratory Relief)",
-      organSystem: "Respiratory",
-      recipe: "अडूसा (वासा) की पत्तियां 50 ग्राम + तुलसी पत्ते 25 ग्राम + काली मिर्च 10 ग्राम + अदरक/सोंठ 25 ग्राम + गुड़ 150 ग्राम।",
-      preparationMethod: "सभी औषधियों को कूटकर 1 लीटर पानी में काढ़ा बनाएं। जब आधा लीटर बचे तो उसमें गुड़ घोल लें।",
-      dosageAdministration: "दिन में दो बार सुबह-शाम 4 से 5 दिनों तक गुनगुना पिलाएं।",
-      precautions: "पशु बाड़े को सीलन व ठंडी हवा से बचाएं। रात में कपूर व नीम के पत्तों का हल्का धुआं करें।"
+      id: "DRUG_AMOXICILLIN_SULBACTAM",
+      salt: "Amoxicillin Sodium (2000 mg) + Sulbactam Sodium (1000 mg)",
+      category: "Antibiotic",
+      ethicalBrand: { name: "Amoxirum Forte 3 gm", company: "Virbac Animal Health", approxMrp: 360.00 },
+      genericOption: { name: "Sulbacillin 3 gm", approxMrp: 145.00 },
+      doseRate: "7 to 10 mg/kg body weight every 24 hours for 3 consecutive days",
+      route: "Intramuscular (I/M) or Slow Intravenous (I/V)",
+      pregnancySafe: true,
+      withdrawalPeriod: { milk: "60 hours", meat: "14 days" },
+      indications: ["Staphylococcal & Streptococcal Mastitis", "Wound infections and surgical site sepsis", "Navel Ill & Joint Ill in calves", "Acute Actinobacillosis"],
+      contraindications: ["Animals exhibiting known penicilloyl protein hypersensitivity"]
     },
     {
-      condition: "कीड़े लगे घाव एवं मैगट्स (Maggoted Wounds)",
-      organSystem: "Integumentary / Skin",
-      recipe: "शुद्ध तारपीन का तेल 50 मिली + नीम का तेल 100 मिली + देशी कपूर 25 ग्राम + सीताफल (शरीफा) के पत्तों का रस 30 मिली।",
-      preparationMethod: "कपूर को तारपीन के तेल में घोलें और नीम के तेल तथा सीताफल पत्र रस के साथ अच्छी तरह मिला लें।",
-      dosageAdministration: "रुई के फाहे से घाव के अंदर तक भरें ताकि कीड़े (मैगट्स) घुटकर बाहर गिर जाएं। ऊपर से नीम तेल की पट्टी बांधें।",
-      precautions: "घाव को फिनाइल से न धोएं। कीड़ों को चिमटी से निकाल कर जला दें ताकि पुनः संक्रमण न फैले।"
+      id: "DRUG_PROCAINE_PENICILLIN_G",
+      salt: "Procaine Penicillin G (20 Lakh IU) + Penicillin G Sodium (20 Lakh IU)",
+      category: "Antibiotic",
+      ethicalBrand: { name: "Fortified Procaine Penicillin 40 Lakh IU", company: "Alembic Pharmaceuticals", approxMrp: 135.00 },
+      genericOption: { name: "Pendistrin 40 Lakh IU", approxMrp: 58.00 },
+      doseRate: "10,000 to 20,000 IU/kg body weight every 24 hours for 5 days",
+      route: "Strictly Deep Intramuscular (Deep I/M only)",
+      pregnancySafe: true,
+      withdrawalPeriod: { milk: "72 hours", meat: "10 days" },
+      indications: ["Black Quarter (Clostridium chauvoei)", "Tetanus (Clostridium tetani) early bactericidal eradication", "Subacute Anthrax cover", "Streptococcal adenitis"],
+      contraindications: ["NEVER administer Intravenously (procaine induces fatal grand mal seizures and acute cardiac arrest)", "Accidental intravascular puncture"]
     },
     {
-      condition: "दस्त एवं खूनी पेचिश (Calf & Adult Diarrhea)",
-      organSystem: "Digestive / Intestines",
-      recipe: "कच्चे बेल की गिरी 100 ग्राम (बछड़े में 30 ग्राम) + ईसबगोल की भूसी 30 ग्राम + जीरा पाउडर 20 ग्राम + ताजा छाछ 500 मिली।",
-      preparationMethod: "बेलगिरी को पीसकर जीरा और ईसबगोल के साथ ताजी मीठी छाछ में अच्छी तरह घोल लें।",
-      dosageAdministration: "दिन में दो बार 2 से 3 दिन तक खाली पेट पिलाएं।",
-      precautions: "दस्त में पानी व नमक की कमी पूरी करने हेतु ओआरएस (ORS) का गुनगुना घोल साथ में निरंतर पिलाते रहें।"
+      id: "DRUG_GENTAMICIN_SULFATE",
+      salt: "Gentamicin Sulfate Injection 40 mg/ml",
+      category: "Antibiotic",
+      ethicalBrand: { name: "Gentacip Vet (100 ml)", company: "Cipla Animal Health", approxMrp: 170.00 },
+      genericOption: { name: "Genta-Vet 100 ml", approxMrp: 70.00 },
+      doseRate: "4 to 5 mg/kg body weight once daily or 2 mg/kg every 12 hours",
+      route: "Intramuscular (I/M), Slow I/V or Intrauterine infusion",
+      pregnancySafe: false,
+      withdrawalPeriod: { milk: "7 days", meat: "45 days" },
+      indications: ["Gram-negative neonatal enteritis and septicemia", "Colibacillosis", "Chronic purulent endometritis (as intrauterine drench with normal saline)"],
+      contraindications: ["Dehydrated calves with elevated blood urea nitrogen (BUN)", "Pre-existing renal damage (potent nephrotoxic and ototoxic agent)"]
     },
     {
-      condition: "पशु की कमजोरी एवं भूख न लगना (Anorexia / Off-feed)",
-      organSystem: "Digestive / Rumen Flora",
-      recipe: "अजवाइन 50 ग्राम + काला नमक 40 ग्राम + सोंठ 30 ग्राम + जीरा 30 ग्राम + हींग 5 ग्राम + पुराना गुड़ 250 ग्राम।",
-      preparationMethod: "सभी सूखे मसालों को बारीक पीसकर गुड़ में अच्छी तरह कूटकर बड़े-बड़े लड्डू (पिंडी) बना लें।",
-      dosageAdministration: "एक-एक लड्डू सुबह और शाम को पशु की जीभ पर रगड़कर खिलाएं। 3 से 5 दिन तक दें।",
-      precautions: "यदि पशु को तेज बुखार हो तो पहले बुखार की दवा दें; केवल अपच होने पर ही यह पाचक नुस्खा कारगर है।"
+      id: "DRUG_MARBOFLOXACIN",
+      salt: "Marbofloxacin 100 mg/ml (10% w/v)",
+      category: "Antibiotic",
+      ethicalBrand: { name: "Forcyl 10% (50 ml)", company: "Vetoquinol India", approxMrp: 720.00 },
+      genericOption: { name: "Marbovet 10% (50 ml)", approxMrp: 320.00 },
+      doseRate: "Single injection of 8 mg/kg (2 ml/25 kg) or daily 2 mg/kg for 3-5 days",
+      route: "Intramuscular (I/M), Subcutaneous (S/C) or I/V",
+      pregnancySafe: false,
+      withdrawalPeriod: { milk: "48 hours (after 8 mg/kg single shot)", meat: "6 days" },
+      indications: ["Acute severe E. coli Mastitis with profound toxemia", "Mannheimia haemolytica pneumonia", "Histophilus somni infections"],
+      contraindications: ["Horses, juvenile calves with cartilage development", "Severe central nervous system disorders"]
+    },
+    {
+      id: "DRUG_CEFOPERAZONE_INTRAMAMMARY",
+      salt: "Cefoperazone Sodium 250 mg per 10 ml syringe",
+      category: "Antibiotic",
+      ethicalBrand: { name: "Pathocef Intramammary Infusion", company: "Zoetis Animal Health", approxMrp: 110.00 },
+      genericOption: { name: "Cefomast 250 mg Infusion", approxMrp: 55.00 },
+      doseRate: "One single 10 ml syringe infused per infected quarter after complete milk stripping",
+      route: "Intramammary teat canal infusion",
+      pregnancySafe: true,
+      withdrawalPeriod: { milk: "96 hours (8 milkings)", meat: "2 days" },
+      indications: ["Clinical and Subclinical Mastitis during active lactation", "Pseudomonas, Klebsiella and Streptococcal udder parenchymal clearing"],
+      contraindications: ["Infusion into teat without surgical scrubbing of teat sphincter (introduces fungal spores)", "Never inject parentally"]
+    },
+    {
+      id: "DRUG_MELOXICAM_PARACETAMOL",
+      salt: "Meloxicam (5 mg/ml) + Paracetamol (150 mg/ml)",
+      category: "NSAID",
+      ethicalBrand: { name: "Melonex Plus (100 ml)", company: "Intas Pharmaceuticals", approxMrp: 220.00 },
+      genericOption: { name: "Melonat Plus (100 ml)", approxMrp: 85.00 },
+      doseRate: "0.5 mg/kg Meloxicam basis (15 to 20 ml per 400 kg adult cattle)",
+      route: "Strictly Deep Intramuscular (Deep I/M)",
+      pregnancySafe: true,
+      withdrawalPeriod: { milk: "5 days", meat: "15 days" },
+      indications: ["Acute hyperthermia (>104°F) in systemic infections", "Musculoskeletal lameness and arthritis", "Acute udder inflammation pain", "Post-surgical pain management"],
+      contraindications: ["Severe abomasal ulceration", "Dehydrated shock without concurrent fluid resuscitation", "Concurrent steroid therapy"]
+    },
+    {
+      id: "DRUG_FLUNIXIN_MEGLUMINE",
+      salt: "Flunixin Meglumine 50 mg/ml (equivalent to 5% active flunixin)",
+      category: "NSAID",
+      ethicalBrand: { name: "Megludyne (50 ml)", company: "Virbac Animal Health", approxMrp: 510.00 },
+      genericOption: { name: "Flunivet (50 ml)", approxMrp: 210.00 },
+      doseRate: "1.1 to 2.2 mg/kg body weight (1 to 2 ml per 45 kg body weight)",
+      route: "Slow Intravenous (I/V preferred) or Deep I/M",
+      pregnancySafe: true,
+      withdrawalPeriod: { milk: "36 hours", meat: "7 days" },
+      indications: ["Endotoxemic shock from Coliform mastitis / Metritis", "Acute visceral abdominal colic and bloat pain", "Severe tracheal edema in HS", "Bovine Respiratory Disease (BRD)"],
+      contraindications: ["Hypovolemic renal failure", "Do not administer intra-arterially", "Use with caution in late third trimester near parturition"]
+    },
+    {
+      id: "DRUG_KETOPROFEN",
+      salt: "Ketoprofen Injection 100 mg/ml (10%)",
+      category: "NSAID",
+      ethicalBrand: { name: "Neoprofen (100 ml)", company: "Vetcare / Provimi", approxMrp: 375.00 },
+      genericOption: { name: "Ketovet (100 ml)", approxMrp: 150.00 },
+      doseRate: "3 mg/kg body weight (3 ml per 100 kg body weight) once daily for 3 days",
+      route: "Deep Intramuscular (I/M) or Slow Intravenous (I/V)",
+      pregnancySafe: true,
+      withdrawalPeriod: { milk: "Zero hours (0 days) - Highly preferred in lactating dairy cattle", meat: "4 days" },
+      indications: ["Acute laminitis and foot rot pain in high-yielding dairy cows", "Post-parturient downer cow pain", "Bovine Ephemeral Fever (BEF) stiffness"],
+      contraindications: ["Concurrent administration with other NSAIDs or anticoagulants", "Severe renal impairment"]
+    },
+    {
+      id: "DRUG_TOLFENAMIC_ACID",
+      salt: "Tolfenamic Acid 40 mg/ml (4% w/v)",
+      category: "NSAID",
+      ethicalBrand: { name: "Tolfedine (100 ml)", company: "Vetoquinol India", approxMrp: 480.00 },
+      genericOption: { name: "Tolfe-Vet (100 ml)", approxMrp: 210.00 },
+      doseRate: "2 mg/kg (1 ml per 20 kg) I/M repeated once after 48 hours; or single IV 4 mg/kg",
+      route: "Intramuscular (I/M) in neck or Slow I/V",
+      pregnancySafe: true,
+      withdrawalPeriod: { milk: "24 hours", meat: "7 days" },
+      indications: ["Acute mastitis pain relief", "Severe pulmonary inflammation in acute pasteurellosis", "Post-operative orthopedic interventions"],
+      contraindications: ["Cardiac failure", "Abomasal erosion diathesis"]
+    },
+    {
+      id: "DRUG_ISOFLUPREDONE_ACETATE",
+      salt: "Isoflupredone Acetate Sterile Suspension 2 mg/ml",
+      category: "Hormone",
+      ethicalBrand: { name: "Isoflud (10 ml)", company: "Zydus Animal Health", approxMrp: 225.00 },
+      genericOption: { name: "Isopred (10 ml)", approxMrp: 95.00 },
+      doseRate: "10 to 20 mg total adult dose (5 to 10 ml total intramuscular injection)",
+      route: "Strictly Deep Intramuscular (Deep I/M only)",
+      pregnancySafe: true,
+      withdrawalPeriod: { milk: "7 days", meat: "7 days" },
+      indications: ["Primary Bovine Ketosis (potent gluconeogenic corticosteroid)", "Severe laryngeal/pharyngeal edema in HS (non-abortifacient steroid)", "Toxic shock and musculoskeletal myositis"],
+      contraindications: ["Concurrent untreated active systemic mycotic infections", "Never administer I/V", "Avoid in animals with profound hypokalemia without potassium supplements"]
+    },
+    {
+      id: "DRUG_DEXAMETHASONE_SODIUM",
+      salt: "Dexamethasone Sodium Phosphate 4.4 mg/ml",
+      category: "Hormone",
+      ethicalBrand: { name: "Dexona Vet (100 ml)", company: "Zydus Animal Health", approxMrp: 125.00 },
+      genericOption: { name: "Dexavet (100 ml)", approxMrp: 48.00 },
+      doseRate: "0.05 to 0.1 mg/kg (5 to 10 ml total adult cow dose)",
+      route: "Intramuscular (I/M) or Rapid Intravenous (I/V)",
+      pregnancySafe: false,
+      withdrawalPeriod: { milk: "72 hours", meat: "8 days" },
+      indications: ["Immediate anaphylactic drug shock and bee/wasp sting reactions", "Non-pregnant cattle with acute laryngeal suffocation", "Induction of elective parturition (late 3rd trimester)"],
+      contraindications: ["STRICTLY CONTRAINDICATED IN PREGNANCY (induces instant abortion in 3rd trimester)", "Corneal ulcers (leads to eye perforation)", "Chronic diabetes mellitus"]
+    },
+    {
+      id: "DRUG_PHENIRAMINE_MALEATE",
+      salt: "Pheniramine Maleate Injection 22.75 mg/ml",
+      category: "Supportive & Fluids",
+      ethicalBrand: { name: "Avil Vet (100 ml)", company: "Intervet / MSD Animal Health", approxMrp: 120.00 },
+      genericOption: { name: "Cadistin Vet (100 ml)", approxMrp: 45.00 },
+      doseRate: "0.5 mg/kg body weight (5 to 10 ml per adult cattle)",
+      route: "Deep Intramuscular (Deep I/M only)",
+      pregnancySafe: true,
+      withdrawalPeriod: { milk: "48 hours", meat: "3 days" },
+      indications: ["Allergic dermatitis, urticaria, insect stings and pruritus", "Serum sickness, vaccine reactions and histamine toxicity", "Bloat and ruminal atony adjunctive therapy", "Retained placenta detox cover"],
+      contraindications: ["Intravenous bolus injection (induces intense central nervous excitation and fatal tremors)"]
+    },
+    {
+      id: "DRUG_DIMINAZENE_ACETURATE",
+      salt: "Diminazene Aceturate (70 mg/ml) + Phenazone / Antipyrine (375 mg/ml)",
+      category: "Antiprotozoal",
+      ethicalBrand: { name: "Berenil RTU (30 ml)", company: "Intervet / MSD Animal Health", approxMrp: 275.00 },
+      genericOption: { name: "Diminavet (30 ml)", approxMrp: 105.00 },
+      doseRate: "3.5 to 5.0 mg/kg body weight (1 ml per 20 kg body weight)",
+      route: "Strictly Deep Intramuscular (Deep I/M only, divide if volume >20 ml)",
+      pregnancySafe: true,
+      withdrawalPeriod: { milk: "20 days", meat: "28 days" },
+      indications: ["Bovine Babesiosis (Babesia bigemina / B. bovis Red Water)", "Trypanosoma evansi (Surra) curative treatment"],
+      contraindications: ["NEVER administer Intravenously (fatal collapse)", "Do not overdose; toxic signs include salivation, ataxia, convulsions", "Camels are hypersensitive"]
+    },
+    {
+      id: "DRUG_BUPARVAQUONE",
+      salt: "Buparvaquone Injection 50 mg/ml",
+      category: "Antiprotozoal",
+      ethicalBrand: { name: "Butalex (20 ml)", company: "MSD Animal Health", approxMrp: 1280.00 },
+      genericOption: { name: "Buparvet / Zubion (20 ml)", approxMrp: 580.00 },
+      doseRate: "2.5 mg/kg body weight (1 ml per 20 kg body weight as single dose)",
+      route: "Strictly Deep Intramuscular (Deep I/M in the neck musculature)",
+      pregnancySafe: true,
+      withdrawalPeriod: { milk: "14 days", meat: "42 days" },
+      indications: ["Acute Theileriosis (Theileria annulata / East Coast Fever)", "Advanced theileriosis with pulmonary involvement (repeat after 48h if severe)"],
+      contraindications: ["Never administer I/V or S/C", "Concurrent immunization with attenuated vaccines within 14 days"]
+    },
+    {
+      id: "DRUG_QUINAPYRAMINE_SALTS",
+      salt: "Quinapyramine Sulfate (1.5 gm) + Quinapyramine Chloride (1.0 gm) per vial",
+      category: "Antiprotozoal",
+      ethicalBrand: { name: "Triquin 2.5 gm vial", company: "MSD Animal Health", approxMrp: 440.00 },
+      genericOption: { name: "Suramin Pro 2.5 gm", approxMrp: 210.00 },
+      doseRate: "4.4 mg/kg (Reconstitute 2.5 gm vial with 15 ml sterile water; give 1 ml per 40 kg)",
+      route: "Strictly Subcutaneous (S/C) behind shoulder fold",
+      pregnancySafe: true,
+      withdrawalPeriod: { milk: "14 days", meat: "28 days" },
+      indications: ["Curative treatment and 6-month chemoprophylaxis of Trypanosoma evansi (Surra) in endemic cattle, buffaloes and equines"],
+      contraindications: ["Never administer I/M or I/V (causes violent local sloughing and severe fatal systemic toxicity)", "Weak, starved or severely dehydrated animals"]
+    },
+    {
+      id: "DRUG_CALCIUM_BOROGLUCONATE_MIFEX",
+      salt: "Calcium Borogluconate 25% w/v + Magnesium Hypophosphite + Dextrose",
+      category: "Metabolic & Calcium",
+      ethicalBrand: { name: "Mifex 450 ml Infusion", company: "Novartis / Elanco", approxMrp: 310.00 },
+      genericOption: { name: "Calci-Vet 450 ml", approxMrp: 135.00 },
+      doseRate: "450 ml per 400 kg cow (300 ml slow I/V warmed to body temp + 150 ml S/C)",
+      route: "Slow Intravenous (I/V) under cardiac monitoring + Subcutaneous (S/C)",
+      pregnancySafe: true,
+      withdrawalPeriod: { milk: "Zero days (0 hours)", meat: "Zero days" },
+      indications: ["Parturient Paresis (Milk Fever) in dairy cows and buffaloes", "Acute hypocalcemic tetany, uterine inertia, eclampsia"],
+      contraindications: ["Rapid I/V infusion without auscultation (causes fatal ventricular fibrillation and systolic cardiac arrest)", "Hypercalcemia"]
+    },
+    {
+      id: "DRUG_TOLDIMPHOS_SODIUM",
+      salt: "Toldimphos Sodium 200 mg/ml (Organic Phosphorus 20%)",
+      category: "Metabolic & Calcium",
+      ethicalBrand: { name: "Tonophosphan Vet (30 ml)", company: "MSD Animal Health", approxMrp: 295.00 },
+      genericOption: { name: "Uro-Phos (30 ml)", approxMrp: 115.00 },
+      doseRate: "10 to 15 ml (2 to 3 gm Toldimphos) daily for 3-5 consecutive days",
+      route: "Deep Intramuscular (I/M), Slow I/V or Subcutaneous",
+      pregnancySafe: true,
+      withdrawalPeriod: { milk: "Zero days", meat: "Zero days" },
+      indications: ["Post-Parturient Hemoglobinuria (PPH) in freshly calved buffaloes", "Pica (eating bones/mud)", "Downer cow syndrome supportive therapy", "Anoestrus and repeat breeding"],
+      contraindications: ["Pre-existing hyperphosphatemia or acute renal shutdown"]
+    },
+    {
+      id: "DRUG_VITAMIN_B_COMPLEX_LIVER",
+      salt: "Thiamine (B1) 10mg + Riboflavin (B2) 3mg + Niacinamide 100mg + B12 10mcg + Liver Extract",
+      category: "Supportive & Fluids",
+      ethicalBrand: { name: "Belamyl (100 ml)", company: "Zydus Animal Health", approxMrp: 185.00 },
+      genericOption: { name: "B-Vet Complex (100 ml)", approxMrp: 70.00 },
+      doseRate: "10 ml for cattle/buffalo; 2 to 5 ml for sheep/goat every 24-48 hours",
+      route: "Strictly Deep Intramuscular (Deep I/M only)",
+      pregnancySafe: true,
+      withdrawalPeriod: { milk: "Zero days", meat: "Zero days" },
+      indications: ["General anorexia, off-feed, rumen microflora revival", "Hepatopathy, toxic jaundice, convalescence after severe blood protozoa", "Anemia support"],
+      contraindications: ["Intravenous administration (causes anaphylactoid shock)"]
+    },
+    {
+      id: "DRUG_NEUROTROPIC_B_VITAMINS",
+      salt: "Thiamine (B1) 100mg + Pyridoxine (B6) 50mg + Cyanocobalamin (B12) 1000mcg per ml",
+      category: "Supportive & Fluids",
+      ethicalBrand: { name: "Tribivet (100 ml)", company: "Intas Pharmaceuticals", approxMrp: 185.00 },
+      genericOption: { name: "Neuro-Vet (100 ml)", approxMrp: 72.00 },
+      doseRate: "10 ml daily for cattle and buffaloes; 3 to 5 ml for small ruminants",
+      route: "Intramuscular (I/M) or Slow Intravenous (I/V)",
+      pregnancySafe: true,
+      withdrawalPeriod: { milk: "Zero days", meat: "Zero days" },
+      indications: ["Polioencephalomalacia (Cerebrocortical Necrosis)", "Nervous acetonemia in ketosis", "Peripheral motor neuropathy and radial/obturator paralysis", "Post-tetanic neural damage"],
+      contraindications: ["Known allergy to cyanocobalamin or cobalt"]
+    },
+    {
+      id: "DRUG_IVERMECTIN_1_PERCENT",
+      salt: "Ivermectin 10 mg/ml (1% w/v injectable)",
+      category: "Anthelmintic",
+      ethicalBrand: { name: "Neomec (10 ml)", company: "Intas Pharmaceuticals", approxMrp: 155.00 },
+      genericOption: { name: "Ivervet (10 ml)", approxMrp: 55.00 },
+      doseRate: "0.2 mg/kg body weight (1 ml per 50 kg body weight single injection)",
+      route: "Strictly Subcutaneous (S/C) into loose skin of neck or behind shoulder",
+      pregnancySafe: true,
+      withdrawalPeriod: { milk: "28 days (STRICTLY PROHIBITED in lactating dairy cattle producing milk for human consumption)", meat: "35 days" },
+      indications: ["Sarcoptic, Psoroptic and Chorioptic Mange", "Tick and sucking lice infestations", "Gastrointestinal nematodes (Haemonchus, Ostertagia)", "Warble fly larvae (Hypoderma)"],
+      contraindications: ["NEVER administer Intramuscularly or Intravenously", "Lactating dairy cattle whose milk is drawn for human use", "Collie-breed dogs"]
+    },
+    {
+      id: "DRUG_ALBENDAZOLE_SUSPENSION",
+      salt: "Albendazole Micronized Oral Suspension 25 mg/ml (2.5%)",
+      category: "Anthelmintic",
+      ethicalBrand: { name: "Albomar (1000 ml)", company: "Virbac Animal Health", approxMrp: 410.00 },
+      genericOption: { name: "Alben-Vet (1000 ml)", approxMrp: 175.00 },
+      doseRate: "Roundworms/Tapeworms: 7.5 mg/kg (3 ml/10 kg); Liver Flukes: 10 mg/kg (4 ml/10 kg)",
+      route: "Oral drench strictly",
+      pregnancySafe: false,
+      withdrawalPeriod: { milk: "72 hours (3 days)", meat: "14 days" },
+      indications: ["Gastrointestinal roundworms, lungworms, tapeworms (Moniezia)", "Chronic Fasciola hepatica / F. gigantica (Liver Flukes)"],
+      contraindications: ["STRICTLY CONTRAINDICATED in the 1st trimester of pregnancy (first 45 days in cattle: teratogenic and causes embryonic death)"]
+    },
+    {
+      id: "DRUG_OXYCLOZANIDE_LEVAMISOLE",
+      salt: "Oxyclozanide 3% w/v + Levamisole HCl 1.5% w/v Oral Suspension",
+      category: "Anthelmintic",
+      ethicalBrand: { name: "Nilzan Drench (1000 ml)", company: "Virbac Animal Health", approxMrp: 535.00 },
+      genericOption: { name: "Oxylev Drench (1000 ml)", approxMrp: 235.00 },
+      doseRate: "10 to 15 mg/kg Oxyclozanide + 7.5 mg/kg Levamisole (Approx 100 ml per 300 kg adult cow)",
+      route: "Oral drench strictly",
+      pregnancySafe: true,
+      withdrawalPeriod: { milk: "48 hours", meat: "14 days" },
+      indications: ["Paramphistomiasis (Amphistomes / Rumen Flukes)", "Fascioliasis (Adult liver flukes)", "Dictyocaulus viviparus (Bovine lungworms)", "Non-specific immunostimulation"],
+      contraindications: ["Concurrent organophosphate (OP) dip or pour-on treatment within 14 days", "Severe hepatic exhaustion"]
+    },
+    {
+      id: "DRUG_CLOPROSTENOL_SODIUM",
+      salt: "Cloprostenol Sodium 250 mcg/ml (Prostaglandin F2-alpha analogue)",
+      category: "Hormone",
+      ethicalBrand: { name: "Pragma (2 ml)", company: "Intas Pharmaceuticals", approxMrp: 235.00 },
+      genericOption: { name: "Cloprost-Vet (2 ml)", approxMrp: 105.00 },
+      doseRate: "500 mcg total dose (2 ml single intramuscular injection)",
+      route: "Strictly Intramuscular (I/M only)",
+      pregnancySafe: false,
+      withdrawalPeriod: { milk: "Zero hours (0 days)", meat: "24 hours" },
+      indications: ["Luteal cysts and Persistent Corpus Luteum", "Subestrus / Unobserved heat synchronization", "Chronic Pyometra and Endometritis evacuation", "Mummified / Macerated fetus expulsion", "Induction of abortion in unwanted mating"],
+      contraindications: ["STRICTLY CONTRAINDICATED in pregnant animals unless therapeutic abortion is intended (instant luteolysis)", "Animals suffering from severe bronchospasm or spastic airways"]
+    },
+    {
+      id: "DRUG_BUSERELIN_ACETATE",
+      salt: "Buserelin Acetate 0.0042 mg/ml (equivalent to 4 mcg Buserelin/ml)",
+      category: "Hormone",
+      ethicalBrand: { name: "Receptal (10 ml)", company: "MSD Animal Health", approxMrp: 610.00 },
+      genericOption: { name: "GnRH-Vet (10 ml)", approxMrp: 275.00 },
+      doseRate: "2.5 to 5.0 ml (10 to 20 mcg Buserelin) at Artificial Insemination or day 11-12 post-AI",
+      route: "Intramuscular (I/M) or Slow I/V",
+      pregnancySafe: true,
+      withdrawalPeriod: { milk: "Zero days", meat: "Zero days" },
+      indications: ["Follicular cysts and cystic ovarian degeneration", "Delayed ovulation and anovulation", "Improvement of conception rate at A.I.", "Prevention of early embryonic mortality (luteotropic support on Day 12)"],
+      contraindications: ["Refractory ovarian hypoplasia or juvenile ovaries with no follicular waves"]
+    },
+    {
+      id: "DRUG_SYNTHETIC_OXYTOCIN",
+      salt: "Synthetic Oxytocin Injection 10 IU/ml",
+      category: "Hormone",
+      ethicalBrand: { name: "Syntocinon Vet (10 IU)", company: "Novartis / Sandoz", approxMrp: 48.00 },
+      genericOption: { name: "Oxytocin Vet (10 IU)", approxMrp: 20.00 },
+      doseRate: "20 to 40 IU (2 to 4 ml) I/M for adult cattle/buffalo; 5 to 10 IU for sheep/goat",
+      route: "Intramuscular (I/M) or very slow Intravenous infusion in glucose drip",
+      pregnancySafe: false,
+      withdrawalPeriod: { milk: "Zero hours", meat: "Zero days" },
+      indications: ["Primary uterine inertia during active stage 2 labor (cervix must be fully dilated)", "Retention of Placenta (ROP) within first 2 to 6 hours postpartum", "Facilitation of milk let-down in agalactia from stress"],
+      contraindications: ["STRICTLY CONTRAINDICATED when cervix is closed or in mechanical dystocia (causes fatal uterine rupture)", "Tetanic uterine contractions"]
+    },
+    {
+      id: "DRUG_ATROPINE_SULFATE",
+      salt: "Atropine Sulfate Injection 1 mg/ml",
+      category: "Supportive & Fluids",
+      ethicalBrand: { name: "Atro-Vet (100 ml)", company: "Harson Laboratories", approxMrp: 98.00 },
+      genericOption: { name: "Atropine 100 ml", approxMrp: 38.00 },
+      doseRate: "Organophosphate toxicity: 0.2 to 0.5 mg/kg (1/4th dose slow IV, 3/4th dose S/C)",
+      route: "1/4th dose slow I/V, remainder Subcutaneous (S/C) or I/M",
+      pregnancySafe: true,
+      withdrawalPeriod: { milk: "3 days", meat: "3 days" },
+      indications: ["Specific antidote for Organophosphate (OP) and Carbamate pesticide poisoning", "Antisialagogue in excessive salivation/choking", "Sinus bradycardia and partial AV heart block"],
+      contraindications: ["Glaucoma", "Paralytic ileus and severe ruminal bloat (unless reversing life-threatening cholinergic crisis)"]
+    },
+    {
+      id: "DRUG_SODIUM_BICARBONATE_7_5",
+      salt: "Sodium Bicarbonate Injection 7.5% w/v Hypertonic Infusion (500 ml)",
+      category: "Rumen Buffer",
+      ethicalBrand: { name: "Sodabicarb 7.5% (500 ml)", company: "Claris / Zydus", approxMrp: 175.00 },
+      genericOption: { name: "Sodium Bicarb 7.5% (500 ml)", approxMrp: 72.00 },
+      doseRate: "500 to 1000 ml slow I/V based on severity of rumen pH drop and base deficit",
+      route: "Strictly Slow Intravenous (Slow I/V only)",
+      pregnancySafe: true,
+      withdrawalPeriod: { milk: "Zero days", meat: "Zero days" },
+      indications: ["Acute Lactic Acidosis (Grain Overload / carbohydrate engorgement)", "Severe metabolic acidosis secondary to diarrheal dehydration", "Hyperkalemia"],
+      contraindications: ["Metabolic or respiratory alkalosis", "Hypocalcemia (alkalosis triggers acute tetany)", "Extravascular perivascular injection causes tissue necrosis"]
+    },
+    {
+      id: "DRUG_DEXTROSE_20_PERCENT",
+      salt: "Dextrose Hypertonic Infusion 20% w/v (1000 ml)",
+      category: "Metabolic & Calcium",
+      ethicalBrand: { name: "Dextrose 20% Vet (1000 ml)", company: "Albert David / Aculife", approxMrp: 145.00 },
+      genericOption: { name: "Dextrose 20% (1000 ml)", approxMrp: 58.00 },
+      doseRate: "1000 to 2000 ml slow I/V infusion warmed to body temperature",
+      route: "Strictly Intravenous (I/V only)",
+      pregnancySafe: true,
+      withdrawalPeriod: { milk: "Zero days", meat: "Zero days" },
+      indications: ["Clinical Ketosis (Acetonemia) in high-yielding dairy cows", "Severe hypoglycemic exhaustion", "Hepatic glycogen depletion support in toxemia", "Downer cow shock"],
+      contraindications: ["Hyperglycemia", "Never administer Subcutaneously or Intramuscularly (induces sterile abscesses and massive sloughing)"]
     }
   ];
 
   /* =========================================================================
-     6. PUBLIC API ATTACHMENT TO WINDOW OBJECT
+     3. EXHAUSTIVE VACCINATION KNOWLEDGE BASE (window.VETCARE_VACCINATION_DB)
      ========================================================================= */
-  if (typeof root !== "undefined") {
-    root.VETCARE_MEDICINES_DB = MEDICINES_DB;
-    root.VETCARE_VACCINATION_DB = VACCINATION_DB;
-    root.VETCARE_DISEASE_DB = DISEASE_DB;
-    root.VETCARE_SYMPTOMS_BY_ORGAN = SYMPTOMS_BY_ORGAN;
-    root.VETCARE_FARMER_ORGAN_REMEDIES = FARMER_ORGAN_REMEDIES;
+  root.VETCARE_VACCINATION_DB = [
+    {
+      id: "VAX_HS",
+      vaccineName: "Hemorrhagic Septicemia Alum Precipitated / Oil Adjuvant Vaccine",
+      diseaseHi: "गलघोंटू (Hemorrhagic Septicemia - Pasteurella multocida B:2)",
+      diseaseEn: "Hemorrhagic Septicemia (HS)",
+      targetSpecies: ["गाय (Cattle)", "भैंस (Buffalo)"],
+      idealAge: "6 माह या उससे अधिक (6 months and above)",
+      season: "मई - जून (Pre-monsoon strictly before rains)",
+      route: "Alum Precipitated: Subcutaneous (S/C); Oil Adjuvant: Deep Intramuscular (Deep I/M)",
+      dose: "Alum Vaccine: 5 ml S/C; Oil Adjuvant Vaccine: 2 to 3 ml Deep I/M",
+      boosterFrequency: "वार्षिक (Annual revaccination pre-monsoon)",
+      immunityDuration: "Alum Vaccine: 6 माह; Oil Adjuvant Vaccine: 12 माह",
+      precautions: "पशु को बुखार या कृमि संक्रमण न हो। टीकाकरण से 15 दिन पूर्व कृमिनाशक (Deworming) अवश्य दें। गाभिन के अंतिम 15 दिनों में अनावश्यक तनाव से बचें।",
+      contraindications: ["बीमार, कमजोर या अत्यधिक ज्वरग्रस्त पशु", "6 माह से छोटे बछड़े जिनके मातृक एंटीबॉडीज (Maternal immunity) मौजूद हों"]
+    },
+    {
+      id: "VAX_BQ",
+      vaccineName: "Black Quarter Formalin Inactivated Aluminum Hydroxide Gel Adjuvant Vaccine",
+      diseaseHi: "लंगड़ा बुखार / चरचरा (Clostridium chauvoei)",
+      diseaseEn: "Black Quarter (BQ)",
+      targetSpecies: ["गाय (Cattle)", "भैंस (Buffalo)", "भेड़-बकरी"],
+      idealAge: "6 माह या उससे अधिक (मुख्यतः 6 माह से 3 वर्ष के युवा पशु)",
+      season: "मई - जून (मानसून पूर्व)",
+      route: "Subcutaneous (S/C) in mid-neck region",
+      dose: "5 ml Subcutaneously in cattle & buffaloes; 2 ml for sheep/goat",
+      boosterFrequency: "वार्षिक (Annual revaccination pre-monsoon)",
+      immunityDuration: "10 से 12 माह",
+      precautions: "सुई साफ और विसंक्रमित हो। 3 वर्ष से अधिक आयु के मवेशियों में यह रोग अत्यंत दुर्लभ है।",
+      contraindications: ["सक्रिय बीक्यू प्रकोप वाले बाड़े में लक्षण दिखा रहे पशुओं को न लगाएं", "गर्भावस्था के अंतिम माह में अत्यधिक भागदौड़ न कराएं"]
+    },
+    {
+      id: "VAX_FMD",
+      vaccineName: "Foot and Mouth Disease Trivalent Inactivated Oil Adjuvant Vaccine (O, A, Asia-1)",
+      diseaseHi: "खुरपका-मुँहपका (FMD Aphthovirus)",
+      diseaseEn: "Foot-and-Mouth Disease (FMD)",
+      targetSpecies: ["गाय", "भैंस", "भेड़", "बकरी", "सूअर"],
+      idealAge: "4 माह की उम्र पर प्रथम टीका (Primary)",
+      season: "फरवरी - मार्च और अगस्त - सितंबर (Bi-annual cycles under NADCP)",
+      route: "Deep Intramuscular (Deep I/M in neck region) or Subcutaneous as per manufacturer",
+      dose: "गाय व भैंस: 2 ml Deep I/M; भेड़ व बकरी: 1 ml Deep I/M",
+      boosterFrequency: "प्रथम टीके के 1 माह बाद पहला बूस्टर; तत्पश्चात प्रति 6 माह पर नियमित बूस्टर",
+      immunityDuration: "लगभग 6 माह",
+      precautions: "कोल्ड चेन (+2°C to +8°C) का कड़ाई से पालन करें। टीके को कभी फ्रीज/बर्फ न जमने दें। वैक्सीन शीशी को लगाने से पहले अच्छी तरह हिलाएं।",
+      contraindications: ["4 माह से छोटे बछड़े", "अति-दुर्बल या तीव्र संक्रामक बीमारी से ग्रस्त पशु"]
+    },
+    {
+      id: "VAX_LSD_GOAT_POX",
+      vaccineName: "Heterologous Live Attenuated Goat Pox Vaccine (Uttarkashi Strain) / Lumpi-ProVacInd",
+      diseaseHi: "लंपी स्किन रोग (Lumpy Skin Disease - Capripoxvirus)",
+      diseaseEn: "Lumpy Skin Disease (LSD)",
+      targetSpecies: ["गाय (Cattle)"],
+      idealAge: "4 माह व उससे अधिक उम्र के बछड़े व गायें",
+      season: "मार्च - अप्रैल (मच्छर, डास मक्खी व किलनी सीजन से पूर्व)",
+      route: "Subcutaneous (S/C) in the side of neck",
+      dose: "Goat Pox Vaccine: 3 ml S/C (10x dose for cattle); Homologous Lumpi-ProVacInd: 1 ml S/C",
+      boosterFrequency: "वार्षिक (Annual booster vaccination)",
+      immunityDuration: "कम से कम 1 वर्ष",
+      precautions: "प्रभावित क्षेत्रों में रिंग वैक्सीनेशन (Ring Vaccination) रणनीति अपनाएं। वैक्सीन को खोलने के 2 घंटे के भीतर उपयोग कर लें।",
+      contraindications: ["सक्रिय लंपी स्किन के नोड्यूल दिखा रहे संक्रमित पशु", "भैंसों में सामान्यतः रोग प्रतिरोधक क्षमता होने से टीकाकरण अनिवार्य नहीं है"]
+    },
+    {
+      id: "VAX_BRUCELLOSIS",
+      vaccineName: "Brucella abortus Cotton Strain 19 Live Vaccine / RB51 Rough Mutant",
+      diseaseHi: "ब्रुसेलोसिस / संक्रामक गर्भपात (Brucella abortus)",
+      diseaseEn: "Bovine Brucellosis",
+      targetSpecies: ["केवल 4 से 8 माह की मादा बछड़ियां (Female Calves strictly)"],
+      idealAge: "4 से 8 माह की उम्र (strictly between 4 to 8 months of age)",
+      season: "वर्ष भर (उम्र के अनुरूप कभी भी)",
+      route: "Subcutaneous (S/C) in neck",
+      dose: "2 ml Subcutaneously (Reduced dose 3-5 x 10^9 organisms)",
+      boosterFrequency: "जीवन में केवल एक बार (Once in a lifetime - NO BOOSTER EVER)",
+      immunityDuration: "आजीवन सुरक्षा (Lifelong protection against abortion)",
+      precautions: "कठोर वैधानिक चेतावनी: यह जूनोटिक टीका है! टीकाकर्मी दस्ताने व चश्मा पहनें। यदि टीका कर्मी की आंख या त्वचा में लग जाए तो तुरंत डॉक्टर से डॉक्सीसाइक्लिन लें।",
+      contraindications: ["STRICTLY PROHIBITED in male calves (induces permanent orchitis)", "STRICTLY PROHIBITED in adult or pregnant cows (causes immediate abortion)", "Female calves >8 months age"]
+    },
+    {
+      id: "VAX_PPR",
+      vaccineName: "PPR Live Attenuated Cell Culture Vaccine (Sungri 96 Strain)",
+      diseaseHi: "बकरी प्लेग / पीपीआर (Peste des Petits Ruminants)",
+      diseaseEn: "Peste des Petits Ruminants (PPR)",
+      targetSpecies: ["बकरी (Goat)", "भेड़ (Sheep)"],
+      idealAge: "4 माह की उम्र पर",
+      season: "जनवरी - फरवरी (प्रजनन सीजन से पूर्व)",
+      route: "Subcutaneous (S/C) in lateral neck or inner flank",
+      dose: "1 ml Subcutaneously",
+      boosterFrequency: "प्रति 3 वर्ष में एक बार (Once in 3 years)",
+      immunityDuration: "कम से कम 3 वर्ष (Often lifelong)",
+      precautions: "घोलने के लिए दिए गए कोल्ड डाइल्युएंट का ही प्रयोग करें। धूप से बचाएं। 2 घंटे में समाप्त करें।",
+      contraindications: ["4 माह से छोटे मेमने", "अंतिम माह की गाभिन बकरियां"]
+    },
+    {
+      id: "VAX_ET",
+      vaccineName: "Enterotoxemia Multi-component Clostridial Aluminum Hydroxide Adjuvant Vaccine",
+      diseaseHi: "फिड़किया / आंत्रविषरक्तता (Clostridium perfringens Type D)",
+      diseaseEn: "Enterotoxemia (Pulpy Kidney)",
+      targetSpecies: ["भेड़ (Sheep)", "बकरी (Goat)", "गाय के बछड़े"],
+      idealAge: "3 से 4 माह की उम्र पर",
+      season: "मई - जून (नई मानसूनी घास व दाना चरने से पूर्व)",
+      route: "Subcutaneous (S/C)",
+      dose: "2.5 ml Subcutaneously for sheep/goat; 5 ml for cattle",
+      boosterFrequency: "प्राथमिक टीके के 2-3 सप्ताह बाद बूस्टर; फिर वार्षिक",
+      immunityDuration: "1 वर्ष",
+      precautions: "अचानक अत्यधिक कार्बोहाइड्रेट (अनाज/हरी घास) खिलाने से पूर्व टीकाकरण चक्र पूरा होना चाहिए।",
+      contraindications: ["तीव्र पेट दर्द या दस्त से ग्रस्त पशु"]
+    },
+    {
+      id: "VAX_ANTHRAX",
+      vaccineName: "Anthrax Spore Vaccine (Sterne Strain 34F2 Live Inactivated Spore Susp.)",
+      diseaseHi: "एंथ्रेक्स / प्लीहा ज्वर / जहरी बुखार (Bacillus anthracis)",
+      diseaseEn: "Anthrax",
+      targetSpecies: ["गाय", "भैंस", "भेड़", "बकरी", "घोड़ा"],
+      idealAge: "6 माह व उससे अधिक (केवल स्थानिक / Endemic क्षेत्रों में)",
+      season: "अप्रैल - मई (गर्मी के मौसम में)",
+      route: "Subcutaneous (S/C) strictly",
+      dose: "गाय व भैंस: 1 ml S/C; भेड़ व बकरी: 0.5 ml S/C",
+      boosterFrequency: "वार्षिक (केवल घोषित स्थानिक रेड-जोन क्षेत्रों में)",
+      immunityDuration: "10 से 12 माह",
+      precautions: "टीका लगाने के 10 दिन पूर्व और 10 दिन बाद तक पशु को कोई भी एंटीबायोटिक (विशेषकर पेनिसिलिन) न दें, अन्यथा टीका निष्प्रभावी हो जाएगा।",
+      contraindications: ["गैर-स्थानिक सुरक्षित क्षेत्र (Non-endemic zones)", "सक्रिय प्रकोप में मृत पशुओं के पास टीकाकरण न करें"]
+    }
+  ];
 
-    // Helper Utility Methods for Clinical Operations
-    root.VetcareDB = {
-      getMedicineById: function (id) {
-        return MEDICINES_DB.find(function (m) { return m.id === id; }) || null;
-      },
-      getMedicinesByCategory: function (category) {
-        return MEDICINES_DB.filter(function (m) { return m.category.toLowerCase() === category.toLowerCase(); });
-      },
-      getDiseaseById: function (id) {
-        return DISEASE_DB.find(function (d) { return d.id === id; }) || null;
-      },
-      searchDiseases: function (query) {
-        if (!query) return DISEASE_DB;
-        var q = query.toLowerCase().trim();
-        return DISEASE_DB.filter(function (d) {
-          return d.nameHindi.toLowerCase().indexOf(q) !== -1 ||
-                 d.nameEnglish.toLowerCase().indexOf(q) !== -1 ||
-                 d.cardinalSigns.toLowerCase().indexOf(q) !== -1 ||
-                 d.organAffected.toLowerCase().indexOf(q) !== -1;
-        });
-      },
-      getVaccinesForSpecies: function (speciesName) {
-        var s = speciesName.toLowerCase();
-        return VACCINATION_DB.filter(function (v) {
-          return v.species.some(function (sp) { return sp.toLowerCase().indexOf(s) !== -1; });
-        });
-      },
-      getRemediesByOrgan: function (organQuery) {
-        var q = organQuery.toLowerCase();
-        return FARMER_ORGAN_REMEDIES.filter(function (r) {
-          return r.organSystem.toLowerCase().indexOf(q) !== -1 ||
-                 r.condition.toLowerCase().indexOf(q) !== -1;
-        });
-      }
-    };
-  }
+  /* =========================================================================
+     4. SMART FARMER CURATED SIMPLE PROFILES (window.VETCARE_FARMER_DISEASE_DB)
+     ========================================================================= */
+  root.VETCARE_FARMER_DISEASE_DB = [
+    {
+      id: "farmer_repeat_breeding",
+      nameHi: "रिपीट ब्रीडिंग (बार-बार फिरना / ग्याभिन न ठहरना)",
+      affectedOrgan: "बच्चेदानी (गर्भाशय व अंडाशय)",
+      causes: "बच्चेदानी में हल्का गुप्त संक्रमण (Subclinical Endometritis), संतुलित आहार व मिनरल की कमी (फास्फोरस, कॉपर, जिंक), सीमन डलवाने का गलत समय या कमजोर अंडा।",
+      effects: "गाय-भैंस हर 21 दिन में फिर से गर्मी/मद में आ जाती है। कृत्रिम गर्भाधान (A.I.) का खर्च बढ़ता है और दूध उत्पादन चक्र लेट होने से भारी आर्थिक नुकसान होता है।",
+      currentStatusSigns: "पशु बार-बार मद के पूरे लक्षण दिखाता है, डिस्चार्ज शीशे जैसा या कभी-कभी हल्का मैला आता है, परंतु 3 बार से अधिक सीमन कराने पर भी खाली रह जाता है।",
+      stagesTimeline: [
+        { stage: "शुरुआती चरण (1-2 बार फिरना)", signs: "मद चक्र सामान्य 21 दिन पर आता है, पशु स्वस्थ दिखता है।", action: "तुरंत मिनरल मिक्सचर शुरू करें और मद शुरू होने के 12-18 घंटे के बीच ही सीमन करवाएं।" },
+        { stage: "दीर्घकालिक बांझपन चरण (3 से अधिक बार फिरना)", signs: "मद चक्र अनियमित (15 या 28 दिन), पेशाब के साथ तार में कभी-कभी सफेद कफ दिखना।", action: "गर्भाशय में संक्रमण की जांच कराएं और डॉक्टर से गर्भाशय की आंतरिक धुलाई कराएं।" }
+      ],
+      desiTreatment: [
+        {
+          name: "अंकुरित गेहूं, सौंफ व हल्दी का गर्भाशय शोधक नुस्खा",
+          ingredients: "अंकुरित देशी गेहूं (250 ग्राम), पिसी सौंफ (50 ग्राम), पुराना गुड़ (100 ग्राम), शुद्ध हल्दी (20 ग्राम)।",
+          preparation: "गेहूं को अंकुरित करें। उसमें सौंफ, हल्दी व गुड़ कूटकर मिलाएं। रोजाना सुबह खाली पेट लगातार 15 दिन तक खिलाएं।",
+          precautions: "यदि डिस्चार्ज में पीला मवाद दिख रहा हो तो पहले डॉक्टर से गर्भाशय की दवा डलवाएं।"
+        },
+        {
+          name: "एलोवेरा (घृतकुमारी) आंतरिक शोधन",
+          ingredients: "ताजा एलोवेरा का गूदा (200 ग्राम), थोड़ी हल्दी (15 ग्राम)।",
+          preparation: "एलोवेरा के कांटे छीलकर गूदे में हल्दी मिलाकर मद में आने के 3 दिन पहले से लगातार 7 दिन तक सुबह खाली पेट खिलाएं।",
+          precautions: "यदि पशु गाभिन ठहर जाए तो एलोवेरा कदापि न दें (यह गर्भाशय संकुचन करता है)।"
+        }
+      ],
+      essentialAdvisory: "यदि 3 बार प्राकृतिक या सीमन कराने पर भी पशु न रुके, तो किसी नीम-हकीम के चक्कर में न पड़ें। तुरंत अधिकृत वेटरनरी डॉक्टर से बच्चेदानी व अंडाशय की पीडी (Pregnancy Diagnosis/Gynec Rectal Exam) करवाएं।"
+    },
+    {
+      id: "farmer_rop",
+      nameHi: "जेर का रुकना (Retention of Placenta - ROP)",
+      affectedOrgan: "बच्चेदानी (गर्भाशय)",
+      causes: "ब्याने के समय कमजोरी, शरीर में कैल्शियम या विटामिन-ई व सेलेनियम की कमी, जुड़वा बच्चे होना या समय से पहले प्रसव।",
+      effects: "बच्चेदानी में भयंकर सड़न पैदा होती है, तेज बुखार चढ़ता है, दूध सूख जाता है और भविष्य में बांझपन का 90% खतरा बढ़ जाता है।",
+      currentStatusSigns: "ब्याने के 8 से 12 घंटे बीत जाने के बाद भी जेर बाहर न गिरना और योनि मार्ग से नीचे की ओर लटकती रहना।",
+      stagesTimeline: [
+        { stage: "प्राथमिक चरण (प्रसव के 6-12 घंटे)", signs: "जेर का कुछ भाग बाहर लटक रहा है, पशु सामान्य जुगाली कर रहा है।", action: "पारंपरिक बांस काढ़े का प्रयोग करें, हाथ से खींचने की गलती बिल्कुल न करें।" },
+        { stage: "सड़न व संक्रमण चरण (18-24 घंटे बाद)", signs: "जेर से सड़े मांस की भयंकर दुर्गंध, मक्खियां भिनभिनाना, चारा छोड़ना व हल्का बुखार।", action: "तत्काल वेटरनरी डॉक्टर को बुलाकर गर्भाशय की सुरक्षित सफाई व एंटीबायोटिक उपचार कराएं।" }
+      ],
+      desiTreatment: [
+        {
+          name: "बांस पत्ता, अजवाइन व सोंठ का पारंपरिक काढ़ा",
+          ingredients: "हरे बांस के ताजे पत्ते (500 ग्राम), अजवाइन (50 ग्राम), सोंठ (50 ग्राम), पुराना गुड़ (400 ग्राम), मेथी दाना (50 ग्राम)।",
+          preparation: "3 लीटर पानी में सभी सामग्री कूटकर डालें। धीमी आंच पर उबालें जब तक पानी आधा (1.5 लीटर) न रह जाए। गुनगुना रहने पर ब्याने के 4 से 6 घंटे के भीतर पशु को पिलाएं।",
+          precautions: "जेर पर ईंट, पत्थर या भारी वजन कभी न बांधें। न ही बलपूर्वक खींचें, इससे गर्भाशय पलट सकता है या रक्तस्राव से पशु मर सकता है।"
+        }
+      ],
+      essentialAdvisory: "यदि ब्याने के 12 घंटे बाद भी जेर न गिरे, तो किसी अनाड़ी व्यक्ति से गर्भाशय में हाथ न डलवाएं। अनाड़ी हाथ डालने से गर्भाशय के बटन (Cotyledons) छिल जाते हैं। तुरंत अधिकृत डॉक्टर को बुलाएं।"
+    },
+    {
+      id: "farmer_mastitis",
+      nameHi: "थनैला रोग (थन की सूजन / Mastitis)",
+      affectedOrgan: "थन एवं अयन (Udder & Teats)",
+      causes: "दूध दुहने के बाद फर्श पर मौजूद गंदगी व जीवाणुओं का खुले थन के छेद से भीतर घुसना, थन पर चोट लगना, अंगूठा दबाकर गलत तरीके से दुहना।",
+      effects: "दूध फटना, छिछड़े आना, थन का हमेशा के लिए मारा जाना (सूखना) और पशु का मूल्य कौड़ियों के भाव हो जाना।",
+      currentStatusSigns: "थन में लाली, सूजन, अयन पत्थर जैसा कड़ा व छूने पर बहुत गर्म, दूध में पीले थक्के, पानी या खून आना, पशु का लात मारना।",
+      stagesTimeline: [
+        { stage: "शुरुआती अवस्था (Subclinical to Mild)", signs: "दूध की पहली धार में बारीक जालीदार छिछड़े, थन में हल्की गर्माहट।", action: "तुरंत थन का पूरा दूध खाली करें और एलोवेरा-हल्दी-चूना लेप लगाएं।" },
+        { stage: "गंभीर अवस्था (Acute Clinical)", signs: "थन बिल्कुल पत्थर जैसा कठोर, दूध की जगह पीला पानी या खून, पशु को 104°F बुखार।", action: "बिना 1 घंटे की देरी के डॉक्टर से नस में इंजेक्शन व थन में ट्यूब डलवाएं।" }
+      ],
+      desiTreatment: [
+        {
+          name: "प्रसिद्ध एलोवेरा, हल्दी व चूना लेप (NDDB प्रमाणित)",
+          ingredients: "ताजा एलोवेरा का गूदा (250 ग्राम), शुद्ध पिसी हल्दी (50 ग्राम), खाने वाला चूना (15 ग्राम)।",
+          preparation: "तीनों को सिलबट्टे या मिक्सी में अच्छी तरह पीसकर लाल रंग का गाढ़ा पेस्ट बनाएं। इसमें थोड़ा पानी मिलाकर पतला करें। थन का पूरा दूध अच्छी तरह निकालकर दिन में 3 से 4 बार पूरे अयन पर लेप लगाएं।",
+          precautions: "दूध निकालने से पहले थन को गुनगुने पानी से अच्छी तरह धो लें। यह लेप लगातार 5 दिन तक लगाएं।"
+        },
+        {
+          name: "कागजी नींबू का रस उपचार",
+          ingredients: "कागजी नींबू (4 से 5 नग)।",
+          preparation: "रस निकालकर 250 मिली सादे पानी में घोलकर दिन में दो बार 3 दिन तक पिलाएं। यह थन के बढ़े हुए खारेपन (pH) को सामान्य करता है।",
+          precautions: "पुराने पथरीले थनैला में केवल नींबू के भरोसे न बैठें।"
+        }
+      ],
+      essentialAdvisory: "यदि थन से खून आ रहा हो, थन नीला-काला पड़ रहा हो या छूने पर ठंडा महसूस हो, तो यह गैंग्रीन थनैला है! तुरंत डॉक्टर को बुलाएं, 24 घंटे में थन हमेशा के लिए गलकर गिर सकता है।"
+    },
+    {
+      id: "farmer_milk_fever",
+      nameHi: "मिल्क फीवर (दुग्ध ज्वर / कैल्शियम की अचानक कमी)",
+      affectedOrgan: "संपूर्ण शरीर (मांसपेशियां, तंत्रिकाएं व रक्त)",
+      causes: "ब्याने के तुरंत बाद अधिक दूध देने वाली गाय-भैंसों में दूध के साथ शरीर का बहुत सारा कैल्शियम अचानक बाहर निकल जाना।",
+      effects: "मांसपेशियां सुन्न हो जाती हैं, पशु उठने में असमर्थ होकर बैठ जाता है और समय पर इलाज न मिले तो 12-24 घंटे में मौत हो जाती है।",
+      currentStatusSigns: "नाम 'फीवर' है परंतु शरीर बर्फ की भांति ठंडा हो जाता है, पशु गर्दन मोड़कर अपनी कोख (पुट्ठे) पर रखकर बैठ जाता है, कान लटक जाते हैं।",
+      stagesTimeline: [
+        { stage: "प्रथम चरण (चलने में लड़खड़ाहट)", signs: "पैरों में कंपकंपी, पिछले पैरों का कांपना, कान ठंडे होना, बेचैनी।", action: "तुरंत ओरल कैल्शियम जेल मुंह से चटाएं और पशु को सहारा दें।" },
+        { stage: "द्वितीय व तृतीय चरण (गर्दन मोड़कर बैठना व कोमा)", signs: "पशु पूरी तरह बैठ जाता है, गर्दन 'S' आकार में मुड़ जाती है, आंखें पथरा जाती हैं, गोबर-पेशाब बंद।", action: "मुंह से कुछ भी न पिलाएं! तुरंत डॉक्टर से नस (I/V) में कैल्शियम की बोतल लगवाएं।" }
+      ],
+      desiTreatment: [
+        {
+          name: "शरीर को गर्माहट व सहारा (आपातकालीन प्राथमिक उपचार)",
+          ingredients: "सूखी पराली/सूखा बिछावन, टाट की सूती बोरियां, सरसों तेल व लहसुन।",
+          preparation: "पशु को सूखी पराली पर सीने के बल बैठाएं (Sternal position)। पूरे शरीर पर सूती बोरियां ढकें। लहसुन मिले गुनगुने सरसों तेल से कानों व खुरों की तेज मालिश करें।",
+          precautions: "सख्त चेतावनी: बैठे हुए या अचेत पशु को कभी भी नाल या बोतल से तेल, काढ़ा या पानी न पिलाएं! तरल फेफड़ों में जाकर पशु की तुरंत दम घुटने से मौत हो जाती है।"
+        }
+      ],
+      essentialAdvisory: "मिल्क फीवर एक शुद्ध आपातकालीन (Medical Emergency) रोग है! देसी नुस्खे केवल डॉक्टर के आने तक शरीर को गर्म रखने के लिए हैं। पशु को बचाने के लिए 1 घंटे के भीतर नस में कैल्शियम (Mifex) चढ़वाना अनिवार्य है।"
+    },
+    {
+      id: "farmer_ketosis",
+      nameHi: "कीटोशिस (दूध व सांस से मीठी गंध आना / ऊर्जा की कमी)",
+      affectedOrgan: "लीवर (यकृत) एवं रूमेन",
+      causes: "ब्याने के 2 से 8 सप्ताह बाद अधिक दूध देने वाले पशुओं में शरीर की आवश्यकता के अनुसार ग्लूकोज/ऊर्जा न मिलना, केवल सूखा तूड़ा खिलाना।",
+      effects: "दूध का उत्पादन अचानक आधा रह जाता है, पशु बहुत तेजी से सूखकर कंकाल बन जाता है और लीवर में चर्बी जम जाती है।",
+      currentStatusSigns: "पशु दाना, चोकर व खली खाना पूरी तरह छोड़ देता है और केवल गंदा सूखा भूसा खाता है। मुंह, सांस और पेशाब से नेलपॉलिश/क्लोरोफॉर्म जैसी मीठी गंध आती है।",
+      stagesTimeline: [
+        { stage: "पाचन संबंधी कीटोशिस", signs: "दाना न खाना, सूखा काला गोबर, दूध में भारी गिरावट, सुस्ती।", action: "तुरंत गुड़ व मीठा तेल देना शुरू करें और सुपाच्य दलिया दें।" },
+        { stage: "नर्वस (पागलपन) कीटोशिस", signs: "दीवार से सिर दबाकर खड़े रहना, हवा में जीभ लहराना, लड़खड़ाना, अंधापन।", action: "तत्काल डॉक्टर द्वारा नस में 20% ग्लूकोज की बोतलें चढ़वाना अनिवार्य।" }
+      ],
+      desiTreatment: [
+        {
+          name: "गुड़, आटा व सरसों तेल का ऊर्जा मिश्रण",
+          ingredients: "पुराना देशी गुड़ (500 ग्राम), गेहूं का आटा (250 ग्राम), मीठा सरसों का तेल (100 मिली)।",
+          preparation: "गुड़ का गाढ़ा घोल बनाएं। उसमें आटा व सरसों का तेल अच्छी तरह फेंटकर पेड़ा बनाएं और रोजाना शाम को लगातार 5 से 7 दिन तक खिलाएं।",
+          precautions: "अत्यधिक तेल एक साथ न दें, इससे पशु को दस्त लग सकते हैं।"
+        }
+      ],
+      essentialAdvisory: "यदि पशु दाना पूरी तरह छोड़ दे और गोबर बहुत सूखा व कड़ा आने लगे, तो तुरंत डॉक्टर से प्रोपलीन ग्लाइकोल (Propylene glycol) व ग्लूकोज ड्रिप लगवाएं।"
+    },
+    {
+      id: "farmer_bloat",
+      nameHi: "तीव्र आफरा (पेट फूलना / गैस भरना / Bloat)",
+      affectedOrgan: "पेट (रूमेन - बाईं कोख)",
+      causes: "ओस वाली गीली बरसीम, लूसर्न, सड़ा-गला दाना, अधिक मात्रा में कच्चा आटा खा लेना जिससे रूमेन में झागदार गैस फंस जाती है।",
+      effects: "फूला हुआ बायां पेट फेफड़ों और डायाफ्राम को दबा देता है, जिससे सांस लेने की जगह नहीं बचती और पशु की तड़पकर दम घुटने से मौत हो जाती है।",
+      currentStatusSigns: "पशु की बाईं कोख ढोल की तरह फूल जाती है, थपथपाने पर 'ढब-ढब' की आवाज आती है, मुंह खोलकर जीभ बाहर निकाल हांफता है, बेचैन होकर लात मारता है।",
+      stagesTimeline: [
+        { stage: "हल्का आफरा", signs: "बाईं कोख में उभार, पशु बार-बार उठता-बैठता है, डकार बंद।", action: "तारपीन तेल, हींग व मीठे तेल का देसी घोल तुरंत नाल से दें।" },
+        { stage: "गंभीर आपातकाल (दम घुटना)", signs: "जीभ पूरी बाहर, आंखें फटी हुई, लड़खड़ाकर गिरना, सांस रुकना।", action: "बाईं कोख के त्रिकोण में सुई या कैनुला चुभोकर तुरंत गैस बाहर निकालें।" }
+      ],
+      desiTreatment: [
+        {
+          name: "तारपीन तेल, सरसों तेल व हींग का आपातकालीन घोल",
+          ingredients: "तारपीन का शुद्ध तेल (30 से 50 मिली), मीठा सरसों का तेल (250 से 300 मिली), असली हींग (10 ग्राम), काला नमक (30 ग्राम)।",
+          preparation: "हींग को पीसकर गुनगुने सरसों के तेल में घोलें। उसमें तारपीन का तेल और काला नमक मिलाएं। नाल द्वारा सावधानीपूर्वक पशु को धीरे-धीरे पिलाएं।",
+          precautions: "पशु का मुंह बहुत ऊंचा न उठाएं। मुंह में आड़ी लकड़ी या रस्सी बांध दें ताकि पशु उसे चबाता रहे; इससे लार गिरेगी और डकार आकर गैस निकलेगी।"
+        }
+      ],
+      essentialAdvisory: "यदि दवा देने के 15-20 मिनट के भीतर गैस न निकले और पशु जमीन पर गिरकर हांफने लगे, तो बिना देरी किए डॉक्टर से बाईं कोख में ट्रोकार-कैनुला लगवाएं।"
+    },
+    {
+      id: "farmer_hs",
+      nameHi: "गलघोंटू (घुरका / नाविक ज्वर / Hemorrhagic Septicemia)",
+      affectedOrgan: "गला, सांस नली, फेफड़े एवं रक्त",
+      causes: "पाश्चुरेला जीवाणु का संक्रमण, जो विशेषकर बरसात के मौसम में गंदे गड्ढों का पानी पीने या अत्यधिक ठंड/गर्मी के तनाव से फैलता है।",
+      effects: "गले में गर्म, दर्दनाक सूजन से श्वासनली पूरी तरह बंद हो जाती है और पशु 12 से 24 घंटे में दम घुटकर मर जाता है।",
+      currentStatusSigns: "अत्यंत तेज बुखार (105-107°F), गले व जबड़े के नीचे भारी गर्म सूजन, सांस लेते समय घुर-घुर की तेज आवाज, मुंह से राल टपकना।",
+      stagesTimeline: [
+        { stage: "प्राथमिक ज्वर चरण", signs: "पशु सुस्त, आंखें लाल, तेज बुखार (106°F), हल्का घुरघुर।", action: "बिना 1 घंटे की भी देरी किए डॉक्टर से एंटीबायोटिक इंजेक्शन लगवाएं।" },
+        { stage: "श्वास अवरोध चरण", signs: "गले में भारी सूजन, जीभ बाहर, सांस रुकना, आंखें फटना।", action: "जीवन रक्षा अत्यंत कठिन; तुरंत आपातकालीन एंटीबायोटिक व स्टेरॉयड आवश्यक।" }
+      ],
+      desiTreatment: [
+        {
+          name: "गले की सिकाई व कपूर-सरसों तेल लेप (केवल प्राथमिक राहत)",
+          ingredients: "सरसों का तेल (100 मिली), भीमसेनी कपूर (10 ग्राम), तारपीन तेल (10 मिली)।",
+          preparation: "गुनगुने सरसों तेल में कपूर घोलकर गले की सूजन पर हल्के हाथ से मालिश करें।",
+          precautions: "सख्त चेतावनी: गलघोंटू में केवल देसी इलाज से पशु कभी नहीं बच सकता! यह केवल डॉक्टर के रास्ते में होने तक की प्राथमिक राहत है।"
+        }
+      ],
+      essentialAdvisory: "गलघोंटू एक अति-घातक संक्रामक छूत का रोग है! तुरंत अधिकृत पशु चिकित्सक को बुलाएं। बीमार पशु को अन्य स्वस्थ पशुओं से तुरंत अलग बांधें और स्वस्थ पशुओं में तुरंत गलघोंटू का टीका लगवाएं।"
+    },
+    {
+      id: "farmer_fmd",
+      nameHi: "खुरपका-मुँहपका (मुंह-खुर की बीमारी / FMD)",
+      affectedOrgan: "मुंह, जीभ, मसूड़े, खुरों के बीच की जगह एवं थन",
+      causes: "अत्यधिक संक्रामक वायरस, जो हवा, चारे, पानी और बीमार पशु के संपर्क से बहुत तेजी से फैलता है।",
+      effects: "पशु कई हफ्तों तक चारा नहीं खा पाता, दूध का उत्पादन हमेशा के लिए घट जाता है, पैर गलने से लंगड़ा हो जाता है और छोटे बछड़े दिल का दौरा पड़ने से मर जाते हैं।",
+      currentStatusSigns: "तेज बुखार, मुंह से चिपचिपी राल (तारदार लार) का लगातार टपकना, होठों को चप-चप करना, जीभ व मसूड़ों पर फफोले व छाले, खुरों के बीच घाव, पैर पटकना।",
+      stagesTimeline: [
+        { stage: "छाले फूटने की अवस्था", signs: "मुंह व खुरों के फफोले फूटकर लाल घाव बनना, पशु का दाना-चारा छोड़ना।", action: "मुंह को फिटकरी पानी से और खुरों को नीम-फिनाइल से दिन में 3 बार धोएं।" },
+        { stage: "जख्म व कीड़े पड़ने की अवस्था", signs: "खुरों के घाव में कीड़े (मैगट्स) पड़ना, खुर का खोल छूटने की नौबत।", action: "घाव पर कपूर-नीम तेल लगाएं और डॉक्टर से एंटीबायोटिक इंजेक्शन लगवाएं।" }
+      ],
+      desiTreatment: [
+        {
+          name: "मुंह के छालों हेतु फिटकरी व सुहागा-शहद लेप",
+          ingredients: "पोटेशियम एलम (फिटकरी) 10 ग्राम, भुना हुआ सुहागा (बोरेक्स) 10 ग्राम, शुद्ध शहद (50 ग्राम)।",
+          preparation: "1 लीटर हल्के गुनगुने पानी में फिटकरी घोलकर मुंह धोएं। धोने के बाद शहद में सुहागा मिलाकर जीभ व छालों पर लेप करें।",
+          precautions: "पशु को चारा बारीक काटकर दलिया या ठंडी कांजी के रूप में दें।"
+        },
+        {
+          name: "खुरों के घाव हेतु नीम व हल्दी का मरहम",
+          ingredients: "उबले नीम के पत्तों का अर्क, हल्दी पाउडर (50 ग्राम), सरसों का तेल (100 मिली), कपूर (10 ग्राम)।",
+          preparation: "नीम के पानी से खुर धोकर उस पर हल्दी, कपूर व सरसों तेल का लेप लगाएं ताकि मक्खी न बैठे।",
+          precautions: "पशु को कीचड़ या गोबर में खड़ा न होने दें; सूखी रेतीली जगह बांधें।"
+        }
+      ],
+      essentialAdvisory: "एफएमडी वायरस जनित है। घावों में कीड़े पड़ने, निमोनिया और थनैला से बचाने के लिए डॉक्टर से एंटीबायोटिक व दर्द निवारक इंजेक्शन का 3 दिन का कोर्स जरूर करवाएं।"
+    },
+    {
+      id: "farmer_lsd",
+      nameHi: "लंपी स्किन रोग (गांठदार त्वचा रोग / LSD)",
+      affectedOrgan: "त्वचा, लिम्फ ग्रंथियां, पैर एवं आंखें",
+      causes: "कैप्रिपॉक्स वायरस, जो मुख्य रूप से डास मक्खी, मच्छर और किलनी (चिचड़ी) के काटने से एक पशु से दूसरे में फैलता है।",
+      effects: "खाल खराब होना, पैरों में भयंकर सूजन से लंगड़ापन, दूध का भारी नुकसान, बांझपन और फेफड़ों में गांठें बनने से निमोनिया।",
+      currentStatusSigns: "तेज बुखार (105-106°F), पूरे शरीर पर 2 से 5 सेमी की कठोर गोल गांठें (Nodules), पैरों व गलकंबल में पानी की सूजन, आंख-नाक से पानी।",
+      stagesTimeline: [
+        { stage: "गांठें उभरने का चरण", signs: "तेज बुखार के साथ शरीर पर कठोर गिल्टियां उभरना, चारा कम करना।", action: "इम्यूनिटी बढ़ाने का हर्बल काढ़ा दें और मक्खी-मच्छर से बचाव करें।" },
+        { stage: "गांठें फूटने व घाव बनने का चरण", signs: "गांठें फूटकर गहरे गड्ढे बनना, मवाद आना, पैरों में भारी सूजन।", action: "घावों पर नीम-हल्दी-कपूर तेल लगाएं और डॉक्टर से दवा लें।" }
+      ],
+      desiTreatment: [
+        {
+          name: "राष्ट्रीय स्वीकृत हर्बल इम्यूनिटी लड्डू (NDDB Formulated)",
+          ingredients: "साबुत काली मिर्च (20 ग्राम), जीरा (20 ग्राम), हल्दी पाउडर (50 ग्राम), गिलोय के टुकड़े (50 ग्राम), तुलसी पत्ते (मुट्ठी भर), पुराना गुड़ (100 ग्राम)।",
+          preparation: "सभी मसालों को कूटकर गुड़ में मिलाकर 2 बड़े लड्डू बनाएं। रोजाना सुबह-शाम 5 से 7 दिन तक खिलाएं।",
+          precautions: "गाभिन पशु को गिलोय और हल्दी की मात्रा आधी कर दें।"
+        },
+        {
+          name: "फूटी गांठों के घाव हेतु हर्बल मरहम",
+          ingredients: "नीम का शुद्ध तेल (100 मिली), कपूर की 5 टिकिया (10 ग्राम), हल्दी पाउडर (20 ग्राम)।",
+          preparation: "नीम तेल में कपूर और हल्दी मिलाकर दिन में दो बार फूटी हुई गांठों पर लगाएं।",
+          precautions: "आंखों के अंदर यह तेल न जाने दें।"
+        }
+      ],
+      essentialAdvisory: "यदि पशु के पैरों में अत्यधिक सूजन आ जाए जिससे वह खड़ा न हो सके, या सांस लेते समय गले से घुरघुर की आवाज आए, तो तुरंत डॉक्टर से संपर्क करें।"
+    },
+    {
+      id: "farmer_surra",
+      nameHi: "सर्रा रोग (मक्खी जनित दौरा रोग / Trypanosomiasis)",
+      affectedOrgan: "रक्त एवं केंद्रीय तंत्रिका तंत्र (मस्तिष्क)",
+      causes: "ट्रिपैनोसोमा प्रोटोजोआ, जो बरसात के बाद बड़ी डास मक्खियों (Tabanus flies) के काटने से खून में फैलता है।",
+      effects: "खून का तेजी से टूटना, भयंकर रक्ताल्पता (Anemia), अंधापन, पागलों जैसे दौरे और अंततः मृत्यु।",
+      currentStatusSigns: "रुक-रुक कर आने वाला तेज बुखार, गोल-गोल चक्कर काटना, दीवार से सिर टकराकर खड़े रहना, आंखों से पानी बहना व पुतली का सफेद होना, रात में अंधापन।",
+      stagesTimeline: [
+        { stage: "रक्त परजीवी चरण", signs: "रुक-रुक कर बुखार, आंखों से पानी, पेट व अंडकोष/अयन के नीचे पानी की सूजन।", action: "तुरंत खून की जांच कराएं और डॉक्टर से दवा लगवाएं।" },
+        { stage: "मस्तिष्कीय तंत्रिका चरण (दौरे पड़ना)", signs: "पशु पागलों की तरह भागता है, गोल चक्कर काटता है, दांत पीसता है व गिर जाता है।", action: "बिना 1 घंटे की देरी के आपातकालीन इंजेक्शन न लगने पर पशु मर जाएगा।" }
+      ],
+      desiTreatment: [
+        {
+          name: "खून व ताकत बढ़ाने हेतु देशी शरबत (केवल सहायक)",
+          ingredients: "पुराना देशी गुड़ (250 ग्राम), मेथी दाना (50 ग्राम), सोंठ (25 ग्राम), आंवला चूर्ण (50 ग्राम)।",
+          preparation: "पानी में उबालकर काढ़ा बनाएं और ठंडा करके पिलाएं ताकि रक्त की कमी में कुछ सहारा मिले।",
+          precautions: "कठोर चेतावनी: सर्रा रोग किसी भी देसी दवा, झाड़-फूंक या काढ़े से कभी ठीक नहीं होता! इसके लिए ट्राईक्विन (Triquin) या बेरेनिल (Berenil) इंजेक्शन अनिवार्य है।"
+        }
+      ],
+      essentialAdvisory: "दीवार से सिर टकराने या गोल चक्कर काटने के लक्षण दिखते ही तुरंत पशु चिकित्सक को बुलाएं। यदि 24 घंटे में सही इंजेक्शन न लगा, तो पशु का दिमाग पूरी तरह नष्ट हो जाएगा।"
+    },
+    {
+      id: "farmer_babesiosis",
+      nameHi: "बबेशियोसिस (चिचड़ी वाला लाल पेशाब / Red Water)",
+      affectedOrgan: "लाल रक्त कोशिकाएं (RBC) एवं गुर्दे (Kidneys)",
+      causes: "संक्रमित चिचड़ी (किलनी/Ticks) के काटने से बबेशिया परजीवी का खून में जाना, जो खून के लाल कणों को फोड़ देता है।",
+      effects: "खून बिल्कुल पानी बन जाता है, पेशाब के रास्ते खून बहने लगता है और 48 घंटे में पशु की कमजोरी से मौत हो जाती है।",
+      currentStatusSigns: "तेज बुखार (105-106°F), पेशाब का रंग कॉफी, कोका-कोला या गहरा लाल होना, दिल की तेज धड़कन जो दूर से सुनाई दे, आंखें पीली/सफेद।",
+      stagesTimeline: [
+        { stage: "तेज बुखार व लाल पेशाब", signs: "पशु हांफता है, पेशाब का रंग गहरा लाल होता है, चारा छोड़ देता है।", action: "तुरंत डॉक्टर को बुलाएं; यह मिनटों का खेल है।" },
+        { stage: "गंभीर एनीमिया व कोमा", signs: "पेशाब का रंग हल्का होना पर आंखें बिल्कुल सफेद पड़ जाना, पशु का गिर जाना।", action: "रक्त चढ़ाने (Blood Transfusion) व ग्लूकोज ड्रिप की आवश्यकता।" }
+      ],
+      desiTreatment: [
+        {
+          name: "शीतलता व ऊर्जा प्राथमिक सहायता (केवल सहायक)",
+          ingredients: "गन्ने का ताजा रस (1 लीटर) या मिश्री व ग्लूकोज का ठंडा पानी, सिर पर ठंडा पानी।",
+          preparation: "पशु को ठंडे छायादार स्थान पर बांधें। सिर पर ठंडा पानी डालें और गन्ने का रस या मिश्री का पानी पिलाएं।",
+          precautions: "लाल पेशाब में कोई भी देसी नुस्खा बीमारी के कीटाणु को नहीं मार सकता; समय बिल्कुल बर्बाद न करें।"
+        }
+      ],
+      essentialAdvisory: "लाल पेशाब देखते ही तुरंत डॉक्टर से बेरेनिल (Berenil) का सही डोज में इंजेक्शन लगवाएं। 24 घंटे की देरी का मतलब पशु की निश्चित मौत है।"
+    },
+    {
+      id: "farmer_theileriosis",
+      nameHi: "थायलेरियासिस (चिचड़ी बुखार / गिल्टियों की सूजन)",
+      affectedOrgan: "लिम्फ ग्रंथियां (गिल्टियां), फेफड़े एवं रक्त",
+      causes: "संक्रमित किलनी के काटने से थायलेरिया परजीवी का खून में प्रवेश, जो विशेषकर संकर (HF व जर्सी) गायों को बहुत तेजी से पकड़ता है।",
+      effects: "फेफड़ों में पानी भरना, अत्यधिक खून की कमी और इलाज में देरी होने पर 80% मृत्यु दर।",
+      currentStatusSigns: "लगातार तेज बुखार (105-107°F) जो पेरासिटामोल से नहीं उतरता, कंधे के आगे की गिल्टी (Prescapular lymph node) सूजकर अमरूद जैसी बड़ी होना, आंख की पुतली पर नीलापन।",
+      stagesTimeline: [
+        { stage: "गिल्टी सूजन व तेज बुखार", signs: "कंधे के पास कठोर गांठ, लगातार 106°F बुखार, आंख से पानी।", action: "तुरंत बुपारवाक्वोन (Buparvaquone) इंजेक्शन हेतु डॉक्टर को बुलाएं।" },
+        { stage: "फेफड़ों में पानी व झागदार सांस", signs: "नाक से सफेद झाग, लगातार हांफना, आंखें सफेद व पीली होना।", action: "अत्यंत नाजुक स्थिति; सघन आईसीयू चिकित्सा आवश्यक।" }
+      ],
+      desiTreatment: [
+        {
+          name: "चिचड़ी नियंत्रण हेतु नीम व कपूर स्प्रे",
+          ingredients: "नीम का गाढ़ा काढ़ा (1 लीटर), कपूर (20 ग्राम), नीलगिरी का तेल (10 मिली)।",
+          preparation: "मिलाकर पशु के शरीर पर और बाड़े की दीवारों की दरारों में छिड़कें ताकि किलनी खत्म हों।",
+          precautions: "बीमार गाय को धूप में कभी न बांधें।"
+        }
+      ],
+      essentialAdvisory: "क्रॉस-ब्रीड गायों में थायलेरिया का एकमात्र पक्का इलाज बुपारवाक्वोन (Butalex) इंजेक्शन है। लक्षण दिखते ही तत्काल डॉक्टर से संपर्क करें।"
+    },
+    {
+      id: "farmer_calf_scours",
+      nameHi: "बछड़ों में सफेद दस्त (Calf Scours / सफेद पेचिश)",
+      affectedOrgan: "पाचन तंत्र (आंतें)",
+      causes: "जन्म के 2 घंटे के भीतर पर्याप्त खीस (Colostrum) न मिलना, गंदे बर्तनों से दूध पिलाना या ई-कोलाई बैक्टीरिया का संक्रमण।",
+      effects: "2-3 दिन में बछड़े के शरीर का पूरा पानी निकल जाता है, गुर्दे काम करना बंद कर देते हैं और बछड़ा मर जाता है।",
+      currentStatusSigns: "सफेद, पीला या मटमैला पानी जैसा पिचकारी दस्त, अत्यंत बदबूदार गोबर, बछड़े का सुस्त होकर जमीन पर लेटे रहना, दूध न पीना।",
+      stagesTimeline: [
+        { stage: "दस्त की शुरुआत", signs: "बछड़ा दूध छोड़ देता है, आंखें सुस्त, पूंछ पर पीला-सफेद गोबर चिपका होना।", action: "दूध देना तुरंत बंद करें और हर 2 घंटे में ओआरएस पानी पिलाएं।" },
+        { stage: "गंभीर निर्जलीकरण (Dehydration)", signs: "त्वचा खींचने पर मुड़ी रह जाना, आंखें गड्ढे में धंसना, पैर ठंडे पड़ना।", action: "तत्काल डॉक्टर से नस द्वारा ड्रिप व एंटीबायोटिक लगवाएं।" }
+      ],
+      desiTreatment: [
+        {
+          name: "जीवन रक्षक नमक-चीनी-सोडा घोल (Home-made ORS)",
+          ingredients: "उबला हुआ ठंडा पानी (1 लीटर), चीनी (20 ग्राम / 4 चम्मच), सादा नमक (3 ग्राम / आधा चम्मच), मीठा खाने का सोडा (2 ग्राम)।",
+          preparation: "घोल बनाकर बछड़े को दिन में 4 से 5 बार 250 से 500 मिली थोड़ा-थोड़ा करके पिलाएं।",
+          precautions: "दस्त की अवस्था में बछड़े को गाढ़ा दूध कदापि न पिलाएं। दूध आंतों में पचता नहीं है और सड़ांध बढ़ाता है।"
+        }
+      ],
+      essentialAdvisory: "यदि बछड़े के कान व पैर ठंडे पड़ जाएं और वह सिर न उठा सके, तो घरेलू उपाय छोड़ तुरंत डॉक्टर से नस में ड्रिप (DNS) चढ़वाएं।"
+    },
+    {
+      id: "farmer_coccidiosis",
+      nameHi: "खूनी दस्त / आंत्रशोथ (Coccidiosis / पेचिश)",
+      affectedOrgan: "आंतें (Intestines)",
+      causes: "कॉकसीडिया प्रोटोजोआ परजीवी, जो गंदे पानी, सड़े चारे या नम कीचड़ वाले बाड़े के माध्यम से बछड़ों के पेट में जाता है।",
+      effects: "आंतों की भीतरी चमड़ी छिल जाती है, खून की भारी कमी होती है और बछड़ा सूखकर कमजोर हो जाता है।",
+      currentStatusSigns: "पतले बदबूदार दस्त जिसमें काला या गहरा लाल थक्केदार खून व आंव (म्यूकस) आती है, पशु दस्त करते समय बहुत जोर लगाता है।",
+      stagesTimeline: [
+        { stage: "शुरुआती पेचिश", signs: "गोबर में हल्का खून व आंव, बछड़े की पीठ धनुष की तरह मुड़ना।", action: "तुरंत छाछ व अनार छिलके का काढ़ा दें और ओआरएस पिलाएं।" },
+        { stage: "गंभीर खूनी दस्त व कांच निकलना", signs: "केवल खून व छिछड़े गिरना, जोर लगाने से गुदा (कांच) बाहर आना।", action: "डॉक्टर द्वारा सल्फा दवाएं व खून रोकने वाले इंजेक्शन अनिवार्य।" }
+      ],
+      desiTreatment: [
+        {
+          name: "अनार छिलका, कच्चा बेल व छाछ का कषाय",
+          ingredients: "अनार के सूखे छिलके (50 ग्राम), कच्चा बेल का गूदा (50 ग्राम), खट्टी छाछ (500 मिली), मेथी पाउडर (20 ग्राम)।",
+          preparation: "छिलके व बेल को कूटकर छाछ में मिलाएं। दिन में दो बार बछड़े को पिलाएं। यह आंतों के घाव को भरता है।",
+          precautions: "बाड़े के फर्श को सूखा रखें और चूने का छिड़काव करें।"
+        }
+      ],
+      essentialAdvisory: "यदि दस्त में लाल खून आ रहा हो, तो तुरंत डॉक्टर से सल्फा बोलस या इंजेक्शन लगवाएं। समय पर दवा न मिलने पर बछड़ा 2 दिन में मर सकता है।"
+    },
+    {
+      id: "farmer_foot_rot",
+      nameHi: "खुर सड़न (खुरों का गलना / Foot Rot)",
+      affectedOrgan: "खुरों के बीच की चमड़ी व ऊतक",
+      causes: "बरसात में लगातार कीचड़ व गोबर में खड़े रहना, खुर में कंकड़ चुभने से सड़न पैदा करने वाले बैक्टीरिया का घुसना।",
+      effects: "पशु एक या दो पैरों से बहुत गंभीर लंगड़ाता है, चरने नहीं जा पाता, सूख जाता है और दूध 60% घट जाता है।",
+      currentStatusSigns: "खुरों के बीच में तेज दुर्गंधयुक्त मवाद, चीरा जैसा घाव, खुर के चारों ओर सूजन व छूने पर असहनीय दर्द, पैर झटकना।",
+      stagesTimeline: [
+        { stage: "शुरुआती सूजन व लंगड़ापन", signs: "खुर के बीच लाली, हल्का लंगड़ाना, पैर को बार-बार जमीन पर पटकना।", action: "खुर धोकर तूतिया (नीला थोथा) के पानी में पैर डुबोएं।" },
+        { stage: "गंभीर सड़न व मवाद", signs: "सड़े मांस जैसी भयंकर दुर्गंध, खुर के जोड़ सूजना, मवाद बहना।", action: "खुर की तराशी करवाएं और डॉक्टर से एंटीबायोटिक इंजेक्शन लगवाएं।" }
+      ],
+      desiTreatment: [
+        {
+          name: "तूतिया (नीला थोथा) फुट-बाथ",
+          ingredients: "तूतिया / कॉपर सल्फेट (50 ग्राम), साफ पानी (5 लीटर)।",
+          preparation: "तूतिया को पानी में अच्छी तरह घोलें। उसमें पशु के संक्रमित पैर को 5 मिनट तक डुबोकर रखें।",
+          precautions: "तूतिया अत्यंत विषैला होता है; ध्यान रहे पशु इस पानी को कदापि न पिए।"
+        },
+        {
+          name: "कपूर, हल्दी व तारपीन लेप",
+          ingredients: "हल्दी पाउडर (25 ग्राम), कपूर (10 ग्राम), तारपीन का तेल (30 मिली)।",
+          preparation: "पेस्ट बनाकर खुरों के बीच के घाव में अच्छी तरह भरें और साफ सूती कपड़े से पट्टी बांध दें।",
+          precautions: "पशु को गीली जमीन व दलदल से दूर सूखे पक्के स्थान पर बांधें।"
+        }
+      ],
+      essentialAdvisory: "यदि खुर की सूजन ऊपर घुटने तक चढ़ जाए, तो इन्फेक्शन जोड़ में घुस चुका है। तुरंत डॉक्टर से एंटीबायोटिक व दर्द निवारक इंजेक्शन लगवाएं।"
+    },
+    {
+      id: "farmer_prolapse",
+      nameHi: "बच्चेदानी या फूल बाहर आना (पीछा दिखाना / Prolapse)",
+      affectedOrgan: "योनि एवं गर्भाशय (Vagina / Uterus)",
+      causes: "शरीर में कैल्शियम व फास्फोरस की भारी कमी, हार्मोन का असंतुलन, पशु को पीछे ढलान वाले स्थान पर बांधना, ब्याने के समय अत्यधिक जोर लगना।",
+      effects: "बाहर निकले अंग पर चोट लगना, गोबर-मिट्टी लगने से सड़न, सेप्टीसीमिया और कुछ ही घंटों में पशु की तड़पकर मौत।",
+      currentStatusSigns: "बैठने पर योनि से लाल रंग का फुटबॉल या तरबूज जैसा मांसल गोला बाहर निकलना, जो खड़े होने पर कभी अंदर जाता है या बाहर ही रह जाता है।",
+      stagesTimeline: [
+        { stage: "शुरुआती पीछा (बैठने पर हल्का दिखना)", signs: "पशु बैठता है तो छोटा गोला दिखता है, खड़े होते ही अंदर चला जाता है।", action: "पशु को पीछे से ऊंचा बांधें, मिनरल मिक्सचर दें और बर्फ की सिकाई करें।" },
+        { stage: "पूर्ण प्रोलैप्स (स्थायी बाहर लटकना)", signs: "पूरा गर्भाशय बाहर लटक गया है, खून रिस रहा है, पशु दर्द से छटपटा रहा है।", action: "अंग को साफ गीले कपड़े से ढकें और तुरंत डॉक्टर को बुलाकर अंदर करवाएं।" }
+      ],
+      desiTreatment: [
+        {
+          name: "बर्फ व फिटकरी पानी से सूजन कम करना (आपातकालीन प्राथमिक उपचार)",
+          ingredients: "बर्फ के टुकड़े, 1% फिटकरी का ठंडा घोल, साफ सूती सफेद चादर।",
+          preparation: "बाहर निकले अंग को ठंडे फिटकरी पानी से धोएं और बर्फ की सिकाई करें ताकि अंग सिकुड़कर छोटा हो जाए। फिर उसे साफ गीली चादर में लपेटकर सहारा देकर रखें।",
+          precautions: "अंग को जमीन, गोबर या मिट्टी में न रगड़ने दें। खुरदरे हाथों से जबरन अंदर धकेलने की कोशिश न करें।"
+        }
+      ],
+      essentialAdvisory: "फूल बाहर आने पर बिना समय गंवाए अधिकृत वेटरनरी डॉक्टर को बुलाएं ताकि एनेस्थीसिया देकर अंग को सुरक्षित अंदर करवाकर टांके (Truss/Buhner suture) लगवाए जा सकें।"
+    },
+    {
+      id: "farmer_metritis",
+      nameHi: "गर्भाशय शोथ (बच्चेदानी में मैला या पीब आना / Metritis)",
+      affectedOrgan: "बच्चेदानी (गर्भाशय)",
+      causes: "ब्याने के समय गंदे हाथ डालना, जेर रुकने पर अनाड़ी व्यक्ति द्वारा खींचना या सीमन के समय संक्रमण।",
+      effects: "बच्चेदानी में स्थायी सूजन आ जाती है, पशु कभी ग्याभिन नहीं ठहरता और दूध उत्पादन आधा रह जाता है।",
+      currentStatusSigns: "योनि मार्ग से सफेद, पीला, कत्थई या बदबूदार मवाद/छिछड़े गिरना, विशेषकर जब पशु बैठता है या जुगाली करता है।",
+      stagesTimeline: [
+        { stage: "तीव्र मेट्राइटिस (ब्याने के 1-2 सप्ताह बाद)", signs: "तेज बदबूदार लाल-भूरा स्राव, हल्का बुखार, दूध घटना।", action: "तुरंत गर्भाशय धुलाई व एंटीबायोटिक उपचार करवाएं।" },
+        { stage: "पुरानी (क्रोनिक) पीब", signs: "पशु स्वस्थ दिखता है पर गर्मी (मद) में शीशे जैसी साफ तार के बजाय मवाद गिरता है।", action: "डॉक्टर द्वारा गर्भाशय में 3 दिन लगातार एंटीबायोटिक दवा भरवाएं।" }
+      ],
+      desiTreatment: [
+        {
+          name: "नीम छाल, हल्दी व अजवाइन का आंतरिक शोधक काढ़ा",
+          ingredients: "देशी नीम की छाल (100 ग्राम), हल्दी गांठ (50 ग्राम), अजवाइन (30 ग्राम), पुराना गुड़ (200 ग्राम)।",
+          preparation: "2 लीटर पानी में पकाएं। 1 लीटर रहने पर छानकर 7 दिन तक रोजाना सुबह खाली पेट पिलाएं।",
+          precautions: "बच्चेदानी के अंदर कोई भी देसी तेल, काढ़ा या राख सिरिंज से न डालें; इससे भयंकर संक्रमण फैल सकता है।"
+        }
+      ],
+      essentialAdvisory: "मवाद आने की स्थिति में पशु को सीमन कभी न लगवाएं, सीमन पूरी तरह खराब हो जाएगा। पहले डॉक्टर से गर्भाशय में 3 दिन लगातार एंटीबायोटिक भरवाकर सफाई कराएं।"
+    },
+    {
+      id: "farmer_indigestion",
+      nameHi: "कब्ज, बदहजमी व रूमेन अक्रियता (Simple Indigestion)",
+      affectedOrgan: "पेट (रूमेन - पहला अमाशय)",
+      causes: "अचानक नया चारा खिलाना, फफूंद लगा तूड़ा, सूखा भूसा अधिक व पानी कम मिलना, प्लास्टिक खा लेना।",
+      effects: "जुगाली बंद हो जाती है, पेट में चारा सड़ने लगता है और दूध उत्पादन अचानक गिर जाता है।",
+      currentStatusSigns: "पशु जुगाली पूरी तरह बंद कर देता है, गोबर कड़ा, सूखा और काले रंग का आता है, पेट पर कान लगाने पर हलचल की आवाज नहीं आती।",
+      stagesTimeline: [
+        { stage: "हल्की सुस्ती", signs: "दाना छोड़ना, कम जुगाली, सूखा गोबर।", action: "पाचक पाचक मसाला व हींग दें।" },
+        { stage: "पूर्ण रूमेन जाम", signs: "दो दिन से गोबर न आना, पेट में हल्का दर्द, आंखें सुस्त।", action: "सेंधा नमक, मैग्नीशियम सल्फेट जुलाब व रूमेन टॉनिक दें।" }
+      ],
+      desiTreatment: [
+        {
+          name: "पाचक संजीवनी मसाला पेड़ा",
+          ingredients: "सोंठ (50 ग्राम), अजवाइन (50 ग्राम), काला नमक (50 ग्राम), जीरा (50 ग्राम), असली हींग (10 ग्राम), पुराना गुड़ (250 ग्राम)।",
+          preparation: "सभी मसालों को बारीक कूटकर गुड़ में मिलाकर बड़ा पेड़ा बनाएं और सुबह-शाम 3 दिन तक खिलाएं।",
+          precautions: "यदि पशु को बुखार हो तो पहले बुखार की दवा दें।"
+        },
+        {
+          name: "सेंधा नमक व मीठा तेल जुलाब",
+          ingredients: "मैग्नीशियम सल्फेट / सेंधा नमक (250 ग्राम), सरसों का तेल (200 मिली), गुनगुना पानी (1 लीटर)।",
+          preparation: "घोलकर एक बार में पिलाएं ताकि आंतों में जमा सूखा गोबर बाहर निकल सके।",
+          precautions: "पतले दस्त वाले पशु को यह जुलाब कभी न दें।"
+        }
+      ],
+      essentialAdvisory: "यदि पाचक मसाला देने के 24 घंटे बाद भी पशु जुगाली शुरू न करे या बाईं कोख में गैस भरने लगे, तो डॉक्टर से रूमेन की जांच कराएं।"
+    },
+    {
+      id: "farmer_maggot_wound",
+      nameHi: "कीड़ेदार घाव (घाव में कीड़े पड़ना / Maggot Wound)",
+      affectedOrgan: "त्वचा, सींग की जड़, खुर, नाभि या योनि",
+      causes: "किसी भी सामान्य चोट या कटे पर मक्खी द्वारा अंडे देना, जिससे 24 घंटे में सैकड़ों रेंगने वाले कीड़े (मैगट्स) बन जाते हैं।",
+      effects: "कीड़े जीवित मांस को अंदर तक खा जाते हैं, जिससे गहरा नासूर बन जाता है और सेप्टिक फैल जाता है।",
+      currentStatusSigns: "घाव से सड़े मांस की भयंकर बदबू, खून-मवाद का रिसाव, घाव के अंदर सफेद कीड़ों का रेंगते हुए दिखाई देना।",
+      stagesTimeline: [
+        { stage: "शुरुआती कीड़े पड़ना", signs: "घाव में गड्ढा बनना, सफेद कीड़े रेंगना, पशु का छटपटाना।", action: "तारपीन तेल व कपूर की बत्ती ठूंसकर कीड़े मारें।" },
+        { stage: "गहरा नासूर", signs: "हड्डी तक गहरा छेद हो जाना, खून बहना, पशु का खाना छोड़ना।", action: "कीड़े पूरी तरह निकालकर एंटीबायोटिक व घाव भरने वाला स्प्रे लगाएं।" }
+      ],
+      desiTreatment: [
+        {
+          name: "तारपीन का तेल व कपूर की बत्ती (कीड़े मारने का अचूक नुस्खा)",
+          ingredients: "तारपीन का तेल (50 मिली), कपूर की 5-6 टिकिया, साफ रूई की बत्ती।",
+          preparation: "तारपीन तेल में कपूर घोलें। रूई को इसमें भिगोकर घाव के गहरे छेद के अंदर ठूंस दें और 10 मिनट के लिए छोड़ दें। भाप से सारे कीड़े तड़पकर बाहर गिर जाएंगे।",
+          precautions: "कीड़ों को चिमटी से चुन-चुनकर निकालें और फिनाइल वाले पानी में डालकर नष्ट करें।"
+        },
+        {
+          name: "सीताफल (शरीफा) के पत्तों का रस",
+          ingredients: "सीताफल के ताजे पत्ते (मुट्ठी भर)।",
+          preparation: "पत्तों को पीसकर रस घाव में निचोड़ें; यह प्राकृतिक रूप से कीड़ों को तुरंत मार देता है।",
+          precautions: "घाव को खुला न छोड़ें, उस पर हमेशा मक्खी-रोधी तेल या स्प्रे लगाएं।"
+        }
+      ],
+      essentialAdvisory: "यदि कीड़े सिर की हड्डी या सींग के अंदर तक घुस चुके हों, तो स्वयं उपचार न करें; डॉक्टर से साइनस की सफाई करवाएं।"
+    },
+    {
+      id: "farmer_navel_ill",
+      nameHi: "बछड़ों में नाभि पकना (Navel Ill / Joint Ill)",
+      affectedOrgan: "नाभि (Umbilicus) एवं जोड़ (घुटने/कोहनी)",
+      causes: "जन्म के समय नाभि नाल को गंदे धागे या जंग लगे ब्लेड से काटना या उस पर टिंचर आयोडीन न लगाना।",
+      effects: "नाभि में मवाद पड़ जाता है और वही जहर खून के रास्ते जोड़ों में पहुंचकर घुटने सुजा देता है, जिससे बछड़ा लंगड़ा हो जाता है।",
+      currentStatusSigns: "नाभि पर कठोर, गर्म सूजन, छूने पर बछड़े का दर्द से चिल्लाना, नाभि से मवाद या खून रिसना, बाद में घुटनों में सूजन।",
+      stagesTimeline: [
+        { stage: "नाभि सूजन", signs: "नाभि का आकार बढ़ना, मवाद टपकना, हल्का बुखार।", action: "नाभि की पोविडोन आयोडीन से सफाई व हल्दी लेप।" },
+        { stage: "जोड़ों में संक्रमण (जॉइंट इल)", signs: "घुटनों व कोहनी के जोड़ों में बड़ी सूजन, बछड़ा खड़ा नहीं हो पाता।", action: "दीर्घकालिक एंटीबायोटिक चिकित्सा की आवश्यकता।" }
+      ],
+      desiTreatment: [
+        {
+          name: "आयोडीन-हल्दी एंटीसेप्टिक पट्टी",
+          ingredients: "पोविडोन आयोडीन लोशन (5%), शुद्ध पिसी हल्दी, साफ रूई।",
+          preparation: "नाभि को अच्छी तरह आयोडीन से धोकर साफ करें और हल्दी का गाढ़ा लेप लगाएं।",
+          precautions: "नाभि पर कभी भी गोबर या चूल्हे की राख न लगाएं।"
+        }
+      ],
+      essentialAdvisory: "यदि बछड़े के घुटनों में सूजन आ जाए या नाभि से लगातार बदबूदार मवाद बहे, तो डॉक्टर से एंटीबायोटिक इंजेक्शन का कोर्स करवाएं।"
+    },
+    {
+      id: "farmer_hcn_poisoning",
+      nameHi: "जहरीली ज्वार विषाक्तता (HCN / धुरिन पॉइजनिंग)",
+      affectedOrgan: "रक्त, श्वसन तंत्र एवं मस्तिष्क",
+      causes: "सूखे के मौसम में 2 फीट से छोटी कच्ची ज्वार (चरी) या नई फूटी हुई ज्वार खिलाना, जिसमें धुरिन नामक साइनाइड जहर होता है।",
+      effects: "खून में ऑक्सीजन का पहुंचना बंद हो जाता है, पशु का दम घुटता है और 15 से 30 मिनट में तड़पकर मौत हो जाती है।",
+      currentStatusSigns: "ज्वार खाने के तुरंत बाद पशु का कांपना, आंखें फटना, मुंह से झाग निकलना, तेज सांस फूलना और जमीन पर गिरकर पैर पटकना।",
+      stagesTimeline: [
+        { stage: "अति-तीव्र विषाक्तता (पहले 15 मिनट)", signs: "लड़खड़ाना, अत्यधिक बेचैनी, तेज सांस, पेशाब निकल जाना।", action: "तुरंत नस में साइनाइड-विरोधी इंजेक्शन अनिवार्य।" },
+        { stage: "अंतिम अवस्था", signs: "दौरे पड़ना, आंख की पुतलियां फैलना, सांस बंद होना।", action: "तत्काल आपातकालीन चिकित्सा।" }
+      ],
+      desiTreatment: [
+        {
+          name: "गुड़ व शीरे का प्राथमिक घोल (केवल जहर सोखने हेतु)",
+          ingredients: "गाढ़ा देशी गुड़ (1 किलोग्राम) पानी में घुला हुआ।",
+          preparation: "तुरंत पशु के मुंह में उड़ेलें ताकि गुड़ का शर्करा अंश साइनाइड के प्रभाव को कुछ हद तक धीमा कर सके।",
+          precautions: "बेहोश पशु को कभी न पिलाएं। याद रखें: यह केवल डॉक्टर के पहुंचने तक 10-15 मिनट का समय बढ़ाने हेतु है।"
+        }
+      ],
+      essentialAdvisory: "ज्वार का जहर अत्यंत तेज होता है! डॉक्टर को तुरंत फोन करें और कहें कि 'सोडियम थायोसल्फेट' (Sodium thiosulfate) का इंजेक्शन लेकर तुरंत पहुंचे।"
+    },
+    {
+      id: "farmer_dystocia",
+      nameHi: "ब्याने में कठिनाई (बच्चा फंसना / Dystocia)",
+      affectedOrgan: "प्रसव मार्ग (श्रोणि, गर्भाशय एवं योनि)",
+      causes: "बच्चे का आकार बहुत बड़ा होना, बच्चे के पैर या सिर मुड़े होना, या गाय की पेल्विस हड्डी संकरी होना।",
+      effects: "समय पर सहायता न मिलने पर बच्चे और मां दोनों की तड़पकर मौत हो सकती है।",
+      currentStatusSigns: "पानी की थैली फटने के 2 घंटे बाद भी बच्चा बाहर न आना, केवल एक पैर या पूंछ बाहर दिखना, गाय का थककर लेट जाना।",
+      stagesTimeline: [
+        { stage: "जोर लगाना", signs: "पशु लगातार जोर लगा रहा है, पर बच्चा आगे नहीं खिसक रहा।", action: "तुरंत पशु चिकित्सक को बुलाएं, स्थिति का परीक्षण कराएं।" },
+        { stage: "थकान व संवेदनहीनता", signs: "पशु का दर्द बंद होना, बच्चे की हलचल बंद होना।", action: "आपातकालीन प्रसूति सहायता या सिजेरियन ऑपरेशन आवश्यक।" }
+      ],
+      desiTreatment: [
+        {
+          name: "प्रसव मार्ग को चिकना करना (केवल प्राथमिक मदद)",
+          ingredients: "मीठा उबला हुआ ठंडा सरसों का तेल (500 मिली) या नीम का काढ़ा।",
+          preparation: "हाथों को साबुन से अच्छी तरह धोकर और नाखून काटकर, सरसों का तेल योनि मार्ग के अंदर लगाएं ताकि सूखापन दूर हो और चिकनाई बने।",
+          precautions: "अनाड़ी व्यक्ति बच्चे के पैरों को रस्सी या ट्रैक्टर से बांधकर कभी न खींचे; इससे गर्भाशय फट जाता है और गाय तुरंत मर जाती है।"
+        }
+      ],
+      essentialAdvisory: "जल-थैली फूटने के 1 घंटे के भीतर यदि सामान्य प्रसव न हो, तो बिना किसी स्थानीय नीम-हकीम के तुरंत अधिकृत वेटरनरी डॉक्टर को बुलाएं।"
+    },
+    {
+      id: "farmer_ephemeral_fever",
+      nameHi: "तीन दिनी बुखार / ढाईया (Bovine Ephemeral Fever)",
+      affectedOrgan: "जोड़, मांसपेशियां एवं रक्त वाहिकाएं",
+      causes: "मच्छर व मक्खियों द्वारा फैलने वाला विषाणु जो अचानक जोड़ों में गंभीर सूजन पैदा करता है।",
+      effects: "पशु 3 दिन के लिए पूरी तरह लंगड़ा या बैठ जाता है, दूध अस्थायी रूप से लगभग शून्य हो जाता है।",
+      currentStatusSigns: "अचानक भयंकर तेज बुखार (105-107°F), चारों पैरों में अकड़न, चलने से पूरी तरह इनकार, आंखों-नाक से प्रचुर पानी।",
+      stagesTimeline: [
+        { stage: "तेज बुखार व अकड़न (दिन 1-2)", signs: "पशु कांपता है, पैर पटकता है या बैठ जाता है, जुगाली बंद।", action: "बुखार व सूजन की दवाएं दिलवाएं।" },
+        { stage: "सुधार व रिकवरी (दिन 3-4)", signs: "तीसरे दिन बुखार उतरता है और पशु लड़खड़ाकर उठने लगता है।", action: "हल्का सुपाच्य चारा व गुड़ का दलिया दें।" }
+      ],
+      desiTreatment: [
+        {
+          name: "सोंठ, गिलोय व अजवाइन काढ़ा",
+          ingredients: "गिलोय डंठल (50 ग्राम), सोंठ (30 ग्राम), अजवाइन (20 ग्राम), पुराना गुड़ (150 ग्राम)।",
+          preparation: "1 लीटर पानी में उबालकर आधा करें। दिन में दो बार गुनगुना पिलाएं। यह जोड़ों के दर्द व अकड़न में बहुत राहत देता है।",
+          precautions: "बैठे हुए पशु को दिन में दो बार करवट बदलवाएं ताकि सुन्न न पड़े।"
+        }
+      ],
+      essentialAdvisory: "यद्यपि यह 3 दिन में ठीक होने वाला रोग है, परंतु तेज बुखार व दर्द के कारण पशु को डॉक्टर से दर्द निवारक इंजेक्शन दिलाना आवश्यक है।"
+    }
+  ];
 
-})(typeof window !== "undefined" ? window : globalThis);
+  /* =========================================================================
+     5. INITIALIZE EMPTY DOCTOR DISEASE DB & FALLBACK HOOK
+     ========================================================================= */
+  root.VETCARE_DISEASE_DB = root.VETCARE_DISEASE_DB || [];
+
+})(typeof window !== "undefined" ? window : global);
