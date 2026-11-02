@@ -1,503 +1,272 @@
 // Vetcare AI OS - Unified Clinical Services & 20km GPS Engine (2026 Production)
+(function (window, document) {
+  'use strict';
 
-(function (root) {
-  "use strict";
-
-  /* =========================================================================
-     1. STORAGE KEYS & SEED REGISTRY
-     ========================================================================= */
   const STORAGE_KEYS = {
-    CLINICAL_CASES: "vetcare_clinical_cases",
-    DISPATCH_REQUESTS: "vetcare_clinical_requests",
-    DOCTOR_LOCATION: "vetcare_doctor_location",
-    REGISTERED_DOCTORS: "vetcare_registered_doctors"
+    CASES: 'vetcare_opd_cases',
+    GPS_REQUESTS: 'vetcare_gps_requests',
+    DOC_LOCATION: 'vetcare_doctor_last_gps'
   };
 
-  // Seed verified registered doctors with GPS coordinates (Privacy Protected)
-  const SEED_REGISTERED_DOCTORS = [
-    {
-      id: "DOC_201",
-      name: "डॉ. सुमित जाखड़ (B.V.Sc & A.H.)",
-      clinicName: "जाखड़ वेटरनरी क्लिनिक एवं ए.आई. सेंटर",
-      lat: 28.4089,
-      lon: 76.9854,
-      specialty: "गायनोकोलॉजी व सर्जरी",
-      rating: "4.9 ★",
-      active: true,
-      phoneHidden: "98120XXXXX" // Strictly masked from farmer
-    },
-    {
-      id: "DOC_202",
-      name: "डॉ. विकास चौधरी (M.V.Sc Medicine)",
-      clinicName: "किसान कल्याण पशु चिकित्सालय",
-      lat: 28.4520,
-      lon: 77.0210,
-      specialty: "क्रिटिकल केयर व मेडिसिन",
-      rating: "4.8 ★",
-      active: true,
-      phoneHidden: "94160XXXXX"
-    },
-    {
-      id: "DOC_203",
-      name: "डॉ. पूजा यादव (B.V.Sc)",
-      clinicName: "स्मार्ट डेयरी पॉलीक्लिनिक",
-      lat: 28.3650,
-      lon: 76.9200,
-      specialty: "थनैला एवं दुग्ध उत्पादन",
-      rating: "5.0 ★",
-      active: true,
-      phoneHidden: "98290XXXXX"
-    }
-  ];
+  let currentServiceMode = 'OPD'; // OPD, AI, UTERINE, VACCINATION
+  let currentCoordinates = { lat: null, lon: null };
 
-  function getStorage(key, fallback) {
+  // Safe Store Utilities
+  function getStored(key, fallback) {
     try {
-      const item = localStorage.getItem(key);
-      return item ? JSON.parse(item) : fallback;
+      const raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : fallback;
     } catch (e) {
-      console.error("Storage Error:", e);
       return fallback;
     }
   }
 
-  function setStorage(key, val) {
+  function setStored(key, data) {
     try {
-      localStorage.setItem(key, JSON.stringify(val));
+      localStorage.setItem(key, JSON.stringify(data));
     } catch (e) {
-      console.error("Storage Write Error:", e);
+      console.error('[ClinicalServices] LocalStorage write error:', e);
     }
-  }
-
-  // Initialize seed registries
-  if (!localStorage.getItem(STORAGE_KEYS.REGISTERED_DOCTORS)) {
-    setStorage(STORAGE_KEYS.REGISTERED_DOCTORS, SEED_REGISTERED_DOCTORS);
-  }
-  if (!localStorage.getItem(STORAGE_KEYS.CLINICAL_CASES)) {
-    setStorage(STORAGE_KEYS.CLINICAL_CASES, []);
-  }
-  if (!localStorage.getItem(STORAGE_KEYS.DISPATCH_REQUESTS)) {
-    setStorage(STORAGE_KEYS.DISPATCH_REQUESTS, []);
   }
 
   /* =========================================================================
-     2. HAVERSINE MATHEMATICAL DISTANCE ENGINE (20-KM RADIUS)
+     1. UNIFIED CLINICAL SERVICES HUB & MULTI-MODE OPD PAD
      ========================================================================= */
-  root.calculateHaversineDistance = function (lat1, lon1, lat2, lon2) {
-    if (!lat1 || !lon1 || !lat2 || !lon2) return 999;
-    const R = 6371; // Earth's radius in kilometers
-    const dLat = (lat2 - lat1) * (Math.PI / 180);
-    const dLon = (lon2 - lon1) * (Math.PI / 180);
-    const a =
-      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
-      Math.sin(dLon / 2) * Math.sin(dLon / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    const d = R * c;
-    return Math.round(d * 10) / 10; // Rounded to 1 decimal place
-  };
 
-  /* =========================================================================
-     3. UNIFIED CLINICAL SERVICES HUB (DOCTOR OPD CONSOLE)
-     ========================================================================= */
-  let activeServiceMode = "GENERAL_OPD"; // GENERAL_OPD | AI_RECORD | METRITIS_FLUSH | VACCINATION
+  window.setClinicalServiceMode = function (mode) {
+    currentServiceMode = mode;
+    const modeButtons = document.querySelectorAll('.service-mode-chip');
+    modeButtons.forEach(btn => {
+      btn.className = 'service-mode-chip py-2 px-2.5 rounded-xl border border-slate-200 text-slate-700 font-medium text-xs transition';
+    });
 
-  root.renderUnifiedClinicalHub = function (containerId = "viewRx") {
-    const container = document.getElementById(containerId);
-    if (!container) return;
-
-    container.innerHTML = `
-      <div class="space-y-4 font-sans text-slate-800">
-        
-        <!-- SERVICE MODE SELECTOR TABS -->
-        <div class="bg-slate-100 p-1.5 rounded-2xl border border-slate-200 grid grid-cols-2 sm:grid-cols-4 gap-1.5 text-xs font-bold">
-          <button onclick="window.switchServiceMode('GENERAL_OPD')" class="py-2.5 px-2 rounded-xl transition flex flex-col items-center justify-center gap-1 ${activeServiceMode === 'GENERAL_OPD' ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-200'}">
-            <span>🩺</span> <span>सामान्य ओपीडी उपचार</span>
-          </button>
-          <button onclick="window.switchServiceMode('AI_RECORD')" class="py-2.5 px-2 rounded-xl transition flex flex-col items-center justify-center gap-1 ${activeServiceMode === 'AI_RECORD' ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-200'}">
-            <span>🧬</span> <span>कृत्रिम गर्भाधान (A.I.)</span>
-          </button>
-          <button onclick="window.switchServiceMode('METRITIS_FLUSH')" class="py-2.5 px-2 rounded-xl transition flex flex-col items-center justify-center gap-1 ${activeServiceMode === 'METRITIS_FLUSH' ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-200'}">
-            <span>🌸</span> <span>गर्भाशय शोधन / फॉलो-अप</span>
-          </button>
-          <button onclick="window.switchServiceMode('VACCINATION')" class="py-2.5 px-2 rounded-xl transition flex flex-col items-center justify-center gap-1 ${activeServiceMode === 'VACCINATION' ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-200'}">
-            <span>💉</span> <span>टीकाकरण रिकॉर्ड</span>
-          </button>
-        </div>
-
-        <!-- MAIN CLINICAL FORM CONTAINER -->
-        <div class="bg-white border border-slate-200 rounded-3xl p-4 sm:p-6 shadow-xs space-y-4">
-          
-          <!-- PATIENT & OWNER IDENTIFIERS -->
-          <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-            <h2 class="text-xs sm:text-sm font-black text-blue-900 flex items-center gap-2">
-              <span>📝</span> <span>डिजिटल पर्ची जेनरेटर: ${root.getServiceModeLabel(activeServiceMode)}</span>
-            </h2>
-            <button onclick="window.captureCurrentGPS()" class="text-[11px] bg-blue-50 text-blue-700 font-bold px-2.5 py-1 rounded-xl border border-blue-200 hover:bg-blue-100 transition flex items-center gap-1">
-              <span>📍</span> <span id="gpsStatusBadge">GPS लोकेशन लें</span>
-            </button>
-          </div>
-
-          <!-- PRIMARY INPUTS -->
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs">
-            <div>
-              <label class="block text-slate-500 font-semibold mb-1">किसान का नाम *</label>
-              <input id="rxFarmerName" type="text" placeholder="उदा. रामनिवास जाखड़" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 outline-none font-bold text-slate-800 focus:border-blue-500" />
-            </div>
-            <div>
-              <label class="block text-slate-500 font-semibold mb-1">किसान मोबाइल (10 अंक) *</label>
-              <input id="rxFarmerPhone" type="tel" maxlength="10" placeholder="98XXXXXXXX" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 outline-none font-mono font-bold text-slate-800 focus:border-blue-500" />
-            </div>
-            <div>
-              <label class="block text-slate-500 font-semibold mb-1">गाँव / ढाणी</label>
-              <input id="rxFarmerVillage" type="text" placeholder="गाँव का नाम" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 outline-none font-medium text-slate-800" />
-            </div>
-          </div>
-
-          <!-- ANIMAL METRICS -->
-          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
-            <div>
-              <label class="block text-slate-500 font-semibold mb-1">पशु का प्रकार</label>
-              <select id="rxAnimalSpecies" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 font-bold outline-none">
-                <option value="गाय (Cow)">गाय (Cow)</option>
-                <option value="भैंस (Buffalo)">भैंस (Buffalo)</option>
-                <option value="बकरी (Goat)">बकरी (Goat)</option>
-                <option value="भेड़ (Sheep)">भेड़ (Sheep)</option>
-                <option value="बछड़ा / कटड़ा">बछड़ा / कटड़ा</option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-slate-500 font-semibold mb-1">कान का टैग / टोकन सं.</label>
-              <input id="rxAnimalTag" type="text" placeholder="टैग संख्या" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 font-mono font-bold outline-none" />
-            </div>
-            <div>
-              <label class="block text-slate-500 font-semibold mb-1">गर्भ स्थिति (Pregnancy)</label>
-              <select id="rxPregnancyStatus" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 font-bold outline-none">
-                <option value="खाली (Non-Pregnant)">खाली (Non-Pregnant)</option>
-                <option value="गाभिन (Pregnant)">गाभिन (Pregnant)</option>
-                <option value="संदेहास्पद (Doubtful)">संदेहास्पद (Doubtful)</option>
-                <option value="ताजा ब्याही">ताजा ब्याही</option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-slate-500 font-semibold mb-1">शारीरिक तापमान (°F)</label>
-              <input id="rxAnimalTemp" type="text" placeholder="101.5°F" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 font-mono font-bold outline-none" />
-            </div>
-          </div>
-
-          <!-- DYNAMIC SPECIALIZED SERVICE SECTION -->
-          <div id="dynamicSpecializedServiceArea" class="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs space-y-3">
-            ${root.renderSpecializedServiceInputs(activeServiceMode)}
-          </div>
-
-          <!-- DIAGNOSIS & PRESCRIPTION TABLE -->
-          <div class="space-y-2">
-            <label class="block text-xs font-bold text-slate-700">प्रोविजनल डायग्नोसिस / पहचाना गया रोग *</label>
-            <input id="rxDiagnosis" type="text" placeholder="उदा. तीव्र गलघोंटू (HS) / थनैला / कीटोसिस" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-black text-slate-900 outline-none focus:border-blue-500" />
-          </div>
-
-          <div>
-            <div class="flex justify-between items-center mb-1 text-xs">
-              <label class="font-bold text-slate-700">Rx: दी गई औषधियां, इंजेक्शन डोज़ व रूट</label>
-              <button onclick="document.getElementById('rxMedicineText').value = ''" class="text-[10px] text-rose-600 hover:underline font-bold">खाली करें</button>
-            </div>
-            <textarea id="rxMedicineText" rows="4" placeholder="1. Inj. Intacef Tazo (3375mg) - I/M&#10;2. Inj. Melonex Plus (15ml) - I/M&#10;3. Bolus Anistamin - 2 गोली सुबह/शाम&#10;4. मिनरल मिक्सचर 50g दैनिक..." class="w-full bg-slate-50 border border-slate-200 rounded-2xl p-3 text-xs font-mono outline-none focus:border-blue-500 leading-relaxed"></textarea>
-          </div>
-
-          <!-- FEES & BILLING -->
-          <div class="grid grid-cols-3 gap-2 text-xs bg-slate-50 p-3 rounded-2xl border border-slate-200">
-            <div>
-              <span class="text-[10px] text-slate-500 block font-bold">कुल फीस (₹)</span>
-              <input id="rxTotalFee" type="number" placeholder="500" oninput="window.calcRxDue()" class="w-full bg-white p-2 rounded-xl border border-slate-200 font-bold" />
-            </div>
-            <div>
-              <span class="text-[10px] text-slate-500 block font-bold">जमा राशि (₹)</span>
-              <input id="rxPaidFee" type="number" placeholder="500" oninput="window.calcRxDue()" class="w-full bg-white p-2 rounded-xl border border-slate-200 font-bold text-emerald-700" />
-            </div>
-            <div>
-              <span class="text-[10px] text-slate-500 block font-bold">बकाया राशि (₹)</span>
-              <input id="rxDueFee" type="number" readonly value="0" class="w-full bg-white p-2 rounded-xl border border-slate-200 font-bold text-rose-600" />
-            </div>
-          </div>
-
-          <!-- DISPATCH & ACTION BUTTONS -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 text-xs">
-            <button onclick="window.saveAndDispatchPrescription('WHATSAPP')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 rounded-2xl shadow-md shadow-emerald-600/20 transition flex items-center justify-center gap-2 active:scale-98">
-              <span>💬</span> <span>1-Click व्हाट्सएप पर पर्ची भेजें</span>
-            </button>
-            <button onclick="window.saveAndDispatchPrescription('PRINT')" class="bg-slate-900 hover:bg-black text-white font-bold py-3.5 rounded-2xl shadow-md transition flex items-center justify-center gap-2 active:scale-98">
-              <span>🖨️</span> <span>पर्ची प्रिंट / PDF डाउनलोड</span>
-            </button>
-          </div>
-
-        </div>
-
-      </div>
-    `;
-  };
-
-  root.getServiceModeLabel = function (mode) {
-    switch (mode) {
-      case "AI_RECORD": return "कृत्रिम गर्भाधान (A.I.)";
-      case "METRITIS_FLUSH": return "गर्भाशय शोधन / फॉलो-अप";
-      case "VACCINATION": return "टीकाकरण रिकॉर्ड";
-      default: return "सामान्य ओपीडी उपचार";
+    const activeBtn = document.getElementById(`btnServiceMode_${mode}`);
+    if (activeBtn) {
+      activeBtn.className = 'service-mode-chip py-2 px-2.5 rounded-xl bg-blue-600 text-white font-bold text-xs shadow-xs transition';
     }
-  };
 
-  root.switchServiceMode = function (mode) {
-    activeServiceMode = mode;
-    root.renderUnifiedClinicalHub();
-  };
+    const modeContainer = document.getElementById('modeSpecificFieldsArea');
+    if (!modeContainer) return;
 
-  root.renderSpecializedServiceInputs = function (mode) {
-    if (mode === "AI_RECORD") {
-      return `
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+    if (mode === 'AI') {
+      modeContainer.innerHTML = `
+        <div class="p-3 bg-purple-50 border border-purple-200 rounded-2xl grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
           <div>
-            <label class="block font-bold text-slate-700 text-[10px] mb-0.5">सीमन स्ट्रॉ / बुल सं. (Bull ID)</label>
-            <input id="aiBullId" type="text" placeholder="उदा. HF-7014 (SABARMATI)" class="w-full bg-white border border-slate-200 rounded-xl p-2 font-bold outline-none" />
+            <label class="block text-[10px] font-bold text-purple-900 mb-0.5">सीमन स्ट्रॉ नंबर / बुल ID</label>
+            <input id="aiStrawNo" type="text" placeholder="उदा. MU-4050" class="w-full bg-white border border-purple-200 rounded-lg p-2 font-mono font-bold outline-none" />
           </div>
           <div>
-            <label class="block font-bold text-slate-700 text-[10px] mb-0.5">सीमन का प्रकार</label>
-            <select id="aiSemenType" class="w-full bg-white border border-slate-200 rounded-xl p-2 outline-none font-bold">
-              <option value="CONVENTIONAL">साधारण सीमन (Conventional)</option>
-              <option value="SEXED_SORTED">सेक्स सॉर्टेड (90% बछड़ी)</option>
-            </select>
+            <label class="block text-[10px] font-bold text-purple-900 mb-0.5">नस्ल (Breed) व वीर्य स्रोत</label>
+            <input id="aiBreed" type="text" placeholder="मुर्राह 100% / साहीवाल" class="w-full bg-white border border-purple-200 rounded-lg p-2 font-medium outline-none" />
           </div>
           <div>
-            <label class="block font-bold text-slate-700 text-[10px] mb-0.5">मद का समय (Heat Phase)</label>
-            <select id="aiHeatPhase" class="w-full bg-white border border-slate-200 rounded-xl p-2 outline-none">
-              <option value="MID_HEAT">मध्यम मद (Mid Heat - 12-18h)</option>
-              <option value="EARLY_HEAT">प्रारंभिक मद (Early Heat)</option>
-              <option value="LATE_HEAT">अंतिम मद (Late Heat)</option>
-            </select>
+            <label class="block text-[10px] font-bold text-purple-900 mb-0.5">संभावित प्रसव दिनांक (Exp. Calving)</label>
+            <input id="aiExpectedDate" type="date" class="w-full bg-white border border-purple-200 rounded-lg p-2 font-bold outline-none" />
           </div>
         </div>
       `;
-    } else if (mode === "METRITIS_FLUSH") {
-      return `
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+    } else if (mode === 'VACCINATION') {
+      modeContainer.innerHTML = `
+        <div class="p-3 bg-emerald-50 border border-emerald-200 rounded-2xl grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
           <div>
-            <label class="block font-bold text-slate-700 text-[10px] mb-0.5">गर्भाशय स्राव की स्थिति</label>
-            <select id="flushDischargeType" class="w-full bg-white border border-slate-200 rounded-xl p-2 outline-none font-bold">
-              <option value="PURULENT">गाढ़ा पीला मवाद (Purulent)</option>
-              <option value="MUCOPURULENT">आंव मिला मवाद (Mucopurulent)</option>
-              <option value="SANGUINOUS">बदबूदार लाल-भूरा मैला</option>
-            </select>
+            <label class="block text-[10px] font-bold text-emerald-900 mb-0.5">टीके का नाम व बैच सं.</label>
+            <input id="vaxBatchNo" type="text" placeholder="FMD / HS / BQ बैच #2026-X" class="w-full bg-white border border-emerald-200 rounded-lg p-2 font-bold outline-none" />
           </div>
           <div>
-            <label class="block font-bold text-slate-700 text-[10px] mb-0.5">प्रयुक्त इंट्रा-यूटेराइन घोल</label>
-            <input id="flushDrugUsed" type="text" placeholder="उदा. 60ml Lixen IU / Povidone 1%" class="w-full bg-white border border-slate-200 rounded-xl p-2 font-bold outline-none" />
-          </div>
-          <div>
-            <label class="block font-bold text-slate-700 text-[10px] mb-0.5">फॉलो-अप तारीख</label>
-            <input id="flushFollowUpDate" type="date" class="w-full bg-white border border-slate-200 rounded-xl p-2 outline-none font-bold" />
+            <label class="block text-[10px] font-bold text-emerald-900 mb-0.5">बूस्टर की अगली देय तिथि</label>
+            <input id="vaxNextDueDate" type="date" class="w-full bg-white border border-emerald-200 rounded-lg p-2 font-bold outline-none" />
           </div>
         </div>
       `;
-    } else if (mode === "VACCINATION") {
-      return `
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+    } else if (mode === 'UTERINE') {
+      modeContainer.innerHTML = `
+        <div class="p-3 bg-amber-50 border border-amber-200 rounded-2xl grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
           <div>
-            <label class="block font-bold text-slate-700 text-[10px] mb-0.5">टीके का नाम (Vaccine)</label>
-            <select id="vaxSelect" class="w-full bg-white border border-slate-200 rounded-xl p-2 outline-none font-bold">
-              <option value="FMD (खुरपका-मुँहपका)">FMD (खुरपका-मुँहपका)</option>
-              <option value="HS (गलघोंटू)">HS (गलघोंटू)</option>
-              <option value="BQ (लंगड़ा बुखार)">BQ (लंगड़ा बुखार)</option>
-              <option value="LSD (लंपी स्किन)">LSD (लंपी स्किन)</option>
-              <option value="BRUCELLA (ब्रुसेलोसिस)">BRUCELLA (ब्रुसेलोसिस)</option>
+            <label class="block text-[10px] font-bold text-amber-900 mb-0.5">गर्भाशय स्राव स्थिति (Discharge Status)</label>
+            <select id="uterineDischargeStatus" class="w-full bg-white border border-amber-200 rounded-lg p-2 font-medium outline-none">
+              <option value="CLEAR">साफ व पारदर्शी (Clear Mucus)</option>
+              <option value="CLOUDY">हल्का मटमैला (Catarrhal)</option>
+              <option value="PURULENT">सफेद मवाद (Purulent / Pyometra)</option>
+              <option value="FETID">तीव्र दुर्गंधयुक्त सड़न (Septic Lochia)</option>
             </select>
           </div>
           <div>
-            <label class="block font-bold text-slate-700 text-[10px] mb-0.5">वैक्सीन बैच नंबर</label>
-            <input id="vaxBatchNo" type="text" placeholder="उदा. VAX-2026-B9" class="w-full bg-white border border-slate-200 rounded-xl p-2 font-mono outline-none" />
-          </div>
-          <div>
-            <label class="block font-bold text-slate-700 text-[10px] mb-0.5">अगला बूस्टर देय (Due Date)</label>
-            <input id="vaxDueDate" type="date" class="w-full bg-white border border-slate-200 rounded-xl p-2 font-bold outline-none" />
+            <label class="block text-[10px] font-bold text-amber-900 mb-0.5">इंट्रा-यूटेरिन इन्फ्यूजन दवा</label>
+            <input id="uterineMedicineInfusion" type="text" placeholder="उदा. Cephapirin (Metricure) 19g" class="w-full bg-white border border-amber-200 rounded-lg p-2 font-medium outline-none" />
           </div>
         </div>
       `;
-    }
-    return `
-      <div class="text-[11px] text-slate-600 flex items-center justify-between">
-        <span>क्लिनिकल परीक्षा: सामान्य एलोपैथिक उपचार, एंटीबायोटिक एवं दर्दनिवारक प्रोटोकॉल।</span>
-        <span class="font-mono text-blue-700 font-bold">General OPD</span>
-      </div>
-    `;
-  };
-
-  root.calcRxDue = function () {
-    const total = parseFloat(document.getElementById("rxTotalFee")?.value) || 0;
-    const paid = parseFloat(document.getElementById("rxPaidFee")?.value) || 0;
-    const dueEl = document.getElementById("rxDueFee");
-    if (dueEl) {
-      dueEl.value = Math.max(0, total - paid);
+    } else {
+      modeContainer.innerHTML = '';
     }
   };
 
-  let capturedLocation = null;
-  root.captureCurrentGPS = function () {
-    const badge = document.getElementById("gpsStatusBadge");
+  window.captureGPSLocation = function () {
+    const gpsField = document.getElementById('opdGPS');
+    const btn = document.getElementById('btnGPS');
+
     if (!navigator.geolocation) {
-      alert("GPS आपके ब्राउज़र में समर्थित नहीं है।");
+      alert('आपके ब्राउज़र में GPS सुविधा उपलब्ध नहीं है।');
       return;
     }
-    if (badge) badge.textContent = "लोकेशन जांची जा रही है...";
+
+    if (btn) btn.textContent = '⌛ GPS...';
 
     navigator.geolocation.getCurrentPosition(
-      pos => {
-        capturedLocation = {
-          lat: pos.coords.latitude,
-          lon: pos.coords.longitude
-        };
-        if (badge) badge.textContent = `📍 ${capturedLocation.lat.toFixed(4)}, ${capturedLocation.lon.toFixed(4)}`;
+      (pos) => {
+        currentCoordinates.lat = pos.coords.latitude;
+        currentCoordinates.lon = pos.coords.longitude;
+        const str = `${pos.coords.latitude.toFixed(5)}, ${pos.coords.longitude.toFixed(5)}`;
+        if (gpsField) gpsField.value = str;
+        if (btn) btn.textContent = '📍 प्राप्त ✅';
+        setStored(STORAGE_KEYS.DOC_LOCATION, currentCoordinates);
       },
-      err => {
-        console.warn("GPS Fail:", err);
-        capturedLocation = { lat: 28.4089, lon: 76.9854 }; // Graceful fallback
-        if (badge) badge.textContent = `📍 28.4089, 76.9854 (डिफ़ॉल्ट)`;
+      (err) => {
+        if (btn) btn.textContent = '📍 GPS';
+        alert('GPS लोकेशन प्राप्त करने में विफल: ' + err.message);
       },
-      { timeout: 7000 }
+      { enableHighAccuracy: true, timeout: 10000 }
     );
   };
 
-  /* =========================================================================
-     4. PRESCRIPTION DISPATCHER & PDF RENDERER
-     ========================================================================= */
-  root.saveAndDispatchPrescription = function (targetChannel) {
-    const farmerName = document.getElementById("rxFarmerName")?.value.trim();
-    const farmerPhone = document.getElementById("rxFarmerPhone")?.value.trim();
-    const village = document.getElementById("rxFarmerVillage")?.value.trim() || "गाँव";
-    const species = document.getElementById("rxAnimalSpecies")?.value;
-    const tag = document.getElementById("rxAnimalTag")?.value.trim() || "बिना टैग";
-    const pregnancy = document.getElementById("rxPregnancyStatus")?.value;
-    const temp = document.getElementById("rxAnimalTemp")?.value.trim() || "सामान्य";
-    const diagnosis = document.getElementById("rxDiagnosis")?.value.trim();
-    const medicines = document.getElementById("rxMedicineText")?.value.trim();
-    const totalFee = document.getElementById("rxTotalFee")?.value || "0";
-    const paidFee = document.getElementById("rxPaidFee")?.value || "0";
-    const dueFee = document.getElementById("rxDueFee")?.value || "0";
+  window.calculateDue = function () {
+    const total = parseFloat(document.getElementById('opdTotalFee')?.value || 0);
+    const paid = parseFloat(document.getElementById('opdPaidFee')?.value || 0);
+    const dueField = document.getElementById('opdDueFee');
+    if (dueField) {
+      dueField.value = Math.max(0, total - paid);
+    }
+  };
 
-    if (!farmerName || !farmerPhone || !diagnosis) {
-      alert("कृपया किसान का नाम, 10-अंकों का मोबाइल नंबर और निदान (Diagnosis) अवश्य भरें!");
-      return;
+  window.clearRxField = function () {
+    const rx = document.getElementById('opdMedicine');
+    if (rx) rx.value = '';
+  };
+
+  /* =========================================================================
+     2. WHATSAPP DISPATCH & PDF PRINT ENGINE
+     ========================================================================= */
+
+  function compileCasePayload() {
+    const name = document.getElementById('opdFarmerName')?.value.trim();
+    const phone = document.getElementById('opdFarmerPhone')?.value.trim();
+    const village = document.getElementById('opdVillage')?.value.trim() || 'एन/ए';
+    const animal = document.getElementById('opdAnimal')?.value || 'गाय';
+    const tag = document.getElementById('opdTag')?.value.trim() || 'बिना टैग';
+    const preg = document.getElementById('opdPregnancy')?.value || 'खाली';
+    const gps = document.getElementById('opdGPS')?.value.trim() || 'उपलब्ध नहीं';
+    const diag = document.getElementById('opdDiagnosis')?.value.trim();
+    const rx = document.getElementById('opdMedicine')?.value.trim();
+    const totalFee = document.getElementById('opdTotalFee')?.value || '0';
+    const paidFee = document.getElementById('opdPaidFee')?.value || '0';
+    const dueFee = document.getElementById('opdDueFee')?.value || '0';
+
+    if (!name || !phone || !diag) {
+      alert('कृपया किसान का नाम, 10-अंकीय मोबाइल नंबर और प्रोविजनल निदान दर्ज करें!');
+      return null;
     }
 
-    const caseId = "VC_RX_" + Date.now().toString().slice(-6);
-    const caseDate = new Date().toLocaleDateString("hi-IN");
-
-    const clinicalCase = {
-      caseId,
-      date: caseDate,
-      mode: activeServiceMode,
-      serviceLabel: root.getServiceModeLabel(activeServiceMode),
-      farmerName,
-      farmerPhone,
+    return {
+      id: 'OPD-' + Date.now().toString().slice(-6),
+      date: new Date().toLocaleDateString('hi-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
+      timestamp: Date.now(),
+      mode: currentServiceMode,
+      name,
+      phone,
       village,
-      species,
+      animal,
       tag,
-      pregnancy,
-      temp,
-      diagnosis,
-      medicines,
+      preg,
+      gps,
+      diag,
+      rx,
       totalFee,
       paidFee,
-      dueFee,
-      gps: capturedLocation || { lat: 28.4089, lon: 76.9854 }
+      dueFee
     };
+  }
 
-    // Save locally
-    const cases = getStorage(STORAGE_KEYS.CLINICAL_CASES, []);
-    cases.unshift(clinicalCase);
-    setStorage(STORAGE_KEYS.CLINICAL_CASES, cases);
+  window.dispatchWhatsAppRx = function () {
+    const c = compileCasePayload();
+    if (!c) return;
 
-    if (targetChannel === "WHATSAPP") {
-      root.dispatchWhatsAppPrescription(clinicalCase);
-    } else {
-      root.printClinicalSlip(clinicalCase);
-    }
+    window.saveOfflineCaseDirectly(c);
+
+    let msg = `*VETCARE AI OS • डिजिटल केस पर्ची*\n`;
+    msg += `----------------------------------------\n`;
+    msg += `📄 *केस सं:* ${c.id} | *दिनांक:* ${c.date}\n`;
+    msg += `👨‍🌾 *पशुपालक:* ${c.name} (${c.village})\n`;
+    msg += `📱 *फोन:* ${c.phone}\n`;
+    msg += `🐄 *मरीज पशु:* ${c.animal} (टैग: ${c.tag})\n`;
+    msg += `🤰 *गर्भ स्थिति:* ${c.preg}\n`;
+    msg += `🩺 *सेवा प्रकार:* ${c.mode}\n`;
+    msg += `🔬 *निदान (Diagnosis):* ${c.diag}\n`;
+    msg += `----------------------------------------\n`;
+    msg += `💊 *उपचार व औषधि निर्देश (Rx):*\n${c.rx || 'क्लिनिकल परामर्श अनुसार'}\n`;
+    msg += `----------------------------------------\n`;
+    msg += `💰 *कुल फीस:* ₹${c.totalFee} | *जमा:* ₹${c.paidFee} | *बकाया:* ₹${c.dueFee}\n\n`;
+    msg += `_अधिकृत पशु चिकित्सा व्यवसायी (Veterinary Practitioner) द्वारा जारी।_`;
+
+    const cleanPhone = c.phone.replace(/[^0-9]/g, '');
+    const targetPhone = cleanPhone.length === 10 ? '91' + cleanPhone : cleanPhone;
+    const url = `https://api.whatsapp.com/send?phone=${targetPhone}&text=${encodeURIComponent(msg)}`;
+    window.open(url, '_blank');
   };
 
-  root.dispatchWhatsAppPrescription = function (c) {
-    const gpsMapLink = `https://www.google.com/maps?q=${c.gps.lat},${c.gps.lon}`;
+  window.saveOfflineCaseDirectly = function (explicitCase) {
+    const c = explicitCase || compileCasePayload();
+    if (!c) return;
 
-    const text = 
-`*🩺 VETCARE CLINICAL AI - डिजिटल केस पर्ची*
----------------------------------------
-*पर्ची सं.:* ${c.caseId} | *दिनांक:* ${c.date}
-*सेवा श्रेणी:* ${c.serviceLabel}
-*किसान का नाम:* ${c.farmerName} (${c.village})
-*मोबाइल:* ${c.farmerPhone}
-*मरीज पशु:* ${c.species} | *टैग:* ${c.tag}
-*गर्भ स्थिति:* ${c.pregnancy} | *तापमान:* ${c.temp}
----------------------------------------
-*🔍 पहचाना गया रोग / निदान:*
-*${c.diagnosis}*
-
-*💊 अनुशंसित दवाइयां व इंजेक्शन (Rx):*
-${c.medicines}
----------------------------------------
-*फीस विवरण:*
-कुल फीस: ₹${c.totalFee} | जमा: ₹${c.paidFee} | *बकाया: ₹${c.dueFee}*
-
-📍 *किसान लोकेशन (Google Maps):*
-${gpsMapLink}
-
-_अधिकृत पशु चिकित्सक द्वारा प्रमाणित_
-_Vetcare AI Telemedicine Network_`;
-
-    const encoded = encodeURIComponent(text);
-    const waUrl = `https://api.whatsapp.com/send?phone=91${c.farmerPhone}&text=${encoded}`;
-    window.open(waUrl, "_blank");
+    const cases = getStored(STORAGE_KEYS.CASES, []);
+    cases.unshift(c);
+    setStored(STORAGE_KEYS.CASES, cases);
+    window.renderCaseRecords();
+    if (!explicitCase) alert(`केस रिकॉर्ड #${c.id} सुरक्षित कर लिया गया!`);
   };
 
-  root.printClinicalSlip = function (c) {
-    const printArea = document.getElementById("printableSlipArea") || document.createElement("div");
-    printArea.id = "printableSlipArea";
-    document.body.appendChild(printArea);
+  window.printCurrentOPDSlip = function () {
+    const c = compileCasePayload();
+    if (!c) return;
 
-    const gpsMapLink = `https://www.google.com/maps?q=${c.gps.lat},${c.gps.lon}`;
+    const printArea = document.getElementById('printableSlipArea');
+    if (!printArea) return;
 
     printArea.innerHTML = `
-      <div style="font-family:sans-serif; max-width:800px; margin:auto; padding:24px; border:2px solid #0f172a; border-radius:16px;">
-        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #0f172a; padding-bottom:12px;">
-          <div>
-            <h1 style="margin:0; font-size:24px; font-weight:900; color:#1e3a8a;">VETCARE पशु चिकित्सा क्लिनिक</h1>
-            <p style="margin:4px 0 0; font-size:12px; color:#475569;">अधिकृत पशु चिकित्सा, कृत्रिम गर्भाधान एवं उन्नत डायग्नोस्टिक केंद्र</p>
-          </div>
-          <div style="text-align:right;">
-            <strong style="font-size:14px; font-family:monospace;">पर्ची सं.: ${c.caseId}</strong>
-            <div style="font-size:12px; color:#475569;">दिनांक: ${c.date}</div>
-          </div>
+      <div style="font-family: sans-serif; padding: 20px; line-height: 1.5; color: #000;">
+        <div style="text-align: center; border-bottom: 2px solid #2563eb; padding-bottom: 10px;">
+          <h2 style="margin: 0; color: #1e3a8a; font-size: 20px;">VETCARE AI OS • CLINICAL OPD PRESCRIPTION</h2>
+          <p style="margin: 2px 0; font-size: 11px;">अधिकृत पशु चिकित्सा व्यवसायी (Veterinary Practitioner) डिजिटल प्रिसक्रिप्शन</p>
         </div>
-
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:16px; font-size:13px; background:#f8fafc; padding:12px; border-radius:12px;">
-          <div><strong>किसान का नाम:</strong> ${c.farmerName} (${c.village})</div>
-          <div><strong>मोबाइल नंबर:</strong> <a href="tel:${c.farmerPhone}" style="color:#2563eb; text-decoration:none;">${c.farmerPhone} 📞</a></div>
-          <div><strong>पशु / प्रजाति:</strong> ${c.species} (टैग: ${c.tag})</div>
-          <div><strong>गर्भ स्थिति:</strong> ${c.pregnancy} (ताप: ${c.temp})</div>
-          <div><strong>सेवा श्रेणी:</strong> ${c.serviceLabel}</div>
-          <div><strong>📍 लोकेशन लिंक:</strong> <a href="${gpsMapLink}" target="_blank" style="color:#2563eb;">Google Maps पर देखें</a></div>
+        <div style="display: flex; justify-content: space-between; font-size: 11px; margin-top: 10px;">
+          <div><b>पर्ची सं:</b> ${c.id}<br><b>दिनांक:</b> ${c.date}</div>
+          <div><b>सेवा विधा:</b> ${c.mode}<br><b>GPS:</b> ${c.gps}</div>
         </div>
-
-        <div style="margin-top:20px;">
-          <h3 style="margin:0 0 8px; font-size:15px; color:#1e3a8a; border-bottom:1px solid #cbd5e1; padding-bottom:4px;">🔍 प्रोविजनल डायग्नोसिस (पहचाना गया रोग)</h3>
-          <div style="font-size:16px; font-weight:bold; color:#0f172a;">${c.diagnosis}</div>
+        <hr style="border: 0.5px solid #ccc; margin: 10px 0;">
+        <table style="width: 100%; font-size: 11px;">
+          <tr>
+            <td><b>पशुपालक:</b> ${c.name}</td>
+            <td><b>मोबाइल:</b> ${c.phone}</td>
+            <td><b>गाँव:</b> ${c.village}</td>
+          </tr>
+          <tr>
+            <td><b>पशु प्रकार:</b> ${c.animal}</td>
+            <td><b>टैग सं:</b> ${c.tag}</td>
+            <td><b>गर्भ स्थिति:</b> ${c.preg}</td>
+          </tr>
+        </table>
+        <hr style="border: 0.5px solid #ccc; margin: 10px 0;">
+        <div style="font-size: 12px; margin: 8px 0;">
+          <b>क्लिनिकल निदान (Provisional Diagnosis):</b> <span style="color: #b91c1c;">${c.diag}</span>
         </div>
-
-        <div style="margin-top:20px;">
-          <h3 style="margin:0 0 8px; font-size:15px; color:#1e3a8a; border-bottom:1px solid #cbd5e1; padding-bottom:4px;">💊 सुझाई गई औषधियां व इंजेक्शन (Rx)</h3>
-          <pre style="white-space:pre-wrap; font-family:monospace; font-size:13px; background:#f1f5f9; padding:12px; border-radius:8px; line-height:1.6;">${c.medicines}</pre>
+        <div style="font-size: 11px; margin-top: 10px;">
+          <b>दवा, इंजेक्शन डोज़ व रूट (Rx Injections & Medicines):</b>
+          <pre style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 10px; border-radius: 8px; font-family: monospace; white-space: pre-wrap;">${c.rx || 'कोई दवा निर्दिष्ट नहीं'}</pre>
         </div>
-
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:24px; padding-top:12px; border-top:2px solid #0f172a;">
-          <div style="font-size:13px;">
-            <strong>कुल फीस:</strong> ₹${c.totalFee} | <strong>जमा:</strong> ₹${c.paidFee} | <strong style="color:#dc2626;">बकाया: ₹${c.dueFee}</strong>
-          </div>
-          <div style="text-align:right;">
-            <div style="height:40px;"></div>
-            <strong style="font-size:13px; border-top:1px solid #000; padding-top:4px;">हस्ताक्षर अधिकृत पशु चिकित्सक</strong>
+        <div style="margin-top: 15px; font-size: 11px; display: flex; justify-content: space-between;">
+          <div><b>कुल शुल्क:</b> ₹${c.totalFee} | <b>जमा:</b> ₹${c.paidFee} | <b>बकाया:</b> ₹${c.dueFee}</div>
+          <div style="text-align: right; margin-top: 20px;">
+            ___________________________<br>
+            <b>अधिकृत हस्ताक्षर व सील</b>
           </div>
         </div>
       </div>
@@ -507,263 +276,236 @@ _Vetcare AI Telemedicine Network_`;
   };
 
   /* =========================================================================
-     5. 20-KM GPS DOCTOR-FARMER MATCHING ENGINE
+     3. SAVED CASE RECORDS EXPLORER
      ========================================================================= */
 
-  /* FARMER SIDE: REQUEST NEARBY DOCTORS */
-  root.renderFarmerDoctorMatcher = function (containerId) {
-    const container = document.getElementById(containerId);
-    if (!container) return;
+  window.renderCaseRecords = function () {
+    const list = document.getElementById('recordsList');
+    const badge = document.getElementById('recordTotalBadge');
+    if (!list) return;
 
-    container.innerHTML = `
-      <div class="bg-white border border-slate-200 rounded-3xl p-5 shadow-xs space-y-4 font-sans text-xs">
-        
-        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-          <div class="flex items-center gap-2">
-            <span class="text-2xl">📍</span>
-            <div>
-              <h2 class="text-sm font-black text-slate-900">20 किमी परिधि में पशु चिकित्सक खोजें</h2>
-              <p class="text-[11px] text-slate-500">GPS Haversine एल्गोरिथ्म द्वारा निकटतम सत्यापित डॉक्टर</p>
+    const cases = getStored(STORAGE_KEYS.CASES, []);
+    if (badge) badge.textContent = `${cases.length} केस सुरक्षित`;
+
+    if (cases.length === 0) {
+      list.innerHTML = `<div class="p-6 text-center text-slate-400 text-xs">अभी तक कोई केस पर्ची सुरक्षित नहीं की गई है।</div>`;
+      return;
+    }
+
+    list.innerHTML = cases.map((c, i) => `
+      <div class="bg-white border border-slate-200 rounded-2xl p-3.5 space-y-2 hover:shadow-xs transition">
+        <div class="flex items-start justify-between">
+          <div>
+            <div class="flex items-center gap-1.5">
+              <span class="text-[10px] bg-blue-50 text-blue-700 font-bold px-1.5 py-0.5 rounded font-mono">${c.id}</span>
+              <h4 class="font-bold text-slate-900 text-xs sm:text-sm">${c.name} (${c.village})</h4>
             </div>
+            <p class="text-[11px] text-slate-500 font-medium">${c.animal} • टैग: ${c.tag} • मो: ${c.phone}</p>
           </div>
-          <button onclick="window.fetchNearbyDoctorsForFarmer()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-1.5 rounded-xl transition shadow-xs">
-            ⚡ लोकेशन स्कैन करें
-          </button>
+          <span class="text-[10px] text-slate-400 font-mono">${c.date}</span>
         </div>
-
-        <!-- SERVICE SELECTOR FOR FARMER -->
-        <div class="grid grid-cols-2 gap-2 text-xs">
-          <div>
-            <label class="block font-bold text-slate-700 mb-1">आवश्यक सेवा चुनें:</label>
-            <select id="reqServiceType" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 font-bold outline-none">
-              <option value="आपातकालीन उपचार">🚨 आपातकालीन उपचार (Emergency)</option>
-              <option value="कृत्रिम गर्भाधान (A.I.)">🧬 कृत्रिम गर्भाधान (A.I.)</option>
-              <option value="बीमारी व ओपीडी">🩺 सामान्य बीमारी व जांच</option>
-              <option value="टीकाकरण">💉 घर पर टीकाकरण</option>
-            </select>
-          </div>
-          <div>
-            <label class="block font-bold text-slate-700 mb-1">मरीज पशु का प्रकार:</label>
-            <select id="reqSpecies" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 font-bold outline-none">
-              <option value="गाय (Cow)">गाय (Cow)</option>
-              <option value="भैंस (Buffalo)">भैंस (Buffalo)</option>
-              <option value="बकरी/भेड़">बकरी/भेड़</option>
-            </select>
+        <div class="text-xs text-rose-700 font-bold">निदान: ${c.diag}</div>
+        <div class="text-[11px] text-slate-600 font-mono bg-slate-50 p-2 rounded-xl truncate">${c.rx || 'परामर्श'}</div>
+        <div class="flex items-center justify-between border-t border-slate-100 pt-2 text-[11px]">
+          <span class="font-bold text-slate-700">फीस: ₹${c.totalFee} (बकाया: ₹${c.dueFee})</span>
+          <div class="flex gap-1.5">
+            <button onclick="window.resendWhatsAppCase('${c.id}')" class="text-emerald-700 bg-emerald-50 px-2 py-1 rounded-lg font-bold hover:bg-emerald-100 transition">
+              💬 व्हाट्सएप
+            </button>
+            <button onclick="window.deleteCaseRecord(${i})" class="text-rose-600 bg-rose-50 px-2 py-1 rounded-lg font-bold hover:bg-rose-100 transition">
+              हटाएं
+            </button>
           </div>
         </div>
-
-        <textarea id="reqFarmerNotes" rows="2" placeholder="पशु के लक्षण संक्षेप में लिखें (उदा. सुबह से पेट फूला है और चारा छोड़ दिया है)..." class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs outline-none"></textarea>
-
-        <!-- DOCTORS LIST CONTAINER -->
-        <div id="nearbyDoctorsListArea" class="space-y-3 pt-2">
-          <div class="text-center py-6 text-slate-400">
-            'लोकेशन स्कैन करें' बटन दबाकर 20 किमी में उपलब्ध डॉक्टर खोजें।
-          </div>
-        </div>
-
       </div>
-    `;
+    `).join('');
   };
 
-  root.fetchNearbyDoctorsForFarmer = function () {
-    const listArea = document.getElementById("nearbyDoctorsListArea");
-    if (!listArea) return;
+  window.handleRecordSearch = function () {
+    const q = (document.getElementById('searchRecordsInput')?.value || '').toLowerCase().trim();
+    const cases = getStored(STORAGE_KEYS.CASES, []);
+    const filtered = cases.filter(c => c.name.toLowerCase().includes(q) || c.phone.includes(q) || c.village.toLowerCase().includes(q) || c.diag.toLowerCase().includes(q));
 
-    listArea.innerHTML = `
-      <div class="text-center py-6 text-slate-500 font-bold animate-pulse">
-        🛰️ आपके खेत/घर की GPS लोकेशन से दूरी की गणना की जा रही है...
+    const list = document.getElementById('recordsList');
+    if (!list) return;
+
+    if (filtered.length === 0) {
+      list.innerHTML = `<div class="p-6 text-center text-slate-400 text-xs">कोई मेल खाता केस नहीं मिला।</div>`;
+      return;
+    }
+
+    list.innerHTML = filtered.map((c, i) => `
+      <div class="bg-white border border-slate-200 rounded-2xl p-3.5 space-y-2">
+        <div class="flex justify-between items-center">
+          <strong class="text-xs text-slate-900">${c.name} (${c.village})</strong>
+          <span class="text-[10px] text-slate-400">${c.date}</span>
+        </div>
+        <div class="text-xs text-rose-700 font-bold">निदान: ${c.diag}</div>
       </div>
-    `;
+    `).join('');
+  };
 
+  window.deleteCaseRecord = function (index) {
+    const cases = getStored(STORAGE_KEYS.CASES, []);
+    cases.splice(index, 1);
+    setStored(STORAGE_KEYS.CASES, cases);
+    window.renderCaseRecords();
+  };
+
+  window.resendWhatsAppCase = function (caseId) {
+    const cases = getStored(STORAGE_KEYS.CASES, []);
+    const c = cases.find(x => x.id === caseId);
+    if (!c) return;
+
+    let msg = `*VETCARE AI OS • डिजिटल पर्ची डुप्लीकेट*\nकेस #${c.id} | ${c.date}\nमरीज: ${c.animal} (टैग: ${c.tag})\nकिसान: ${c.name}\nनिदान: ${c.diag}\nउपचार:\n${c.rx}`;
+    const cleanPhone = c.phone.replace(/[^0-9]/g, '');
+    const targetPhone = cleanPhone.length === 10 ? '91' + cleanPhone : cleanPhone;
+    window.open(`https://api.whatsapp.com/send?phone=${targetPhone}&text=${encodeURIComponent(msg)}`, '_blank');
+  };
+
+  /* =========================================================================
+     4. 20-KM GPS DOCTOR-FARMER MATCHING & GOOGLE MAPS NAVIGATION
+     ========================================================================= */
+
+  function haversineDistanceKm(lat1, lon1, lat2, lon2) {
+    const R = 6371; // Earth radius in km
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return Math.round(R * c * 10) / 10;
+  }
+
+  // Farmer initiates emergency call (Doctor phone number strictly hidden from farmer)
+  window.requestDoctorEmergencyVisit = function () {
     if (!navigator.geolocation) {
-      alert("GPS समर्थित नहीं है, डिफ़ॉल्ट लोकेशन से गणना की जा रही है।");
-      root.renderMatchedDoctors(28.4000, 76.9900);
+      alert('लोकेशन सक्षम नहीं है।');
       return;
     }
 
     navigator.geolocation.getCurrentPosition(
-      pos => {
-        root.renderMatchedDoctors(pos.coords.latitude, pos.coords.longitude);
+      (pos) => {
+        const farmerLat = pos.coords.latitude;
+        const farmerLon = pos.coords.longitude;
+        const farmerName = prompt('कृपया अपना नाम दर्ज करें:');
+        const farmerPhone = prompt('कृपया अपना 10-अंकीय मोबाइल नंबर दर्ज करें:');
+        const animalProblem = prompt('पशु की मुख्य समस्या क्या है? (उदा. गलघोंटू, जेर रुकना, ब्याने में दिक्कत)');
+
+        if (!farmerName || !farmerPhone) return;
+
+        const requests = getStored(STORAGE_KEYS.GPS_REQUESTS, []);
+        const newReq = {
+          id: 'REQ-' + Date.now().toString().slice(-5),
+          time: new Date().toLocaleTimeString('hi-IN', { hour: '2-digit', minute: '2-digit' }),
+          farmerName,
+          farmerPhone,
+          problem: animalProblem || 'आपातकालीन क्लिनिकल जांच',
+          farmerLat,
+          farmerLon,
+          status: 'PENDING'
+        };
+
+        requests.unshift(newReq);
+        setStored(STORAGE_KEYS.GPS_REQUESTS, requests);
+
+        alert('✅ आपका अनुरोध 20-किमी दायरे में उपस्थित अधिकृत पशु चिकित्सकों को भेज दिया गया है!\nडॉक्टर की सुरक्षा व व्यस्तता के कारण डॉक्टर का व्यक्तिगत नंबर गोपनीय रखा गया है। डॉक्टर स्वयं आपसे संपर्क करेंगे।');
       },
-      err => {
-        console.warn("Farmer GPS denied, using default coordinates:", err);
-        root.renderMatchedDoctors(28.4000, 76.9900);
-      },
-      { timeout: 7000 }
+      (err) => {
+        alert('GPS समस्या: ' + err.message);
+      }
     );
   };
 
-  root.renderMatchedDoctors = function (farmerLat, farmerLon) {
-    const listArea = document.getElementById("nearbyDoctorsListArea");
-    if (!listArea) return;
+  // Render incoming requests on Doctor Dashboard
+  window.renderDoctorGPSDashboard = function (containerId) {
+    const target = document.getElementById(containerId || 'viewDiagnosis');
+    if (!target) return;
 
-    const allDocs = getStorage(STORAGE_KEYS.REGISTERED_DOCTORS, SEED_REGISTERED_DOCTORS);
-
-    // Filter within 20 KM radius using Haversine algorithm
-    const matched = allDocs.map(doc => {
-      const distance = root.calculateHaversineDistance(farmerLat, farmerLon, doc.lat, doc.lon);
-      return { ...doc, distance };
-    }).filter(d => d.distance <= 20);
-
-    matched.sort((a, b) => a.distance - b.distance);
-
-    if (matched.length === 0) {
-      listArea.innerHTML = `
-        <div class="p-4 bg-amber-50 border border-amber-200 rounded-2xl text-amber-900 text-center font-medium">
-          आपके 20 किमी दायरे में कोई सक्रिय डॉक्टर नहीं मिला। कृपया सीधे हेल्पलाइन पर संपर्क करें।
-        </div>
-      `;
-      return;
+    let gpsBox = document.getElementById('doctorGPSRequestsBox');
+    if (!gpsBox) {
+      gpsBox = document.createElement('div');
+      gpsBox.id = 'doctorGPSRequestsBox';
+      gpsBox.className = 'bg-white border-2 border-indigo-100 rounded-3xl p-5 shadow-xs space-y-3.5';
+      target.insertBefore(gpsBox, target.firstChild);
     }
 
-    listArea.innerHTML = `
+    const docGps = getStored(STORAGE_KEYS.DOC_LOCATION, { lat: 28.6139, lon: 77.2090 });
+    const requests = getStored(STORAGE_KEYS.GPS_REQUESTS, []);
+
+    // Filter requests within 20 km
+    const nearbyRequests = requests.map(req => {
+      const dist = haversineDistanceKm(docGps.lat, docGps.lon, req.farmerLat, req.farmerLon);
+      return { ...req, distanceKm: dist };
+    }).filter(req => req.distanceKm <= 20 || isNaN(req.distanceKm));
+
+    gpsBox.innerHTML = `
+      <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+        <div class="flex items-center gap-2">
+          <span class="w-3 h-3 rounded-full bg-emerald-500 animate-ping"></span>
+          <h3 class="text-sm font-bold text-slate-900">
+            📍 20-किमी GPS लाइव किसान कॉल व नेविगेशन
+          </h3>
+        </div>
+        <span class="text-xs bg-indigo-50 text-indigo-700 font-bold px-2.5 py-1 rounded-xl border border-indigo-200">
+          ${nearbyRequests.length} सक्रिय कॉल
+        </span>
+      </div>
+
       <div class="space-y-2.5">
-        <div class="text-[11px] font-bold text-slate-500">20 किमी परिधि में ${matched.length} डॉक्टर उपलब्ध हैं:</div>
-        ${matched.map(doc => `
-          <div class="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl flex items-center justify-between gap-3">
-            <div>
-              <div class="flex items-center gap-2">
-                <span class="font-black text-slate-900 text-xs sm:text-sm">${doc.name}</span>
-                <span class="text-[10px] bg-emerald-50 text-emerald-700 font-bold px-1.5 py-0.2 rounded border border-emerald-200">${doc.rating}</span>
+        ${nearbyRequests.length === 0 ? `
+          <div class="p-4 text-center text-slate-400 text-xs">
+            20 किमी दायरे में कोई लंबित आपातकालीन किसान कॉल नहीं है।
+          </div>
+        ` : nearbyRequests.map(r => `
+          <div class="bg-indigo-50/40 border border-indigo-200 rounded-2xl p-3.5 space-y-2">
+            <div class="flex items-start justify-between">
+              <div>
+                <strong class="text-xs text-indigo-950">${r.farmerName}</strong>
+                <span class="block text-[11px] text-slate-500 font-medium">मो: ${r.farmerPhone} • समय: ${r.time}</span>
               </div>
-              <div class="text-[11px] text-slate-600 font-medium">${doc.clinicName}</div>
-              <div class="text-[10px] text-blue-700 font-bold mt-0.5">विशेषज्ञता: ${doc.specialty}</div>
-              <div class="text-[10px] text-slate-400 font-mono mt-0.5">🔒 संपर्क: ${doc.phoneHidden} (सुरक्षित कॉल केवल डॉक्टर द्वारा)</div>
-            </div>
-
-            <div class="text-right shrink-0 space-y-1.5">
-              <span class="inline-block text-xs font-black text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-lg font-mono">
-                ${doc.distance} किमी दूर
+              <span class="text-xs font-black px-2 py-0.5 rounded-lg bg-indigo-600 text-white shadow-xs">
+                ${r.distanceKm} किमी दूर
               </span>
-              <button onclick="window.requestDoctorVisit('${doc.id}', ${farmerLat}, ${farmerLon})" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-1.5 px-3 rounded-xl text-[11px] shadow-xs transition active:scale-98">
-                अनुरोध भेजें ➔
-              </button>
+            </div>
+
+            <p class="text-xs text-rose-700 font-bold bg-white p-2 rounded-xl border border-indigo-100">
+              🚨 समस्या: ${r.problem}
+            </p>
+
+            <div class="flex gap-2 pt-1 text-xs">
+              <!-- Direct Google Maps Navigation Trigger -->
+              <a 
+                href="https://www.google.com/maps/dir/?api=1&destination=${r.farmerLat},${r.farmerLon}" 
+                target="_blank" 
+                class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 rounded-xl text-center shadow-xs transition flex items-center justify-center gap-1.5"
+              >
+                <span>🗺️ गूगल मैप्स नेविगेशन शुरू करें</span>
+              </a>
+              <a 
+                href="tel:${r.farmerPhone}" 
+                class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2 rounded-xl text-center transition flex items-center justify-center gap-1"
+              >
+                <span>📞 कॉल</span>
+              </a>
             </div>
           </div>
-        `).join("")}
+        `).join('')}
       </div>
     `;
   };
 
-  root.requestDoctorVisit = function (doctorId, farmerLat, farmerLon) {
-    const serviceType = document.getElementById("reqServiceType")?.value || "आपातकालीन उपचार";
-    const species = document.getElementById("reqSpecies")?.value || "गाय";
-    const notes = document.getElementById("reqFarmerNotes")?.value.trim() || "कोई विवरण नहीं";
+  // Safe Lifecycle Initialization
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+      window.renderCaseRecords();
+      window.setClinicalServiceMode('OPD');
+    });
+  } else {
+    window.renderCaseRecords();
+    window.setClinicalServiceMode('OPD');
+  }
 
-    const farmerName = prompt("कृपया अपना नाम दर्ज करें:");
-    if (!farmerName) return;
-    const farmerPhone = prompt("कृपया अपना 10 अंकों का मोबाइल नंबर दर्ज करें (डॉक्टर द्वारा संपर्क हेतु):");
-    if (!farmerPhone || farmerPhone.length < 10) {
-      alert("वैध 10-अंकों का मोबाइल नंबर अनिवार्य है!");
-      return;
-    }
-
-    const requestId = "REQ_" + Date.now().toString().slice(-6);
-    const requestPayload = {
-      requestId,
-      doctorId,
-      farmerName,
-      farmerPhone,
-      serviceType,
-      species,
-      notes,
-      farmerLat,
-      farmerLon,
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      status: "PENDING"
-    };
-
-    const requests = getStorage(STORAGE_KEYS.DISPATCH_REQUESTS, []);
-    requests.unshift(requestPayload);
-    setStorage(STORAGE_KEYS.DISPATCH_REQUESTS, requests);
-
-    alert(`अनुरोध सफलतापूर्वक भेजा गया! डॉक्टर को आपका केस और GPS नेविगेशन लिंक प्रेषित कर दिया गया है। वे शीघ्र कॉल करेंगे।`);
-  };
-
-  /* =========================================================================
-     6. DOCTOR SIDE: INCOMING REQUESTS NOTIFICATION & NAVIGATION ROUTER
-     ========================================================================= */
-  root.renderDoctorIncomingRequests = function (containerId) {
-    const container = document.getElementById(containerId);
-    if (!container) return;
-
-    const requests = getStorage(STORAGE_KEYS.DISPATCH_REQUESTS, []);
-
-    container.innerHTML = `
-      <div class="bg-white border border-slate-200 rounded-3xl p-5 shadow-xs space-y-4 font-sans text-xs">
-        
-        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-          <div class="flex items-center gap-2">
-            <span class="text-2xl">🚨</span>
-            <div>
-              <h2 class="text-sm font-black text-slate-900">किसान विजिट अनुरोध (Incoming Visits)</h2>
-              <p class="text-[11px] text-slate-500">20 किमी दायरे से सीधे प्राप्त अलर्ट</p>
-            </div>
-          </div>
-          <span class="text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200 px-2.5 py-0.5 rounded-full font-mono">
-            ${requests.filter(r => r.status === 'PENDING').length} नए अलर्ट
-          </span>
-        </div>
-
-        <div class="space-y-3">
-          ${requests.length === 0 ? `
-            <div class="text-center py-8 text-slate-400">वर्तमान में कोई लंबित विजिट अनुरोध नहीं है।</div>
-          ` : requests.map(req => {
-            const googleMapsRouteUrl = `https://www.google.com/maps/dir/?api=1&destination=${req.farmerLat},${req.farmerLon}`;
-            const isPending = req.status === "PENDING";
-
-            return `
-              <div class="p-4 rounded-2xl border transition ${isPending ? 'bg-amber-50/50 border-amber-200' : 'bg-slate-50 border-slate-200'} space-y-2.5">
-                <div class="flex items-start justify-between gap-2">
-                  <div>
-                    <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-100 text-blue-800">${req.serviceType}</span>
-                    <h3 class="text-xs sm:text-sm font-black text-slate-900 mt-1">${req.farmerName} (${req.species})</h3>
-                  </div>
-                  <span class="text-[10px] font-mono text-slate-400">${req.time}</span>
-                </div>
-
-                <p class="text-slate-600 bg-white/80 p-2.5 rounded-xl border border-slate-200/60 leading-relaxed">
-                  "${req.notes}"
-                </p>
-
-                <!-- ACTIONS FOR DOCTOR -->
-                <div class="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-slate-200/50">
-                  <div class="flex items-center gap-2">
-                    <a href="tel:${req.farmerPhone}" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-1.5 rounded-xl text-[11px] flex items-center gap-1 transition">
-                      <span>📞</span> <span>कॉल करें (${req.farmerPhone})</span>
-                    </a>
-
-                    <a href="${googleMapsRouteUrl}" target="_blank" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-3 py-1.5 rounded-xl text-[11px] flex items-center gap-1 transition">
-                      <span>📍</span> <span>रास्ता देखें (Google Maps)</span>
-                    </a>
-                  </div>
-
-                  ${isPending ? `
-                    <button onclick="window.markRequestCompleted('${req.requestId}')" class="bg-slate-800 hover:bg-black text-white font-bold px-3 py-1.5 rounded-xl text-[11px] transition">
-                      ✓ केस पूर्ण मार्क करें
-                    </button>
-                  ` : `
-                    <span class="text-emerald-700 font-bold text-[11px]">✓ विजिट संपन्न</span>
-                  `}
-                </div>
-              </div>
-            `;
-          }).join("")}
-        </div>
-
-      </div>
-    `;
-  };
-
-  root.markRequestCompleted = function (requestId) {
-    const requests = getStorage(STORAGE_KEYS.DISPATCH_REQUESTS, []);
-    const idx = requests.findIndex(r => r.requestId === requestId);
-    if (idx === -1) return;
-
-    requests[idx].status = "COMPLETED";
-    setStorage(STORAGE_KEYS.DISPATCH_REQUESTS, requests);
-    alert("केस सफलतापूर्वक पूर्ण मार्क किया गया।");
-    root.renderDoctorIncomingRequests("doctorIncomingRequestsArea");
-  };
-
-})(typeof window !== "undefined" ? window : global);
+})(window, document);
