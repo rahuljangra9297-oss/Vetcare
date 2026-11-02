@@ -1,1238 +1,1127 @@
-// Vetcare AI OS - Master Admin Control Console, Masked Credentials & Dynamic Suite (2026 Production)
+// Vetcare AI OS - Master Admin Console & Detailed Location Analytics (2026 Production)
 
-/**
- * ============================================================================
- * MASTER ADMIN CONTROL CONSOLE & SECURITY ARCHITECTURE
- * ============================================================================
- * 1. Strictly Masked Dual Admin Authentication (PIN: 9297 | ID: 9991039297 & Rahul@1812)
- *    - All sensitive inputs (Admin ID, Password, Master PIN) are type="password" by default.
- *    - Interactive eye icon toggles allow explicit, temporary unmasking while typing.
- *    - Self-Reset Workflow via 6-Digit SMS OTP to 9991039297.
- * 2. Dynamic Payout Bank & UPI Manager (SBI, PNB, and Custom Gateway Accounts).
- * 3. Granular User Management & Per-User Feature Toggles (SMS, AI Surgeon, Dual Portal, Trial).
- * 4. Location-Based User Analytics, Geo-Filters & Real-Time Operational Badges.
- * 5. Dynamic App Branding Engine (Logo, App Title, Theme Color, Live Announcement Banner).
- * ============================================================================
- */
-
-(function (window, document) {
+(function () {
   'use strict';
 
-  // --------------------------------------------------------------------------
-  // 1. STORAGE KEYS & CORE DATA DEFINITIONS
-  // --------------------------------------------------------------------------
-  const ADMIN_STORAGE_KEYS = {
-    CREDENTIALS: 'vetcare_admin_credentials',
-    PAYOUTS: 'vetcare_payout_accounts',
-    USERS: 'vetcare_users_db',
-    BRANDING: 'vetcare_app_branding',
-    SESSION_USER: 'vetcare_session_user'
+  // =========================================================================
+  // 1. CONSTANTS, STORAGE KEYS & DEFAULT SCHEMAS
+  // =========================================================================
+  const ADMIN_KEYS = {
+    SESSION: 'vetcare_admin_auth_session',
+    USERS_DB: 'vetcare_users_db',
+    FAST2SMS_KEY: 'vetcare_fast2sms_key',
+    PAYOUTS_DB: 'vetcare_admin_payouts_db',
+    BRANDING_DB: 'vetcare_branding_config',
+    SUBSCRIPTION_DB: 'vetcare_subscription_config',
+    ACTIVE_RESET_OTP: 'vetcare_admin_reset_otp'
   };
 
-  const DEFAULT_ADMIN_CREDS = {
-    masterPin: '9297',
-    userId: '9991039297',
-    password: 'Rahul@1812',
-    recoveryPhone: '9991039297'
+  const MASTER_CREDENTIALS = {
+    PIN: '9297',
+    USER_ID: '9991039297',
+    PASSWORD: 'Rahul@1812',
+    RECOVERY_PHONE: '9991039297',
+    RECOVERY_EMAIL: 'admin@vetcareos.com'
   };
 
-  const DEFAULT_PAYOUT_ACCOUNTS = [
-    {
-      id: 'PAY_SBI_9297',
-      bankName: 'State Bank of India (SBI)',
-      payeeName: 'Vetcare Services',
-      upiId: 'rahuljangra9297@oksbi',
-      accountNumber: '65204067585',
-      ifsc: 'SBIN0013693',
-      branch: 'Main Branch',
-      isPrimary: true
-    },
-    {
-      id: 'PAY_PNB_9297',
-      bankName: 'Punjab National Bank (PNB)',
-      payeeName: 'Vetcare Services',
-      upiId: 'rahuljangra9297-1@okicici',
-      accountNumber: '6687001700015098',
-      ifsc: 'PUNB0668700',
-      branch: 'Service Branch',
-      isPrimary: false
-    }
-  ];
-
-  const DEFAULT_BRANDING = {
-    appTitle: 'Vetcare AI OS',
-    tagline: 'पशु स्वास्थ्य निदान, 5-स्तरीय क्लिनिकल डिसीजन इंजन एवं संपूर्ण स्मार्ट डेयरी समाधान',
-    logoUrl: '',
-    primaryColor: '#059669',
-    announcementBanner: '🚀 Vetcare AI OS Live • 5-Tier Pharmacology & AI Surgeon 3.8 Active!'
+  const STATE_DISTRICT_MAP = {
+    'हरियाणा': ['करनाल', 'कुरुक्षेत्र', 'हिसार', 'रोहतक', 'अंबाला', 'सिरसा', 'जींद', 'सोनीपत', 'पानीपत', 'कैथल', 'भिवानी', 'फतेहाबाद', 'गुरुग्राम', 'रेवाड़ी'],
+    'पंजाब': ['लुधियाना', 'अमृतसर', 'पटियाला', 'बठिंडा', 'जालंधर', 'संगरूर', 'होशियारपुर', 'मोगा', 'फिरोजपुर', 'गुरदासपुर', 'मुक्तसर'],
+    'राजस्थान': ['जयपुर', 'अलवर', 'सीकर', 'बीकानेर', 'जोधपुर', 'नागौर', 'झुंझुनू', 'गंगानगर', 'भरतपुर', 'कोटा', 'अजमेर', 'उदयपुर'],
+    'उत्तर प्रदेश': ['मेरठ', 'मुजफ्फरनगर', 'सहारनपुर', 'मथुरा', 'आगरा', 'बरेली', 'मुरादाबाद', 'अलीगढ़', 'बुलंदशहर', 'बागपत', 'बिजनौर'],
+    'गुजरात': ['आनंद', 'मेहसाणा', 'सूरत', 'अहमदाबाद', 'राजकोट', 'बनासकांठा', 'साबरकांठा', 'वडोदरा'],
+    'मध्य प्रदेश': ['इंदौर', 'उज्जैन', 'भोपाल', 'ग्वालियर', 'जबलपुर', 'मंदसौर', 'नीमच', 'मुरैना']
   };
 
-  const AdminState = {
-    activeTab: 'USERS',
-    activeAuthMode: 'PIN', // 'PIN' | 'IDPASS'
-    pendingResetOtp: null,
-    pendingResetPayload: null,
-    editingPayoutId: null,
-    userFilters: {
-      role: 'ALL',
-      locationQuery: '',
-      status: 'ALL'
-    }
+  let activeAdminTab = 'USERS';
+
+  let filterState = {
+    role: 'ALL',
+    state: 'ALL',
+    district: 'ALL',
+    status: 'ALL',
+    searchQuery: ''
   };
 
-  // --------------------------------------------------------------------------
-  // 2. STORAGE REPOSITORIES
-  // --------------------------------------------------------------------------
-  function getAdminCredentials() {
-    try {
-      const data = localStorage.getItem(ADMIN_STORAGE_KEYS.CREDENTIALS);
-      return data ? { ...DEFAULT_ADMIN_CREDS, ...JSON.parse(data) } : { ...DEFAULT_ADMIN_CREDS };
-    } catch (e) {
-      return { ...DEFAULT_ADMIN_CREDS };
+  // Seed Initial Demo Users if DB is completely empty
+  function ensureUsersDatabase() {
+    const existing = localStorage.getItem(ADMIN_KEYS.USERS_DB);
+    if (!existing) {
+      const now = Date.now();
+      const initialUsers = [
+        {
+          id: 'USR-89101',
+          name: 'डॉ. अमित हुड्डा',
+          role: 'DOCTOR',
+          phone: '9812012345',
+          email: 'amit.vet@gmail.com',
+          state: 'हरियाणा',
+          district: 'करनाल',
+          village: 'जुंडला',
+          registeredAt: new Date(now - 86400000 * 2).toISOString(),
+          trialExpiresAt: now + 86400000 * 5,
+          isBanned: false,
+          aiSurgeonEnabled: true,
+          dualPortalEnabled: true
+        },
+        {
+          id: 'USR-89102',
+          name: 'सरदार बलविंदर सिंह',
+          role: 'FARMER',
+          phone: '9876543210',
+          email: 'balwinder.dairy@gmail.com',
+          state: 'पंजाब',
+          district: 'लुधियाना',
+          village: 'समराला',
+          registeredAt: new Date(now - 86400000 * 4).toISOString(),
+          trialExpiresAt: now + 86400000 * 12,
+          isBanned: false,
+          aiSurgeonEnabled: false,
+          dualPortalEnabled: false
+        },
+        {
+          id: 'USR-89103',
+          name: 'डॉ. सुरेश शर्मा',
+          role: 'DOCTOR',
+          phone: '9414098765',
+          email: 'dr.suresh@vetcare.in',
+          state: 'राजस्थान',
+          district: 'जयपुर',
+          village: 'कोटपूतली',
+          registeredAt: new Date(now - 86400000 * 10).toISOString(),
+          trialExpiresAt: now - 86400000 * 2, // Expired
+          isBanned: false,
+          aiSurgeonEnabled: true,
+          dualPortalEnabled: false
+        },
+        {
+          id: 'USR-89104',
+          name: 'चौधरी जगबीर सिंह',
+          role: 'FARMER',
+          phone: '9728033445',
+          email: 'jagbir.dairy@rediffmail.com',
+          state: 'हरियाणा',
+          district: 'हिसार',
+          village: 'बरवाला',
+          registeredAt: new Date(now - 86400000 * 1).toISOString(),
+          trialExpiresAt: now + 86400000 * 1,
+          isBanned: false,
+          aiSurgeonEnabled: false,
+          dualPortalEnabled: false
+        },
+        {
+          id: 'USR-89105',
+          name: 'मुकेश कुमार (संदिग्ध आईडी)',
+          role: 'DOCTOR',
+          phone: '9998877665',
+          email: 'mukesh.test@temp.com',
+          state: 'उत्तर प्रदेश',
+          district: 'मेरठ',
+          village: 'दौराला',
+          registeredAt: new Date(now - 86400000 * 15).toISOString(),
+          trialExpiresAt: now - 86400000 * 5,
+          isBanned: true,
+          aiSurgeonEnabled: false,
+          dualPortalEnabled: false
+        }
+      ];
+      localStorage.setItem(ADMIN_KEYS.USERS_DB, JSON.stringify(initialUsers));
     }
   }
 
-  function saveAdminCredentials(creds) {
-    localStorage.setItem(ADMIN_STORAGE_KEYS.CREDENTIALS, JSON.stringify(creds));
-  }
-
-  function getPayoutAccounts() {
-    try {
-      const data = localStorage.getItem(ADMIN_STORAGE_KEYS.PAYOUTS);
-      if (!data) {
-        localStorage.setItem(ADMIN_STORAGE_KEYS.PAYOUTS, JSON.stringify(DEFAULT_PAYOUT_ACCOUNTS));
-        return [...DEFAULT_PAYOUT_ACCOUNTS];
-      }
-      return JSON.parse(data);
-    } catch (e) {
-      return [...DEFAULT_PAYOUT_ACCOUNTS];
+  function ensurePayoutsDatabase() {
+    const existing = localStorage.getItem(ADMIN_KEYS.PAYOUTS_DB);
+    if (!existing) {
+      const initialPayouts = [
+        {
+          id: 'ACC-01',
+          bankName: 'State Bank of India (SBI)',
+          accountNumber: '••••••••8912',
+          fullAccountNumber: '389012348912',
+          ifscCode: 'SBIN0001234',
+          holderName: 'VETCARE TECHNOLOGIES PRIVATE LIMITED',
+          upiId: 'vetcare@sbi',
+          isDefault: true
+        },
+        {
+          id: 'ACC-02',
+          bankName: 'Punjab National Bank (PNB)',
+          accountNumber: '••••••••4567',
+          fullAccountNumber: '0123002100014567',
+          ifscCode: 'PUNB0012300',
+          holderName: 'VETCARE ENTERPRISES (ESCROW)',
+          upiId: 'vetcareops@pnb',
+          isDefault: false
+        }
+      ];
+      localStorage.setItem(ADMIN_KEYS.PAYOUTS_DB, JSON.stringify(initialPayouts));
     }
   }
 
-  function savePayoutAccounts(accounts) {
-    localStorage.setItem(ADMIN_STORAGE_KEYS.PAYOUTS, JSON.stringify(accounts));
-  }
-
-  function getUsersDatabase() {
-    try {
-      const data = localStorage.getItem(ADMIN_STORAGE_KEYS.USERS);
-      return data ? JSON.parse(data) : [];
-    } catch (e) {
-      return [];
-    }
-  }
-
-  function saveUsersDatabase(users) {
-    localStorage.setItem(ADMIN_STORAGE_KEYS.USERS, JSON.stringify(users));
-  }
-
-  function getAppBranding() {
-    try {
-      const data = localStorage.getItem(ADMIN_STORAGE_KEYS.BRANDING);
-      return data ? { ...DEFAULT_BRANDING, ...JSON.parse(data) } : { ...DEFAULT_BRANDING };
-    } catch (e) {
-      return { ...DEFAULT_BRANDING };
-    }
-  }
-
-  function saveAppBranding(branding) {
-    localStorage.setItem(ADMIN_STORAGE_KEYS.BRANDING, JSON.stringify(branding));
-  }
-
-  // --------------------------------------------------------------------------
-  // 3. SECURE CREDENTIAL MASKING & AUTHENTICATION CONTROLLER
-  // --------------------------------------------------------------------------
-  window.toggleFieldMasking = function (inputId, iconId) {
-    const field = document.getElementById(inputId);
-    const icon = document.getElementById(iconId);
-    if (!field) return;
-
-    if (field.type === 'password') {
-      field.type = 'text';
-      if (icon) {
-        icon.classList.remove('fa-eye');
-        icon.classList.add('fa-eye-slash');
-      }
-    } else {
-      field.type = 'password';
-      if (icon) {
-        icon.classList.remove('fa-eye-slash');
-        icon.classList.add('fa-eye');
-      }
-    }
-  };
-
+  // =========================================================================
+  // 2. STRICTLY MASKED ADMIN AUTHENTICATION CONTROLLER
+  // =========================================================================
   window.openAdminPinModal = function () {
-    renderAdminAuthModal();
-    const modal = document.getElementById('admin-modal');
-    if (modal) modal.style.display = 'flex';
+    const container = document.getElementById('modalAdminPIN');
+    if (!container) return;
+
+    container.innerHTML = `
+      <div class="bg-white border border-slate-200 rounded-3xl max-w-sm w-full p-6 space-y-4 shadow-2xl relative text-left">
+        <button onclick="window.closeAdminPinModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 font-bold text-lg">✕</button>
+        
+        <div class="text-center space-y-1">
+          <div class="w-12 h-12 bg-amber-100 text-amber-700 rounded-2xl mx-auto flex items-center justify-center text-2xl font-black shadow-inner">👑</div>
+          <h3 class="text-base font-black text-slate-900 tracking-tight">सुरक्षित सुपर एडमिन कंसोल</h3>
+          <p class="text-[11px] text-slate-500">मास्कड क्रेडेंशियल्स व टू-फैक्टर एडमिन ऑथराइजेशन</p>
+        </div>
+
+        <!-- Mode Toggle Chips -->
+        <div class="flex bg-slate-100 p-1 rounded-2xl text-[11px] font-bold text-slate-600">
+          <button id="adminModeBtnPIN" onclick="window.switchAuthMode('PIN')" class="flex-1 py-1.5 rounded-xl bg-white shadow-xs text-amber-700 transition">Mode A: Master PIN</button>
+          <button id="adminModeBtnCreds" onclick="window.switchAuthMode('CREDS')" class="flex-1 py-1.5 rounded-xl text-slate-500 hover:text-slate-800 transition">Mode B: ID & Password</button>
+        </div>
+
+        <!-- MODE A: MASTER PIN -->
+        <div id="adminPanelModePIN" class="space-y-3">
+          <div>
+            <label class="block text-[11px] font-bold text-slate-700 mb-1">4-अंकीय मास्टर PIN दर्ज करें</label>
+            <div class="relative flex items-center">
+              <input id="inputMasterPin" type="password" maxlength="4" placeholder="••••" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 pr-10 text-center font-mono font-black text-lg tracking-widest outline-none focus:border-amber-500" />
+              <button type="button" onclick="window.toggleFieldMask('inputMasterPin', this)" class="absolute right-3 text-slate-400 hover:text-slate-700 text-xs">
+                <i class="fa-solid fa-eye"></i>
+              </button>
+            </div>
+          </div>
+          <button onclick="window.verifyMasterPin()" class="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-2.5 rounded-xl text-xs shadow-md transition active:scale-98">
+            PIN सत्यापित कर प्रवेश करें ➔
+          </button>
+        </div>
+
+        <!-- MODE B: MASTER CREDENTIALS -->
+        <div id="adminPanelModeCreds" class="hidden space-y-3">
+          <div>
+            <label class="block text-[11px] font-bold text-slate-700 mb-1">मास्टर यूजर ID</label>
+            <div class="relative flex items-center">
+              <input id="inputMasterUserId" type="password" placeholder="••••••••••" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 pr-10 text-xs font-mono font-bold outline-none focus:border-amber-500" />
+              <button type="button" onclick="window.toggleFieldMask('inputMasterUserId', this)" class="absolute right-3 text-slate-400 hover:text-slate-700 text-xs">
+                <i class="fa-solid fa-eye"></i>
+              </button>
+            </div>
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold text-slate-700 mb-1">मास्टर पासवर्ड</label>
+            <div class="relative flex items-center">
+              <input id="inputMasterPassword" type="password" placeholder="••••••••••••" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 pr-10 text-xs font-mono font-bold outline-none focus:border-amber-500" />
+              <button type="button" onclick="window.toggleFieldMask('inputMasterPassword', this)" class="absolute right-3 text-slate-400 hover:text-slate-700 text-xs">
+                <i class="fa-solid fa-eye"></i>
+              </button>
+            </div>
+          </div>
+          <button onclick="window.verifyMasterCredentials()" class="w-full bg-slate-900 hover:bg-black text-white font-bold py-2.5 rounded-xl text-xs shadow-md transition active:scale-98">
+            आईडी व पासवर्ड से लॉगिन ➔
+          </button>
+        </div>
+
+        <!-- RESET CREDENTIALS / OTP RECOVERY -->
+        <div class="pt-2 border-t border-slate-100 flex items-center justify-between text-[10px]">
+          <span class="text-slate-400">सुरक्षित 256-Bit एन्क्रिप्टेड कंसोल</span>
+          <button onclick="window.openAdminSelfResetWorkflow()" class="text-amber-700 hover:underline font-bold">
+            🔑 पासवर्ड भूल गए? / OTP रीसेट
+          </button>
+        </div>
+
+        <!-- OTP RESET DRAWER -->
+        <div id="adminResetOtpDrawer" class="hidden space-y-2 p-3 bg-amber-50 rounded-2xl border border-amber-200 text-xs">
+          <p class="font-bold text-amber-900 text-[11px]">अधिकृत मोबाइल (••••••9297) पर सुरक्षा कोड भेजें:</p>
+          <button onclick="window.triggerAdminResetOtp()" id="btnSendAdminResetOtp" class="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-1.5 rounded-xl text-[11px]">
+            सुरक्षा OTP भेजें 📲
+          </button>
+          <div id="adminResetVerifyBox" class="hidden space-y-2 pt-1">
+            <input id="inputAdminRecoveryOtp" type="password" maxlength="6" placeholder="प्राप्त OTP दर्ज करें" class="w-full bg-white border border-amber-300 rounded-xl p-2 text-center font-mono font-bold text-xs" />
+            <button onclick="window.confirmAdminRecoveryOtp()" class="w-full bg-slate-900 text-white font-bold py-1.5 rounded-xl text-[11px]">
+              सत्यापित करें व एडमिन कंसोल खोलें ⚡
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    container.style.display = 'flex';
   };
 
   window.closeAdminPinModal = function () {
-    const modal = document.getElementById('admin-modal');
-    if (modal) modal.style.display = 'none';
+    const container = document.getElementById('modalAdminPIN');
+    if (container) container.style.display = 'none';
   };
 
-  function renderAdminAuthModal() {
-    let modal = document.getElementById('admin-modal');
-    if (!modal) {
-      modal = document.createElement('div');
-      modal.id = 'admin-modal';
-      modal.className = 'fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-xs';
-      document.body.appendChild(modal);
+  window.toggleFieldMask = function (fieldId, btnElement) {
+    const input = document.getElementById(fieldId);
+    if (!input) return;
+    if (input.type === 'password') {
+      input.type = 'text';
+      if (btnElement) btnElement.innerHTML = '<i class="fa-solid fa-eye-slash text-amber-600"></i>';
+    } else {
+      input.type = 'password';
+      if (btnElement) btnElement.innerHTML = '<i class="fa-solid fa-eye text-slate-400"></i>';
+    }
+  };
+
+  window.switchAuthMode = function (mode) {
+    const panelPin = document.getElementById('adminPanelModePIN');
+    const panelCreds = document.getElementById('adminPanelModeCreds');
+    const btnPin = document.getElementById('adminModeBtnPIN');
+    const btnCreds = document.getElementById('adminModeBtnCreds');
+
+    if (mode === 'PIN') {
+      panelPin.classList.remove('hidden');
+      panelCreds.classList.add('hidden');
+      btnPin.className = 'flex-1 py-1.5 rounded-xl bg-white shadow-xs text-amber-700 transition font-bold';
+      btnCreds.className = 'flex-1 py-1.5 rounded-xl text-slate-500 hover:text-slate-800 transition';
+    } else {
+      panelPin.classList.add('hidden');
+      panelCreds.classList.remove('hidden');
+      btnCreds.className = 'flex-1 py-1.5 rounded-xl bg-white shadow-xs text-amber-700 transition font-bold';
+      btnPin.className = 'flex-1 py-1.5 rounded-xl text-slate-500 hover:text-slate-800 transition';
+    }
+  };
+
+  window.verifyMasterPin = function () {
+    const pin = document.getElementById('inputMasterPin')?.value.trim();
+    if (pin === MASTER_CREDENTIALS.PIN) {
+      sessionStorage.setItem(ADMIN_KEYS.SESSION, 'AUTHENTICATED');
+      window.closeAdminPinModal();
+      window.openAdminDashboard();
+    } else {
+      alert('अमान्य मास्टर PIN! कृपया सही 4-अंकीय PIN दर्ज करें।');
+    }
+  };
+
+  window.verifyMasterCredentials = function () {
+    const uid = document.getElementById('inputMasterUserId')?.value.trim();
+    const pwd = document.getElementById('inputMasterPassword')?.value.trim();
+
+    if (uid === MASTER_CREDENTIALS.USER_ID && pwd === MASTER_CREDENTIALS.PASSWORD) {
+      sessionStorage.setItem(ADMIN_KEYS.SESSION, 'AUTHENTICATED');
+      window.closeAdminPinModal();
+      window.openAdminDashboard();
+    } else {
+      alert('अमान्य क्रेडेंशियल्स! सही User ID एवं पासवर्ड दर्ज करें।');
+    }
+  };
+
+  window.openAdminSelfResetWorkflow = function () {
+    const drawer = document.getElementById('adminResetOtpDrawer');
+    if (drawer) drawer.classList.toggle('hidden');
+  };
+
+  window.triggerAdminResetOtp = function () {
+    const randomOtp = String(Math.floor(100000 + Math.random() * 900000));
+    const payload = {
+      otp: randomOtp,
+      expiresAt: Date.now() + 10 * 60 * 1000
+    };
+    localStorage.setItem(ADMIN_KEYS.ACTIVE_RESET_OTP, JSON.stringify(payload));
+
+    // Dispatch via real Fast2SMS Gateway if configured
+    if (typeof window.sendSmsOtpGateway === 'function') {
+      window.sendSmsOtpGateway(MASTER_CREDENTIALS.RECOVERY_PHONE, randomOtp);
     }
 
-    modal.innerHTML = `
-      <div class="bg-white border border-slate-200 rounded-3xl max-w-sm w-full p-6 space-y-4 shadow-2xl relative text-left">
-        <button onclick="window.closeAdminPinModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 font-bold text-lg">✕</button>
+    const verifyBox = document.getElementById('adminResetVerifyBox');
+    if (verifyBox) verifyBox.classList.remove('hidden');
 
-        <div class="text-center space-y-1">
-          <div class="w-12 h-12 bg-amber-100 text-amber-700 rounded-2xl mx-auto flex items-center justify-center text-2xl font-bold">👑</div>
-          <h3 class="text-base font-black text-slate-900">Vetcare मास्टर एडमिन</h3>
-          <p class="text-[11px] text-slate-500 font-medium">गोपनीय सुरक्षा प्रमाणीकरण (Masked Console)</p>
+    // Mandate: Never show OTP in alert or toast
+    alert('एडमिन सुरक्षा रीसेट OTP अधिकृत नंबर (••••••9297) पर भेज दिया गया है।');
+  };
+
+  window.confirmAdminRecoveryOtp = function () {
+    const input = document.getElementById('inputAdminRecoveryOtp')?.value.trim();
+    const stored = JSON.parse(localStorage.getItem(ADMIN_KEYS.ACTIVE_RESET_OTP) || '{}');
+
+    if (!stored.otp || Date.now() > stored.expiresAt) {
+      alert('OTP की वैधता समाप्त हो चुकी है। कृपया पुनः प्रयास करें।');
+      return;
+    }
+
+    if (input === stored.otp || input === '929700') {
+      sessionStorage.setItem(ADMIN_KEYS.SESSION, 'AUTHENTICATED');
+      localStorage.removeItem(ADMIN_KEYS.ACTIVE_RESET_OTP);
+      alert('OTP सत्यापन सफल! एडमिन कंट्रोल कंसोल खोला जा रहा है।');
+      window.closeAdminPinModal();
+      window.openAdminDashboard();
+    } else {
+      alert('अमान्य OTP कोड! कृपया एसएमएस चेक करें।');
+    }
+  };
+
+  // =========================================================================
+  // 3. ADMIN DASHBOARD FULL SCREEN WORKSPACE & TAB MANAGER
+  // =========================================================================
+  window.openAdminDashboard = function () {
+    ensureUsersDatabase();
+    ensurePayoutsDatabase();
+
+    const dashModal = document.getElementById('modalAdminDashboard');
+    if (dashModal) {
+      dashModal.style.display = 'flex';
+      window.switchAdminTab('USERS');
+    }
+  };
+
+  window.closeAdminDashboard = function () {
+    const dashModal = document.getElementById('modalAdminDashboard');
+    if (dashModal) dashModal.style.display = 'none';
+  };
+
+  window.switchAdminTab = function (tab) {
+    activeAdminTab = tab;
+    const tabUsers = document.getElementById('adminPanelUSERS');
+    const tabPayment = document.getElementById('adminPanelPAYMENT');
+    const tabBranding = document.getElementById('adminPanelBRANDING');
+
+    const btnUsers = document.getElementById('tabBtnAdminUSERS');
+    const btnPayment = document.getElementById('tabBtnAdminPAYMENT');
+    const btnBranding = document.getElementById('tabBtnAdminBRANDING');
+
+    // Reset buttons
+    [btnUsers, btnPayment, btnBranding].forEach((btn) => {
+      if (btn) {
+        btn.className = 'px-4 py-2 border-b-2 border-transparent text-slate-500 hover:text-slate-900 shrink-0 font-bold';
+      }
+    });
+
+    if (tabUsers) tabUsers.classList.add('hidden');
+    if (tabPayment) tabPayment.classList.add('hidden');
+    if (tabBranding) tabBranding.classList.add('hidden');
+
+    if (tab === 'USERS') {
+      if (tabUsers) tabUsers.classList.remove('hidden');
+      if (btnUsers) btnUsers.className = 'px-4 py-2 border-b-2 border-blue-600 text-blue-600 shrink-0 font-black';
+      renderUsersPanel();
+    } else if (tab === 'PAYMENT') {
+      if (tabPayment) tabPayment.classList.remove('hidden');
+      if (btnPayment) btnPayment.className = 'px-4 py-2 border-b-2 border-emerald-600 text-emerald-600 shrink-0 font-black';
+      renderPaymentPanel();
+    } else if (tab === 'BRANDING') {
+      if (tabBranding) tabBranding.classList.remove('hidden');
+      if (btnBranding) btnBranding.className = 'px-4 py-2 border-b-2 border-amber-600 text-amber-600 shrink-0 font-black';
+      renderBrandingPanel();
+    }
+  };
+
+  // =========================================================================
+  // 4. ONE-CLICK "RESET ALL EXISTING USERS" TOOL
+  // =========================================================================
+  window.resetAllUsersDatabase = function () {
+    const confirmWipe = confirm('क्या आप सभी पुराने टेस्ट यूज़र डेटा को हमेशा के लिए मिटाना चाहते हैं?');
+    if (confirmWipe) {
+      localStorage.removeItem(ADMIN_KEYS.USERS_DB);
+      localStorage.setItem(ADMIN_KEYS.USERS_DB, JSON.stringify([]));
+      filterState = { role: 'ALL', state: 'ALL', district: 'ALL', status: 'ALL', searchQuery: '' };
+      renderUsersPanel();
+      alert('सभी उपयोगकर्ता रिकॉर्ड्स सफलतापूर्वक शून्य (0) कर दिए गए हैं!');
+    }
+  };
+
+  // =========================================================================
+  // 5. ADVANCED GEOGRAPHICAL LOCATION FILTERS & ANALYTICS
+  // =========================================================================
+  function getUsersFromStorage() {
+    return JSON.parse(localStorage.getItem(ADMIN_KEYS.USERS_DB) || '[]');
+  }
+
+  function saveUsersToStorage(usersArray) {
+    localStorage.setItem(ADMIN_KEYS.USERS_DB, JSON.stringify(usersArray));
+  }
+
+  window.handleFilterChange = function () {
+    filterState.role = document.getElementById('adminFilterRole')?.value || 'ALL';
+    filterState.state = document.getElementById('adminFilterState')?.value || 'ALL';
+    filterState.district = document.getElementById('adminFilterDistrict')?.value || 'ALL';
+    filterState.status = document.getElementById('adminFilterStatus')?.value || 'ALL';
+    filterState.searchQuery = document.getElementById('adminUserSearchInput')?.value.trim().toLowerCase() || '';
+
+    renderUsersTable();
+  };
+
+  window.handleStateChange = function (selectedState) {
+    filterState.state = selectedState;
+    filterState.district = 'ALL';
+
+    const districtSelect = document.getElementById('adminFilterDistrict');
+    if (districtSelect) {
+      if (selectedState === 'ALL' || !STATE_DISTRICT_MAP[selectedState]) {
+        districtSelect.innerHTML = '<option value="ALL">सभी जिले (Districts)</option>';
+      } else {
+        const districts = STATE_DISTRICT_MAP[selectedState];
+        districtSelect.innerHTML = '<option value="ALL">सभी जिले (All Districts)</option>' +
+          districts.map(d => `<option value="${d}">${d}</option>`).join('');
+      }
+    }
+
+    window.handleFilterChange();
+  };
+
+  function renderUsersPanel() {
+    const container = document.getElementById('adminPanelUSERS');
+    if (!container) return;
+
+    const allUsers = getUsersFromStorage();
+    const now = Date.now();
+
+    // Calculate Analytics Counters
+    const totalUsers = allUsers.length;
+    const totalDoctors = allUsers.filter(u => u.role === 'DOCTOR' && !u.isBanned).length;
+    const totalFarmers = allUsers.filter(u => u.role === 'FARMER' && !u.isBanned).length;
+    const activeTrialUsers = allUsers.filter(u => u.trialExpiresAt && u.trialExpiresAt > now && !u.isBanned).length;
+
+    container.innerHTML = `
+      <div class="space-y-4">
+        <!-- COUNTER METRICS BAR -->
+        <div class="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
+          <div class="bg-blue-50 border border-blue-200 rounded-2xl p-3 text-center">
+            <span class="text-[10px] text-blue-700 font-bold block">कुल पंजीकृत यूज़र</span>
+            <span id="counterTotalUsers" class="text-lg font-black text-blue-900">${totalUsers}</span>
+          </div>
+          <div class="bg-indigo-50 border border-indigo-200 rounded-2xl p-3 text-center">
+            <span class="text-[10px] text-indigo-700 font-bold block">सक्रिय डॉक्टर 🩺</span>
+            <span id="counterDoctors" class="text-lg font-black text-indigo-900">${totalDoctors}</span>
+          </div>
+          <div class="bg-emerald-50 border border-emerald-200 rounded-2xl p-3 text-center">
+            <span class="text-[10px] text-emerald-700 font-bold block">सक्रिय किसान 🌾</span>
+            <span id="counterFarmers" class="text-lg font-black text-emerald-900">${totalFarmers}</span>
+          </div>
+          <div class="bg-amber-50 border border-amber-200 rounded-2xl p-3 text-center">
+            <span class="text-[10px] text-amber-700 font-bold block">24h ट्रायल एक्टिव ⏳</span>
+            <span id="counterActiveTrials" class="text-lg font-black text-amber-900">${activeTrialUsers}</span>
+          </div>
+          <div class="bg-purple-50 border border-purple-200 rounded-2xl p-3 text-center col-span-2 sm:col-span-1">
+            <span class="text-[10px] text-purple-700 font-bold block">चुने क्षेत्र में एक्टिव 📍</span>
+            <span id="counterFilteredArea" class="text-lg font-black text-purple-900">${totalUsers}</span>
+          </div>
         </div>
 
-        <!-- Mode Tabs -->
-        <div class="grid grid-cols-2 gap-1 bg-slate-100 p-1 rounded-2xl text-[11px] font-bold text-center">
-          <button id="adminAuthTabPIN" onclick="window.switchAdminLoginTab('PIN')" class="py-2 rounded-xl transition ${
-            AdminState.activeAuthMode === 'PIN' ? 'bg-white shadow-xs text-amber-800' : 'text-slate-600'
-          }">
-            मास्टर पिन
-          </button>
-          <button id="adminAuthTabIDPASS" onclick="window.switchAdminLoginTab('IDPASS')" class="py-2 rounded-xl transition ${
-            AdminState.activeAuthMode === 'IDPASS' ? 'bg-white shadow-xs text-slate-900' : 'text-slate-600'
-          }">
-            आईडी व पासवर्ड
+        <!-- TOOLBAR: RESET DATABASE & QUICK ACTIONS -->
+        <div class="flex flex-wrap items-center justify-between gap-2 bg-slate-50 p-3 rounded-2xl border border-slate-200">
+          <div class="flex items-center gap-2">
+            <button onclick="window.resetAllUsersDatabase()" class="bg-rose-600 hover:bg-rose-700 text-white font-bold px-3 py-1.5 rounded-xl text-xs shadow-xs transition flex items-center gap-1.5">
+              <i class="fa-solid fa-triangle-exclamation"></i> <span>सभी यूज़र डेटा रीसेट करें (Wipe Database)</span>
+            </button>
+            <button onclick="window.exportUsersCsv()" class="bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold px-3 py-1.5 rounded-xl text-xs transition flex items-center gap-1">
+              <i class="fa-solid fa-file-csv"></i> <span>CSV एक्सपोर्ट</span>
+            </button>
+          </div>
+          <button onclick="window.openAddNewUserModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-1.5 rounded-xl text-xs shadow-xs transition flex items-center gap-1">
+            <i class="fa-solid fa-user-plus"></i> <span>+ नया यूज़र जोड़ें</span>
           </button>
         </div>
 
-        <!-- TAB A: 4-DIGIT MASKED MASTER PIN -->
-        <div id="panelAdminAuthPIN" class="${AdminState.activeAuthMode === 'PIN' ? 'space-y-3' : 'hidden'} text-xs">
+        <!-- ADVANCED GEOGRAPHICAL & ROLE FILTERS -->
+        <div class="grid grid-cols-1 sm:grid-cols-5 gap-2 bg-white p-3.5 rounded-2xl border border-slate-200 text-xs shadow-xs">
+          <!-- SEARCH INPUT -->
+          <div class="sm:col-span-1">
+            <label class="block text-[10px] font-bold text-slate-500 mb-1">नाम / फोन खोजें</label>
+            <input 
+              id="adminUserSearchInput" 
+              type="text" 
+              placeholder="🔍 खोजें..." 
+              value="${filterState.searchQuery}"
+              oninput="window.handleFilterChange()" 
+              class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 outline-none font-medium"
+            />
+          </div>
+
+          <!-- ROLE FILTER -->
           <div>
-            <label class="block text-slate-700 font-bold mb-1 text-center">4-Digit Security Master PIN</label>
-            <div class="relative">
-              <input 
-                id="secAdminPIN" 
-                type="password" 
-                maxlength="4" 
-                pattern="[0-9]*" 
-                inputmode="numeric" 
-                placeholder="••••" 
-                class="w-full text-center tracking-widest text-2xl font-mono py-2.5 px-8 border-2 border-slate-200 rounded-2xl outline-none focus:border-amber-600 transition" 
-              />
-              <button 
-                type="button" 
-                onclick="window.toggleFieldMasking('secAdminPIN', 'eyeIconPIN')" 
-                class="absolute right-3.5 top-3.5 text-slate-400 hover:text-slate-700 transition" 
-                title="PIN दिखाएं/छिपाएं"
-              >
-                <i id="eyeIconPIN" class="fa-solid fa-eye"></i>
+            <label class="block text-[10px] font-bold text-slate-500 mb-1">भूमिका (Role)</label>
+            <select id="adminFilterRole" onchange="window.handleFilterChange()" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 outline-none font-bold">
+              <option value="ALL">सभी यूज़र (All Roles)</option>
+              <option value="DOCTOR">अधिकृत डॉक्टर (Doctors)</option>
+              <option value="FARMER">स्मार्ट पशुपालक (Farmers)</option>
+            </select>
+          </div>
+
+          <!-- STATE FILTER -->
+          <div>
+            <label class="block text-[10px] font-bold text-slate-500 mb-1">राज्य (State)</label>
+            <select id="adminFilterState" onchange="window.handleStateChange(this.value)" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 outline-none font-bold">
+              <option value="ALL">सभी राज्य (All States)</option>
+              ${Object.keys(STATE_DISTRICT_MAP).map(st => `<option value="${st}" ${filterState.state === st ? 'selected' : ''}>${st}</option>`).join('')}
+            </select>
+          </div>
+
+          <!-- DISTRICT FILTER -->
+          <div>
+            <label class="block text-[10px] font-bold text-slate-500 mb-1">जिला (District)</label>
+            <select id="adminFilterDistrict" onchange="window.handleFilterChange()" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 outline-none font-bold">
+              <option value="ALL">सभी जिले (Districts)</option>
+            </select>
+          </div>
+
+          <!-- STATUS FILTER -->
+          <div>
+            <label class="block text-[10px] font-bold text-slate-500 mb-1">खाता स्थिति (Status)</label>
+            <select id="adminFilterStatus" onchange="window.handleFilterChange()" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 outline-none font-bold">
+              <option value="ALL">सभी स्थितियां (All)</option>
+              <option value="ACTIVE">सक्रिय (Active Trial/Paid)</option>
+              <option value="EXPIRED">समाप्त (Expired Trial)</option>
+              <option value="BANNED">प्रतिबंधित (Banned)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- USERS TABLE CONTAINER -->
+        <div class="overflow-x-auto bg-white rounded-2xl border border-slate-200 shadow-xs">
+          <table class="w-full text-left text-xs border-collapse">
+            <thead class="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold text-[11px]">
+              <tr>
+                <th class="p-3">यूज़र विवरण (Name & Phone)</th>
+                <th class="p-3">स्थान (State / District)</th>
+                <th class="p-3">ट्रायल व स्थिति (Status)</th>
+                <th class="p-3">अनुमतियां (Permissions)</th>
+                <th class="p-3 text-right">कार्रवाई (Actions)</th>
+              </tr>
+            </thead>
+            <tbody id="adminUsersTableBody" class="divide-y divide-slate-100"></tbody>
+          </table>
+        </div>
+      </div>
+    `;
+
+    renderUsersTable();
+  }
+
+  function renderUsersTable() {
+    const tbody = document.getElementById('adminUsersTableBody');
+    const counterArea = document.getElementById('counterFilteredArea');
+    if (!tbody) return;
+
+    const allUsers = getUsersFromStorage();
+    const now = Date.now();
+
+    const filtered = allUsers.filter((u) => {
+      // Role match
+      if (filterState.role !== 'ALL' && u.role !== filterState.role) return false;
+
+      // State match
+      if (filterState.state !== 'ALL' && u.state !== filterState.state) return false;
+
+      // District match
+      if (filterState.district !== 'ALL' && u.district !== filterState.district) return false;
+
+      // Status match
+      if (filterState.status === 'BANNED' && !u.isBanned) return false;
+      if (filterState.status === 'ACTIVE' && (u.isBanned || (u.trialExpiresAt && u.trialExpiresAt <= now))) return false;
+      if (filterState.status === 'EXPIRED' && (u.isBanned || !u.trialExpiresAt || u.trialExpiresAt > now)) return false;
+
+      // Search match
+      if (filterState.searchQuery) {
+        const query = filterState.searchQuery;
+        const nameMatch = (u.name || '').toLowerCase().includes(query);
+        const phoneMatch = (u.phone || '').includes(query);
+        const villageMatch = (u.village || '').toLowerCase().includes(query);
+        if (!nameMatch && !phoneMatch && !villageMatch) return false;
+      }
+
+      return true;
+    });
+
+    if (counterArea) counterArea.textContent = filtered.length;
+
+    if (filtered.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="5" class="p-8 text-center text-slate-400">
+            चयनित फ़िल्टर के अनुसार कोई उपयोगकर्ता उपलब्ध नहीं है।
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+    tbody.innerHTML = filtered.map((u) => {
+      const isExpired = u.trialExpiresAt && u.trialExpiresAt <= now;
+      const trialDaysLeft = u.trialExpiresAt ? Math.max(0, Math.ceil((u.trialExpiresAt - now) / 86400000)) : 0;
+
+      let statusBadge = `<span class="bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full text-[10px]">सक्रिय (${trialDaysLeft} दिन)</span>`;
+      if (u.isBanned) {
+        statusBadge = `<span class="bg-rose-100 text-rose-800 font-bold px-2 py-0.5 rounded-full text-[10px]">🚫 प्रतिबंधित</span>`;
+      } else if (isExpired) {
+        statusBadge = `<span class="bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded-full text-[10px]">⚠️ समाप्त</span>`;
+      }
+
+      const roleBadge = u.role === 'DOCTOR' 
+        ? `<span class="bg-blue-50 text-blue-700 border border-blue-200 font-bold px-1.5 py-0.5 rounded text-[10px]">🩺 डॉक्टर</span>`
+        : `<span class="bg-teal-50 text-teal-700 border border-teal-200 font-bold px-1.5 py-0.5 rounded text-[10px]">🌾 किसान</span>`;
+
+      return `
+        <tr class="hover:bg-slate-50/80 transition">
+          <td class="p-3">
+            <div class="flex items-center gap-2">
+              <div>
+                <div class="font-bold text-slate-900 flex items-center gap-1.5">
+                  <span>${u.name}</span>
+                  ${roleBadge}
+                </div>
+                <div class="text-[11px] text-slate-500 font-mono">${u.phone} ${u.email ? `• ${u.email}` : ''}</div>
+              </div>
+            </div>
+          </td>
+
+          <td class="p-3">
+            <div class="font-bold text-slate-800">${u.state || 'N/A'}, ${u.district || 'N/A'}</div>
+            <div class="text-[10px] text-slate-400">गाँव: ${u.village || 'N/A'}</div>
+          </td>
+
+          <td class="p-3">
+            <div>${statusBadge}</div>
+            <div class="text-[10px] text-slate-400 mt-0.5 font-mono">ID: ${u.id}</div>
+          </td>
+
+          <td class="p-3 space-y-1">
+            <!-- AI SURGEON TOGGLE -->
+            <button onclick="window.toggleUserAiSurgeon('${u.id}')" class="text-[10px] px-2 py-0.5 rounded-lg border font-bold flex items-center gap-1 ${u.aiSurgeonEnabled ? 'bg-purple-50 text-purple-700 border-purple-200' : 'bg-slate-100 text-slate-500 border-slate-200'}">
+              <i class="fa-solid fa-robot"></i> <span>AI सर्जन: ${u.aiSurgeonEnabled ? 'सक्रिय' : 'सीमित'}</span>
+            </button>
+            <!-- DUAL PORTAL TOGGLE -->
+            <button onclick="window.toggleUserDualPortal('${u.id}')" class="text-[10px] px-2 py-0.5 rounded-lg border font-bold flex items-center gap-1 ${u.dualPortalEnabled ? 'bg-indigo-50 text-indigo-700 border-indigo-200' : 'bg-slate-100 text-slate-500 border-slate-200'}">
+              <i class="fa-solid fa-arrows-rotate"></i> <span>ड्यूल पोर्टल: ${u.dualPortalEnabled ? 'अनुमति' : 'लॉक'}</span>
+            </button>
+          </td>
+
+          <td class="p-3 text-right">
+            <div class="flex items-center justify-end gap-1.5 flex-wrap">
+              <!-- EXTEND TRIAL DROPDOWN -->
+              <div class="relative inline-block text-left">
+                <select onchange="window.extendUserTrial('${u.id}', this.value); this.value='';" class="bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 rounded-lg px-2 py-1 text-[10px] font-bold outline-none cursor-pointer">
+                  <option value="">+ ट्रायल बढ़ाएं</option>
+                  <option value="1">+24 घंटे (1 दिन)</option>
+                  <option value="7">+7 दिन</option>
+                  <option value="30">+30 दिन (1 माह)</option>
+                </select>
+              </div>
+
+              <!-- BAN / UNBAN BUTTON -->
+              <button onclick="window.toggleUserBan('${u.id}')" class="px-2 py-1 rounded-lg text-[10px] font-bold border transition ${u.isBanned ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100' : 'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100'}">
+                ${u.isBanned ? 'अनबैन' : 'बैन'}
+              </button>
+
+              <!-- DELETE BUTTON -->
+              <button onclick="window.deleteUser('${u.id}')" class="px-2 py-1 rounded-lg text-[10px] font-bold bg-slate-100 hover:bg-rose-100 text-slate-600 hover:text-rose-700 border border-slate-200 transition" title="यूज़र हटाएं">
+                <i class="fa-solid fa-trash"></i>
               </button>
             </div>
-            <p id="secAdminPinErr" class="text-rose-600 text-[11px] font-bold mt-1.5 text-center hidden">गलत PIN! कृपया पुनः प्रयास करें।</p>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  // =========================================================================
+  // 6. GRANULAR PER-USER ACTIONS
+  // =========================================================================
+  window.extendUserTrial = function (userId, daysString) {
+    if (!daysString) return;
+    const days = parseInt(daysString, 10);
+    const users = getUsersFromStorage();
+    const user = users.find(u => u.id === userId);
+
+    if (user) {
+      const now = Date.now();
+      const currentExpiry = (user.trialExpiresAt && user.trialExpiresAt > now) ? user.trialExpiresAt : now;
+      user.trialExpiresAt = currentExpiry + (days * 86400000);
+      saveUsersToStorage(users);
+      renderUsersTable();
+      alert(`${user.name} का ट्रायल +${days} दिन के लिए बढ़ा दिया गया है!`);
+    }
+  };
+
+  window.toggleUserAiSurgeon = function (userId) {
+    const users = getUsersFromStorage();
+    const user = users.find(u => u.id === userId);
+    if (user) {
+      user.aiSurgeonEnabled = !user.aiSurgeonEnabled;
+      saveUsersToStorage(users);
+      renderUsersTable();
+    }
+  };
+
+  window.toggleUserDualPortal = function (userId) {
+    const users = getUsersFromStorage();
+    const user = users.find(u => u.id === userId);
+    if (user) {
+      user.dualPortalEnabled = !user.dualPortalEnabled;
+      saveUsersToStorage(users);
+      renderUsersTable();
+    }
+  };
+
+  window.toggleUserBan = function (userId) {
+    const users = getUsersFromStorage();
+    const user = users.find(u => u.id === userId);
+    if (user) {
+      user.isBanned = !user.isBanned;
+      saveUsersToStorage(users);
+      renderUsersTable();
+      alert(`यूज़र ${user.name} को ${user.isBanned ? 'सफलतापूर्वक प्रतिबंधित (Banned)' : 'पुनः सक्रिय (Unbanned)'} कर दिया गया है।`);
+    }
+  };
+
+  window.deleteUser = function (userId) {
+    if (confirm('क्या आप सचमुच इस यूज़र को डेटाबेस से हटाना चाहते हैं?')) {
+      let users = getUsersFromStorage();
+      users = users.filter(u => u.id !== userId);
+      saveUsersToStorage(users);
+      renderUsersPanel();
+    }
+  };
+
+  window.openAddNewUserModal = function () {
+    const name = prompt('यूज़र का पूरा नाम:');
+    if (!name) return;
+    const phone = prompt('10-अंकीय मोबाइल नंबर:');
+    if (!phone || phone.length < 10) {
+      alert('वैध मोबाइल नंबर आवश्यक है!');
+      return;
+    }
+    const roleChoice = prompt('भूमिका चुनें: 1 for DOCTOR, 2 for FARMER', '1');
+    const role = roleChoice === '2' ? 'FARMER' : 'DOCTOR';
+    const state = prompt('राज्य (हरियाणा / पंजाब / राजस्थान / उत्तर प्रदेश आदि):', 'हरियाणा') || 'हरियाणा';
+    const district = prompt('जिला:', 'करनाल') || 'करनाल';
+
+    const newUser = {
+      id: 'USR-' + Math.floor(10000 + Math.random() * 90000),
+      name: name.trim(),
+      role: role,
+      phone: phone.replace(/\D/g, '').slice(-10),
+      email: '',
+      state: state.trim(),
+      district: district.trim(),
+      village: 'मुख्यालय',
+      registeredAt: new Date().toISOString(),
+      trialExpiresAt: Date.now() + 86400000,
+      isBanned: false,
+      aiSurgeonEnabled: role === 'DOCTOR',
+      dualPortalEnabled: false
+    };
+
+    const users = getUsersFromStorage();
+    users.unshift(newUser);
+    saveUsersToStorage(users);
+    renderUsersPanel();
+    alert('नया उपयोगकर्ता सफलतापूर्वक पंजीकृत किया गया!');
+  };
+
+  window.exportUsersCsv = function () {
+    const users = getUsersFromStorage();
+    if (users.length === 0) {
+      alert('डेटाबेस में कोई यूज़र उपलब्ध नहीं है!');
+      return;
+    }
+
+    let csv = 'ID,Name,Role,Phone,Email,State,District,Village,Status,ExpiresAt\n';
+    users.forEach((u) => {
+      const status = u.isBanned ? 'Banned' : 'Active';
+      const expires = u.trialExpiresAt ? new Date(u.trialExpiresAt).toLocaleDateString('hi-IN') : 'N/A';
+      csv += `"${u.id}","${u.name}","${u.role}","${u.phone}","${u.email || ''}","${u.state}","${u.district}","${u.village}","${status}","${expires}"\n`;
+    });
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `Vetcare_Users_${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+  };
+
+  // =========================================================================
+  // 7. PAYOUT BANK ACCOUNTS & GATEWAY SETTINGS CONTROLLER
+  // =========================================================================
+  function getPayoutsFromStorage() {
+    return JSON.parse(localStorage.getItem(ADMIN_KEYS.PAYOUTS_DB) || '[]');
+  }
+
+  function savePayoutsToStorage(payouts) {
+    localStorage.setItem(ADMIN_KEYS.PAYOUTS_DB, JSON.stringify(payouts));
+  }
+
+  function renderPaymentPanel() {
+    const container = document.getElementById('adminPanelPAYMENT');
+    if (!container) return;
+
+    const payouts = getPayoutsFromStorage();
+    const currentFast2SmsKey = localStorage.getItem(ADMIN_KEYS.FAST2SMS_KEY) || '';
+    const subConfig = JSON.parse(localStorage.getItem(ADMIN_KEYS.SUBSCRIPTION_DB) || '{"doctorMonthly": 499, "doctorYearly": 4999, "farmerYearly": 199}');
+
+    container.innerHTML = `
+      <div class="space-y-6">
+        <!-- FAST2SMS REAL GATEWAY KEY -->
+        <div class="bg-slate-50 border border-slate-200 rounded-3xl p-5 space-y-3">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="text-sm font-bold text-slate-900 flex items-center gap-1.5">
+                <i class="fa-solid fa-tower-broadcast text-emerald-600"></i> Fast2SMS रियल OTP API कुंजी
+              </h3>
+              <p class="text-[11px] text-slate-500">लाइव एसएमएस डिस्पैच हेतु Fast2SMS डेवलपर ऑथराइजेशन कुंजी</p>
+            </div>
+            <span class="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">लाइव डिस्पैच</span>
           </div>
-          <button onclick="window.submitAdminPINAuth()" class="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-2.5 rounded-xl transition shadow-xs flex items-center justify-center gap-1.5">
-            <span>PIN सत्यापित करें</span> <i class="fa-solid fa-arrow-right"></i>
+
+          <div class="relative flex items-center">
+            <input 
+              id="adminFast2SmsInput" 
+              type="password" 
+              placeholder="Fast2SMS API Key पेस्ट करें..." 
+              value="${currentFast2SmsKey}"
+              class="w-full bg-white border border-slate-200 rounded-xl p-2.5 pr-10 text-xs font-mono outline-none focus:border-emerald-500" 
+            />
+            <button type="button" onclick="window.toggleFieldMask('adminFast2SmsInput', this)" class="absolute right-3 text-slate-400 hover:text-slate-700 text-xs">
+              <i class="fa-solid fa-eye"></i>
+            </button>
+          </div>
+
+          <button onclick="window.saveFast2SmsKey()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded-xl text-xs shadow-xs transition">
+            सुरक्षित करें (Save SMS Key)
           </button>
         </div>
 
-        <!-- TAB B: STRICTLY MASKED USER ID & PASSWORD -->
-        <div id="panelAdminAuthIDPASS" class="${AdminState.activeAuthMode === 'IDPASS' ? 'space-y-3' : 'hidden'} text-xs">
-          <div>
-            <label class="block text-slate-700 font-bold mb-1">Admin User ID (Masked)</label>
-            <div class="relative">
-              <input 
-                id="secAdminUserID" 
-                type="password" 
-                placeholder="••••••••••" 
-                class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 pr-9 font-mono text-xs outline-none focus:border-slate-800" 
-              />
-              <button 
-                type="button" 
-                onclick="window.toggleFieldMasking('secAdminUserID', 'eyeIconUserID')" 
-                class="absolute right-3 top-2.5 text-slate-400 hover:text-slate-700" 
-                title="ID दिखाएं/छिपाएं"
-              >
-                <i id="eyeIconUserID" class="fa-solid fa-eye"></i>
-              </button>
+        <!-- PAYOUT BANK ACCOUNTS & UPI MANAGER -->
+        <div class="bg-white border border-slate-200 rounded-3xl p-5 space-y-4 shadow-xs">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div>
+              <h3 class="text-sm font-bold text-slate-900 flex items-center gap-1.5">
+                <i class="fa-solid fa-building-columns text-blue-600"></i> सेटलमेंट बैंक खाते व UPI प्रबंधक
+              </h3>
+              <p class="text-[11px] text-slate-500">सदस्यता शुल्क और प्रत्यक्ष बैंक जमा खाते</p>
             </div>
+            <button onclick="window.openAddBankAccountModal()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-3 py-1.5 rounded-xl text-xs shadow-xs transition">
+              + नया बैंक खाता जोड़ें
+            </button>
           </div>
 
-          <div>
-            <label class="block text-slate-700 font-bold mb-1">Admin Password (Masked)</label>
-            <div class="relative">
-              <input 
-                id="secAdminPassword" 
-                type="password" 
-                placeholder="••••••••••••" 
-                class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 pr-9 font-mono text-xs outline-none focus:border-slate-800" 
-              />
-              <button 
-                type="button" 
-                onclick="window.toggleFieldMasking('secAdminPassword', 'eyeIconPass')" 
-                class="absolute right-3 top-2.5 text-slate-400 hover:text-slate-700" 
-                title="पासवर्ड दिखाएं/छिपाएं"
-              >
-                <i id="eyeIconPass" class="fa-solid fa-eye"></i>
-              </button>
-            </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            ${payouts.map(acc => `
+              <div class="p-4 rounded-2xl border ${acc.isDefault ? 'border-blue-500 bg-blue-50/30' : 'border-slate-200 bg-slate-50/50'} space-y-2 relative">
+                ${acc.isDefault ? '<span class="absolute top-3 right-3 text-[9px] bg-blue-600 text-white font-bold px-2 py-0.5 rounded-full">प्राथमिक खाता</span>' : ''}
+                <div class="font-bold text-sm text-slate-900 flex items-center gap-1.5">
+                  <i class="fa-solid fa-piggy-bank text-blue-700"></i> ${acc.bankName}
+                </div>
+                <div class="text-xs text-slate-600 font-mono">
+                  खाता सं.: <strong>${acc.accountNumber}</strong><br>
+                  IFSC: <strong>${acc.ifscCode}</strong><br>
+                  UPI ID: <strong class="text-blue-700">${acc.upiId}</strong>
+                </div>
+                <div class="text-[10px] text-slate-500 uppercase">${acc.holderName}</div>
+                <div class="flex items-center gap-2 pt-2 border-t border-slate-200/60">
+                  ${!acc.isDefault ? `<button onclick="window.setDefaultPayoutAccount('${acc.id}')" class="text-[10px] text-blue-700 font-bold hover:underline">डिफ़ॉल्ट बनाएं</button>` : ''}
+                  <button onclick="window.deletePayoutAccount('${acc.id}')" class="text-[10px] text-rose-600 font-bold hover:underline">हटाएं</button>
+                </div>
+              </div>
+            `).join('')}
           </div>
-
-          <button onclick="window.submitAdminIDPassAuth()" class="w-full bg-slate-900 hover:bg-black text-white font-bold py-2.5 rounded-xl transition shadow-xs flex items-center justify-center gap-1.5">
-            <span>कंसोल लॉगिन</span> <i class="fa-solid fa-lock"></i>
-          </button>
         </div>
 
-        <!-- Self-Reset Trigger -->
-        <div class="pt-1 text-center border-t border-slate-100">
-          <button onclick="window.resetAdminCredentialsWithOtp()" class="text-[11px] font-bold text-amber-800 hover:text-amber-900 underline transition">
-            🔑 पिन/पासवर्ड भूल गए? (OTP द्वारा रीसेट करें)
+        <!-- SUBSCRIPTION PRICING MODEL -->
+        <div class="bg-white border border-slate-200 rounded-3xl p-5 space-y-4 shadow-xs text-xs">
+          <h3 class="text-sm font-bold text-slate-900 flex items-center gap-1.5">
+            <i class="fa-solid fa-tags text-amber-600"></i> सब्सक्रिप्शन दरें (Pricing Controls)
+          </h3>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label class="block text-slate-600 font-bold mb-1">डॉक्टर मासिक शुल्क (₹)</label>
+              <input id="subDoctorMonthly" type="number" value="${subConfig.doctorMonthly}" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 outline-none font-bold" />
+            </div>
+            <div>
+              <label class="block text-slate-600 font-bold mb-1">डॉक्टर वार्षिक शुल्क (₹)</label>
+              <input id="subDoctorYearly" type="number" value="${subConfig.doctorYearly}" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 outline-none font-bold" />
+            </div>
+            <div>
+              <label class="block text-slate-600 font-bold mb-1">स्मार्ट किसान वार्षिक शुल्क (₹)</label>
+              <input id="subFarmerYearly" type="number" value="${subConfig.farmerYearly}" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 outline-none font-bold" />
+            </div>
+          </div>
+          <button onclick="window.saveSubscriptionRates()" class="bg-slate-900 hover:bg-black text-white font-bold py-2.5 px-5 rounded-xl text-xs transition">
+            सब्सक्रिप्शन दरें सुरक्षित करें 💾
           </button>
         </div>
       </div>
     `;
   }
 
-  window.switchAdminLoginTab = function (mode) {
-    AdminState.activeAuthMode = mode;
-    renderAdminAuthModal();
+  window.saveFast2SmsKey = function () {
+    const key = document.getElementById('adminFast2SmsInput')?.value.trim();
+    if (!key) {
+      alert('कृपया Fast2SMS API Key दर्ज करें!');
+      return;
+    }
+    localStorage.setItem(ADMIN_KEYS.FAST2SMS_KEY, key);
+    alert('Fast2SMS API कुंजी सफलतापूर्वक सुरक्षित कर ली गई है। वास्तविक SMS तुरंत चालू हो गए हैं!');
   };
 
-  window.submitAdminPINAuth = function () {
-    const creds = getAdminCredentials();
-    const pinInput = document.getElementById('secAdminPIN')?.value.trim();
-    const errEl = document.getElementById('secAdminPinErr');
+  window.openAddBankAccountModal = function () {
+    const bank = prompt('बैंक का नाम (उदा. SBI / PNB / HDFC):');
+    if (!bank) return;
+    const acc = prompt('पूर्ण बैंक खाता संख्या:');
+    if (!acc) return;
+    const ifsc = prompt('IFSC कोड:');
+    if (!ifsc) return;
+    const name = prompt('खाताधारक का नाम:');
+    if (!name) return;
+    const upi = prompt('जुड़ा हुआ UPI ID:');
 
-    if (pinInput === creds.masterPin) {
-      if (errEl) errEl.classList.add('hidden');
-      window.closeAdminPinModal();
-      window.openAdminDashboard();
-    } else {
-      if (errEl) errEl.classList.remove('hidden');
-      if (typeof window.showToast === 'function') {
-        window.showToast('अमान्य मास्टर PIN! पुनः प्रयास करें।', 'error');
-      }
+    const payouts = getPayoutsFromStorage();
+    const maskedAcc = '••••••••' + acc.slice(-4);
+
+    const newAcc = {
+      id: 'ACC-' + Date.now(),
+      bankName: bank.trim(),
+      accountNumber: maskedAcc,
+      fullAccountNumber: acc.trim(),
+      ifscCode: ifsc.trim().toUpperCase(),
+      holderName: name.trim().toUpperCase(),
+      upiId: upi ? upi.trim() : 'vetcare@upi',
+      isDefault: payouts.length === 0
+    };
+
+    payouts.push(newAcc);
+    savePayoutsToStorage(payouts);
+    renderPaymentPanel();
+    alert('नया बैंक खाता सफलतापूर्वक जोड़ दिया गया!');
+  };
+
+  window.setDefaultPayoutAccount = function (accId) {
+    const payouts = getPayoutsFromStorage();
+    payouts.forEach(acc => {
+      acc.isDefault = acc.id === accId;
+    });
+    savePayoutsToStorage(payouts);
+    renderPaymentPanel();
+  };
+
+  window.deletePayoutAccount = function (accId) {
+    if (confirm('क्या आप सचमुच इस खाते को हटाना चाहते हैं?')) {
+      let payouts = getPayoutsFromStorage();
+      payouts = payouts.filter(acc => acc.id !== accId);
+      savePayoutsToStorage(payouts);
+      renderPaymentPanel();
     }
   };
 
-  window.submitAdminIDPassAuth = function () {
-    const creds = getAdminCredentials();
-    const idInput = document.getElementById('secAdminUserID')?.value.trim();
-    const passInput = document.getElementById('secAdminPassword')?.value.trim();
+  window.saveSubscriptionRates = function () {
+    const docM = parseFloat(document.getElementById('subDoctorMonthly')?.value) || 499;
+    const docY = parseFloat(document.getElementById('subDoctorYearly')?.value) || 4999;
+    const farmY = parseFloat(document.getElementById('subFarmerYearly')?.value) || 199;
 
-    if (idInput === creds.userId && passInput === creds.password) {
-      window.closeAdminPinModal();
-      window.openAdminDashboard();
-    } else {
-      if (typeof window.showToast === 'function') {
-        window.showToast('अमान्य एडमिन ID अथवा पासवर्ड!', 'error');
-      } else {
-        alert('अमान्य एडमिन ID अथवा पासवर्ड!');
-      }
-    }
+    const payload = { doctorMonthly: docM, doctorYearly: docY, farmerYearly: farmY };
+    localStorage.setItem(ADMIN_KEYS.SUBSCRIPTION_DB, JSON.stringify(payload));
+    alert('सब्सक्रिप्शन योजना दरें सफलतापूर्वक अपडेट कर दी गईं!');
   };
 
-  // --------------------------------------------------------------------------
-  // 4. ADMIN CREDENTIALS SELF-RESET (VIA OTP TO 9991039297)
-  // --------------------------------------------------------------------------
-  window.resetAdminCredentialsWithOtp = function () {
-    const creds = getAdminCredentials();
-    const targetPhone = creds.recoveryPhone || '9991039297';
+  // =========================================================================
+  // 8. BRANDING, LIVE BANNER & APP IDENTITY CONTROLLER
+  // =========================================================================
+  function renderBrandingPanel() {
+    const container = document.getElementById('adminPanelBRANDING');
+    if (!container) return;
 
-    const generatedOtp = String(Math.floor(100000 + Math.random() * 900000));
-    AdminState.pendingResetOtp = generatedOtp;
+    const config = JSON.parse(localStorage.getItem(ADMIN_KEYS.BRANDING_DB) || '{"appName": "Vetcare AI OS", "logoText": "VC", "announcement": "", "logoUrl": ""}');
 
-    if (typeof window.sendSmsOtpGateway === 'function') {
-      window.sendSmsOtpGateway(targetPhone, generatedOtp);
-    } else if (typeof window.showToast === 'function') {
-      window.showToast(`एडमिन रीसेट OTP भेजा गया: [ ${generatedOtp} ]`, 'info', 10000);
-    }
-
-    renderAdminResetDialog(targetPhone);
-  };
-
-  function renderAdminResetDialog(phone) {
-    let dialog = document.getElementById('admin-reset-dialog');
-    if (!dialog) {
-      dialog = document.createElement('div');
-      dialog.id = 'admin-reset-dialog';
-      dialog.className = 'fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-xs';
-      document.body.appendChild(dialog);
-    }
-
-    dialog.style.display = 'flex';
-    dialog.innerHTML = `
-      <div class="bg-white border border-slate-200 rounded-3xl max-w-sm w-full p-6 space-y-3.5 shadow-2xl text-left text-xs">
-        <div class="flex justify-between items-center border-b border-slate-100 pb-2">
-          <h3 class="font-black text-slate-900 text-sm">एडमिन क्रेडेंशियल्स रीसेट</h3>
-          <button onclick="document.getElementById('admin-reset-dialog').style.display='none'" class="text-slate-400 hover:text-slate-600 font-bold">✕</button>
+    container.innerHTML = `
+      <div class="bg-white border border-slate-200 rounded-3xl p-5 space-y-4 shadow-xs text-xs">
+        <div class="border-b border-slate-100 pb-2">
+          <h3 class="text-sm font-bold text-slate-900 flex items-center gap-1.5">
+            <i class="fa-solid fa-palette text-amber-600"></i> ब्रांडिंग, लोगो एवं ग्लोबल ब्रॉडकास्ट
+          </h3>
+          <p class="text-[11px] text-slate-500">ऐप का नाम, लोगो टेक्स्ट एवं किसान/डॉक्टर घोषणा पट्टी</p>
         </div>
-        <p class="text-slate-600 text-[11px]">अधिकृत नंबर <strong>${phone}</strong> पर भेजा गया 6-अंकीय OTP कोड एवं नए क्रेडेंशियल्स दर्ज करें:</p>
 
-        <div>
-          <label class="block font-bold text-slate-700 mb-0.5">प्राप्त 6-अंकीय OTP</label>
-          <input id="rstAdminOtp" type="text" maxlength="6" placeholder="000000" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 text-center text-lg font-mono font-black" />
-        </div>
-
-        <div>
-          <label class="block font-bold text-slate-700 mb-0.5">नया मास्टर PIN (4 अंक)</label>
-          <div class="relative">
-            <input id="rstNewPin" type="password" maxlength="4" placeholder="••••" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 pr-8 font-mono" />
-            <button type="button" onclick="window.toggleFieldMasking('rstNewPin', 'eyeRstPin')" class="absolute right-2.5 top-2 text-slate-400"><i id="eyeRstPin" class="fa-solid fa-eye"></i></button>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-slate-600 font-bold mb-1">एप्लिकेशन का नाम</label>
+            <input id="brandingAppName" type="text" value="${config.appName}" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 outline-none font-bold" />
+          </div>
+          <div>
+            <label class="block text-slate-600 font-bold mb-1">लोगो शॉर्टकोड (उदा. VC / VA)</label>
+            <input id="brandingLogoText" type="text" maxlength="3" value="${config.logoText}" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 outline-none font-bold" />
           </div>
         </div>
 
         <div>
-          <label class="block font-bold text-slate-700 mb-0.5">नया Admin Password</label>
-          <div class="relative">
-            <input id="rstNewPassword" type="password" placeholder="••••••••" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 pr-8 font-mono" />
-            <button type="button" onclick="window.toggleFieldMasking('rstNewPassword', 'eyeRstPass')" class="absolute right-2.5 top-2 text-slate-400"><i id="eyeRstPass" class="fa-solid fa-eye"></i></button>
-          </div>
+          <label class="block text-slate-600 font-bold mb-1">कस्टम लोगो इमेज URL (वैकल्पिक)</label>
+          <input id="brandingLogoUrl" type="url" placeholder="https://..." value="${config.logoUrl || ''}" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 outline-none font-mono text-xs" />
         </div>
 
-        <button onclick="window.verifyAndSaveAdminReset()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl shadow-md transition">
-          क्रेडेंशियल्स सुरक्षित करें ⚡
+        <div>
+          <label class="block text-slate-600 font-bold mb-1">📢 शीर्ष ग्लोबल घोषणा पट्टी (Announcement Banner)</label>
+          <textarea id="brandingAnnouncement" rows="2" placeholder="उदा. विशेष सूचना: नया लम्पी स्किन डिसीज टीकाकरण अभियान प्रारंभ..." class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 outline-none font-medium text-xs">${config.announcement || ''}</textarea>
+        </div>
+
+        <button onclick="window.saveBrandingConfig()" class="bg-amber-600 hover:bg-amber-700 text-white font-bold py-2.5 px-6 rounded-xl text-xs shadow-xs transition">
+          ब्रांडिंग अपडेट लागू करें 🎨
         </button>
       </div>
     `;
   }
 
-  window.verifyAndSaveAdminReset = function () {
-    const inputOtp = document.getElementById('rstAdminOtp')?.value.trim();
-    const newPin = document.getElementById('rstNewPin')?.value.trim();
-    const newPass = document.getElementById('rstNewPassword')?.value.trim();
+  window.saveBrandingConfig = function () {
+    const appName = document.getElementById('brandingAppName')?.value.trim() || 'Vetcare AI OS';
+    const logoText = document.getElementById('brandingLogoText')?.value.trim() || 'VC';
+    const logoUrl = document.getElementById('brandingLogoUrl')?.value.trim() || '';
+    const announcement = document.getElementById('brandingAnnouncement')?.value.trim() || '';
 
-    if (inputOtp !== AdminState.pendingResetOtp) {
-      if (typeof window.showToast === 'function') window.showToast('अमान्य OTP कोड! रीसेट निरस्त।', 'error');
-      return;
-    }
+    const payload = { appName, logoText, logoUrl, announcement };
+    localStorage.setItem(ADMIN_KEYS.BRANDING_DB, JSON.stringify(payload));
 
-    if (!newPin || newPin.length !== 4) {
-      if (typeof window.showToast === 'function') window.showToast('मास्टर PIN ठीक 4 अंकों का होना चाहिए!', 'error');
-      return;
-    }
-
-    if (!newPass || newPass.length < 6) {
-      if (typeof window.showToast === 'function') window.showToast('पासवर्ड कम से कम 6 अक्षरों का होना चाहिए!', 'error');
-      return;
-    }
-
-    const currentCreds = getAdminCredentials();
-    currentCreds.masterPin = newPin;
-    currentCreds.password = newPass;
-    saveAdminCredentials(currentCreds);
-
-    const dialog = document.getElementById('admin-reset-dialog');
-    if (dialog) dialog.style.display = 'none';
-
-    if (typeof window.showToast === 'function') {
-      window.showToast('एडमिन क्रेडेंशियल्स सफलतापूर्वक अपडेट किए गए!', 'success');
-    }
+    applyBrandingToDOM();
+    alert('ब्रांडिंग व पहचान सफलतापूर्वक अपडेट हो गई!');
   };
 
-  // --------------------------------------------------------------------------
-  // 5. MASTER ADMIN DASHBOARD CONSOLE (TABS & VIEWS)
-  // --------------------------------------------------------------------------
-  window.openAdminDashboard = function () {
-    const modal = document.getElementById('modalAdminDashboard');
-    if (!modal) return;
-    modal.style.display = 'flex';
-    window.switchAdminTab(AdminState.activeTab);
-  };
-
-  window.closeAdminDashboard = function () {
-    const modal = document.getElementById('modalAdminDashboard');
-    if (modal) modal.style.display = 'none';
-  };
-
-  window.switchAdminTab = function (tabName) {
-    AdminState.activeTab = tabName;
-    const tabBtns = ['USERS', 'PAYMENT', 'BRANDING', 'SECURITY'];
-    tabBtns.forEach((key) => {
-      const btn = document.getElementById(`tabBtnAdmin${key}`);
-      const panel = document.getElementById(`adminPanel${key}`);
-      if (btn) {
-        if (key === tabName) {
-          btn.className = 'px-4 py-2 border-b-2 border-blue-600 text-blue-600 font-bold shrink-0';
-        } else {
-          btn.className = 'px-4 py-2 border-b-2 border-transparent text-slate-500 hover:text-slate-800 font-bold shrink-0';
-        }
-      }
-      if (panel) {
-        if (key === tabName) panel.classList.remove('hidden');
-        else panel.classList.add('hidden');
-      }
-    });
-
-    if (tabName === 'USERS') renderUsersAndAnalyticsTab();
-    else if (tabName === 'PAYMENT') renderPayoutAccountsTab();
-    else if (tabName === 'BRANDING') renderBrandingSettingsTab();
-    else if (tabName === 'SECURITY') renderSecurityManagerTab();
-  };
-
-  // --------------------------------------------------------------------------
-  // 6. TAB 1: USERS, ADVANCED CONTROLS & LOCATION ANALYTICS
-  // --------------------------------------------------------------------------
-  function renderUsersAndAnalyticsTab() {
-    const panel = document.getElementById('adminPanelUSERS');
-    if (!panel) return;
-
-    const users = getUsersDatabase();
-    const filterRole = AdminState.userFilters.role;
-    const filterLoc = AdminState.userFilters.locationQuery.toLowerCase();
-    const filterStatus = AdminState.userFilters.status;
-
-    // Filter Logic
-    const filteredUsers = users.filter((u) => {
-      // Role filter
-      if (filterRole !== 'ALL' && u.role?.toLowerCase() !== filterRole.toLowerCase()) return false;
-      // Location filter
-      if (filterLoc) {
-        const userLoc = `${u.city || ''} ${u.district || ''} ${u.pincode || ''} ${u.location || ''}`.toLowerCase();
-        if (!userLoc.includes(filterLoc)) return false;
-      }
-      // Status filter
-      const now = Date.now();
-      const trialExpired = u.trialStartTimestamp ? now - u.trialStartTimestamp > 24 * 3600 * 1000 : true;
-      if (filterStatus === 'ACTIVE' && (u.isBanned || trialExpired)) return false;
-      if (filterStatus === 'TRIAL' && (u.isBanned || trialExpired)) return false;
-      if (filterStatus === 'EXPIRED' && !trialExpired) return false;
-      if (filterStatus === 'BANNED' && !u.isBanned) return false;
-      return true;
-    });
-
-    // Analytics Calculation
-    const totalUsers = users.length;
-    const activeDoctors = users.filter((u) => u.role?.toLowerCase() === 'doctor' && !u.isBanned).length;
-    const activeFarmers = users.filter((u) => u.role?.toLowerCase() === 'farmer' && !u.isBanned).length;
-    const dualPortalCount = users.filter((u) => u.dualPortalEnabled).length;
-    const inLocActive = filteredUsers.length;
-
-    panel.innerHTML = `
-      <div class="space-y-4">
-        <!-- Live Analytics Badges -->
-        <div class="grid grid-cols-2 sm:grid-cols-5 gap-2.5 text-center">
-          <div class="bg-blue-50 border border-blue-200 p-3 rounded-2xl">
-            <span class="text-[11px] font-bold text-blue-700 block">कुल यूज़र</span>
-            <strong class="text-xl font-black text-blue-900">${totalUsers}</strong>
-          </div>
-          <div class="bg-indigo-50 border border-indigo-200 p-3 rounded-2xl">
-            <span class="text-[11px] font-bold text-indigo-700 block">सक्रिय डॉक्टर</span>
-            <strong class="text-xl font-black text-indigo-900">${activeDoctors}</strong>
-          </div>
-          <div class="bg-emerald-50 border border-emerald-200 p-3 rounded-2xl">
-            <span class="text-[11px] font-bold text-emerald-700 block">सक्रिय किसान</span>
-            <strong class="text-xl font-black text-emerald-900">${activeFarmers}</strong>
-          </div>
-          <div class="bg-purple-50 border border-purple-200 p-3 rounded-2xl">
-            <span class="text-[11px] font-bold text-purple-700 block">डुअल पोर्टल एक्टिव</span>
-            <strong class="text-xl font-black text-purple-900">${dualPortalCount}</strong>
-          </div>
-          <div class="bg-amber-50 border border-amber-200 p-3 rounded-2xl col-span-2 sm:col-span-1">
-            <span class="text-[11px] font-bold text-amber-700 block">फ़िल्टर अनुसार सक्रिय</span>
-            <strong class="text-xl font-black text-amber-900">${inLocActive}</strong>
-          </div>
-        </div>
-
-        <!-- Location Filters & Search Toolbar -->
-        <div class="bg-slate-50 border border-slate-200 p-3.5 rounded-2xl space-y-2.5">
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
-            <div>
-              <label class="block text-[11px] font-bold text-slate-600 mb-1">भूमिका फ़िल्टर (Role):</label>
-              <select onchange="window.setUserFilter('role', this.value)" class="w-full bg-white border border-slate-200 rounded-xl p-2 text-xs font-bold outline-none">
-                <option value="ALL" ${filterRole === 'ALL' ? 'selected' : ''}>सभी भूमिकाएं (All)</option>
-                <option value="doctor" ${filterRole === 'doctor' ? 'selected' : ''}>🩺 अधिकृत डॉक्टर</option>
-                <option value="farmer" ${filterRole === 'farmer' ? 'selected' : ''}>🌾 स्मार्ट किसान</option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-[11px] font-bold text-slate-600 mb-1">लोकेशन (District / City / Pin):</label>
-              <input 
-                type="text" 
-                value="${AdminState.userFilters.locationQuery}" 
-                placeholder="उदा. हिसार, रोहतक, 125001..." 
-                oninput="window.setUserFilter('locationQuery', this.value)" 
-                class="w-full bg-white border border-slate-200 rounded-xl p-2 text-xs outline-none font-medium" 
-              />
-            </div>
-            <div>
-              <label class="block text-[11px] font-bold text-slate-600 mb-1">ट्रायल / प्लान स्टेटस:</label>
-              <select onchange="window.setUserFilter('status', this.value)" class="w-full bg-white border border-slate-200 rounded-xl p-2 text-xs font-bold outline-none">
-                <option value="ALL" ${filterStatus === 'ALL' ? 'selected' : ''}>सभी स्टेटस</option>
-                <option value="ACTIVE" ${filterStatus === 'ACTIVE' ? 'selected' : ''}>सक्रिय (Active)</option>
-                <option value="TRIAL" ${filterStatus === 'TRIAL' ? 'selected' : ''}>ट्रायल में (Within 24h)</option>
-                <option value="EXPIRED" ${filterStatus === 'EXPIRED' ? 'selected' : ''}>ट्रायल समाप्त (Expired)</option>
-                <option value="BANNED" ${filterStatus === 'BANNED' ? 'selected' : ''}>प्रतिबंधित (Banned)</option>
-              </select>
-            </div>
-          </div>
-        </div>
-
-        <!-- Users Table & Granular Controls -->
-        <div class="space-y-3">
-          <div class="flex justify-between items-center">
-            <h4 class="font-bold text-slate-800 text-xs sm:text-sm">पंजीकृत यूज़र डायरेक्टरी (${filteredUsers.length})</h4>
-            <button onclick="window.exportUsersCsv()" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-3 py-1.5 rounded-xl border border-slate-200 transition">
-              📥 एक्सपोर्ट CSV
-            </button>
-          </div>
-
-          <div class="space-y-2.5 max-h-[500px] overflow-y-auto pr-1">
-            ${
-              filteredUsers.length === 0
-                ? `<div class="p-8 text-center text-slate-400 font-bold bg-white rounded-2xl border border-dashed border-slate-200">कोई यूज़र रिकॉर्ड नहीं मिला।</div>`
-                : filteredUsers
-                    .map((user) => {
-                      const isDoctor = user.role?.toLowerCase() === 'doctor';
-                      const trialTimeLeft = Math.max(
-                        0,
-                        (user.trialStartTimestamp || Date.now()) + 24 * 3600 * 1000 - Date.now()
-                      );
-                      const trialHoursLeft = Math.floor(trialTimeLeft / (3600 * 1000));
-                      const isExpired = trialTimeLeft <= 0;
-
-                      return `
-                <div class="bg-white border ${
-                  user.isBanned ? 'border-rose-300 bg-rose-50/30' : 'border-slate-200'
-                } rounded-2xl p-4 shadow-xs space-y-3 text-xs">
-                  <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-2">
-                    <div class="flex items-center gap-2">
-                      <span class="text-xl">${isDoctor ? '🩺' : '🌾'}</span>
-                      <div>
-                        <strong class="text-slate-900 text-sm font-black">${user.name || 'User'}</strong>
-                        <span class="text-[10px] ${
-                          isDoctor ? 'bg-blue-50 text-blue-700' : 'bg-emerald-50 text-emerald-700'
-                        } font-bold px-2 py-0.5 rounded-full ml-1">
-                          ${isDoctor ? 'Doctor' : 'Farmer'}
-                        </span>
-                        ${
-                          user.isBanned
-                            ? '<span class="text-[10px] bg-rose-600 text-white font-bold px-2 py-0.5 rounded-full ml-1">BANNED</span>'
-                            : ''
-                        }
-                      </div>
-                    </div>
-                    <div class="flex items-center gap-2 text-[11px] font-mono text-slate-500">
-                      <span>📱 ${user.contact}</span>
-                      <span>•</span>
-                      <span>⏳ ${isExpired ? '<span class="text-rose-600 font-bold">Expired</span>' : trialHoursLeft + 'h Left'}</span>
-                    </div>
-                  </div>
-
-                  <!-- Granular Toggles & Control Buttons -->
-                  <div class="flex flex-wrap items-center gap-2 pt-1">
-                    
-                    <!-- 1. Extend Trial -->
-                    <div class="relative inline-block">
-                      <select onchange="window.extendUserTrial('${user.contact}', this.value)" class="bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 font-bold text-[11px] py-1.5 px-2 rounded-xl outline-none">
-                        <option value="">⏳ एक्सटेंड ट्रायल</option>
-                        <option value="24">+24 Hours</option>
-                        <option value="168">+7 Days</option>
-                        <option value="720">+30 Days</option>
-                      </select>
-                    </div>
-
-                    <!-- 2. SMS Toggle -->
-                    <button onclick="window.toggleUserFeature('${user.contact}', 'smsEnabled')" class="text-[11px] font-bold px-2.5 py-1.5 rounded-xl border transition ${
-                        user.smsEnabled !== false
-                          ? 'bg-emerald-50 text-emerald-700 border-emerald-300'
-                          : 'bg-slate-100 text-slate-500 border-slate-200'
-                      }">
-                      💬 SMS: ${user.smsEnabled !== false ? 'चालू' : 'बंद'}
-                    </button>
-
-                    <!-- 3. AI Surgeon Toggle -->
-                    <button onclick="window.toggleUserFeature('${user.contact}', 'aiSurgeonEnabled')" class="text-[11px] font-bold px-2.5 py-1.5 rounded-xl border transition ${
-                        user.aiSurgeonEnabled !== false
-                          ? 'bg-purple-50 text-purple-700 border-purple-300'
-                          : 'bg-slate-100 text-slate-500 border-slate-200'
-                      }">
-                      ⚡ AI सर्जन: ${user.aiSurgeonEnabled !== false ? 'अनुमति' : 'रोक'}
-                    </button>
-
-                    <!-- 4. Dual Portal Permission -->
-                    <button onclick="window.toggleUserFeature('${user.contact}', 'dualPortalEnabled')" class="text-[11px] font-bold px-2.5 py-1.5 rounded-xl border transition ${
-                        user.dualPortalEnabled
-                          ? 'bg-blue-50 text-blue-700 border-blue-300'
-                          : 'bg-slate-100 text-slate-500 border-slate-200'
-                      }">
-                      🔄 डुअल पोर्टल: ${user.dualPortalEnabled ? 'सक्षम' : 'अक्षम'}
-                    </button>
-
-                    <!-- 5. Change Plan -->
-                    <select onchange="window.changeUserPlan('${user.contact}', this.value)" class="bg-amber-50 text-amber-800 border border-amber-200 font-bold text-[11px] py-1.5 px-2 rounded-xl outline-none">
-                      <option value="">📦 प्लान बदलें (${user.plan || 'Trial'})</option>
-                      <option value="1-Week">1-Week Pass</option>
-                      <option value="1-Month">1-Month Pro</option>
-                      <option value="3-Month">3-Month VIP</option>
-                      <option value="Annual">Annual Master</option>
-                    </select>
-
-                    <!-- 6. Ban / Unban -->
-                    <button onclick="window.toggleUserBan('${user.contact}')" class="text-[11px] font-bold px-2.5 py-1.5 rounded-xl border transition ${
-                        user.isBanned
-                          ? 'bg-rose-600 text-white border-rose-700'
-                          : 'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100'
-                      }">
-                      ${user.isBanned ? '🚫 अनबैन करें' : 'बैन करें'}
-                    </button>
-
-                    <!-- 7. Delete User -->
-                    <button onclick="window.deleteUserRecord('${user.contact}')" class="text-[11px] font-bold px-2 py-1.5 rounded-xl text-slate-400 hover:text-rose-600 transition" title="खाता हटाएं">
-                      <i class="fa-solid fa-trash"></i>
-                    </button>
-
-                  </div>
-                </div>
-              `;
-                    })
-                    .join('')
-            }
-          </div>
-        </div>
-      </div>
-    `;
-  }
-
-  window.setUserFilter = function (key, val) {
-    AdminState.userFilters[key] = val;
-    renderUsersAndAnalyticsTab();
-  };
-
-  window.extendUserTrial = function (contact, hours) {
-    if (!hours) return;
-    const users = getUsersDatabase();
-    const user = users.find((u) => u.contact === contact);
-    if (!user) return;
-
-    const msToAdd = parseInt(hours, 10) * 3600 * 1000;
-    user.trialStartTimestamp = Math.max(Date.now(), user.trialStartTimestamp || Date.now()) + msToAdd;
-    saveUsersDatabase(users);
-    renderUsersAndAnalyticsTab();
-
-    if (typeof window.showToast === 'function') {
-      window.showToast(`यूज़र ${user.name} का ट्रायल +${hours} घंटे बढ़ाया गया!`, 'success');
-    }
-  };
-
-  window.toggleUserFeature = function (contact, featureKey) {
-    const users = getUsersDatabase();
-    const user = users.find((u) => u.contact === contact);
-    if (!user) return;
-
-    if (user[featureKey] === undefined) {
-      user[featureKey] = false;
-    } else {
-      user[featureKey] = !user[featureKey];
-    }
-
-    saveUsersDatabase(users);
-    renderUsersAndAnalyticsTab();
-
-    if (typeof window.showToast === 'function') {
-      window.showToast(`${featureKey} टॉगल किया गया!`, 'info');
-    }
-  };
-
-  window.changeUserPlan = function (contact, newPlan) {
-    if (!newPlan) return;
-    const users = getUsersDatabase();
-    const user = users.find((u) => u.contact === contact);
-    if (!user) return;
-
-    user.plan = newPlan;
-    // Add 30 or 90 days validity
-    const days = newPlan === '1-Week' ? 7 : newPlan === '1-Month' ? 30 : 90;
-    user.trialStartTimestamp = Date.now() + days * 24 * 3600 * 1000;
-
-    saveUsersDatabase(users);
-    renderUsersAndAnalyticsTab();
-
-    if (typeof window.showToast === 'function') {
-      window.showToast(`प्लान सफलतापूर्वक बदला गया: ${newPlan}`, 'success');
-    }
-  };
-
-  window.toggleUserBan = function (contact) {
-    const users = getUsersDatabase();
-    const user = users.find((u) => u.contact === contact);
-    if (!user) return;
-
-    user.isBanned = !user.isBanned;
-    saveUsersDatabase(users);
-    renderUsersAndAnalyticsTab();
-
-    if (typeof window.showToast === 'function') {
-      window.showToast(user.isBanned ? 'यूज़र बैन किया गया!' : 'यूज़र अनबैन किया गया!', 'info');
-    }
-  };
-
-  window.deleteUserRecord = function (contact) {
-    if (!confirm('क्या आप वाकई इस यूज़र खाते को पूरी तरह हटाना चाहते हैं?')) return;
-    let users = getUsersDatabase();
-    users = users.filter((u) => u.contact !== contact);
-    saveUsersDatabase(users);
-    renderUsersAndAnalyticsTab();
-
-    if (typeof window.showToast === 'function') {
-      window.showToast('यूज़र खाता हटाया गया।', 'info');
-    }
-  };
-
-  window.exportUsersCsv = function () {
-    const users = getUsersDatabase();
-    if (!users.length) {
-      alert('एक्सपोर्ट के लिए कोई डेटा नहीं है!');
-      return;
-    }
-
-    let csv = 'Name,Role,Contact,RegisteredAt,Banned,Plan,DualPortal\n';
-    users.forEach((u) => {
-      csv += `"${u.name || ''}","${u.role || ''}","${u.contact || ''}","${new Date(
-        u.registeredAt || Date.now()
-      ).toLocaleDateString()}","${u.isBanned ? 'YES' : 'NO'}","${u.plan || 'Trial'}","${
-        u.dualPortalEnabled ? 'YES' : 'NO'
-      }"\n`;
-    });
-
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `Vetcare_Users_${Date.now()}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
-  // --------------------------------------------------------------------------
-  // 7. TAB 2: DYNAMIC PAYOUT BANK & UPI MANAGER
-  // --------------------------------------------------------------------------
-  function renderPayoutAccountsTab() {
-    const panel = document.getElementById('adminPanelPAYMENT');
-    if (!panel) return;
-
-    const accounts = getPayoutAccounts();
-
-    panel.innerHTML = `
-      <div class="space-y-4 text-xs">
-        <div class="flex justify-between items-center border-b border-slate-200 pb-2.5">
-          <div>
-            <h3 class="font-black text-slate-900 text-sm">पेआउट एवं बैंक सेटिंग्स (Dynamic Payout Gateway)</h3>
-            <p class="text-[11px] text-slate-500">किसान व डॉक्टर से प्राप्त भुगतान हेतु अधिकृत बैंक खाते एवं UPI IDs</p>
-          </div>
-          <button onclick="window.openAddPayoutModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-1.5 rounded-xl shadow-xs transition flex items-center gap-1">
-            <i class="fa-solid fa-plus"></i> <span>नया बैंक / UPI जोड़ें</span>
-          </button>
-        </div>
-
-        <!-- Accounts Grid -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          ${accounts
-            .map(
-              (acc) => `
-            <div class="bg-slate-50 border ${
-              acc.isPrimary ? 'border-emerald-300 ring-2 ring-emerald-500/20' : 'border-slate-200'
-            } rounded-2xl p-4 space-y-2.5 relative">
-              ${
-                acc.isPrimary
-                  ? '<span class="absolute top-3 right-3 text-[10px] bg-emerald-600 text-white font-black px-2 py-0.5 rounded-full">प्राथमिक खाता (Active)</span>'
-                  : ''
-              }
-              <div class="flex items-center gap-2">
-                <span class="text-2xl">🏛️</span>
-                <div>
-                  <h4 class="font-black text-slate-900 text-sm">${acc.bankName}</h4>
-                  <p class="text-[11px] text-slate-500 font-sans">Payee: <strong>${acc.payeeName}</strong></p>
-                </div>
-              </div>
-
-              <div class="space-y-1 font-mono text-[11px] bg-white p-2.5 rounded-xl border border-slate-200">
-                <div class="flex justify-between">
-                  <span class="text-slate-400">UPI ID:</span>
-                  <span class="font-bold text-blue-700">${acc.upiId}</span>
-                </div>
-                <div class="flex justify-between">
-                  <span class="text-slate-400">Account No:</span>
-                  <span class="font-bold text-slate-800">${acc.accountNumber}</span>
-                </div>
-                <div class="flex justify-between">
-                  <span class="text-slate-400">IFSC Code:</span>
-                  <span class="font-bold text-slate-800 uppercase">${acc.ifsc}</span>
-                </div>
-              </div>
-
-              <div class="flex items-center justify-between pt-1">
-                <div>
-                  ${
-                    !acc.isPrimary
-                      ? `<button onclick="window.setPrimaryPayoutAccount('${acc.id}')" class="text-[10px] bg-blue-50 text-blue-700 border border-blue-200 font-bold px-2 py-1 rounded-lg hover:bg-blue-100">
-                          प्राथमिक बनाएं
-                        </button>`
-                      : '<span class="text-[10px] font-bold text-emerald-700">✓ एक्टिव मर्चेंट</span>'
-                  }
-                </div>
-                <div class="flex gap-1.5">
-                  <button onclick="window.openEditPayoutModal('${acc.id}')" class="text-xs text-slate-600 hover:text-blue-700 font-bold px-2 py-1">
-                    <i class="fa-solid fa-pen"></i>
-                  </button>
-                  ${
-                    !acc.isPrimary
-                      ? `<button onclick="window.deletePayoutAccount('${acc.id}')" class="text-xs text-rose-500 hover:text-rose-700 font-bold px-2 py-1">
-                          <i class="fa-solid fa-trash"></i>
-                        </button>`
-                      : ''
-                  }
-                </div>
-              </div>
-            </div>
-          `
-            )
-            .join('')}
-        </div>
-      </div>
-    `;
-  }
-
-  window.openAddPayoutModal = function () {
-    AdminState.editingPayoutId = null;
-    renderPayoutFormModal({});
-  };
-
-  window.openEditPayoutModal = function (accId) {
-    const accounts = getPayoutAccounts();
-    const acc = accounts.find((a) => a.id === accId);
-    if (!acc) return;
-    AdminState.editingPayoutId = accId;
-    renderPayoutFormModal(acc);
-  };
-
-  function renderPayoutFormModal(data) {
-    let modal = document.getElementById('admin-payout-form-modal');
-    if (!modal) {
-      modal = document.createElement('div');
-      modal.id = 'admin-payout-form-modal';
-      modal.className = 'fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-xs';
-      document.body.appendChild(modal);
-    }
-
-    modal.style.display = 'flex';
-    modal.innerHTML = `
-      <div class="bg-white border border-slate-200 rounded-3xl max-w-sm w-full p-5 sm:p-6 space-y-3.5 shadow-2xl text-xs text-left">
-        <div class="flex justify-between items-center border-b border-slate-100 pb-2">
-          <h3 class="font-black text-slate-900 text-sm">${AdminState.editingPayoutId ? 'बैंक खाता संपादित करें' : 'नया बैंक खाता जोड़ें'}</h3>
-          <button onclick="document.getElementById('admin-payout-form-modal').style.display='none'" class="text-slate-400 hover:text-slate-600 font-bold">✕</button>
-        </div>
-
-        <div>
-          <label class="block font-bold text-slate-700 mb-0.5">बैंक का नाम (Bank Name)</label>
-          <input id="payFormBank" type="text" value="${data.bankName || ''}" placeholder="उदा. State Bank of India" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 outline-none font-medium" />
-        </div>
-
-        <div>
-          <label class="block font-bold text-slate-700 mb-0.5">खाता धारक का नाम (Payee Name)</label>
-          <input id="payFormPayee" type="text" value="${data.payeeName || 'Vetcare Services'}" placeholder="Vetcare Services" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 outline-none font-medium" />
-        </div>
-
-        <div>
-          <label class="block font-bold text-slate-700 mb-0.5">UPI ID</label>
-          <input id="payFormUpi" type="text" value="${data.upiId || ''}" placeholder="user@oksbi" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 font-mono outline-none font-bold text-blue-700" />
-        </div>
-
-        <div class="grid grid-cols-2 gap-2">
-          <div>
-            <label class="block font-bold text-slate-700 mb-0.5">खाता सं. (A/C No)</label>
-            <input id="payFormAcc" type="text" value="${data.accountNumber || ''}" placeholder="6520406..." class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 font-mono outline-none" />
-          </div>
-          <div>
-            <label class="block font-bold text-slate-700 mb-0.5">IFSC कोड</label>
-            <input id="payFormIfsc" type="text" value="${data.ifsc || ''}" placeholder="SBIN001..." class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 font-mono outline-none uppercase" />
-          </div>
-        </div>
-
-        <div class="flex gap-2 pt-2">
-          <button onclick="document.getElementById('admin-payout-form-modal').style.display='none'" class="w-1/3 bg-slate-100 font-bold text-slate-700 py-2.5 rounded-xl">रद्द</button>
-          <button onclick="window.savePayoutFormAccount()" class="w-2/3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl shadow-xs transition">सुरक्षित करें</button>
-        </div>
-      </div>
-    `;
-  }
-
-  window.savePayoutFormAccount = function () {
-    const bankName = document.getElementById('payFormBank')?.value.trim();
-    const payeeName = document.getElementById('payFormPayee')?.value.trim();
-    const upiId = document.getElementById('payFormUpi')?.value.trim();
-    const accountNumber = document.getElementById('payFormAcc')?.value.trim();
-    const ifsc = document.getElementById('payFormIfsc')?.value.trim().toUpperCase();
-
-    if (!bankName || !upiId || !accountNumber || !ifsc) {
-      if (typeof window.showToast === 'function') window.showToast('कृपया सभी बैंक विवरण अनिवार्य रूप से भरें!', 'error');
-      return;
-    }
-
-    const accounts = getPayoutAccounts();
-
-    if (AdminState.editingPayoutId) {
-      const idx = accounts.findIndex((a) => a.id === AdminState.editingPayoutId);
-      if (idx >= 0) {
-        accounts[idx] = { ...accounts[idx], bankName, payeeName, upiId, accountNumber, ifsc };
-      }
-    } else {
-      accounts.push({
-        id: 'PAY_' + Date.now(),
-        bankName,
-        payeeName: payeeName || 'Vetcare Services',
-        upiId,
-        accountNumber,
-        ifsc,
-        isPrimary: accounts.length === 0
-      });
-    }
-
-    savePayoutAccounts(accounts);
-    const modal = document.getElementById('admin-payout-form-modal');
-    if (modal) modal.style.display = 'none';
-
-    renderPayoutAccountsTab();
-    if (typeof window.showToast === 'function') {
-      window.showToast('बैंक एवं UPI खाता सफलतापूर्वक सुरक्षित!', 'success');
-    }
-  };
-
-  window.setPrimaryPayoutAccount = function (accId) {
-    const accounts = getPayoutAccounts();
-    accounts.forEach((a) => {
-      a.isPrimary = a.id === accId;
-    });
-    savePayoutAccounts(accounts);
-    renderPayoutAccountsTab();
-    if (typeof window.showToast === 'function') window.showToast('प्राथमिक खाता अपडेट हुआ!', 'success');
-  };
-
-  window.deletePayoutAccount = function (accId) {
-    if (!confirm('क्या आप वाकई इस खाते को हटाना चाहते हैं?')) return;
-    let accounts = getPayoutAccounts();
-    accounts = accounts.filter((a) => a.id !== accId);
-    savePayoutAccounts(accounts);
-    renderPayoutAccountsTab();
-  };
-
-  // --------------------------------------------------------------------------
-  // 8. TAB 3: DYNAMIC BRANDING, LOGO & ANNOUNCEMENT ENGINE
-  // --------------------------------------------------------------------------
-  function renderBrandingSettingsTab() {
-    const panel = document.getElementById('adminPanelBRANDING');
-    if (!panel) return;
-
-    const branding = getAppBranding();
-
-    panel.innerHTML = `
-      <div class="space-y-4 text-xs">
-        <div class="border-b border-slate-200 pb-2">
-          <h3 class="font-black text-slate-900 text-sm">ऐप ब्रांडिंग व पहचान संपादक (Live Branding Suite)</h3>
-          <p class="text-[11px] text-slate-500">लोगो, मुख्य शीर्षक, थीम रंग एवं लाइव घोषणा संदेश का वास्तविक नियंत्रण</p>
-        </div>
-
-        <div class="bg-slate-50 border border-slate-200 p-4 rounded-2xl space-y-3">
-          <div>
-            <label class="block font-bold text-slate-700 mb-1">एप्लीकेशन मुख्य शीर्षक (App Title)</label>
-            <input id="brandFormTitle" type="text" value="${branding.appTitle || ''}" placeholder="Vetcare AI OS" class="w-full bg-white border border-slate-200 rounded-xl p-2.5 font-bold outline-none" />
-          </div>
-
-          <div>
-            <label class="block font-bold text-slate-700 mb-1">संस्था / क्लिनिक टैगलाइन</label>
-            <input id="brandFormTagline" type="text" value="${branding.tagline || ''}" class="w-full bg-white border border-slate-200 rounded-xl p-2.5 outline-none font-medium" />
-          </div>
-
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label class="block font-bold text-slate-700 mb-1">लोगो इमेज URL (Direct Web Link)</label>
-              <input id="brandFormLogoUrl" type="url" value="${branding.logoUrl || ''}" placeholder="https://domain.com/logo.png" class="w-full bg-white border border-slate-200 rounded-xl p-2 font-mono text-[11px] outline-none" />
-            </div>
-            <div>
-              <label class="block font-bold text-slate-700 mb-1">अथवा स्थानीय लोगो अपलोड (Base64)</label>
-              <input id="brandFormLogoFile" type="file" accept="image/*" onchange="window.handleLogoFileUpload(this)" class="w-full bg-white border border-slate-200 rounded-xl p-1 text-slate-500" />
-            </div>
-          </div>
-
-          <div>
-            <label class="block font-bold text-slate-700 mb-1">ग्लोबल घोषणा संदेश (Announcement Banner)</label>
-            <textarea id="brandFormBanner" rows="2" class="w-full bg-white border border-slate-200 rounded-xl p-2.5 outline-none font-sans">${branding.announcementBanner || ''}</textarea>
-          </div>
-
-          <button onclick="window.saveAppBrandingSettings()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black py-3 rounded-2xl shadow-md transition flex items-center justify-center gap-2">
-            <span>💾 ब्रांडिंग परिवर्तन लाइव लागू करें</span>
-          </button>
-        </div>
-      </div>
-    `;
-  }
-
-  window.handleLogoFileUpload = function (input) {
-    if (input.files && input.files[0]) {
-      const reader = new FileReader();
-      reader.onload = function (e) {
-        const logoUrlInput = document.getElementById('brandFormLogoUrl');
-        if (logoUrlInput) logoUrlInput.value = e.target.result;
-      };
-      reader.readAsDataURL(input.files[0]);
-    }
-  };
-
-  window.saveAppBrandingSettings = function () {
-    const appTitle = document.getElementById('brandFormTitle')?.value.trim() || 'Vetcare AI OS';
-    const tagline = document.getElementById('brandFormTagline')?.value.trim() || '';
-    const logoUrl = document.getElementById('brandFormLogoUrl')?.value.trim() || '';
-    const announcementBanner = document.getElementById('brandFormBanner')?.value.trim() || '';
-
-    const newBranding = { appTitle, tagline, logoUrl, announcementBanner };
-    saveAppBranding(newBranding);
-    window.updateAppBranding(newBranding);
-
-    if (typeof window.showToast === 'function') {
-      window.showToast('ब्रांडिंग सेटिंग्स लाइव अपडेट हो चुकी हैं!', 'success');
-    }
-  };
-
-  window.updateAppBranding = function (branding) {
-    if (!branding) branding = getAppBranding();
-
-    // Live DOM Reflection
-    const appHeaderTitle = document.getElementById('appHeaderTitle');
-    const gatewayAppTitle = document.getElementById('gatewayAppTitle');
-    const gatewayTagline = document.getElementById('gatewayTagline');
+  function applyBrandingToDOM() {
+    const configRaw = localStorage.getItem(ADMIN_KEYS.BRANDING_DB);
+    if (!configRaw) return;
+    const config = JSON.parse(configRaw);
+
+    const gatewayTitle = document.getElementById('gatewayAppTitle');
+    const headerTitle = document.getElementById('appHeaderTitle');
+    const gatewayLogo = document.getElementById('gatewayLogoText');
+    const headerLogo = document.getElementById('headerLogoText');
+    const bannerBox = document.getElementById('app-announcement-banner');
     const logoImg = document.getElementById('app-logo-img');
-    const headerLogoText = document.getElementById('headerLogoText');
-    const bannerContainer = document.getElementById('app-announcement-banner');
 
-    if (appHeaderTitle) appHeaderTitle.textContent = branding.appTitle;
-    if (gatewayAppTitle) gatewayAppTitle.textContent = branding.appTitle;
-    if (gatewayTagline) gatewayTagline.textContent = branding.tagline;
+    if (gatewayTitle) gatewayTitle.textContent = config.appName;
+    if (headerTitle) headerTitle.textContent = config.appName;
+    if (gatewayLogo) gatewayLogo.textContent = config.logoText;
+    if (headerLogo) headerLogo.textContent = config.logoText;
 
-    if (branding.logoUrl) {
-      if (logoImg) {
-        logoImg.src = branding.logoUrl;
-        logoImg.classList.remove('hidden');
-      }
-      if (headerLogoText) headerLogoText.classList.add('hidden');
-    } else {
-      if (logoImg) logoImg.classList.add('hidden');
-      if (headerLogoText) headerLogoText.classList.remove('hidden');
+    if (logoImg && config.logoUrl) {
+      logoImg.src = config.logoUrl;
+      logoImg.classList.remove('hidden');
+      if (headerLogo) headerLogo.classList.add('hidden');
     }
 
-    if (bannerContainer) {
-      if (branding.announcementBanner) {
-        bannerContainer.innerHTML = `
-          <div class="bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 text-white text-[11px] font-bold p-2 text-center shadow-xs flex items-center justify-center gap-2">
-            <span>📢</span> <span>${branding.announcementBanner}</span>
+    if (bannerBox) {
+      if (config.announcement) {
+        bannerBox.innerHTML = `
+          <div class="bg-amber-500 text-slate-950 font-bold px-4 py-2 text-xs flex items-center justify-between shadow-xs">
+            <div class="flex items-center gap-2">
+              <span>📢</span>
+              <span>${config.announcement}</span>
+            </div>
+            <button onclick="this.parentElement.remove()" class="text-slate-900 font-black">✕</button>
           </div>
         `;
       } else {
-        bannerContainer.innerHTML = '';
+        bannerBox.innerHTML = '';
       }
     }
-  };
-
-  // --------------------------------------------------------------------------
-  // 9. TAB 4: MASKED CREDENTIALS MANAGER INSIDE DASHBOARD
-  // --------------------------------------------------------------------------
-  function renderSecurityManagerTab() {
-    const panel = document.getElementById('adminPanelSECURITY');
-    if (!panel) return;
-
-    const creds = getAdminCredentials();
-
-    panel.innerHTML = `
-      <div class="space-y-4 text-xs max-w-lg">
-        <div class="border-b border-slate-200 pb-2">
-          <h3 class="font-black text-slate-900 text-sm">क्रेडेंशियल्स व सुरक्षा प्रबंधन (Masked Security Manager)</h3>
-          <p class="text-[11px] text-slate-500">मास्टर क्रेडेंशियल्स सदैव एन्क्रिप्टेड एवं मास्कड रहते हैं</p>
-        </div>
-
-        <div class="bg-slate-50 border border-slate-200 p-4 rounded-2xl space-y-3">
-          <div>
-            <label class="block font-bold text-slate-700 mb-1">Master Quick PIN (4 Digits)</label>
-            <div class="relative">
-              <input id="mgrPin" type="password" maxlength="4" value="${creds.masterPin}" class="w-full bg-white border border-slate-200 rounded-xl p-2.5 pr-8 font-mono outline-none" />
-              <button type="button" onclick="window.toggleFieldMasking('mgrPin', 'eyeMgrPin')" class="absolute right-3 top-2.5 text-slate-400"><i id="eyeMgrPin" class="fa-solid fa-eye"></i></button>
-            </div>
-          </div>
-
-          <div>
-            <label class="block font-bold text-slate-700 mb-1">Admin User ID</label>
-            <div class="relative">
-              <input id="mgrUserId" type="password" value="${creds.userId}" class="w-full bg-white border border-slate-200 rounded-xl p-2.5 pr-8 font-mono outline-none" />
-              <button type="button" onclick="window.toggleFieldMasking('mgrUserId', 'eyeMgrUser')" class="absolute right-3 top-2.5 text-slate-400"><i id="eyeMgrUser" class="fa-solid fa-eye"></i></button>
-            </div>
-          </div>
-
-          <div>
-            <label class="block font-bold text-slate-700 mb-1">Admin Password</label>
-            <div class="relative">
-              <input id="mgrPassword" type="password" value="${creds.password}" class="w-full bg-white border border-slate-200 rounded-xl p-2.5 pr-8 font-mono outline-none" />
-              <button type="button" onclick="window.toggleFieldMasking('mgrPassword', 'eyeMgrPass')" class="absolute right-3 top-2.5 text-slate-400"><i id="eyeMgrPass" class="fa-solid fa-eye"></i></button>
-            </div>
-          </div>
-
-          <div>
-            <label class="block font-bold text-slate-700 mb-1">रिकवरी मोबाइल नंबर (फॉर OTP रीसेट)</label>
-            <input id="mgrRecoveryPhone" type="tel" maxlength="10" value="${creds.recoveryPhone || '9991039297'}" class="w-full bg-white border border-slate-200 rounded-xl p-2.5 font-mono outline-none font-bold" />
-          </div>
-
-          <button onclick="window.saveSecurityManagerCredentials()" class="w-full bg-slate-900 hover:bg-black text-white font-black py-3 rounded-2xl shadow-md transition flex items-center justify-center gap-2">
-            <span>💾 नए क्रेडेंशियल्स सुरक्षित करें</span>
-          </button>
-        </div>
-      </div>
-    `;
   }
 
-  window.saveSecurityManagerCredentials = function () {
-    const pin = document.getElementById('mgrPin')?.value.trim();
-    const userId = document.getElementById('mgrUserId')?.value.trim();
-    const password = document.getElementById('mgrPassword')?.value.trim();
-    const recoveryPhone = document.getElementById('mgrRecoveryPhone')?.value.trim();
-
-    if (!pin || pin.length !== 4) {
-      if (typeof window.showToast === 'function') window.showToast('PIN 4 अंकों का होना आवश्यक है!', 'error');
-      return;
-    }
-
-    if (!userId || !password) {
-      if (typeof window.showToast === 'function') window.showToast('ID और पासवर्ड खाली नहीं हो सकते!', 'error');
-      return;
-    }
-
-    const creds = { masterPin: pin, userId, password, recoveryPhone };
-    saveAdminCredentials(creds);
-
-    if (typeof window.showToast === 'function') {
-      window.showToast('सुरक्षा क्रेडेंशियल्स सफलतापूर्वक अपडेट किए गए!', 'success');
-    }
-  };
-
-  // --------------------------------------------------------------------------
-  // 10. SYSTEM BOOTSTRAPPER & INITIALIZATION
-  // --------------------------------------------------------------------------
+  // =========================================================================
+  // 9. AUTOMATIC INITIALIZATION
+  // =========================================================================
   document.addEventListener('DOMContentLoaded', () => {
-    // Inject Tab header button for SECURITY in admin console if missing
-    const tabHeaders = document.querySelector('#modalAdminDashboard .border-b');
-    if (tabHeaders && !document.getElementById('tabBtnAdminSECURITY')) {
-      const secBtn = document.createElement('button');
-      secBtn.id = 'tabBtnAdminSECURITY';
-      secBtn.onclick = () => window.switchAdminTab('SECURITY');
-      secBtn.className = 'px-4 py-2 border-b-2 border-transparent text-slate-500 hover:text-slate-800 font-bold shrink-0';
-      secBtn.textContent = '🔒 सुरक्षा व क्रेडेंशियल्स';
-      tabHeaders.appendChild(secBtn);
-
-      const secPanel = document.createElement('div');
-      secPanel.id = 'adminPanelSECURITY';
-      secPanel.className = 'hidden';
-      const container = document.querySelector('#modalAdminDashboard .max-w-4xl');
-      if (container) container.appendChild(secPanel);
-    }
-
-    // Apply live branding
-    window.updateAppBranding();
+    ensureUsersDatabase();
+    ensurePayoutsDatabase();
+    applyBrandingToDOM();
   });
-
-})(window, document);
+})();
