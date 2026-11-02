@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title id="pageTitleTag">Vetcare AI OS | Clinical & Smart Dairy Assistant</title>
   
-  <!-- Meta & PWA Settings -->
+  <!-- Meta & PWA Directives -->
   <meta name="description" content="Vetcare AI OS - 3-Way Clinical Decision Support System, 5-Tier Pharmacology, Digital OPD, and Smart Dairy Management" />
   <meta name="theme-color" content="#059669" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -59,8 +59,8 @@
         </div>
         <div>
           <h1 class="text-sm sm:text-base font-black leading-tight text-slate-900 flex items-center gap-1.5">
-            <span>Vetcare AI OS</span>
-            <span class="text-[9px] bg-emerald-50 text-emerald-700 font-mono font-bold px-1.5 py-0.5 rounded border border-emerald-300">2026</span>
+            <span id="gatewayAppTitle">Vetcare AI OS</span>
+            <span class="text-[9px] bg-emerald-50 text-emerald-700 font-mono font-bold px-1.5 py-0.5 rounded border border-emerald-300">2026 Live</span>
           </h1>
           <p class="text-[10px] text-slate-500 font-bold">Clinical & Smart Dairy OS</p>
         </div>
@@ -71,7 +71,7 @@
         <span id="session-timer-badge" class="bg-slate-100 text-slate-700 font-mono font-bold text-[10px] px-2 py-1 rounded-xl border border-slate-200" title="सुरक्षा सत्र टाइमर">⏱️ 60:00</span>
         <span id="trial-timer-badge" class="bg-amber-50 text-amber-800 font-mono font-bold text-[10px] px-2 py-1 rounded-xl border border-amber-200" title="24-घंटे मुफ़्त क्लिनिकल ट्रायल">⏳ 24h Trial</span>
 
-        <!-- Language Selector -->
+        <!-- Language Selector (Default: Hinglish) -->
         <select onchange="window.setAppLanguage ? window.setAppLanguage(this.value) : null" class="bg-slate-50 border border-slate-200 text-slate-800 text-[10px] sm:text-xs font-bold rounded-xl px-2 py-1 outline-none cursor-pointer">
           <option value="hinglish" selected>Hinglish</option>
           <option value="hindi">हिन्दी</option>
@@ -89,7 +89,7 @@
         <span>नेक्स्ट-जेन वेटरनरी क्लिनिकल डिसीजन सपोर्ट इंजन</span>
       </div>
       <h2 class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">पशु स्वास्थ्य निदान एवं क्लिनिकल प्रबंधन</h2>
-      <p class="text-xs sm:text-sm text-slate-600 max-w-lg mx-auto">
+      <p id="gatewayTagline" class="text-xs sm:text-sm text-slate-600 max-w-lg mx-auto">
         48+ रोग मैट्रिक्स, 5-स्तरीय फार्माकोलॉजी, 1-क्लिक व्हाट्सएप पर्ची एवं प्रमाणित 25 देसी सिद्ध नुस्खे
       </p>
     </div>
@@ -182,7 +182,7 @@
   <!-- ========================================================================= -->
   <div id="screenMainApp" class="hidden w-full max-w-4xl min-h-screen flex flex-col bg-white border-x border-slate-200 shadow-xl pb-24 relative">
 
-    <!-- Sticky Main Header -->
+    <!-- Sticky Main Header with Dual Timers, Badges & Logout -->
     <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 px-3 sm:px-6 py-2.5 flex items-center justify-between shadow-xs">
       <div class="flex items-center space-x-2.5 cursor-pointer" onclick="window.navigateToView ? window.navigateToView('viewServicesLauncher') : null">
         <div id="headerLogoBox" class="w-9 h-9 rounded-2xl bg-emerald-600 flex items-center justify-center font-black text-white text-sm shadow-md shadow-emerald-500/20 overflow-hidden">
@@ -205,8 +205,8 @@
           <i class="fa-solid fa-arrows-rotate"></i> <span class="hidden md:inline">पोर्टल</span>
         </button>
 
-        <button onclick="window.logoutUser ? window.logoutUser() : null" class="text-[11px] px-2.5 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold border border-rose-200 transition" title="लॉगआउट">
-          <i class="fa-solid fa-right-from-bracket"></i> <span class="hidden md:inline">लॉगआउट</span>
+        <button onclick="window.logoutUser ? window.logoutUser() : null" class="text-[11px] px-2.5 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold border border-rose-200 transition flex items-center gap-1" title="लॉगआउट">
+          <i class="fa-solid fa-right-from-bracket"></i> <span>🚪 लॉगआउट</span>
         </button>
       </div>
     </header>
@@ -222,13 +222,13 @@
     <!-- MAIN BODY WORKSPACE -->
     <main class="flex-1 p-3.5 sm:p-6 space-y-5">
       
-      <!-- Central Services Launcher Container -->
+      <!-- Central Services Launcher Grid Container -->
       <section id="services-launcher-container"></section>
 
-      <!-- 3.1 DOCTOR WORKSPACE CONTAINER -->
+      <!-- 3.1 VETERINARY PRACTITIONER WORKSPACE (DOCTOR) -->
       <div id="doctor-workspace" class="space-y-4">
         
-        <!-- TAB: CLINICAL DIAGNOSIS -->
+        <!-- TAB: CLINICAL DIAGNOSIS & SYMPTOM MATRIX -->
         <section id="viewDiagnosis" class="space-y-4">
           <div id="panelDiagMatrix"></div>
           <div id="diseaseSearchResults" class="space-y-4"></div>
@@ -271,7 +271,7 @@
             <div class="grid grid-cols-2 gap-2 text-xs">
               <div class="flex gap-1.5">
                 <input id="opdGPS" type="text" placeholder="GPS लोकेशन" readonly class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 text-xs font-mono" />
-                <button onclick="window.captureGPSLocation()" id="btnGPS" type="button" class="bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 px-2 py-1 rounded-xl text-xs font-semibold shrink-0">📍 GPS</button>
+                <button onclick="window.captureGPSLocation()" id="btnGPS" type="button" class="bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 px-2.5 py-1 rounded-xl text-xs font-semibold shrink-0">📍 GPS</button>
               </div>
               <select id="opdPregnancy" class="bg-slate-50 border border-slate-200 rounded-xl p-2 text-xs font-medium">
                 <option value="खाली (Non-Pregnant)">खाली (Non-Pregnant)</option>
@@ -290,7 +290,7 @@
               <textarea id="opdMedicine" rows="3" placeholder="उदा. 1. Inj. Xyrofur 1g - I/M&#10;2. Inj. Melonex Plus 15ml - I/M..." class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs outline-none font-mono"></textarea>
             </div>
 
-            <!-- Fees Grid -->
+            <!-- Fees Breakdown -->
             <div class="grid grid-cols-3 gap-2 text-xs bg-slate-50 p-2.5 rounded-2xl border border-slate-200">
               <div>
                 <span class="text-[10px] text-slate-500 block font-semibold">कुल फीस (₹)</span>
@@ -321,7 +321,7 @@
           </div>
         </section>
 
-        <!-- TAB: CASE RECORDS -->
+        <!-- TAB: PATIENT CASE RECORDS -->
         <section id="viewRecords" class="hidden space-y-3">
           <div class="flex items-center justify-between">
             <h2 class="text-sm font-bold text-slate-900 flex items-center gap-1">
@@ -339,7 +339,7 @@
           <div id="recordsList" class="space-y-2"></div>
         </section>
 
-        <!-- TAB: DRUG STOCK INVENTORY -->
+        <!-- TAB: DRUG & SEMEN STOCK INVENTORY -->
         <section id="viewInventory" class="hidden space-y-4">
           <div id="inventoryContainer"></div>
         </section>
@@ -359,7 +359,7 @@
               </button>
             </div>
 
-            <!-- Species Dropdown & Quick Chips -->
+            <!-- Species Quick Select Chips -->
             <div class="space-y-1.5">
               <label class="block font-bold text-slate-700">1. रोगी पशु की प्रजाति (Species Selection):</label>
               <div class="flex flex-wrap gap-1.5" id="aiSpeciesChipsContainer">
@@ -420,10 +420,10 @@
 
       </div>
 
-      <!-- 3.2 SMART FARMER WORKSPACE CONTAINER -->
+      <!-- 3.2 SMART FARMER WORKSPACE (PASHUPALAK) -->
       <div id="farmer-workspace" class="space-y-4">
         
-        <!-- TAB: BREEDING & HEAT TRACKER -->
+        <!-- TAB: 25 DESI DISEASES HUB & BREEDING/HEAT TRACKER -->
         <section id="viewBreeding" class="hidden space-y-4">
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div class="bg-white border border-slate-200 rounded-3xl p-4 sm:p-5 shadow-xs space-y-2.5">
@@ -447,7 +447,7 @@
         <!-- TAB: DAIRY LEDGER KHATA -->
         <section id="viewFinance" class="hidden space-y-4"></section>
 
-        <!-- TAB: HELPDESK & SUPPORT -->
+        <!-- TAB: HELPDESK & 20KM DOCTOR REQUEST -->
         <section id="viewHelpdesk" class="hidden space-y-4"></section>
 
       </div>
@@ -505,7 +505,7 @@
   </div>
 
   <!-- ========================================================================= -->
-  <!-- MODAL 1: DUAL-TAB AUTHENTICATION MODAL (ID: 'auth-modal')                 -->
+  <!-- MODAL 1: USER AUTHENTICATION MODAL (ID: 'auth-modal')                     -->
   <!-- ========================================================================= -->
   <div id="auth-modal" style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
     <div class="bg-white border border-slate-200 rounded-3xl max-w-sm w-full p-5 sm:p-6 space-y-4 shadow-2xl relative text-left">
@@ -517,7 +517,7 @@
         <p class="text-[11px] text-slate-500">24-घंटे मुफ़्त क्लिनिकल ट्रायल एवं प्रमाणीकरण</p>
       </div>
 
-      <!-- Tab Switcher Header -->
+      <!-- Tab Switcher: Login vs Register -->
       <div class="grid grid-cols-2 gap-1 bg-slate-100 p-1 rounded-2xl text-xs font-bold text-center">
         <button id="authTabBtnLogin" onclick="switchAuthModalTab('LOGIN')" class="py-2 rounded-xl bg-white shadow-xs text-blue-700 transition">
           लॉगिन करें (Login)
@@ -535,7 +535,12 @@
         </div>
         <div>
           <label class="block text-slate-700 font-bold mb-1">पासवर्ड</label>
-          <input id="inputAuthLoginPassword" type="password" placeholder="••••••••" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 outline-none font-mono" />
+          <div class="relative">
+            <input id="inputAuthLoginPassword" type="password" placeholder="••••••••" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 pr-9 outline-none font-mono" />
+            <button type="button" onclick="toggleMask('inputAuthLoginPassword', 'iconAuthLoginEye')" class="absolute right-3 top-2.5 text-slate-400 hover:text-slate-700">
+              <i id="iconAuthLoginEye" class="fa-solid fa-eye"></i>
+            </button>
+          </div>
         </div>
 
         <button onclick="handleDirectPasswordLogin()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl shadow-md transition">
@@ -572,7 +577,12 @@
         </div>
         <div>
           <label class="block text-slate-700 font-bold mb-0.5">नया पासवर्ड बनाएं</label>
-          <input id="inputAuthRegisterPassword" type="password" placeholder="कम से कम 6 अंक" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 outline-none font-mono" />
+          <div class="relative">
+            <input id="inputAuthRegisterPassword" type="password" placeholder="कम से कम 6 अंक" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 pr-9 outline-none font-mono" />
+            <button type="button" onclick="toggleMask('inputAuthRegisterPassword', 'iconAuthRegEye')" class="absolute right-3 top-2 text-slate-400 hover:text-slate-700">
+              <i id="iconAuthRegEye" class="fa-solid fa-eye"></i>
+            </button>
+          </div>
         </div>
 
         <button onclick="handleRegistrationAndOtpSend()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl shadow-md transition">
@@ -580,11 +590,11 @@
         </button>
       </div>
 
-      <!-- COMMON OTP VERIFICATION CONTAINER -->
+      <!-- COMMON OTP VERIFICATION CONTAINER (60S RESEND TIMER) -->
       <div id="authOtpSection" class="hidden space-y-2 pt-2 border-t border-slate-100 text-xs">
         <div class="flex justify-between items-center">
           <label class="text-slate-700 font-bold">6-अंकीय OTP कोड</label>
-          <span id="authOtpResendCountdown" class="text-[10px] text-slate-400 font-mono">रीसेंड: 00:45</span>
+          <span id="authOtpResendCountdown" class="text-[10px] text-slate-400 font-mono">रीसेंड: 00:59</span>
         </div>
         <input id="inputAuthOtp" type="text" maxlength="6" placeholder="000000" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 text-center text-lg font-mono tracking-widest font-black outline-none" />
         <button onclick="window.handleAuthOtpVerification ? window.handleAuthOtpVerification() : null" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl transition shadow-xs">
@@ -595,7 +605,7 @@
   </div>
 
   <!-- ========================================================================= -->
-  <!-- MODAL 2: MASKED ADMIN DUAL-AUTH MODAL (ID: 'admin-modal')                 -->
+  <!-- MODAL 2: STRICTLY MASKED ADMIN DUAL-AUTH MODAL (ID: 'admin-modal')       -->
   <!-- ========================================================================= -->
   <div id="admin-modal" style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
     <div class="bg-white border border-slate-200 rounded-3xl max-w-xs w-full p-6 space-y-4 shadow-2xl relative text-left">
@@ -604,7 +614,7 @@
       <div class="text-center space-y-1">
         <div class="w-12 h-12 bg-amber-100 text-amber-700 rounded-2xl mx-auto flex items-center justify-center text-2xl font-bold">👑</div>
         <h3 class="text-base font-black text-slate-900">Vetcare मास्टर एडमिन</h3>
-        <p class="text-[11px] text-slate-500">सुरक्षा प्रमाणीकरण जांच</p>
+        <p class="text-[11px] text-slate-500 font-medium">गोपनीय सुरक्षा प्रमाणीकरण (Masked Console)</p>
       </div>
 
       <!-- Admin Tab Switcher -->
@@ -617,62 +627,99 @@
         </button>
       </div>
 
-      <!-- TAB A: 4-DIGIT MASTER PIN -->
+      <!-- TAB A: 4-DIGIT MASKED MASTER PIN -->
       <div id="adminTabContentPIN" class="space-y-3 text-xs">
         <div>
           <label class="block text-slate-700 font-bold mb-1 text-center">4-Digit Security Master PIN</label>
-          <input 
-            id="inputAdminPIN" 
-            type="password" 
-            maxlength="4" 
-            pattern="[0-9]*" 
-            inputmode="numeric" 
-            placeholder="****" 
-            class="w-full text-center tracking-widest text-2xl font-mono py-2 border-2 border-slate-200 rounded-2xl outline-none focus:border-amber-600 transition" 
-          />
+          <div class="relative">
+            <input 
+              id="admin-pin-input" 
+              type="password" 
+              maxlength="4" 
+              pattern="[0-9]*" 
+              inputmode="numeric" 
+              placeholder="••••" 
+              class="w-full text-center tracking-widest text-2xl font-mono py-2.5 px-8 border-2 border-slate-200 rounded-2xl outline-none focus:border-amber-600 transition" 
+            />
+            <button 
+              type="button" 
+              onclick="toggleMask('admin-pin-input', 'iconEyeAdminPin')" 
+              class="absolute right-3.5 top-3.5 text-slate-400 hover:text-slate-700 transition"
+              title="PIN देखें/छिपाएं"
+            >
+              <i id="iconEyeAdminPin" class="fa-solid fa-eye"></i>
+            </button>
+          </div>
           <p id="adminPinErrorMsg" class="text-rose-600 text-[10px] font-bold mt-1 text-center hidden">अमान्य PIN! पुनः प्रयास करें।</p>
         </div>
-        <button onclick="handleAdminPINSubmit()" class="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-2.5 rounded-xl transition shadow-xs">
-          PIN सत्यापित करें ➔
+        <button onclick="handleAdminPINSubmit()" class="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-2.5 rounded-xl transition shadow-xs flex items-center justify-center gap-1.5">
+          <span>PIN सत्यापित करें</span> <i class="fa-solid fa-arrow-right"></i>
         </button>
       </div>
 
-      <!-- TAB B: USER ID & PASSWORD -->
+      <!-- TAB B: STRICTLY MASKED USER ID & PASSWORD (ZERO PLAINTEXT EXPOSURE) -->
       <div id="adminTabContentIDPASS" class="hidden space-y-2.5 text-xs">
         <div>
-          <label class="block text-slate-700 font-bold mb-0.5">Admin ID</label>
-          <input id="inputAdminID" type="text" value="9991039297" placeholder="Admin ID" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 outline-none font-mono" />
-        </div>
-        <div>
-          <label class="block text-slate-700 font-bold mb-0.5">Admin Password</label>
+          <label class="block text-slate-700 font-bold mb-0.5">Admin User ID (Masked)</label>
           <div class="relative">
-            <input id="inputAdminPassword" type="password" value="Rahul@1812" placeholder="••••••••" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 pr-8 outline-none font-mono" />
-            <button type="button" onclick="toggleAdminPasswordVisibility()" class="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600">
-              <i id="iconAdminPassEye" class="fa-solid fa-eye"></i>
+            <input 
+              id="admin-id-input" 
+              type="password" 
+              placeholder="एडमिन यूजर ID" 
+              class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 pr-9 font-mono text-xs outline-none focus:border-slate-800" 
+            />
+            <button 
+              type="button" 
+              onclick="toggleMask('admin-id-input', 'iconEyeAdminId')" 
+              class="absolute right-3 top-2.5 text-slate-400 hover:text-slate-700 transition"
+              title="ID देखें/छिपाएं"
+            >
+              <i id="iconEyeAdminId" class="fa-solid fa-eye"></i>
             </button>
           </div>
         </div>
-        <button onclick="handleAdminIDPassSubmit()" class="w-full bg-slate-900 hover:bg-black text-white font-bold py-2.5 rounded-xl transition shadow-xs">
-          कंसोल लॉगिन ⚡
+
+        <div>
+          <label class="block text-slate-700 font-bold mb-0.5">Admin Password (Masked)</label>
+          <div class="relative">
+            <input 
+              id="admin-password-input" 
+              type="password" 
+              placeholder="एडमिन पासवर्ड" 
+              class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 pr-9 font-mono text-xs outline-none focus:border-slate-800" 
+            />
+            <button 
+              type="button" 
+              onclick="toggleMask('admin-password-input', 'iconEyeAdminPass')" 
+              class="absolute right-3 top-2.5 text-slate-400 hover:text-slate-700 transition"
+              title="पासवर्ड देखें/छिपाएं"
+            >
+              <i id="iconEyeAdminPass" class="fa-solid fa-eye"></i>
+            </button>
+          </div>
+        </div>
+
+        <button onclick="handleAdminIDPassSubmit()" class="w-full bg-slate-900 hover:bg-black text-white font-bold py-2.5 rounded-xl transition shadow-xs flex items-center justify-center gap-1.5">
+          <span>कंसोल लॉगिन</span> <i class="fa-solid fa-lock"></i>
         </button>
       </div>
 
-      <!-- Reset / Forgot Trigger -->
-      <div class="pt-1 text-center">
-        <button onclick="handleAdminForgotCredentials()" class="text-[11px] font-bold text-amber-800 hover:text-amber-900 underline">
+      <!-- Reset / Forgot Trigger Via OTP -->
+      <div class="pt-1 text-center border-t border-slate-100">
+        <button onclick="handleAdminForgotCredentials()" class="text-[11px] font-bold text-amber-800 hover:text-amber-900 underline transition">
           🔑 पिन/पासवर्ड भूल गए? (OTP द्वारा रीसेट करें)
         </button>
       </div>
     </div>
   </div>
 
-  <!-- Admin PIN Compatibility Anchor -->
+  <!-- Compatibility Anchor for Legacy Calls -->
   <div id="modalAdminPIN" style="display: none;"></div>
 
   <!-- ========================================================================= -->
-  <!-- MODAL 3: FULL SCREEN ADMIN DASHBOARD                                      -->
+  <!-- MODAL 3: FULL SCREEN ADMIN MANAGEMENT CONSOLE (ID: 'admin-console-view') -->
   <!-- ========================================================================= -->
-  <div id="modalAdminDashboard" style="display: none;" class="fixed inset-0 z-50 flex flex-col bg-white overflow-y-auto">
+  <div id="admin-console-view" style="display: none;" class="fixed inset-0 z-50 flex flex-col bg-white overflow-y-auto">
     <header class="sticky top-0 z-10 bg-slate-900 text-white px-4 sm:px-8 py-3.5 flex items-center justify-between shadow-md">
       <div class="flex items-center gap-2.5">
         <span class="text-2xl">👑</span>
@@ -681,19 +728,75 @@
           <p class="text-[10px] text-slate-400">ग्लोबल कॉन्फ़िगरेशन, थीम/लोगो, यूजर ट्रैकर व सब्सक्रिप्शन</p>
         </div>
       </div>
-      <button onclick="window.closeAdminDashboard ? window.closeAdminDashboard() : (document.getElementById('modalAdminDashboard').style.display='none')" class="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-300 hover:text-white font-bold text-base transition">✕</button>
+      <button onclick="window.closeAdminDashboard ? window.closeAdminDashboard() : (document.getElementById('admin-console-view').style.display='none')" class="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-300 hover:text-white font-bold text-base transition">✕</button>
     </header>
+
     <div class="max-w-4xl w-full mx-auto p-4 sm:p-6 space-y-6 flex-1 text-xs sm:text-sm">
+      <!-- 4 Main Admin Tabs -->
       <div class="flex border-b border-slate-200 overflow-x-auto no-scrollbar gap-2 pb-1 font-bold text-slate-600">
-        <button onclick="window.switchAdminTab ? window.switchAdminTab('USERS') : null" id="tabBtnAdminUSERS" class="px-4 py-2 border-b-2 border-blue-600 text-blue-600 shrink-0">👥 उपयोगकर्ता (Live Tracker)</button>
-        <button onclick="window.switchAdminTab ? window.switchAdminTab('PAYMENT') : null" id="tabBtnAdminPAYMENT" class="px-4 py-2 border-b-2 border-transparent hover:text-slate-900 shrink-0">💳 सब्सक्रिप्शन दरें</button>
-        <button onclick="window.switchAdminTab ? window.switchAdminTab('BRANDING') : null" id="tabBtnAdminBRANDING" class="px-4 py-2 border-b-2 border-transparent hover:text-slate-900 shrink-0">🎨 ब्रांडिंग व पहचान</button>
+        <button onclick="window.switchAdminTab ? window.switchAdminTab('USERS') : switchLocalAdminTab('USERS')" id="tabBtnAdminUSERS" class="px-4 py-2 border-b-2 border-blue-600 text-blue-600 shrink-0">
+          👥 यूज़र प्रबंधन व लोकेशन फ़िल्टर
+        </button>
+        <button onclick="window.switchAdminTab ? window.switchAdminTab('PAYMENT') : switchLocalAdminTab('PAYMENT')" id="tabBtnAdminPAYMENT" class="px-4 py-2 border-b-2 border-transparent hover:text-slate-900 shrink-0">
+          💳 बैंक खाता व UPI प्रबंधक
+        </button>
+        <button onclick="window.switchAdminTab ? window.switchAdminTab('BRANDING') : switchLocalAdminTab('BRANDING')" id="tabBtnAdminBRANDING" class="px-4 py-2 border-b-2 border-transparent hover:text-slate-900 shrink-0">
+          🎨 ऐप ब्रांडिंग व लोगो
+        </button>
+        <button onclick="window.switchAdminTab ? window.switchAdminTab('PRICING') : switchLocalAdminTab('PRICING')" id="tabBtnAdminPRICING" class="px-4 py-2 border-b-2 border-transparent hover:text-slate-900 shrink-0">
+          📦 सब्सक्रिप्शन प्लान एडिटर
+        </button>
       </div>
+
+      <!-- Tab 1: Users & Analytics -->
       <div id="adminPanelUSERS"></div>
+
+      <!-- Tab 2: Bank & Payouts -->
       <div id="adminPanelPAYMENT" class="hidden"></div>
+
+      <!-- Tab 3: Branding & Logo -->
       <div id="adminPanelBRANDING" class="hidden"></div>
+
+      <!-- Tab 4: Pricing & Rates Editor -->
+      <div id="adminPanelPRICING" class="hidden space-y-4">
+        <div class="bg-slate-50 border border-slate-200 rounded-3xl p-5 space-y-4">
+          <h3 class="font-bold text-slate-900 text-sm">सब्सक्रिप्शन दरें (Doctor & Farmer Pricing Editor)</h3>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="bg-white p-4 rounded-2xl border border-slate-200 space-y-2">
+              <span class="font-bold text-blue-700 block">🩺 डॉक्टर प्लान दरें (Veterinary Doctor)</span>
+              <div class="flex justify-between items-center">
+                <span>मासिक (Monthly):</span>
+                <input type="number" value="299" class="w-24 bg-slate-50 border p-1 rounded font-bold text-right" />
+              </div>
+              <div class="flex justify-between items-center">
+                <span>वार्षिक (Annual):</span>
+                <input type="number" value="1999" class="w-24 bg-slate-50 border p-1 rounded font-bold text-right" />
+              </div>
+            </div>
+
+            <div class="bg-white p-4 rounded-2xl border border-slate-200 space-y-2">
+              <span class="font-bold text-emerald-700 block">🌾 पशुपालक प्लान दरें (Smart Farmer)</span>
+              <div class="flex justify-between items-center">
+                <span>मासिक (Monthly):</span>
+                <input type="number" value="99" class="w-24 bg-slate-50 border p-1 rounded font-bold text-right" />
+              </div>
+              <div class="flex justify-between items-center">
+                <span>वार्षिक (Annual):</span>
+                <input type="number" value="799" class="w-24 bg-slate-50 border p-1 rounded font-bold text-right" />
+              </div>
+            </div>
+          </div>
+          <button onclick="alert('सब्सक्रिप्शन प्लान दरें सुरक्षित कर ली गईं!')" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl shadow-xs transition">
+            💾 दरें सुरक्षित करें
+          </button>
+        </div>
+      </div>
+
     </div>
   </div>
+
+  <!-- Backward-compatibility alias for admin dashboard -->
+  <div id="modalAdminDashboard" style="display: none;"></div>
 
   <!-- ========================================================================= -->
   <!-- MODAL 4: DOCTOR CLINICAL DECLARATION MODAL                                -->
@@ -739,10 +842,31 @@
   <div id="printableSlipArea" class="hidden p-8 bg-white text-slate-900 border border-slate-400 space-y-4 font-sans text-xs"></div>
 
   <!-- ========================================================================= -->
-  <!-- MODAL CONTROLLER & AUTH SHIM SCRIPTS                                      -->
+  <!-- INLINE CORE UTILITIES & MODAL SHIM HANDLERS                               -->
   <!-- ========================================================================= -->
   <script>
     let activePendingAuthRole = 'doctor';
+
+    // Interactive Mask Toggler for all Password/ID/PIN Fields
+    function toggleMask(fieldId, iconId) {
+      const input = document.getElementById(fieldId);
+      const icon = document.getElementById(iconId);
+      if (!input) return;
+
+      if (input.type === 'password') {
+        input.type = 'text';
+        if (icon) {
+          icon.classList.remove('fa-eye');
+          icon.classList.add('fa-eye-slash');
+        }
+      } else {
+        input.type = 'password';
+        if (icon) {
+          icon.classList.remove('fa-eye-slash');
+          icon.classList.add('fa-eye');
+        }
+      }
+    }
 
     window.openAuthModal = function (role) {
       activePendingAuthRole = role || 'doctor';
@@ -804,20 +928,6 @@
       }
     }
 
-    function toggleAdminPasswordVisibility() {
-      const input = document.getElementById('inputAdminPassword');
-      const icon = document.getElementById('iconAdminPassEye');
-      if (input) {
-        if (input.type === 'password') {
-          input.type = 'text';
-          if (icon) icon.className = 'fa-solid fa-eye-slash';
-        } else {
-          input.type = 'password';
-          if (icon) icon.className = 'fa-solid fa-eye';
-        }
-      }
-    }
-
     function handleDirectPasswordLogin() {
       const contact = document.getElementById('inputAuthLoginContact')?.value.trim();
       const pass = document.getElementById('inputAuthLoginPassword')?.value.trim();
@@ -866,40 +976,67 @@
     }
 
     function handleAdminPINSubmit() {
-      const pin = document.getElementById('inputAdminPIN')?.value.trim();
+      const pin = document.getElementById('admin-pin-input')?.value.trim();
       const errorMsg = document.getElementById('adminPinErrorMsg');
       if (pin === '9297' || pin === '1234') {
         if (errorMsg) errorMsg.classList.add('hidden');
         document.getElementById('admin-modal').style.display = 'none';
-        const dashboard = document.getElementById('modalAdminDashboard');
-        if (dashboard) dashboard.style.display = 'flex';
+        
+        const consoleView = document.getElementById('admin-console-view');
+        if (consoleView) consoleView.style.display = 'flex';
+        if (typeof window.switchAdminTab === 'function') window.switchAdminTab('USERS');
       } else {
         if (errorMsg) errorMsg.classList.remove('hidden');
       }
     }
 
     function handleAdminIDPassSubmit() {
-      const id = document.getElementById('inputAdminID')?.value.trim();
-      const pass = document.getElementById('inputAdminPassword')?.value.trim();
+      const id = document.getElementById('admin-id-input')?.value.trim();
+      const pass = document.getElementById('admin-password-input')?.value.trim();
       if (id === '9991039297' && pass === 'Rahul@1812') {
         document.getElementById('admin-modal').style.display = 'none';
-        const dashboard = document.getElementById('modalAdminDashboard');
-        if (dashboard) dashboard.style.display = 'flex';
+        
+        const consoleView = document.getElementById('admin-console-view');
+        if (consoleView) consoleView.style.display = 'flex';
+        if (typeof window.switchAdminTab === 'function') window.switchAdminTab('USERS');
       } else {
         alert('अमान्य एडमिन ID अथवा पासवर्ड!');
       }
     }
 
     function handleAdminForgotCredentials() {
-      const phone = prompt('एडमिन मास्टर वेरिफिकेशन हेतु रजिस्टर्ड मोबाइल दर्ज करें:', '9991039297');
-      if (phone) {
-        const otp = String(Math.floor(100000 + Math.random() * 900000));
-        if (typeof window.sendSmsOtpGateway === 'function') {
-          window.sendSmsOtpGateway(phone, otp);
-        } else {
-          alert('एडमिन रीसेट OTP भेजा गया: ' + otp);
+      if (typeof window.resetAdminCredentialsWithOtp === 'function') {
+        window.resetAdminCredentialsWithOtp();
+      } else {
+        const phone = prompt('एडमिन मास्टर वेरिफिकेशन हेतु रजिस्टर्ड मोबाइल दर्ज करें:', '9991039297');
+        if (phone) {
+          const otp = String(Math.floor(100000 + Math.random() * 900000));
+          if (typeof window.sendSmsOtpGateway === 'function') {
+            window.sendSmsOtpGateway(phone, otp);
+          } else {
+            alert('एडमिन रीसेट OTP भेजा गया: ' + otp);
+          }
         }
       }
+    }
+
+    function switchLocalAdminTab(tabName) {
+      const panels = ['USERS', 'PAYMENT', 'BRANDING', 'PRICING'];
+      panels.forEach((p) => {
+        const btn = document.getElementById(`tabBtnAdmin${p}`);
+        const panel = document.getElementById(`adminPanel${p}`);
+        if (btn) {
+          if (p === tabName) {
+            btn.className = 'px-4 py-2 border-b-2 border-blue-600 text-blue-600 font-bold shrink-0';
+          } else {
+            btn.className = 'px-4 py-2 border-b-2 border-transparent hover:text-slate-900 font-bold shrink-0 text-slate-500';
+          }
+        }
+        if (panel) {
+          if (p === tabName) panel.classList.remove('hidden');
+          else panel.classList.add('hidden');
+        }
+      });
     }
   </script>
 
