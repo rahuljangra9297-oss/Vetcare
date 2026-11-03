@@ -1,916 +1,891 @@
-// Vetcare AI OS - Smart Farmer Diseases, Detailed Repeat Breeder & Ledger (2026 Production)
-
-/**
- * ============================================================================
- * VETCARE AI OS — SMART FARMER CLINICAL ENGINE & DAIRY WORKSPACE (2026 LOCKED)
- * ============================================================================
- * Features:
- * 1. Organ-Based & Bilingual Disease Guide (Zero Allopathic Injections - 100% Certified EVM).
- * 2. Deep Repeat Breeder (बार-बार फिरना) Diagnostic & 3-Tier Natural Therapy Protocol.
- * 3. Daily Milk & Feed Expense Ledger with LocalStorage Persistence & WhatsApp Export.
- * 4. Central Services Launcher & Anti-Kickout Tab Controller.
- */
+// Vetcare AI OS - Smart Farmer Execution Engine & Desi Knowledge Hub (2026 Production)
 
 (function () {
   'use strict';
 
-  // ==========================================================================
-  // 1. ORGAN-BASED FARMER DISEASES DATABASE (100% ETHNO-VETERINARY MEDICINE)
-  // ==========================================================================
-  window.VETCARE_FARMER_DISEASES = [
-    // ------------------------------------------------------------------------
-    // A. बच्चेदानी व प्रजनन (Uterus & Reproduction)
-    // ------------------------------------------------------------------------
-    {
-      id: "DIS_FARMER_01",
-      nameHi: "रिपीट ब्रीडर (बार-बार फिरना)",
-      nameEn: "Repeat Breeding (Delayed Conception)",
-      organ: "बच्चेदानी व प्रजनन",
-      causes: "हार्मोनल असंतुलन (Delayed Ovulation), गर्भाशय में अदृश्य मैला (Subclinical Metritis), सूक्ष्म खनिज (Chelated Minerals) की कमी व खराब सीमन गुणवत्ता।",
-      symptoms: "पशु हर 18-21 दिन में सामान्य हीट में आता है, सीमन रखवाने के बावजूद गर्भ नहीं ठहरता, कभी-कभी हीट में मटमैला या हल्का पीला तार आता है।",
-      stages: "1. प्रारंभिक चरण (हीट चक्र सामान्य): पशु समय पर बोलता है किंतु गर्भाधान विफल होता है।\n2. मध्य चरण (60-90 दिन): गर्भाशय एंडोमेट्रियम में हल्की सूजन।\n3. जीर्ण चरण (Chronic): ओवेरियन सिस्ट या ल्यूटियल अपर्याप्तता।",
-      desiRemedy: {
-        ingredients: "अंकुरित गेहूं 250 ग्राम, बारीक पिसी सौंफ 50 ग्राम, पुराना देसी गुड़ 100 ग्राम, एलोवेरा (ग्वारपाठा) का गूदा 150 ग्राम।",
-        preparation: "अंकुरित गेहूं, सौंफ और गुड़ को मिलाकर सुबह खाली पेट लगातार 10 दिनों तक खिलाएं। साथ में एलोवेरा गूदा 5 दिन दें।",
-        precautions: "गाभिन होने पर सौंफ व गुड़ तुरंत बंद करें। कृत्रिम गर्भाधान (A.I.) केवल तभी कराएं जब तार बिल्कुल कांच जैसा शीशेदार पारदर्शी हो।"
-      },
-      doctorRedAlert: "यदि पशु 3 बार ए.आई. के बाद भी खाली रह जाए, तो देसी नुस्खे रोकें। तुरंत डॉक्टर से गर्भाशय की धुलाई (Uterine Wash) करवाएं और ए.आई. के समय GnRH (Receptal 2.5ml) व 5वें दिन Progesterone इंजेक्शन लगवाएं।"
-    },
-    {
-      id: "DIS_FARMER_02",
-      nameHi: "जेर का रुकना (आंवल न गिरना)",
-      nameEn: "Retention of Placenta (ROP)",
-      organ: "बच्चेदानी व प्रजनन",
-      causes: "ब्याने के 8 घंटे बाद भी जेर न गिरना, कैल्शियम/फास्फोरस की कमी, गर्भाशय में संकुचन की कमी (Uterine Inertia), समय पूर्व प्रसव।",
-      symptoms: "योनि मार्ग से जेर लटकती दिखाई देना, बदबूदार गंध, पशु का सुस्त होना, दूध में अचानक गिरावट, हल्का बुखार।",
-      stages: "• 0-6 घंटे: सामान्य प्रसव उपरांत अवधि।\n• 6-12 घंटे: जेर का आंशिक रुकावट चरण।\n• 12+ घंटे: सड़ांध व टॉक्सिमिया का गंभीर खतरा।",
-      desiRemedy: {
-        ingredients: "पुराना गुड़ 500 ग्राम, सोंठ (सूखा अदरक) 50 ग्राम, अजवाइन 50 ग्राम, मेथी दाना 50 ग्राम, हल्दी 50 ग्राम, तिल का तेल 100 ml।",
-        preparation: "2 लीटर पानी में गुड़, अजवाइन, मेथी और सोंठ को अच्छी तरह उबालकर काढ़ा बनाएं। गुनगुना होने पर तिल का तेल व हल्दी मिलाकर ब्याने के 2 घंटे बाद पिलाएं।",
-        precautions: "हाथ से कभी भी जबरदस्ती जेर न खींचें! इससे गर्भाशय छिलने और आजीवन बांझपन का खतरा रहता है।"
-      },
-      doctorRedAlert: "ब्याने के 12 घंटे बाद भी जेर न गिरे या पशु को 103°F से अधिक बुखार हो, तो तुरंत पशु चिकित्सक को बुलाएं।"
-    },
-    {
-      id: "DIS_FARMER_03",
-      nameHi: "फूल निकलना / पाछा (योनि भ्रंश)",
-      nameEn: "Vaginal & Uterine Prolapse",
-      organ: "बच्चेदानी व प्रजनन",
-      causes: "एस्ट्रोजन हार्मोन का अधिक होना, शरीर में कैल्शियम व फास्फोरस की भारी कमी, बैठते समय पीछे की ओर ढलान वाला फर्श, कब्ज व जोर लगाना।",
-      symptoms: "बैठने पर योनि मार्ग से लाल गेंद जैसा मांसल अंग बाहर आना, खड़े होने पर अंदर चला जाना। गंभीर स्थिति में खड़े रहने पर भी बाहर लटके रहना।",
-      stages: "1st Degree: केवल बैठने पर थोड़ा सा फूल दिखना।\n2nd Degree: खड़े होने पर भी बाहर रहना।\n3rd Degree: पूर्ण गर्भाशय का बाहर आना (Uterine Inversion) - इमरजेंसी।",
-      desiRemedy: {
-        ingredients: "बबूल (कीकर) की गोंद 100 ग्राम, देसी घी 100 ग्राम, मिश्री 100 ग्राम, ताजा फिटकरी 10 ग्राम।",
-        preparation: "गोंद को घी में भून लें। इसमें मिश्री मिलाकर 7 दिन तक सुबह दें। बाहर निकले भाग को 1% हल्के गुनगुने फिटकरी पानी या पोटेशियम परमैंगनेट (लाल दवा) से धोकर साफ करें।",
-        precautions: "पशु का पिछला हिस्सा 4-6 इंच ऊंचा रखें। गोबर साफ रखें ताकि बाहर निकले भाग पर गंदगी न लगे।"
-      },
-      doctorRedAlert: "यदि फूल पर चोट लगकर खून बहने लगे या पेशाब बंद हो जाए, तो तुरंत डॉक्टर से ट्रस (Rope Truss) बंधवाएं या Buhner टांके लगवाएं।"
-    },
+  // =========================================================================
+  // 1. STATE & CONSTANTS (STRICT FARMER ROLE ISOLATION)
+  // =========================================================================
+  let currentOrganFilter = 'सभी';
+  let diseaseSearchKeyword = '';
+  let activeFarmerTab = 'diseases'; // 'diseases' | 'bulls' | 'ledger' | 'schemes' | 'doctorSos'
 
-    // ------------------------------------------------------------------------
-    // B. अयन व थन (Udder & Teats)
-    // ------------------------------------------------------------------------
-    {
-      id: "DIS_FARMER_04",
-      nameHi: "थनैला रोग (एक्यूट मैस्टाइटिस)",
-      nameEn: "Acute Bovine Mastitis",
-      organ: "अयन व थन",
-      causes: "अडर में स्ट्रेप्टोकोकस, स्टेफिलोकोकस या ई-कोलाई बैक्टीरिया का संक्रमण, गंदे फर्श पर बैठना, गलत मिल्किंग तकनीक।",
-      symptoms: "अडर (लेवटी) में कठोर सूजन, थन छूने पर अत्यधिक गर्म व दर्द, दूध में पीले छिछड़े (Flakes), पानी जैसा दूध या खून आना।",
-      stages: "1. सब-क्लिनिकल: दूध में छिपा हुआ जीवाणु, केवल स्ट्रिप कप टेस्ट में बदलाव।\n2. एक्यूट: थन में भारी सूजन व दर्द।\n3. क्रोनिक (फाइब्रोसिस): थन का पत्थर जैसा कठोर होना और दूध स्थायी बंद।",
-      desiRemedy: {
-        ingredients: "ताजा घृतकुमारी (एलोवेरा) 250 ग्राम, हल्दी चूर्ण 50 ग्राम, चूना (कैल्शियम हाइड्रोक्साइड) 15 ग्राम।",
-        preparation: "एलोवेरा, हल्दी और चूने को सिलबट्टे या मिक्सी में पीसकर लाल-नारंगी लेप बनाएं। थन का पूरा खराब दूध निकालकर लेप को पूरे अडर पर दिन में 3-4 बार लगाएं।",
-        precautions: "दूध निकालने के बाद 30 मिनट तक पशु को बैठने न दें ताकि थन का छेद (Teat Sphincter) प्राकृतिक रूप से बंद हो सके।"
-      },
-      doctorRedAlert: "दूध से बदबूदार लाल खून आने लगे, पशु चारा बंद कर दे या बुखार 105°F पहुंचे, तो तुरंत एंटीबायोटिक व सूजनरोधी इंजेक्शन हेतु डॉक्टर बुलाएं।"
-    },
-    {
-      id: "DIS_FARMER_05",
-      nameHi: "ब्याने के बाद लेवटी की सूजन (अडर एडिमा)",
-      nameEn: "Physiological Udder Edema",
-      organ: "अयन व थन",
-      causes: "ब्याने के आसपास अडर में रक्त परिसंचरण में रुकावट, अत्यधिक प्रोटीन व नमक युक्त आहार, पहली ब्यांत की बछड़ियों में अधिक।",
-      symptoms: "लेवटी पर दोनों तरफ पिलपिली सूजन, अंगुली दबाने पर गड्ढा पड़ना (Pitting Edema), दूध की धार बिल्कुल सामान्य होना (छिछड़े रहित)।",
-      stages: "• ब्याने से 7 दिन पूर्व से ब्याने के 10 दिन बाद तक का प्राकृतिक प्रभाव।",
-      desiRemedy: {
-        ingredients: "सेंधा नमक 50 ग्राम, गुनगुना पानी 5 लीटर, सरसों का तेल 50 ml, कपूर 10 ग्राम।",
-        preparation: "गुनगुने नमक के पानी से लेवटी की धीरे-धीरे सिकाई करें। बाद में सरसों के तेल में कपूर मिलाकर हल्के हाथों से ऊपर की ओर मालिश करें।",
-        precautions: "यह संक्रामक थनैला नहीं है, अतः एंटीबायोटिक न लगाएं। पशु को हल्का व्यायाम (टहलाना) कराएं।"
-      },
-      doctorRedAlert: "यदि सूजन जांघों तक फैल जाए और पशु लंगड़ा कर चलने लगे तो डाईयूरेटिक (पेशाब बढ़ाने वाली) दवा हेतु डॉक्टर से सलाह लें।"
-    },
+  const ORGAN_CATEGORIES = [
+    'सभी',
+    'बच्चादानी व प्रजनन',
+    'अयन व थन',
+    'पेट व पाचन',
+    'खुर व पैर',
+    'पोषण व संक्रामक'
+  ];
 
-    // ------------------------------------------------------------------------
-    // C. पेट व पाचन (Digestive System)
-    // ------------------------------------------------------------------------
+  // Verified Central & Haryana Government Dairy Schemes
+  const GOVT_SCHEMES_DB = [
     {
-      id: "DIS_FARMER_06",
-      nameHi: "तीव्र अफारा (पेट में गैस भरना)",
-      nameEn: "Frothy & Free-Gas Bloat (Tympany)",
-      organ: "पेट व पाचन",
-      causes: "अत्यधिक गीला हरा बरसीम या दलहनी चारा खाना, सड़ा-गला दाना, प्लास्टिक या बाहरी वस्तु द्वारा भोजन नली (Esophagus) का अवरोध।",
-      symptoms: "बाईं कोख (Left Flank) का ढोलक की तरह फूल जाना, थपथपाने पर ड्रम जैसी आवाज आना, मुंह खोलकर जीभ बाहर निकाल सांस लेना, बेचैनी।",
-      stages: "• स्टेज 1: बाईं कोख में हल्का फुलाव, जुगाली बंद।\n• स्टेज 2: पेट का अत्यधिक तनाव, सांस फूलना।\n• स्टेज 3: दम घुटना, जमीन पर गिरना (अति आपातकालीन)।",
-      desiRemedy: {
-        ingredients: "मीठा सरसों का तेल 250-500 ml, तारपीन का तेल (Turpentine Oil) 20-30 ml, हींग 15 ग्राम, अजवाइन 50 ग्राम, काला नमक 50 ग्राम।",
-        preparation: "सरसों के तेल में तारपीन का तेल, भुनी हुई हींग और पिसी अजवाइन-काला नमक मिलाकर नाल द्वारा सावधानीपूर्वक धीरे-धीरे पिलाएं।",
-        precautions: "दवा पिलाते समय पशु की जीभ कभी न पकड़ें अन्यथा दवा फेफड़ों में जाकर ड्रेंचिंग निमोनिया से मृत्यु हो सकती है!"
-      },
-      doctorRedAlert: "यदि पशु सांस न ले पाए और आंखें फटी रह जाएं, तो बाईं कोख में ट्रोकार-कैनुला (Trocar & Cannula) लगाकर तुरंत गैस निकालने हेतु डॉक्टर को बुलाएं।"
+      id: "SCH_01",
+      title: "पशु किसान क्रेडिट कार्ड योजना (Pashu KCC)",
+      authority: "केंद्र एवं हरियाणा राज्य सरकार",
+      target: "गाय, भैंस, भेड़, बकरी व मुर्गी पालक",
+      benefits: "प्रति गाय ₹40,783 एवं प्रति भैंस ₹60,249 तक का कार्यशील पूंजी ऋण। ₹1.60 लाख तक शून्य बंधक (No Collateral) ऋण मात्र 4% रियायती ब्याज दर पर।",
+      eligibility: "पशु का स्वास्थ्य प्रमाण पत्र, आधार कार्ड, बैंक पासबुक व जमीन/पशु प्रमाण।",
+      howToApply: "अपने नजदीकी सरकारी बैंक शाखा अथवा कॉमन सर्विस सेंटर (CSC) पर आवेदन करें।"
     },
     {
-      id: "DIS_FARMER_07",
-      nameHi: "अपच, अरुचि व भूख बंद (हाजमा खराब)",
-      nameEn: "Simple Indigestion & Anorexia",
-      organ: "पेट व पाचन",
-      causes: "चारे में अचानक बदलाव, फफूंद लगा दाना, अधिक मात्रा में सूखा भूसा खाना, पानी कम पीना, रूमेन माइक्रोफ्लोरा की निष्क्रियता।",
-      symptoms: "पशु का जुगाली बंद करना, सूखा कड़ा या दुर्गंधयुक्त गोबर, पेट में गुड़गुड़ाहट की कमी, सुस्ती।",
-      stages: "• 24-48 घंटे: रूमेन की गतिशीलता धीमी पड़ना।",
-      desiRemedy: {
-        ingredients: "लहसुन 50 ग्राम, अदरक 50 ग्राम, जीरा 50 ग्राम, काली मिर्च 20 ग्राम, गुड़ 200 ग्राम, छाछ (खट्टी लस्सी) 1 लीटर।",
-        preparation: "मसालों को पीसकर गुड़ में मिला लें। इसकी दो पिन्नियां बनाकर सुबह-शाम खिलाएं और साथ में खट्टी छाछ पिलाएं।",
-        precautions: "2 दिन तक भारी खल या दलिया बंद रखें, केवल हल्का हरा चारा व सुपाच्य घास दें।"
-      },
-      doctorRedAlert: "यदि 3 दिन तक गोबर बिल्कुल बंद हो जाए और पेट में दर्द के लक्षण दिखें तो आंतों में रुकावट (Intestinal Obstruction) की जांच करवाएं।"
-    },
-
-    // ------------------------------------------------------------------------
-    // D. खुर व पैर (Hooves & Limbs)
-    // ------------------------------------------------------------------------
-    {
-      id: "DIS_FARMER_08",
-      nameHi: "खुरपका-मुंहपका (FMD)",
-      nameEn: "Foot and Mouth Disease (FMD)",
-      organ: "खुर व पैर",
-      causes: "एपथोवायरस (Apthovirus) जनित अति संक्रामक विषाणु, दूषित हवा, पानी, व रोगी पशु के संपर्क से फैलाव।",
-      symptoms: "105-106°F तेज बुखार, मुंह से तार की तरह लार टपकना, जीभ, मसूड़ों व खुरों के बीच छाले (Blisters), लंगड़ाकर चलना, दूध में भारी गिरावट।",
-      stages: "• दिन 1-2: तेज बुखार व लार गिरना।\n• दिन 3-5: छालों का फटना व खुरों में कीड़े पड़ने का जोखिम।\n• दिन 6-10: रिकवरी चरण।",
-      desiRemedy: {
-        ingredients: "मुंह हेतु: सुहागा (बोरेक्स) 20 ग्राम भुना हुआ, शहद 50 ग्राम। खुरों हेतु: फिटकरी 1% घोल, नीम का तेल 100 ml, कपूर 10 ग्राम।",
-        preparation: "मुंह के छालों पर भुना सुहागा शहद में मिलाकर लगाएं। खुरों को फिटकरी के पानी से धोकर नीम तेल व कपूर का मिश्रण लगाएं ताकि कीड़े न पड़ें।",
-        precautions: "रोगी पशु को स्वस्थ पशुओं से अलग रखें। दूध को अच्छी तरह उबालकर ही उपयोग करें। नवजात बछड़ों को मां का दूध सीधे न पीने दें।"
-      },
-      doctorRedAlert: "यदि खुरों में मैगॉट्स (कीड़े) पड़ जाएं या बछड़ों में दिल की गति अनियंत्रित हो जाए तो तत्काल आपातकालीन उपचार लें।"
+      id: "SCH_02",
+      title: "हरियाणा मुर्राह दुग्ध प्रोत्साहन योजना (Cash Reward)",
+      authority: "पशुपालन एवं डेयरी विभाग, हरियाणा सरकार",
+      target: "उच्च दुग्ध उत्पादक मुर्राह भैंस पालक",
+      benefits: "19 से 25+ किलोग्राम दैनिक दूध देने वाली मुर्राह भैंसों पर ₹15,000 से लेकर ₹30,000 तक का एकमुश्त नकद पुरस्कार व प्रमाण-पत्र।",
+      eligibility: "हरियाणा का मूल निवासी, शुद्ध मुर्राह भैंस, विभागीय टीम द्वारा तीन समय की दुग्ध तुलाई में पात्रता।",
+      howToApply: "नजदीकी राजकीय पशु चिकित्सालय के डॉक्टर (GVD) से संपर्क कर दुग्ध मापन हेतु पंजीकरण कराएं।"
     },
     {
-      id: "DIS_FARMER_09",
-      nameHi: "खुर सड़न व लंगड़ापन (फुट रॉट)",
-      nameEn: "Bovine Foot Rot (Interdigital Necrosis)",
-      organ: "खुर व पैर",
-      causes: "खुरों के बीच नमी, गोबर-कीचड़ में लगातार खड़े रहना, नुकीले पत्थरों से खुरों में घाव होकर फ्यूसोबैक्टीरियम का संक्रमण।",
-      symptoms: "पैर जमीन पर न टेकना, खुरों के बीच तेज बदबूदार मवाद, खुर के चारों ओर सूजन, लंगड़ापन।",
-      stages: "• प्रारंभिक: खुर की त्वचा लाल व दर्दनाक।\n• द्वितीय: त्वचा फटकर बदबूदार घाव बनना।",
-      desiRemedy: {
-        ingredients: "तूतिया (कॉपर सल्फेट / नीला थोथा) 50 ग्राम, चूना 50 ग्राम, नारियल या सरसों का तेल 150 ml।",
-        preparation: "नीले थोथे और चूने को बारीक पीसकर तेल में मिलाकर मलहम बनाएं। खुर को पोटाश या फिटकरी पानी से धोकर सुखाएं और यह मलहम लगाकर साफ पट्टी बांधें।",
-        precautions: "पशु को सूखे और पक्के फर्श पर बांधें। तूतिया जहरीला होता है, इसे पशु को चाटने न दें!"
-      },
-      doctorRedAlert: "यदि सूजन घुटने तक चढ़ जाए और पैर से खून बहने लगे तो डॉक्टर से एंटीबायोटिक व खुर की सर्जरी कराएं।"
-    },
-
-    // ------------------------------------------------------------------------
-    // E. उपापचयी व संक्रामक (Metabolic & Infectious)
-    // ------------------------------------------------------------------------
-    {
-      id: "DIS_FARMER_10",
-      nameHi: "मिल्क फीवर (सूतक बुखार / कैल्शियम की कमी)",
-      nameEn: "Hypocalcemia (Milk Fever)",
-      organ: "उपापचयी व संक्रामक",
-      causes: "ब्याने के तुरंत बाद दूध में भारी मात्रा में कैल्शियम निकल जाना, रक्त में कैल्शियम स्तर 8 mg/dl से घटकर 4-5 mg/dl होना।",
-      symptoms: "ब्याने के 24-48 घंटे में पशु जमीन पर बैठ जाता है, गर्दन मोड़कर कोख की तरफ रखना (S-Shape Posture), कान व सींग ठंडे पड़ना, तापमान 98-99°F (सब-नॉर्मल)।",
-      stages: "• स्टेज 1: लड़खड़ाहट व मांसपेशियों में कंपन।\n• स्टेज 2: जमीन पर बैठना, गर्दन मोड़ना (Sterna Recumbency)।\n• स्टेज 3: एक तरफ पसर जाना व बेहोशी (Coma)।",
-      desiRemedy: {
-        ingredients: "आयनिक कैल्शियम ओरल जेल (Oral Calcium Gel) 300 ग्राम वायल, मेथी दाना 100 ग्राम, पुराना गुड़ 250 ग्राम।",
-        preparation: "यदि पशु होश में है और निगल सकता है, तो तुरंत ओरल कैल्शियम जेल धीरे-धीरे पिलाएं। ब्याने से 15 दिन पूर्व मेथी व गुड़ दें।",
-        precautions: "यदि पशु अचेत है या गर्दन मोड़े लेटा है, तो मुंह से कुछ भी जबरदस्ती न पिलाएं, यह सांस की नली में जा सकता है!"
-      },
-      doctorRedAlert: "यह एक अति-आपातकालीन स्थिति है! बिना 1 मिनट गंवाए तुरंत वेटरनरी डॉक्टर को बुलाकर नस में कैल्शियम बोरोर्ग्लुकोनेट (Mifex 450ml IV) चढ़वाएं।"
+      id: "SCH_03",
+      title: "राष्ट्रीय गोकुल मिशन (Rashtriya Gokul Mission)",
+      authority: "पशुपालन और डेयरी विभाग, भारत सरकार",
+      target: "देशी गोवंश एवं महिष संवर्धन",
+      benefits: "सॉर्टेड सेक्सड सीमन (Sexed Semen) पर भारी सरकारी सब्सिडी (मात्र ₹100-₹200 प्रति स्ट्रॉ), कृत्रिम गर्भाधान तकनीशियनों द्वारा नि:शुल्क/सस्ती डोरस्टेप ए.आई.।",
+      eligibility: "समस्त पशुपालक जो देशी नस्लों (साहीवाल, गिर, थारपारकर, मुर्राह) का पालन करते हैं।",
+      howToApply: "सरकारी ए.आई. वर्कर अथवा पशु अस्पताल के माध्यम से सेक्सड सीमन का अनुरोध करें।"
     },
     {
-      id: "DIS_FARMER_11",
-      nameHi: "कीटोसिस (एसिटोनीमिया)",
-      nameEn: "Bovine Ketosis (Negative Energy Balance)",
-      organ: "उपापचयी व संक्रामक",
-      causes: "ब्याने के 2 से 8 सप्ताह बाद ऊर्जा की भारी कमी, शरीर की चर्बी का तेजी से टूटना, रक्त में कीटोन बॉडीज का बढ़ना।",
-      symptoms: "पशु का दाना व खल खाना बिल्कुल बंद कर देना, केवल सूखा भूसा खाना, दूध में अप्रत्याशित भारी गिरावट, सांस व दूध से मीठी फल जैसी गंध (Sweet Acetone Breath)।",
-      stages: "• सब-क्लिनिकल: दूध में वसा/प्रोटीन अनुपात बिगड़ना।\n• क्लीनिकल: तीव्र वजन घटना व नर्वस लक्षण (दीवार चाटना)।",
-      desiRemedy: {
-        ingredients: "प्रोपलीन ग्लाइकोल (Propylene Glycol) 200 ml अथवा तरल ग्लूकोज / शहद 250 ग्राम, मीठा सोडा 50 ग्राम।",
-        preparation: "प्रोपलीन ग्लाइकोल या शुद्ध शहद को पानी में घोलकर 4-5 दिन तक सुबह-शाम पिलाएं। ऊर्जा स्तर तुरंत सुधरता है।",
-        precautions: "ब्याने से पूर्व पशु को न तो अत्यधिक मोटा होने दें और न ही अत्यधिक कमजोर रखें।"
-      },
-      doctorRedAlert: "यदि पशु अजीब हरकतें करे, पागलों की तरह दौड़े या दीवार से सिर टकराए (Nervous Ketosis), तो तुरंत 25% डेक्सट्रोज ड्रिप हेतु डॉक्टर बुलाएं।"
+      id: "SCH_04",
+      title: "राष्ट्रीय पशुधन मिशन (NLM - National Livestock Mission)",
+      authority: "केंद्र सरकार (DAHD)",
+      target: "बकरी पालन, भेड़ पालन, कुक्कुट व साइलेज (हरा चारा) बैंक",
+      benefits: "50% तक पूंजीगत सीधी सब्सिडी (बकरी/भेड़ फार्मिंग यूनिट पर ₹50 लाख तक तथा साइलेज मेकिंग यूनिट पर 50 लाख पर 25 लाख अनुदान)।",
+      eligibility: "किसान, उद्यमी, स्वयं सहायता समूह (SHG) व FPO। विस्तृत प्रोजेक्ट रिपोर्ट (DPR) अनिवार्य।",
+      howToApply: "भारत सरकार के nlm.udyamimitra.in पोर्टल पर ऑनलाइन आवेदन जमा करें।"
     },
     {
-      id: "DIS_FARMER_12",
-      nameHi: "लाल पेशाब (फास्फोरस की कमी / PPH)",
-      nameEn: "Post-Parturient Hemoglobinuria (PPH)",
-      organ: "उपापचयी व संक्रामक",
-      causes: "ब्याने के 1-4 सप्ताह बाद रक्त में अकार्बनिक फास्फोरस की अत्यधिक कमी, क्रूसीफेरस चारा (सरसों/राई/गोभी) अधिक खिलाना।",
-      symptoms: "पेशाब का रंग कॉफी या गहरे लाल रंग का होना, आंखें व मसूड़े पीले पड़ना (तीव्र एनीमिया), दूध सूख जाना, कमजोरी।",
-      stages: "• दिन 1: हल्का भूरा-लाल पेशाब।\n• दिन 2-3: गहरा कॉफी रंग, खून में आरबीसी का टूटना।",
-      desiRemedy: {
-        ingredients: "सोडियम एसिड फास्फेट पाउडर 100 ग्राम अथवा डी-कैल्शियम फास्फेट (DCP) 100 ग्राम, आंवला चूर्ण 100 ग्राम, गुड़ 200 ग्राम।",
-        preparation: "सोडियम एसिड फास्फेट को आंवला और गुड़ के साथ मिलाकर दिन में दो बार 5 दिन तक दें।",
-        precautions: "सरसों, गोभी के पत्ते व शलजम तुरंत बंद करें। यह बबेसिओसिस (चिंचड़ी बुखार) से अलग है क्योंकि इसमें 106°F बुखार नहीं होता।"
-      },
-      doctorRedAlert: "यदि पेशाब का रंग गहरा काला हो जाए और पशु खड़ा न हो पाए, तो तुरंत डॉक्टर से उच्च क्षमता का फास्फोरस इंजेक्शन (Tonophosphan 30ml IV) लगवाएं।"
+      id: "SCH_05",
+      title: "पं. दीन दयाल उपाध्याय पशुधन सुरक्षा बीमा योजना",
+      authority: "हरियाणा पशुधन विकास बोर्ड (HLDB)",
+      target: "समस्त दुधारू पशुधन",
+      benefits: "मात्र ₹100 प्रीमियम (अनुसूचित जाति हेतु 100% मुफ़्त) पर बड़े पशु का ₹60,000 से ₹80,000 तक का व्यापक मृत्यु बीमा कवरेज।",
+      eligibility: "पशु का स्वस्थ होना व कान में 12-अंकीय RFID टैग लगा होना अनिवार्य।",
+      howToApply: "ग्राम पशु चिकित्सक या HLDB अधिकृत बीमा एजेंट द्वारा स्वास्थ्य प्रमाण पत्र बनवाकर।"
     }
   ];
 
-  // ==========================================================================
-  // 2. DETAILED REPEAT BREEDER DIRECTORY MODULE & CONTROLLER
-  // ==========================================================================
-  window.renderRepeatBreederGuide = function (targetContainerId) {
-    var container = document.getElementById(targetContainerId || "repeatBreederSection");
-    if (!container) {
-      container = document.getElementById("viewBreeding");
-    }
-    if (!container) return;
+  // =========================================================================
+  // 2. MASTER INITIALIZATION (window.initFarmerDashboard)
+  // =========================================================================
+  window.initFarmerDashboard = function () {
+    // 1. Strict Isolation: Hide Doctor Workspace & View Containers
+    const doctorWorkspace = document.getElementById('doctor-workspace');
+    if (doctorWorkspace) doctorWorkspace.style.display = 'none';
 
-    // Check if repeatBreederList exists inside viewBreeding to fill directly
-    var listEl = document.getElementById("repeatBreederList");
-    var heatContainer = document.getElementById("heatSignsContainer");
-    var dischargeContainer = document.getElementById("dischargeContainer");
+    // 2. Ensure Farmer Workspace is visible
+    const farmerWorkspace = document.getElementById('farmer-workspace');
+    if (!farmerWorkspace) return;
+    farmerWorkspace.style.display = 'block';
 
-    if (listEl) {
-      listEl.innerHTML = `
-        <li>
-          <strong class="text-amber-900">1. गर्भाशय की अदृश्य सूजन (Subclinical Metritis):</strong>
-          अक्सर डिस्चार्ज साफ दिखता है किंतु अंदर सूक्ष्म जीवाणु होते हैं। 
-          <em>समाधान:</em> देसी हल्दी 50g व घी 100g लगातार 5 दिन दें अथवा डॉक्टर से Lugol's Iodine या Cephapirin से गर्भाशय धुलवाएं।
-        </li>
-        <li>
-          <strong class="text-amber-900">2. अंडा फूटने में देरी (Delayed Ovulation):</strong>
-          टीका लगाने के समय अंडाशय से अंडा बाहर नहीं निकलता और सीमन निष्प्रभावी हो जाता है। 
-          <em>समाधान:</em> ए.आई. (A.I.) करवाते समय Buserelin (Receptal 2.5 ml IM) का टीका लगवाएं।
-        </li>
-        <li>
-          <strong class="text-amber-900">3. 10-दिवसीय अंकुरित गेहूं व सौंफ थेरेपी:</strong>
-          प्रतिदिन सुबह 250 ग्राम अंकुरित गेहूं + 50 ग्राम बारीक पिसी सौंफ + 100 ग्राम गुड़ 10 दिन खिलाएं। यह नेचुरल विटामिन-ई और फाइटोएस्ट्रोजन का सर्वश्रेष्ठ स्रोत है।
-        </li>
-        <li>
-          <strong class="text-amber-900">4. चिलेटेड मिनरल मिक्सचर व बायोटीन:</strong>
-          नियमित रूप से 50 ग्राम अच्छी गुणवत्ता का मिनरल मिक्सचर (जिसमें Zinc, Copper, Selenium व Cobalt हो) दैनिक दाने में 30 दिन तक अनिवार्य रूप से दें।
-        </li>
-      `;
+    // 3. Clear doctor-only UI artifacts
+    const doctorPrescriptionPad = document.getElementById('viewRx');
+    if (doctorPrescriptionPad) doctorPrescriptionPad.classList.add('hidden');
+
+    // 4. Update Role Badge in top header
+    const roleBadge = document.getElementById('currentUserRoleBadge');
+    if (roleBadge) {
+      roleBadge.textContent = '🌾 Smart Farmer (स्मार्ट पशुपालक)';
+      roleBadge.className = 'text-[10px] sm:text-[11px] font-bold text-emerald-700';
     }
 
-    if (heatContainer) {
-      heatContainer.innerHTML = `
-        <div class="bg-blue-50/70 p-2.5 rounded-2xl border border-blue-100 space-y-1">
-          <strong class="text-blue-900 block font-bold">⏱️ 12-घंटे का स्वर्णिम नियम (AM-PM Rule):</strong>
-          <p class="text-[11px] text-slate-700 leading-relaxed">
-            • यदि पशु <strong>सुबह</strong> रंभाना शुरू करे या पहली बार डोके करे, तो <strong>उसी दिन शाम</strong> को सीमन रखवाएं।<br>
-            • यदि पशु <strong>शाम/रात</strong> को हीट में आए, तो <strong>अगली सुबह</strong> सीमन रखवाएं।
-          </p>
-        </div>
-        <div class="bg-emerald-50/70 p-2.5 rounded-2xl border border-emerald-100 space-y-1">
-          <strong class="text-emerald-900 block font-bold">🐂 सीमन रखने का सटीक चरम समय:</strong>
-          <p class="text-[11px] text-slate-700 leading-relaxed">
-            हीट शुरू होने के 12 से 18 घंटे के बीच जब डिस्चार्ज लंबा, लचीला व अटूट हो, तब गर्भाधान की संभावना 85% से अधिक होती है।
-          </p>
-        </div>
-      `;
-    }
+    // 5. Hide Doctor Bottom Nav Buttons
+    const navRx = document.getElementById('navRx');
+    const navRecords = document.getElementById('navRecords');
+    const navInventory = document.getElementById('navInventory');
+    const navAI = document.getElementById('navAI');
+    if (navRx) navRx.classList.add('hidden');
+    if (navRecords) navRecords.classList.add('hidden');
+    if (navInventory) navInventory.classList.add('hidden');
+    if (navAI) navAI.classList.add('hidden');
 
-    if (dischargeContainer) {
-      dischargeContainer.innerHTML = `
-        <div class="space-y-1.5">
-          <div class="p-2 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-950">
-            <span class="font-bold block">1. शीशे जैसा साफ, पारदर्शी अटूट तार:</span>
-            <span class="text-[11px]">✅ गर्भाशय 100% स्वस्थ है। तुरंत अच्छी नस्ल का प्रमाणित सीमन रखवाएं।</span>
-          </div>
-          <div class="p-2 rounded-xl bg-amber-50 border border-amber-200 text-amber-950">
-            <span class="font-bold block">2. मटमैला, पीला या दही जैसा गाढ़ा तार:</span>
-            <span class="text-[11px]">⚠️ गर्भाशय में संक्रमण (Metritis) है। सीमन न रखवाएं, पैसे बर्बाद होंगे। पहले डॉक्टर से इलाज कराएं।</span>
-          </div>
-          <div class="p-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-800">
-            <span class="font-bold block">3. खून की हल्की लकीर (Metestrus Bleeding):</span>
-            <span class="text-[11px]">ℹ️ हीट समाप्त हो चुकी है। इस तारीख को डायरी में नोट करें, ठीक 19-21 दिन बाद अगली हीट आएगी।</span>
-          </div>
-        </div>
-      `;
+    // 6. Build and inject Farmer Hub
+    buildFarmerHubContainer(farmerWorkspace);
+
+    // 7. Render default Organ Disease cards
+    window.renderFarmerDiseasesByOrgan('सभी');
+
+    // 8. Auto-render Ledger & Schemes data
+    renderDailyLedgerUI();
+    renderGovtSchemesUI();
+
+    // 9. Attach Bull Directory if script loaded
+    if (typeof window.initBullDirectory === 'function') {
+      window.initBullDirectory('farmerBullMountSection');
     }
   };
 
-  // ==========================================================================
-  // 3. ORGAN-BASED & DIRECT NAME SEARCH CONTROLLER
-  // ==========================================================================
-  var currentOrganFilter = "ALL";
-  var currentSearchQuery = "";
-
-  window.renderFarmerDiseases = function (organFilter, searchQuery, containerId) {
-    var container = document.getElementById(containerId || "diseaseSearchResults");
+  // =========================================================================
+  // 3. BUILD COMPLETE 5-TOOL FARMER HUB CONTAINER
+  // =========================================================================
+  function buildFarmerHubContainer(parentEl) {
+    let container = document.getElementById('farmerHubUnifiedRoot');
     if (!container) {
-      container = document.getElementById("viewHelpdesk");
+      container = document.createElement('div');
+      container.id = 'farmerHubUnifiedRoot';
+      container.className = 'w-full space-y-4';
+      parentEl.prepend(container);
     }
-    if (!container) return;
 
-    if (organFilter !== undefined) currentOrganFilter = organFilter;
-    if (searchQuery !== undefined) currentSearchQuery = searchQuery;
-
-    // Filter Logic
-    var list = window.VETCARE_FARMER_DISEASES.filter(function (d) {
-      if (currentOrganFilter !== "ALL" && d.organ !== currentOrganFilter) {
-        return false;
-      }
-      if (currentSearchQuery.trim() !== "") {
-        var q = currentSearchQuery.toLowerCase().trim();
-        var matchHi = d.nameHi.toLowerCase().indexOf(q) !== -1;
-        var matchEn = d.nameEn.toLowerCase().indexOf(q) !== -1;
-        var matchSymptoms = d.symptoms.toLowerCase().indexOf(q) !== -1;
-        var matchCauses = d.causes.toLowerCase().indexOf(q) !== -1;
-        var matchOrgan = d.organ.toLowerCase().indexOf(q) !== -1;
-        if (!matchHi && !matchEn && !matchSymptoms && !matchCauses && !matchOrgan) {
-          return false;
-        }
-      }
-      return true;
-    });
-
-    var organTabs = [
-      { id: "ALL", label: "सभी रोग (" + window.VETCARE_FARMER_DISEASES.length + ")" },
-      { id: "बच्चेदानी व प्रजनन", label: "बच्चेदानी व प्रजनन" },
-      { id: "अयन व थन", label: "अयन व थन" },
-      { id: "पेट व पाचन", label: "पेट व पाचन" },
-      { id: "खुर व पैर", label: "खुर व पैर" },
-      { id: "उपापचयी व संक्रामक", label: "उपापचयी व संक्रामक" }
-    ];
-
-    var html = `
-      <div class="space-y-4 text-xs">
-        
-        <!-- TOP TOOLBAR: SEARCH & ORGAN TABS -->
-        <div class="bg-white border border-slate-200 rounded-3xl p-4 shadow-xs space-y-3">
-          <div class="flex flex-col sm:flex-row gap-2">
-            <!-- Bilingual Search Input -->
-            <div class="relative flex-1">
-              <span class="absolute left-3.5 top-3 text-slate-400 text-xs"><i class="fa-solid fa-magnifying-glass"></i></span>
-              <input
-                id="farmerDiseaseSearchInput"
-                type="text"
-                value="${escapeHtml(currentSearchQuery)}"
-                placeholder="रोग का नाम, अंग या लक्षण खोजें (उदा. थनैला, रिपीट, अफारा, Mastitis)..."
-                oninput="window.handleFarmerDiseaseTyping(this.value)"
-                class="w-full bg-slate-50 border border-slate-200 rounded-2xl pl-9 pr-8 py-2.5 text-xs outline-none focus:border-emerald-600 font-medium text-slate-800"
-              />
-              ${currentSearchQuery ? `
-                <button onclick="window.clearFarmerDiseaseSearch()" class="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 text-xs">✕</button>
-              ` : ''}
-            </div>
-          </div>
-
-          <!-- Organ Tabs Overflow Scroll -->
-          <div class="flex gap-1.5 overflow-x-auto no-scrollbar pb-1 text-[11px] font-bold">
-            ${organTabs.map(function (tab) {
-              var isActive = currentOrganFilter === tab.id;
-              return `
-                <button
-                  type="button"
-                  onclick="window.setFarmerOrganFilter('${escapeHtml(tab.id)}')"
-                  class="px-3 py-1.5 rounded-xl transition whitespace-nowrap shrink-0 ${isActive ? 'bg-emerald-600 text-white shadow-xs' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'}"
-                >
-                  ${escapeHtml(tab.label)}
-                </button>
-              `;
-            }).join('')}
-          </div>
-
-          <div class="flex items-center justify-between text-[11px] text-slate-500 pt-1 border-t border-slate-100">
-            <span>उपलब्ध देसी उपचार: <strong class="text-slate-800">${list.length}</strong> रोग</span>
-            <button onclick="window.resetFarmerDiseaseFilters()" class="text-emerald-700 hover:underline font-bold">
-              🔄 रीसेट करें
-            </button>
-          </div>
-        </div>
-
-        <!-- DISEASE CARDS LIST -->
-        ${list.length === 0 ? `
-          <div class="bg-white border-2 border-dashed border-slate-200 rounded-3xl p-8 text-center space-y-2">
-            <span class="text-4xl">🌿</span>
-            <h3 class="text-sm font-bold text-slate-800">कोई संबंधित देसी उपचार नहीं मिला!</h3>
-            <p class="text-xs text-slate-500">कृपया अपना कीवर्ड बदलें अथवा 'सभी रोग' टैब पर क्लिक करें।</p>
-          </div>
-        ` : `
-          <div class="space-y-4">
-            ${list.map(function (disease) { return renderSingleFarmerDiseaseCard(disease); }).join('')}
-          </div>
-        `}
-
-      </div>
-    `;
-
-    container.innerHTML = html;
-  };
-
-  // Helper: Render Single Disease Card
-  function renderSingleFarmerDiseaseCard(d) {
-    return `
-      <div class="bg-white border border-slate-200 hover:border-emerald-500 rounded-3xl p-4 sm:p-5 shadow-xs transition space-y-3.5 relative">
-        
-        <!-- CARD HEADER: ORGAN & TITLES -->
-        <div class="space-y-1.5">
-          <div class="flex items-center justify-between">
-            <span class="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
-              📍 प्रभावित अंग: ${escapeHtml(d.organ)}
-            </span>
-            <span class="text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200 px-2 py-0.5 rounded-lg">
-              🌿 100% देसी नुस्खा (शून्य सुई)
-            </span>
-          </div>
-
-          <div class="pt-1">
-            <h3 class="text-base font-black text-slate-900 leading-tight">
-              ${escapeHtml(d.nameHi)}
-            </h3>
-            <p class="text-xs font-mono font-medium text-slate-500">
-              ${escapeHtml(d.nameEn)}
-            </p>
-          </div>
-        </div>
-
-        <!-- CAUSES & SYMPTOMS -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
-          <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200/80 space-y-1">
-            <span class="font-bold text-slate-700 block text-[11px] uppercase tracking-wider">मुख्य कारण (Root Cause):</span>
-            <p class="text-slate-800 leading-relaxed text-[11.5px]">${escapeHtml(d.causes)}</p>
-          </div>
-          <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200/80 space-y-1">
-            <span class="font-bold text-slate-700 block text-[11px] uppercase tracking-wider">पहचान व लक्षण (Cardinal Signs):</span>
-            <p class="text-slate-800 leading-relaxed text-[11.5px]">${escapeHtml(d.symptoms)}</p>
-          </div>
-        </div>
-
-        <!-- STAGES TIMELINE -->
-        <div class="p-3 bg-blue-50/50 rounded-2xl border border-blue-100 space-y-1 text-xs">
-          <span class="font-bold text-blue-900 block text-[11px] uppercase tracking-wider">बीमारी की अवस्थाएं (Timeline):</span>
-          <p class="text-slate-700 whitespace-pre-line text-[11.5px] leading-relaxed pl-1">${escapeHtml(d.stages)}</p>
-        </div>
-
-        <!-- CERTIFIED DESI REMEDY BOX -->
-        <div class="p-4 bg-emerald-50/80 rounded-2xl border border-emerald-200 space-y-2 text-xs text-emerald-950">
-          <div class="flex items-center gap-1.5 font-bold text-emerald-900">
-            <span class="text-base">🥣</span>
-            <span class="text-xs sm:text-sm">प्रमाणित घरेलू देसी नुस्खा व तैयारी:</span>
-          </div>
-          <div class="space-y-1.5 pl-1 leading-relaxed text-[11.5px]">
-            <div><strong>सामग्री:</strong> ${escapeHtml(d.desiRemedy.ingredients)}</div>
-            <div><strong>तैयारी व खुराक:</strong> ${escapeHtml(d.desiRemedy.preparation)}</div>
-            <div class="text-emerald-800 font-medium"><strong>परहेज / सावधानी:</strong> ${escapeHtml(d.desiRemedy.precautions)}</div>
-          </div>
-        </div>
-
-        <!-- RED ALERT: WHEN TO CALL DOCTOR -->
-        <div class="p-3 bg-rose-50/80 rounded-2xl border border-rose-200 space-y-1 text-xs text-rose-950">
-          <span class="font-bold text-rose-900 flex items-center gap-1">
-            <i class="fa-solid fa-triangle-exclamation"></i> डॉक्टर को कब बुलाएं (Red Alert):
-          </span>
-          <p class="text-[11px] leading-relaxed pl-4 font-medium">${escapeHtml(d.doctorRedAlert)}</p>
-        </div>
-
-        <!-- WHATSAPP SHARE REMEDY -->
-        <div class="pt-2 border-t border-slate-100 flex justify-end">
-          <button
-            type="button"
-            onclick="window.shareFarmerRemedyWhatsApp('${escapeHtml(d.id)}')"
-            class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-1.5 px-3 rounded-xl text-[11px] transition flex items-center gap-1.5 shadow-xs"
-          >
-            <i class="fa-brands fa-whatsapp text-sm"></i>
-            <span>नुस्खा व्हाट्सएप पर शेयर करें</span>
+    container.innerHTML = `
+      <!-- TOP 5 CLEAN TOOLS SWITCHER BAR -->
+      <div class="bg-white border border-slate-200 rounded-3xl p-2.5 sm:p-3 shadow-xs">
+        <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar text-xs font-bold" id="farmerToolNavTabs">
+          <button type="button" onclick="window.switchFarmerToolTab('diseases')" id="fTabBtn_diseases" class="px-3 py-2 rounded-2xl bg-emerald-600 text-white shadow-xs shrink-0 flex items-center gap-1.5 transition">
+            <i class="fa-solid fa-stethoscope"></i> <span>1. 🩺 22 देसी रोग व नुस्खे</span>
+          </button>
+          <button type="button" onclick="window.switchFarmerToolTab('bulls')" id="fTabBtn_bulls" class="px-3 py-2 rounded-2xl bg-slate-100 text-slate-700 hover:bg-slate-200 shrink-0 flex items-center gap-1.5 transition">
+            <i class="fa-solid fa-dna"></i> <span>2. 🐂 बुल डायरेक्टरी व A.I.</span>
+          </button>
+          <button type="button" onclick="window.switchFarmerToolTab('ledger')" id="fTabBtn_ledger" class="px-3 py-2 rounded-2xl bg-slate-100 text-slate-700 hover:bg-slate-200 shrink-0 flex items-center gap-1.5 transition">
+            <i class="fa-solid fa-wallet"></i> <span>3. 🥛 दूध व चारा बहीखाता</span>
+          </button>
+          <button type="button" onclick="window.switchFarmerToolTab('schemes')" id="fTabBtn_schemes" class="px-3 py-2 rounded-2xl bg-slate-100 text-slate-700 hover:bg-slate-200 shrink-0 flex items-center gap-1.5 transition">
+            <i class="fa-solid fa-landmark"></i> <span>4. 📜 सरकारी योजनाएं</span>
+          </button>
+          <button type="button" onclick="window.switchFarmerToolTab('doctorSos')" id="fTabBtn_doctorSos" class="px-3 py-2 rounded-2xl bg-slate-100 text-slate-700 hover:bg-slate-200 shrink-0 flex items-center gap-1.5 transition">
+            <i class="fa-solid fa-truck-medical"></i> <span>5. 📍 20km डॉक्टर अनुरोध</span>
           </button>
         </div>
-
       </div>
+
+      <!-- TOOL 1: ORGAN-BASED DISEASE RENDERER SECTION -->
+      <section id="fToolSection_diseases" class="space-y-4">
+        <div class="bg-gradient-to-r from-emerald-700 via-teal-800 to-emerald-900 text-white rounded-3xl p-4 sm:p-6 shadow-md relative overflow-hidden">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <span class="text-[10px] bg-white/20 text-emerald-100 font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider">शून्य इंजेक्शन • 100% प्राकृतिक उपचार</span>
+              <h2 class="text-base sm:text-lg font-black mt-1">अंग-वार 22 प्रमाणित देसी रोग निदान व घरेलू नुस्खे</h2>
+              <p class="text-[11px] text-emerald-100 mt-0.5">ICAR, NDDB व तंजौर विश्वविद्यालय (TDU) द्वारा सत्यापित पारंपरिक पशु चिकित्सा ज्ञान</p>
+            </div>
+            <div class="text-[11px] font-mono bg-emerald-900/60 border border-emerald-400/30 px-3 py-1.5 rounded-2xl shrink-0 self-start sm:self-auto text-emerald-200">
+              🌱 सुरक्षित व विष-मुक्त
+            </div>
+          </div>
+        </div>
+
+        <!-- Organ Filter Buttons & Search -->
+        <div class="bg-white border border-slate-200 rounded-3xl p-4 shadow-xs space-y-3">
+          <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1 text-xs" id="farmerOrganFilterButtons">
+            ${renderOrganButtonsHtml()}
+          </div>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 text-xs">
+              <i class="fa-solid fa-magnifying-glass"></i>
+            </span>
+            <input 
+              type="text" 
+              id="farmerDiseaseSearchInput" 
+              placeholder="रोग का नाम, अंग अथवा लक्षण खोजें (उदा. थनैला, आफरा, रिपीट ब्रीडर, बुखार)..." 
+              oninput="window.handleFarmerDiseaseSearch(this.value)"
+              class="w-full bg-slate-50 border border-slate-200 rounded-2xl pl-9 pr-3 py-2.5 text-xs outline-none focus:border-emerald-500 font-medium"
+            />
+          </div>
+        </div>
+
+        <!-- DISEASE CARDS CONTAINER -->
+        <div id="farmerDiseaseCardsGrid" class="space-y-3.5"></div>
+      </section>
+
+      <!-- TOOL 2: BULL DIRECTORY SECTION -->
+      <section id="fToolSection_bulls" class="hidden space-y-4">
+        <div id="farmerBullMountSection"></div>
+      </section>
+
+      <!-- TOOL 3: MILK & EXPENSE LEDGER SECTION -->
+      <section id="fToolSection_ledger" class="hidden space-y-4">
+        <div id="farmerLedgerMountSection"></div>
+      </section>
+
+      <!-- TOOL 4: GOVERNMENT SCHEMES SECTION -->
+      <section id="fToolSection_schemes" class="hidden space-y-4">
+        <div id="farmerSchemesMountSection"></div>
+      </section>
+
+      <!-- TOOL 5: 20KM DOCTOR REQUEST / SOS DISPATCH SECTION -->
+      <section id="fToolSection_doctorSos" class="hidden space-y-4">
+        <div id="farmerDoctorSosMountSection">${renderDoctorSosHtml()}</div>
+      </section>
     `;
   }
 
-  // 1-Click WhatsApp Share for Desi Remedies
-  window.shareFarmerRemedyWhatsApp = function (diseaseId) {
-    var d = window.VETCARE_FARMER_DISEASES.find(function (item) { return item.id === diseaseId; });
-    if (!d) return;
+  function renderOrganButtonsHtml() {
+    return ORGAN_CATEGORIES.map(cat => {
+      const active = (cat === currentOrganFilter);
+      const cls = active 
+        ? 'bg-emerald-600 text-white font-bold shadow-xs' 
+        : 'bg-slate-100 text-slate-700 hover:bg-slate-200 font-medium';
+      return `
+        <button 
+          type="button" 
+          onclick="window.renderFarmerDiseasesByOrgan('${cat}')" 
+          class="px-3 py-1.5 rounded-xl transition shrink-0 text-[11px] ${cls}"
+        >
+          ${cat}
+        </button>
+      `;
+    }).join('');
+  }
 
-    var text =
-      "🌿 *पशु रोग प्रमाणित देसी उपचार* 🐄\n\n" +
-      "🔹 *रोग का नाम:* " + d.nameHi + " (" + d.nameEn + ")\n" +
-      "📍 *अंग:* " + d.organ + "\n\n" +
-      "⚠️ *पहचान व लक्षण:* " + d.symptoms + "\n\n" +
-      "🥣 *देसी नुस्खा:* " + d.desiRemedy.ingredients + "\n" +
-      "🥄 *तैयारी व खुराक:* " + d.desiRemedy.preparation + "\n\n" +
-      "🚨 *डॉक्टर को कब बुलाएं:* " + d.doctorRedAlert + "\n\n" +
-      "स्रोत: *Vetcare AI OS (स्मार्ट पशुपालक समाधान)*";
+  // =========================================================================
+  // 4. ORGAN-BASED DISEASE RENDERER (window.renderFarmerDiseasesByOrgan)
+  // =========================================================================
+  window.renderFarmerDiseasesByOrgan = function (organ) {
+    currentOrganFilter = organ || 'सभी';
 
-    var url = "https://wa.me/?text=" + encodeURIComponent(text);
-    window.open(url, "_blank");
+    // Update filter buttons appearance
+    const btnContainer = document.getElementById('farmerOrganFilterButtons');
+    if (btnContainer) {
+      btnContainer.innerHTML = renderOrganButtonsHtml();
+    }
+
+    const grid = document.getElementById('farmerDiseaseCardsGrid');
+    if (!grid) return;
+
+    const db = window.VETCARE_FARMER_DISEASE_DB || [];
+    if (!db || db.length === 0) {
+      grid.innerHTML = `
+        <div class="p-6 text-center bg-white border border-slate-200 rounded-3xl text-xs text-slate-500">
+          ⚠️ देसी रोग डाटाबेस लोड हो रहा है, कृपया 1 सेकंड प्रतीक्षा करें...
+        </div>
+      `;
+      return;
+    }
+
+    const filtered = db.filter(item => {
+      const matchCat = (currentOrganFilter === 'सभी') || (item.organCategory === currentOrganFilter);
+      const matchSearch = !diseaseSearchKeyword || (
+        item.nameHi.toLowerCase().includes(diseaseSearchKeyword) ||
+        item.organCategory.toLowerCase().includes(diseaseSearchKeyword) ||
+        item.causes.toLowerCase().includes(diseaseSearchKeyword) ||
+        item.identificationSigns.toLowerCase().includes(diseaseSearchKeyword)
+      );
+      return matchCat && matchSearch;
+    });
+
+    if (filtered.length === 0) {
+      grid.innerHTML = `
+        <div class="p-8 text-center bg-white border border-dashed border-slate-300 rounded-3xl space-y-2 text-xs">
+          <div class="text-3xl">🌾</div>
+          <p class="font-bold text-slate-700">इस श्रेणी में कोई रोग नहीं मिला।</p>
+          <p class="text-slate-400">कृपया अन्य श्रेणी चुनें या सर्च बॉक्स खाली करें।</p>
+        </div>
+      `;
+      return;
+    }
+
+    grid.innerHTML = filtered.map(disease => {
+      const stagesHtml = (disease.stagesTimeline || []).map(st => `
+        <div class="bg-slate-50 p-2.5 rounded-2xl border border-slate-100 text-[11px] space-y-1">
+          <div class="font-bold text-slate-800 flex items-center gap-1.5">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+            <span>${st.stage}</span>
+          </div>
+          <div class="text-slate-600 pl-3"><strong>लक्षण:</strong> ${st.signs}</div>
+          <div class="text-emerald-800 pl-3 font-semibold"><strong>कार्रवाई:</strong> ${st.action}</div>
+        </div>
+      `).join('');
+
+      const remediesHtml = (disease.desiRemedies || []).map((rem, idx) => `
+        <div class="bg-emerald-50/60 border border-emerald-200 rounded-2xl p-3.5 space-y-2 text-xs text-slate-800">
+          <div class="font-black text-emerald-900 flex items-center gap-1.5 text-xs sm:text-sm">
+            <span>🌿 देसी नुस्खा #${idx + 1}:</span>
+            <span>${rem.remedyName}</span>
+          </div>
+          <div class="text-[11px] space-y-1">
+            <p><strong class="text-slate-700">आवश्यक सामग्री:</strong> <span class="font-medium text-emerald-950">${rem.ingredients}</span></p>
+            <p><strong class="text-slate-700">तैयार करने व देने की विधि:</strong> <span class="font-medium text-slate-800">${rem.method}</span></p>
+            <p class="text-amber-800"><strong class="text-amber-900">⚠️ जरूरी सावधानी:</strong> ${rem.precautions}</p>
+          </div>
+        </div>
+      `).join('');
+
+      return `
+        <div class="bg-white border-2 border-slate-200/80 hover:border-emerald-500 rounded-3xl p-4 sm:p-5 shadow-xs transition space-y-3.5">
+          <!-- TOP HEADER -->
+          <div class="flex items-start justify-between gap-2 border-b border-slate-100 pb-2.5">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-lg border border-emerald-200">
+                  ${disease.organCategory}
+                </span>
+                <span class="text-[10px] font-mono text-slate-400">${disease.id}</span>
+              </div>
+              <h3 class="text-sm sm:text-base font-black text-slate-900 mt-1">
+                ${disease.nameHi}
+              </h3>
+            </div>
+            <span class="text-2xl">🌱</span>
+          </div>
+
+          <!-- CAUSES & SIGNS -->
+          <div class="space-y-1.5 text-xs">
+            <p class="text-slate-700 leading-relaxed">
+              <strong class="text-slate-900">कारण:</strong> ${disease.causes}
+            </p>
+            <p class="text-slate-700 leading-relaxed bg-amber-50/40 p-2.5 rounded-2xl border border-amber-100">
+              <strong class="text-amber-950">पहचान के मुख्य लक्षण:</strong> ${disease.identificationSigns}
+            </p>
+          </div>
+
+          <!-- STAGES TIMELINE ACCORDION -->
+          <div class="space-y-1.5">
+            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">रोग के चरण व तत्काल कार्रवाई:</span>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              ${stagesHtml}
+            </div>
+          </div>
+
+          <!-- EXPANDABLE FULL REMEDY SECTION (CLICK TO EXPAND) -->
+          <div class="pt-1">
+            <button 
+              type="button" 
+              onclick="window.toggleDesiRemedyDrawer('${disease.id}')"
+              class="w-full bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold py-2.5 px-4 rounded-2xl text-xs border border-emerald-200 transition flex items-center justify-between shadow-xs active:scale-98"
+            >
+              <span class="flex items-center gap-1.5">
+                <i class="fa-solid fa-mortar-pestle text-emerald-600"></i>
+                <span>प्रमाणित 100% देसी नुस्खे व खुराक देखें (Zero Injection)</span>
+              </span>
+              <i id="iconRemedy_${disease.id}" class="fa-solid fa-chevron-down text-emerald-600 transition-transform"></i>
+            </button>
+
+            <div id="drawerRemedy_${disease.id}" class="hidden pt-3 space-y-3">
+              ${remediesHtml}
+
+              <!-- WHEN TO CALL DOCTOR WARNING -->
+              <div class="bg-rose-50 border border-rose-200 rounded-2xl p-3 text-xs text-rose-900 flex items-start gap-2">
+                <i class="fa-solid fa-triangle-exclamation text-rose-600 text-sm mt-0.5 shrink-0"></i>
+                <div>
+                  <strong class="text-rose-950">कब डॉक्टर को तुरंत बुलाएं?</strong>
+                  <p class="text-[11px] text-rose-800 mt-0.5 leading-relaxed">${disease.whenToCallDoctor}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
   };
 
-  // Filter Event Handlers
-  window.handleFarmerDiseaseTyping = function (val) {
-    currentSearchQuery = val;
-    window.renderFarmerDiseases();
+  window.toggleDesiRemedyDrawer = function (diseaseId) {
+    const drawer = document.getElementById(`drawerRemedy_${diseaseId}`);
+    const icon = document.getElementById(`iconRemedy_${diseaseId}`);
+    if (!drawer) return;
+    if (drawer.classList.contains('hidden')) {
+      drawer.classList.remove('hidden');
+      if (icon) icon.className = 'fa-solid fa-chevron-up text-emerald-600 transition-transform';
+    } else {
+      drawer.classList.add('hidden');
+      if (icon) icon.className = 'fa-solid fa-chevron-down text-emerald-600 transition-transform';
+    }
   };
 
-  window.clearFarmerDiseaseSearch = function () {
-    currentSearchQuery = "";
-    var el = document.getElementById("farmerDiseaseSearchInput");
-    if (el) el.value = "";
-    window.renderFarmerDiseases();
+  window.handleFarmerDiseaseSearch = function (keyword) {
+    diseaseSearchKeyword = (keyword || '').trim().toLowerCase();
+    window.renderFarmerDiseasesByOrgan(currentOrganFilter);
   };
 
-  window.setFarmerOrganFilter = function (organ) {
-    currentOrganFilter = organ;
-    window.renderFarmerDiseases();
+  // =========================================================================
+  // 5. TOOL SWITCHER LOGIC
+  // =========================================================================
+  window.switchFarmerToolTab = function (tabId) {
+    activeFarmerTab = tabId;
+    const tabs = ['diseases', 'bulls', 'ledger', 'schemes', 'doctorSos'];
+
+    tabs.forEach(t => {
+      const sec = document.getElementById(`fToolSection_${t}`);
+      const btn = document.getElementById(`fTabBtn_${t}`);
+      if (sec) {
+        if (t === tabId) {
+          sec.classList.remove('hidden');
+        } else {
+          sec.classList.add('hidden');
+        }
+      }
+      if (btn) {
+        if (t === tabId) {
+          btn.className = 'px-3 py-2 rounded-2xl bg-emerald-600 text-white shadow-xs shrink-0 flex items-center gap-1.5 transition font-bold';
+        } else {
+          btn.className = 'px-3 py-2 rounded-2xl bg-slate-100 text-slate-700 hover:bg-slate-200 shrink-0 flex items-center gap-1.5 transition font-medium';
+        }
+      }
+    });
+
+    if (tabId === 'bulls' && typeof window.initBullDirectory === 'function') {
+      window.initBullDirectory('farmerBullMountSection');
+    }
+    if (tabId === 'ledger') {
+      renderDailyLedgerUI();
+    }
+    if (tabId === 'schemes') {
+      renderGovtSchemesUI();
+    }
   };
 
-  window.resetFarmerDiseaseFilters = function () {
-    currentOrganFilter = "ALL";
-    currentSearchQuery = "";
-    window.renderFarmerDiseases();
-  };
+  // =========================================================================
+  // 6. TOOL 3: DAILY MILK & CATTLE FEED EXPENSE LEDGER
+  // =========================================================================
+  const LEDGER_STORAGE_KEY = 'vetcare_farmer_milk_ledger';
 
-  // ==========================================================================
-  // 4. DAILY MILK & FEED EXPENSE LEDGER (LOCAL STORAGE PERSISTENCE)
-  // ==========================================================================
-  window.getMilkLedgerRecords = function () {
+  function getLedgerData() {
     try {
-      var data = localStorage.getItem("vetcare_milk_ledger");
-      return data ? JSON.parse(data) : [];
+      return JSON.parse(localStorage.getItem(LEDGER_STORAGE_KEY)) || [];
     } catch (e) {
       return [];
     }
-  };
+  }
 
-  window.saveMilkLedgerRecords = function (records) {
-    try {
-      localStorage.setItem("vetcare_milk_ledger", JSON.stringify(records));
-    } catch (e) {
-      console.error("Ledger storage error:", e);
-    }
-  };
+  function saveLedgerData(records) {
+    localStorage.setItem(LEDGER_STORAGE_KEY, JSON.stringify(records));
+  }
 
-  window.renderMilkLedger = function (containerId) {
-    var container = document.getElementById(containerId || "viewFinance");
-    if (!container) return;
+  function renderDailyLedgerUI() {
+    const mountEl = document.getElementById('farmerLedgerMountSection');
+    if (!mountEl) return;
 
-    var records = window.getMilkLedgerRecords();
+    const records = getLedgerData();
+    const todayStr = new Date().toISOString().split('T')[0];
 
-    // Summary calculations
-    var totalLiters = 0;
-    var totalIncome = 0;
-    var totalExpense = 0;
+    // Compute Totals
+    const totalMilkAll = records.reduce((acc, r) => acc + (parseFloat(r.totalMilk) || 0), 0);
+    const totalIncomeAll = records.reduce((acc, r) => acc + (parseFloat(r.revenue) || 0), 0);
+    const totalExpenseAll = records.reduce((acc, r) => acc + (parseFloat(r.totalExpense) || 0), 0);
+    const totalProfitAll = totalIncomeAll - totalExpenseAll;
 
-    records.forEach(function (r) {
-      totalLiters += Number(r.liters || 0);
-      totalIncome += Number(r.income || 0);
-      totalExpense += Number(r.expense || 0);
-    });
-
-    var netProfit = totalIncome - totalExpense;
-
-    var html = `
-      <div class="space-y-4 text-xs">
-        
-        <!-- TOP FINANCES SUMMARY BANNER -->
-        <div class="bg-gradient-to-r from-slate-900 via-emerald-950 to-teal-900 text-white rounded-3xl p-5 shadow-lg border border-slate-700">
+    mountEl.innerHTML = `
+      <div class="space-y-4">
+        <!-- LEDGER HEADER BANNER -->
+        <div class="bg-gradient-to-r from-blue-700 via-indigo-700 to-blue-900 text-white rounded-3xl p-4 sm:p-6 shadow-md">
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              <div class="flex items-center gap-2">
-                <span class="text-2xl">🥛</span>
-                <h2 class="text-base sm:text-lg font-black tracking-tight">दैनिक दूध बिक्री व पशु आहार खाता-बही</h2>
-              </div>
-              <p class="text-xs text-slate-300 mt-1">
-                दूध, फैट, दाना-चारा खर्च और शुद्ध दैनिक लाभ-हानि का डिजिटल लेखा-जोखा।
-              </p>
+              <span class="text-[10px] bg-white/20 text-blue-100 font-bold px-2.5 py-0.5 rounded-full uppercase">दैनिक डेयरी हिसाब-किताब</span>
+              <h2 class="text-base sm:text-lg font-black mt-1">दूध उत्पादन, फैट, दाना-चारा खर्च व शुद्ध मुनाफा बहीखाता</h2>
+              <p class="text-[11px] text-blue-100 mt-0.5">अपने डेयरी फार्म की प्रतिदिन की सटीक आमदनी व बचत ट्रैक करें</p>
             </div>
-            <button
-              type="button"
-              onclick="window.exportLedgerWhatsAppSummary()"
-              class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-1.5 rounded-xl text-xs transition flex items-center gap-1.5 shrink-0 shadow-xs"
-            >
-              <i class="fa-brands fa-whatsapp text-sm"></i>
-              <span>बहीखाता शेयर करें</span>
-            </button>
-          </div>
-
-          <!-- SUMMARY STATS -->
-          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mt-4 pt-3 border-t border-slate-700/80 text-center">
-            <div class="bg-white/10 rounded-2xl p-2 backdrop-blur-xs">
-              <span class="text-[10px] text-slate-300 block font-medium">कुल दूध उत्पादन</span>
-              <span class="text-sm sm:text-base font-black text-white">${totalLiters.toFixed(1)} ली.</span>
-            </div>
-            <div class="bg-emerald-500/20 rounded-2xl p-2 border border-emerald-400/30">
-              <span class="text-[10px] text-emerald-200 block font-medium">कुल दूध आमदनी</span>
-              <span class="text-sm sm:text-base font-black text-emerald-300">₹${totalIncome.toFixed(0)}</span>
-            </div>
-            <div class="bg-rose-500/20 rounded-2xl p-2 border border-rose-400/30">
-              <span class="text-[10px] text-rose-200 block font-medium">कुल चारा व दवा खर्च</span>
-              <span class="text-sm sm:text-base font-black text-rose-300">₹${totalExpense.toFixed(0)}</span>
-            </div>
-            <div class="bg-amber-500/20 rounded-2xl p-2 border border-amber-400/30">
-              <span class="text-[10px] text-amber-200 block font-medium">शुद्ध बचत / लाभ</span>
-              <span class="text-sm sm:text-base font-black ${netProfit >= 0 ? 'text-amber-300' : 'text-rose-400'}">₹${netProfit.toFixed(0)}</span>
+            <!-- TOTAL PROFIT PILL -->
+            <div class="bg-white/10 border border-white/20 rounded-2xl p-3 text-right">
+              <span class="text-[10px] text-blue-200 block">कुल संचित शुद्ध लाभ:</span>
+              <span class="text-base sm:text-lg font-black text-emerald-300">₹${totalProfitAll.toLocaleString('en-IN')}</span>
             </div>
           </div>
         </div>
 
         <!-- NEW ENTRY INPUT FORM -->
-        <div class="bg-white border border-slate-200 rounded-3xl p-4 sm:p-5 shadow-xs space-y-3">
-          <h3 class="font-bold text-slate-900 flex items-center gap-1.5 text-xs sm:text-sm">
-            <i class="fa-solid fa-plus-circle text-emerald-600"></i>
-            <span>नई दूध बिक्री या खर्च प्रविष्टि जोड़ें:</span>
+        <div class="bg-white border border-slate-200 rounded-3xl p-4 sm:p-5 shadow-xs space-y-3.5 text-xs">
+          <h3 class="font-bold text-slate-900 flex items-center gap-1.5 border-b border-slate-100 pb-2">
+            <i class="fa-solid fa-plus-circle text-blue-600"></i>
+            <span>आज का नया दूध व खर्च रिकॉर्ड दर्ज करें:</span>
           </h3>
 
-          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+          <div class="grid grid-cols-1 sm:grid-cols-4 gap-2.5">
             <div>
-              <label class="block text-[10px] font-bold text-slate-500 mb-1">दिनांक</label>
-              <input id="ledgerDate" type="date" value="${new Date().toISOString().split('T')[0]}" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 outline-none font-medium" />
+              <label class="block text-slate-600 font-bold mb-1">दिनांक (Date)</label>
+              <input id="ledgDate" type="date" value="${todayStr}" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 outline-none font-bold" />
             </div>
             <div>
-              <label class="block text-[10px] font-bold text-slate-500 mb-1">समय (Shift)</label>
-              <select id="ledgerShift" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 outline-none font-bold">
-                <option value="सुबह (Morning)">सुबह (Morning)</option>
-                <option value="शाम (Evening)">शाम (Evening)</option>
-              </select>
+              <label class="block text-slate-600 font-bold mb-1">सुबह का दूध (लीटर)</label>
+              <input id="ledgMorning" type="number" step="0.5" placeholder="उदा. 12.5" oninput="window.calcLedgerPreview()" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 outline-none font-bold" />
             </div>
             <div>
-              <label class="block text-[10px] font-bold text-slate-500 mb-1">दूध (लीटर) *</label>
-              <input id="ledgerLiters" type="number" step="0.5" placeholder="10" oninput="window.calcLedgerIncome()" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 outline-none font-bold text-slate-900" />
+              <label class="block text-slate-600 font-bold mb-1">शाम का दूध (लीटर)</label>
+              <input id="ledgEvening" type="number" step="0.5" placeholder="उदा. 11.0" oninput="window.calcLedgerPreview()" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 outline-none font-bold" />
             </div>
             <div>
-              <label class="block text-[10px] font-bold text-slate-500 mb-1">फैट % (Fat)</label>
-              <input id="ledgerFat" type="number" step="0.1" placeholder="7.0" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 outline-none font-bold" />
+              <label class="block text-slate-600 font-bold mb-1">औसत फैट % (Fat)</label>
+              <input id="ledgFat" type="number" step="0.1" placeholder="उदा. 6.8" oninput="window.calcLedgerPreview()" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 outline-none font-bold" />
             </div>
           </div>
 
-          <div class="grid grid-cols-3 gap-2 text-xs">
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
             <div>
-              <label class="block text-[10px] font-bold text-slate-500 mb-1">दूध भाव (₹/लीटर) *</label>
-              <input id="ledgerRate" type="number" placeholder="60" oninput="window.calcLedgerIncome()" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 outline-none font-bold" />
+              <label class="block text-slate-600 font-bold mb-1">दूध भाव प्रति लीटर (₹)</label>
+              <input id="ledgRate" type="number" step="1" placeholder="उदा. 60" oninput="window.calcLedgerPreview()" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 outline-none font-bold text-blue-700" />
             </div>
             <div>
-              <label class="block text-[10px] font-bold text-slate-500 mb-1">दूध कुल आय (₹)</label>
-              <input id="ledgerIncome" type="number" readonly placeholder="0" class="w-full bg-emerald-50 border border-emerald-200 rounded-xl p-2 outline-none font-black text-emerald-800" />
+              <label class="block text-slate-600 font-bold mb-1">दाना-खल-फीड खर्च (₹)</label>
+              <input id="ledgFeedExpense" type="number" step="1" placeholder="उदा. 450" oninput="window.calcLedgerPreview()" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 outline-none font-bold text-rose-600" />
             </div>
             <div>
-              <label class="block text-[10px] font-bold text-slate-500 mb-1">दाना-चारा खर्च (₹)</label>
-              <input id="ledgerExpense" type="number" placeholder="150" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 outline-none font-bold text-rose-700" />
+              <label class="block text-slate-600 font-bold mb-1">अन्य/तूड़ा-चारा खर्च (₹)</label>
+              <input id="ledgOtherExpense" type="number" step="1" placeholder="उदा. 150" oninput="window.calcLedgerPreview()" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 outline-none font-bold text-rose-600" />
             </div>
           </div>
 
-          <button
-            type="button"
-            onclick="window.submitNewLedgerEntry()"
-            class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-2xl shadow-xs transition active:scale-98 flex items-center justify-center gap-1.5"
+          <!-- DYNAMIC PREVIEW BOX -->
+          <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3 flex flex-wrap items-center justify-between gap-3 text-slate-700 font-semibold">
+            <div>कुल दूध: <span id="prevTotalMilk" class="font-bold text-slate-900">0 L</span></div>
+            <div>दूध बिक्री: <span id="prevRevenue" class="font-bold text-blue-700">₹0</span></div>
+            <div>कुल खर्च: <span id="prevExpense" class="font-bold text-rose-600">₹0</span></div>
+            <div class="text-xs sm:text-sm">शुद्ध मुनाफा: <span id="prevProfit" class="font-black text-emerald-700 text-sm sm:text-base">₹0</span></div>
+          </div>
+
+          <button 
+            type="button" 
+            onclick="window.saveFarmerLedgerEntry()" 
+            class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-2xl shadow-md transition active:scale-98 flex items-center justify-center gap-2"
           >
             <i class="fa-solid fa-floppy-disk"></i>
-            <span>खाता-बही में सुरक्षित करें</span>
+            <span>बहीखाते में सुरक्षित करें</span>
           </button>
         </div>
 
-        <!-- RECENT ENTRIES TABLE -->
-        <div class="bg-white border border-slate-200 rounded-3xl p-4 shadow-xs space-y-3">
-          <div class="flex items-center justify-between">
-            <h3 class="font-bold text-slate-900 text-xs sm:text-sm">हाल की प्रविष्टियां (${records.length})</h3>
-            <button onclick="window.clearEntireLedger()" class="text-[10px] text-rose-600 hover:underline font-bold">
-              🗑️ संपूर्ण बहीखाता खाली करें
+        <!-- RECENT RECORDS TABLE -->
+        <div class="bg-white border border-slate-200 rounded-3xl p-4 sm:p-5 shadow-xs space-y-3 text-xs">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
+            <h3 class="font-bold text-slate-900 flex items-center gap-1.5">
+              <i class="fa-solid fa-clock-rotate-left text-slate-500"></i>
+              <span>हाल के बहीखाता रिकॉर्ड्स (कुल: ${records.length} दिन)</span>
+            </h3>
+            <button onclick="window.clearLedgerHistory()" class="text-[10px] text-rose-600 hover:underline font-bold">
+              इतिहास साफ करें
             </button>
           </div>
 
-          ${records.length === 0 ? `
-            <div class="p-6 text-center text-slate-400 space-y-1">
-              <i class="fa-solid fa-receipt text-3xl"></i>
-              <p class="text-xs">कोई प्रविष्टि दर्ज नहीं है। ऊपर दिए गए फॉर्म से पहला रिकॉर्ड जोड़ें।</p>
-            </div>
-          ` : `
-            <div class="overflow-x-auto no-scrollbar">
-              <table class="w-full text-left text-[11px] border-collapse">
-                <thead>
-                  <tr class="border-b border-slate-200 text-slate-500 font-bold bg-slate-50">
-                    <th class="p-2">दिनांक</th>
-                    <th class="p-2">समय</th>
-                    <th class="p-2">दूध</th>
-                    <th class="p-2">फैट</th>
-                    <th class="p-2">आय (₹)</th>
-                    <th class="p-2">खर्च (₹)</th>
-                    <th class="p-2">शुद्ध (₹)</th>
-                    <th class="p-2 text-center">हटाएं</th>
-                  </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-100 font-medium text-slate-800">
-                  ${records.slice(-15).reverse().map(function (r) {
-                    var net = Number(r.income || 0) - Number(r.expense || 0);
-                    return `
-                      <tr class="hover:bg-slate-50">
-                        <td class="p-2 whitespace-nowrap">${escapeHtml(r.date)}</td>
-                        <td class="p-2">${escapeHtml(r.shift)}</td>
-                        <td class="p-2 font-bold">${escapeHtml(String(r.liters))}L</td>
-                        <td class="p-2">${escapeHtml(String(r.fat || '-'))}%</td>
-                        <td class="p-2 text-emerald-700 font-bold">₹${escapeHtml(String(r.income))}</td>
-                        <td class="p-2 text-rose-600 font-bold">₹${escapeHtml(String(r.expense))}</td>
-                        <td class="p-2 font-black ${net >= 0 ? 'text-emerald-800' : 'text-rose-700'}">₹${net}</td>
-                        <td class="p-2 text-center">
-                          <button onclick="window.deleteLedgerRecord('${escapeHtml(r.id)}')" class="text-rose-500 hover:text-rose-700 p-1">
-                            <i class="fa-solid fa-trash-can text-xs"></i>
-                          </button>
-                        </td>
-                      </tr>
-                    `;
-                  }).join('')}
-                </tbody>
-              </table>
-            </div>
-          `}
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-[11px]">
+              <thead>
+                <tr class="bg-slate-50 text-slate-500 border-b border-slate-200">
+                  <th class="p-2">दिनांक</th>
+                  <th class="p-2">कुल दूध</th>
+                  <th class="p-2">फैट %</th>
+                  <th class="p-2">भाव (₹)</th>
+                  <th class="p-2">बिक्री (₹)</th>
+                  <th class="p-2">खर्च (₹)</th>
+                  <th class="p-2 text-right">शुद्ध लाभ (₹)</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${renderLedgerTableRows(records)}
+              </tbody>
+            </table>
+          </div>
         </div>
-
       </div>
     `;
+  }
 
-    container.innerHTML = html;
-  };
+  function renderLedgerTableRows(records) {
+    if (!records || records.length === 0) {
+      return `
+        <tr>
+          <td colspan="7" class="p-4 text-center text-slate-400">अभी तक कोई दैनिक रिकॉर्ड दर्ज नहीं किया गया है।</td>
+        </tr>
+      `;
+    }
 
-  // Ledger Calculations & Handlers
-  window.calcLedgerIncome = function () {
-    var liters = parseFloat(document.getElementById("ledgerLiters")?.value || 0);
-    var rate = parseFloat(document.getElementById("ledgerRate")?.value || 0);
-    var incomeEl = document.getElementById("ledgerIncome");
-    if (incomeEl) {
-      incomeEl.value = Math.round(liters * rate);
+    return records.slice(-15).reverse().map(rec => {
+      const isPositive = rec.netProfit >= 0;
+      return `
+        <tr class="border-b border-slate-100 hover:bg-slate-50">
+          <td class="p-2 font-mono font-semibold">${rec.date}</td>
+          <td class="p-2 font-bold">${rec.totalMilk} L</td>
+          <td class="p-2">${rec.fat ? rec.fat + '%' : '-'}</td>
+          <td class="p-2">₹${rec.rate}</td>
+          <td class="p-2 font-bold text-blue-700">₹${rec.revenue}</td>
+          <td class="p-2 text-rose-600">₹${rec.totalExpense}</td>
+          <td class="p-2 text-right font-black ${isPositive ? 'text-emerald-700' : 'text-rose-700'}">
+            ₹${rec.netProfit}
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  window.calcLedgerPreview = function () {
+    const m = parseFloat(document.getElementById('ledgMorning')?.value) || 0;
+    const e = parseFloat(document.getElementById('ledgEvening')?.value) || 0;
+    const rate = parseFloat(document.getElementById('ledgRate')?.value) || 0;
+    const feed = parseFloat(document.getElementById('ledgFeedExpense')?.value) || 0;
+    const other = parseFloat(document.getElementById('ledgOtherExpense')?.value) || 0;
+
+    const totalMilk = (m + e);
+    const revenue = Math.round(totalMilk * rate);
+    const totalExp = Math.round(feed + other);
+    const netProfit = Math.round(revenue - totalExp);
+
+    const prevMilk = document.getElementById('prevTotalMilk');
+    const prevRev = document.getElementById('prevRevenue');
+    const prevExp = document.getElementById('prevExpense');
+    const prevProf = document.getElementById('prevProfit');
+
+    if (prevMilk) prevMilk.textContent = `${totalMilk.toFixed(1)} L`;
+    if (prevRev) prevRev.textContent = `₹${revenue}`;
+    if (prevExp) prevExp.textContent = `₹${totalExp}`;
+    if (prevProf) {
+      prevProf.textContent = `₹${netProfit}`;
+      prevProf.className = netProfit >= 0 ? 'font-black text-emerald-700 text-sm sm:text-base' : 'font-black text-rose-700 text-sm sm:text-base';
     }
   };
 
-  window.submitNewLedgerEntry = function () {
-    var date = document.getElementById("ledgerDate")?.value;
-    var shift = document.getElementById("ledgerShift")?.value;
-    var liters = parseFloat(document.getElementById("ledgerLiters")?.value || 0);
-    var fat = parseFloat(document.getElementById("ledgerFat")?.value || 0);
-    var rate = parseFloat(document.getElementById("ledgerRate")?.value || 0);
-    var income = parseFloat(document.getElementById("ledgerIncome")?.value || 0);
-    var expense = parseFloat(document.getElementById("ledgerExpense")?.value || 0);
+  window.saveFarmerLedgerEntry = function () {
+    const date = document.getElementById('ledgDate')?.value || new Date().toISOString().split('T')[0];
+    const m = parseFloat(document.getElementById('ledgMorning')?.value) || 0;
+    const e = parseFloat(document.getElementById('ledgEvening')?.value) || 0;
+    const fat = document.getElementById('ledgFat')?.value || '';
+    const rate = parseFloat(document.getElementById('ledgRate')?.value) || 0;
+    const feed = parseFloat(document.getElementById('ledgFeedExpense')?.value) || 0;
+    const other = parseFloat(document.getElementById('ledgOtherExpense')?.value) || 0;
 
-    if (!liters || liters <= 0 || !rate || rate <= 0) {
-      alert("कृपया दूध की मात्रा (लीटर) और भाव (₹/लीटर) अवश्य भरें!");
+    const totalMilk = parseFloat((m + e).toFixed(1));
+    if (totalMilk <= 0 || rate <= 0) {
+      alert('कृपया वैध दूध मात्रा और प्रति लीटर भाव दर्ज करें!');
       return;
     }
 
-    var newEntry = {
-      id: "LEDGER_" + Date.now(),
-      date: date,
-      shift: shift,
-      liters: liters,
-      fat: fat,
-      rate: rate,
-      income: income,
-      expense: expense
+    const revenue = Math.round(totalMilk * rate);
+    const totalExpense = Math.round(feed + other);
+    const netProfit = Math.round(revenue - totalExpense);
+
+    const newRecord = {
+      id: 'REC_' + Date.now(),
+      date,
+      morning: m,
+      evening: e,
+      totalMilk,
+      fat,
+      rate,
+      feedExpense: feed,
+      otherExpense: other,
+      totalExpense,
+      revenue,
+      netProfit
     };
 
-    var records = window.getMilkLedgerRecords();
-    records.push(newEntry);
-    window.saveMilkLedgerRecords(records);
+    const records = getLedgerData();
+    records.push(newRecord);
+    saveLedgerData(records);
 
-    // Reset inputs
-    document.getElementById("ledgerLiters").value = "";
-    document.getElementById("ledgerIncome").value = "";
-    document.getElementById("ledgerExpense").value = "";
-
-    window.renderMilkLedger();
+    alert(`✅ ${date} का बहीखाता सुरक्षित किया गया!\nदूध: ${totalMilk}L • शुद्ध मुनाफा: ₹${netProfit}`);
+    renderDailyLedgerUI();
   };
 
-  window.deleteLedgerRecord = function (id) {
-    if (!confirm("क्या आप इस प्रविष्टि को हटाना चाहते हैं?")) return;
-    var records = window.getMilkLedgerRecords().filter(function (r) { return r.id !== id; });
-    window.saveMilkLedgerRecords(records);
-    window.renderMilkLedger();
-  };
-
-  window.clearEntireLedger = function () {
-    if (!confirm("⚠️ क्या आप पूरा बहीखाता मिटाना चाहते हैं? यह क्रिया पूर्ववत नहीं होगी।")) return;
-    localStorage.removeItem("vetcare_milk_ledger");
-    window.renderMilkLedger();
-  };
-
-  window.exportLedgerWhatsAppSummary = function () {
-    var records = window.getMilkLedgerRecords();
-    if (records.length === 0) {
-      alert("शेयर करने के लिए कोई रिकॉर्ड उपलब्ध नहीं है।");
-      return;
+  window.clearLedgerHistory = function () {
+    if (confirm('क्या आप सचमुच सारा बहीखाता इतिहास हटाना चाहते हैं?')) {
+      localStorage.removeItem(LEDGER_STORAGE_KEY);
+      renderDailyLedgerUI();
     }
-
-    var totalL = 0, totalInc = 0, totalExp = 0;
-    records.forEach(function (r) {
-      totalL += Number(r.liters || 0);
-      totalInc += Number(r.income || 0);
-      totalExp += Number(r.expense || 0);
-    });
-
-    var text =
-      "📊 *मेरी डेयरी खाता-बही रिपोर्ट (Vetcare AI OS)* 🥛\n\n" +
-      "📅 कुल दर्ज दिन: " + records.length + " प्रविष्टियां\n" +
-      "🥛 कुल दूध उत्पादन: " + totalL.toFixed(1) + " लीटर\n" +
-      "💰 कुल दूध बिक्री आय: ₹" + totalInc.toFixed(0) + "\n" +
-      "🌾 कुल दाना-चारा खर्च: ₹" + totalExp.toFixed(0) + "\n" +
-      "✨ *शुद्ध डेयरी लाभ: ₹" + (totalInc - totalExp).toFixed(0) + "*\n\n" +
-      "सत्यापित डेयरी रिपोर्ट • Vetcare AI OS";
-
-    var url = "https://wa.me/?text=" + encodeURIComponent(text);
-    window.open(url, "_blank");
   };
 
-  // ==========================================================================
-  // 5. CENTRAL SERVICES LAUNCHER & TAB CONTROLLER
-  // ==========================================================================
-  window.renderFarmerServicesLauncher = function () {
-    var container = document.getElementById("services-launcher-container");
-    if (!container) return;
+  // =========================================================================
+  // 7. TOOL 4: GOVERNMENT SCHEMES SECTION
+  // =========================================================================
+  function renderGovtSchemesUI() {
+    const mountEl = document.getElementById('farmerSchemesMountSection');
+    if (!mountEl) return;
 
-    var html = `
-      <div class="bg-gradient-to-r from-emerald-800 to-teal-800 text-white rounded-3xl p-4 sm:p-5 shadow-md mb-4">
-        <div class="flex items-center justify-between mb-3">
-          <div class="flex items-center gap-2">
-            <span class="text-2xl">🌾</span>
-            <div>
-              <h2 class="text-sm sm:text-base font-black">स्मार्ट पशुपालक सेवा केंद्र (Services Launcher)</h2>
-              <p class="text-[11px] text-emerald-200">देसी उपचार, सीमन बुल डायरेक्टरी, सरकारी योजनाएं व डेयरी हिसाब</p>
-            </div>
-          </div>
-          <span class="text-[10px] bg-white/20 px-2 py-0.5 rounded-full font-bold">1-क्लिक एक्सेस</span>
+    mountEl.innerHTML = `
+      <div class="space-y-4">
+        <!-- SCHEMES BANNER -->
+        <div class="bg-gradient-to-r from-amber-700 via-orange-700 to-amber-900 text-white rounded-3xl p-4 sm:p-6 shadow-md">
+          <span class="text-[10px] bg-white/20 text-amber-100 font-bold px-2.5 py-0.5 rounded-full uppercase">सरकारी अनुदान व सहायता</span>
+          <h2 class="text-base sm:text-lg font-black mt-1">हरियाणा व भारत सरकार की प्रमुख पशुपालन योजनाएं</h2>
+          <p class="text-[11px] text-amber-100 mt-0.5">पशु किसान क्रेडिट कार्ड, नकद पुरस्कार, सब्सिडी व बीमा योजनाओं की अधिकृत जानकारी</p>
         </div>
 
-        <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 text-center text-xs">
-          <button onclick="window.openFarmerService('repeat_breeder')" class="bg-white/10 hover:bg-white/20 p-2.5 rounded-2xl border border-white/10 transition active:scale-95 space-y-1">
-            <span class="text-xl block">🔄</span>
-            <span class="font-bold block text-[11px]">रिपीट ब्रीडर हल</span>
-          </button>
-          <button onclick="window.openFarmerService('diseases')" class="bg-white/10 hover:bg-white/20 p-2.5 rounded-2xl border border-white/10 transition active:scale-95 space-y-1">
-            <span class="text-xl block">🌿</span>
-            <span class="font-bold block text-[11px]">25+ देसी नुस्खे</span>
-          </button>
-          <button onclick="window.openFarmerService('bulls')" class="bg-white/10 hover:bg-white/20 p-2.5 rounded-2xl border border-white/10 transition active:scale-95 space-y-1">
-            <span class="text-xl block">🐂</span>
-            <span class="font-bold block text-[11px]">बुल व सीमन बैंक</span>
-          </button>
-          <button onclick="window.openFarmerService('schemes')" class="bg-white/10 hover:bg-white/20 p-2.5 rounded-2xl border border-white/10 transition active:scale-95 space-y-1">
-            <span class="text-xl block">🏛️</span>
-            <span class="font-bold block text-[11px]">सरकारी योजनाएं</span>
-          </button>
-          <button onclick="window.openFarmerService('ledger')" class="bg-white/10 hover:bg-white/20 p-2.5 rounded-2xl border border-white/10 transition active:scale-95 space-y-1">
-            <span class="text-xl block">🥛</span>
-            <span class="font-bold block text-[11px]">खाता बही (दूध)</span>
+        <!-- SCHEMES GRID -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5 text-xs">
+          ${GOVT_SCHEMES_DB.map(sc => `
+            <div class="bg-white border-2 border-slate-200/80 hover:border-amber-500 rounded-3xl p-4 sm:p-5 shadow-xs transition space-y-3 flex flex-col justify-between">
+              <div class="space-y-2">
+                <div class="flex items-center justify-between">
+                  <span class="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-amber-50 text-amber-800 border border-amber-200">
+                    ${sc.authority}
+                  </span>
+                  <span class="text-[10px] text-slate-400 font-mono">${sc.id}</span>
+                </div>
+                <h3 class="text-sm font-black text-slate-900 leading-tight">
+                  ${sc.title}
+                </h3>
+                <p class="text-[11px] font-semibold text-emerald-800">
+                  🎯 <strong>लक्षित लाभार्थी:</strong> ${sc.target}
+                </p>
+                <div class="bg-slate-50 p-2.5 rounded-2xl border border-slate-100 text-[11px] space-y-1 text-slate-700">
+                  <p><strong class="text-slate-900">प्रमुख लाभ:</strong> ${sc.benefits}</p>
+                  <p><strong class="text-slate-900">पात्रता:</strong> ${sc.eligibility}</p>
+                </div>
+              </div>
+
+              <div class="pt-2 border-t border-slate-100 text-[11px] flex items-center justify-between">
+                <span class="text-slate-500"><strong>आवेदन:</strong> ${sc.howToApply}</span>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+
+        <!-- HELPLINE CARD -->
+        <div class="bg-amber-50 border border-amber-300 rounded-3xl p-4 text-xs text-amber-950 flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div class="space-y-0.5 text-center sm:text-left">
+            <span class="font-bold flex items-center justify-center sm:justify-start gap-1">
+              <i class="fa-solid fa-phone-volume text-amber-700"></i> राष्ट्रीय पशुपालन हेल्पलाइन:
+            </span>
+            <p class="text-[11px] text-amber-800">किसी भी योजना की जानकारी अथवा समस्या हेतु टोल-फ्री कॉल करें: <strong>1962 (पशु एम्बुलेंस व सहायता)</strong></p>
+          </div>
+          <a href="tel:1962" class="bg-amber-700 hover:bg-amber-800 text-white font-bold px-4 py-2 rounded-2xl text-xs shrink-0 shadow-sm transition">
+            📞 1962 पर कॉल करें
+          </a>
+        </div>
+      </div>
+    `;
+  }
+
+  // =========================================================================
+  // 8. TOOL 5: 20KM DOCTOR REQUEST / SOS DISPATCH (ZERO ALLOPATHIC DOSAGES)
+  // =========================================================================
+  function renderDoctorSosHtml() {
+    return `
+      <div class="space-y-4">
+        <!-- SOS BANNER -->
+        <div class="bg-gradient-to-r from-rose-700 via-red-800 to-rose-900 text-white rounded-3xl p-4 sm:p-6 shadow-md">
+          <span class="text-[10px] bg-white/20 text-rose-100 font-bold px-2.5 py-0.5 rounded-full uppercase">तत्काल पशु चिकित्सा संबल</span>
+          <h2 class="text-base sm:text-lg font-black mt-1">निकटतम 20-km पशु चिकित्सक / वीएलडीए से तुरंत संपर्क</h2>
+          <p class="text-[11px] text-rose-100 mt-0.5">आपातकालीन स्थिति में अपनी GPS लोकेशन सहित 1-क्लिक व्हाट्सएप संदेश भेजें</p>
+        </div>
+
+        <!-- REQUEST FORM -->
+        <div class="bg-white border border-slate-200 rounded-3xl p-4 sm:p-5 shadow-xs space-y-3.5 text-xs">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <div>
+              <label class="block text-slate-700 font-bold mb-1">आपका नाम व गांव *</label>
+              <input id="sosFarmerName" type="text" placeholder="उदा. रामपाल जी, गांव - सालवन" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 outline-none font-medium" />
+            </div>
+            <div>
+              <label class="block text-slate-700 font-bold mb-1">पशु का प्रकार व पहचान</label>
+              <select id="sosAnimalType" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 outline-none font-bold">
+                <option value="मुर्राह भैंस">मुर्राह भैंस</option>
+                <option value="देशी गाय (साहीवाल/गिर)">देशी गाय (साहीवाल/गिर)</option>
+                <option value="एचएफ/जर्सी क्रॉस गाय">एचएफ/जर्सी क्रॉस गाय</option>
+                <option value="बकरी/भेड़">बकरी/भेड़</option>
+                <option value="बछड़ा/कटड़ा">बछड़ा/कटड़ा</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <div>
+              <label class="block text-slate-700 font-bold mb-1">आपातकाल स्तर (Emergency Level)</label>
+              <select id="sosEmergencyLevel" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 outline-none font-bold text-rose-700">
+                <option value="अति-गंभीर (आफरा / मिल्क फीवर / ब्याने में रुकावट)">🔴 अति-गंभीर (आफरा / मिल्क फीवर / ब्याने में रुकावट)</option>
+                <option value="मध्यम (तीव्र बुखार / थनैला / खूनी दस्त)">🟡 मध्यम (तीव्र बुखार / थनैला / खूनी दस्त)</option>
+                <option value="सामान्य (हीट / ए.आई. सीमन / चेकअप)">🟢 सामान्य (हीट / ए.आई. सीमन / चेकअप)</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-slate-700 font-bold mb-1">GPS लोकेशन (सटीक नेविगेशन हेतु)</label>
+              <div class="flex gap-1.5">
+                <input id="sosGpsCoordinates" type="text" placeholder="GPS लोकेशन प्राप्त करें" readonly class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-mono" />
+                <button type="button" onclick="window.captureSosGps()" class="bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 px-3 py-2 rounded-xl text-xs font-bold shrink-0">
+                  📍 GPS लें
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-slate-700 font-bold mb-1">रोग के मुख्य लक्षण (Problem Details)</label>
+            <textarea id="sosProblemText" rows="3" placeholder="उदा. भैंस सुबह से पेट फुलाकर बैठी है, गर्दन मुड़ी हुई है और कान ठंडे पड़ रहे हैं..." class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs outline-none font-medium"></textarea>
+          </div>
+
+          <div>
+            <label class="block text-slate-700 font-bold mb-1">क्षेत्रीय वेटरनरी डॉक्टर / वीएलडीए का मोबाइल नंबर *</label>
+            <input id="sosDoctorPhone" type="tel" maxlength="10" placeholder="10-अंकीय डॉक्टर मोबाइल नंबर" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 outline-none font-mono font-bold" />
+            <p class="text-[10px] text-slate-400 mt-1">अपने नजदीकी सरकारी या निजी पशु चिकित्सक का नंबर दर्ज करें।</p>
+          </div>
+
+          <button 
+            type="button" 
+            onclick="window.dispatchDoctorSosWhatsApp()" 
+            class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 rounded-2xl shadow-lg transition active:scale-98 flex items-center justify-center gap-2 text-xs sm:text-sm"
+          >
+            <i class="fa-brands fa-whatsapp text-lg"></i>
+            <span>व्हाट्सएप पर तुरंत डॉक्टर को SOS अनुरोध भेजें (1-Click)</span>
           </button>
         </div>
       </div>
     `;
+  }
 
-    container.innerHTML = html;
-  };
-
-  window.openFarmerService = function (serviceId) {
-    if (typeof window.switchTab === "function") {
-      if (serviceId === "repeat_breeder") {
-        window.switchTab("breeding");
-        window.renderRepeatBreederGuide();
-      } else if (serviceId === "diseases") {
-        window.switchTab("feed"); // or helpdesk tab
-        window.renderFarmerDiseases();
-      } else if (serviceId === "bulls") {
-        window.switchTab("breeding");
-        if (typeof window.renderBullDirectory === "function") {
-          window.renderBullDirectory();
-        }
-      } else if (serviceId === "schemes") {
-        if (typeof window.renderGovtSchemes === "function") {
-          window.renderGovtSchemes();
-        }
-      } else if (serviceId === "ledger") {
-        window.switchTab("finance");
-        window.renderMilkLedger();
-      }
+  window.captureSosGps = function () {
+    const input = document.getElementById('sosGpsCoordinates');
+    if (!navigator.geolocation) {
+      alert('आपके ब्राउज़र में GPS सुविधा उपलब्ध नहीं है।');
+      return;
     }
+    input.value = "GPS खोज जारी...";
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        const coords = `${pos.coords.latitude.toFixed(5)}, ${pos.coords.longitude.toFixed(5)}`;
+        input.value = coords;
+      },
+      err => {
+        input.value = "";
+        alert('लोकेशन प्राप्त नहीं हो सकी: ' + err.message);
+      },
+      { enableHighAccuracy: true, timeout: 8000 }
+    );
   };
 
-  // Safe HTML Escaping
-  function escapeHtml(str) {
-    if (typeof str !== "string") return str;
-    return str
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#039;");
-  }
+  window.dispatchDoctorSosWhatsApp = function () {
+    const farmerName = document.getElementById('sosFarmerName')?.value.trim();
+    const animal = document.getElementById('sosAnimalType')?.value;
+    const level = document.getElementById('sosEmergencyLevel')?.value;
+    const gps = document.getElementById('sosGpsCoordinates')?.value.trim();
+    const problem = document.getElementById('sosProblemText')?.value.trim();
+    const docPhone = document.getElementById('sosDoctorPhone')?.value.trim();
 
-  // Auto-Initialization Observer
-  function autoInitFarmerEngine() {
-    window.renderRepeatBreederGuide();
-    window.renderFarmerDiseases();
-    window.renderMilkLedger();
-    window.renderFarmerServicesLauncher();
-  }
+    if (!farmerName) {
+      alert('कृपया अपना नाम व गांव दर्ज करें!');
+      return;
+    }
+    if (!docPhone || docPhone.length < 10) {
+      alert('कृपया डॉक्टर का वैध 10-अंकीय मोबाइल नंबर दर्ज करें!');
+      return;
+    }
 
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", autoInitFarmerEngine);
+    let mapLink = gps ? `https://maps.google.com/?q=${gps.replace(/\s+/g, '')}` : 'उपलब्ध नहीं';
+
+    const msg = `🚨 *आपातकालीन पशु चिकित्सा अनुरोध (Vetcare AI OS)* 🚨\n\n` +
+      `👤 *किसान का नाम:* ${farmerName}\n` +
+      `🐾 *पशु:* ${animal}\n` +
+      `⚠️ *आपातकाल स्तर:* ${level}\n` +
+      `📝 *रोग के लक्षण:* ${problem || 'तत्काल परीक्षण आवश्यक'}\n` +
+      `📍 *लाइव GPS मैप लोकेशन:* ${mapLink}\n\n` +
+      `_कृपया शीघ्र अति शीघ्र संपर्क करने या पहुंचने की कृपा करें।_`;
+
+    const cleanPhone = docPhone.replace(/\D/g, '').slice(-10);
+    const waUrl = `https://wa.me/91${cleanPhone}?text=${encodeURIComponent(msg)}`;
+    window.open(waUrl, '_blank');
+  };
+
+  // =========================================================================
+  // 9. AUTOMATIC BOOTSTRAPPING FOR SMART FARMER
+  // =========================================================================
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function () {
+      // If landing state is already authenticated as farmer, trigger initialization
+      const userStr = localStorage.getItem('vetcare_user');
+      if (userStr) {
+        try {
+          const user = JSON.parse(userStr);
+          if (user && user.role === 'farmer') {
+            window.initFarmerDashboard();
+          }
+        } catch (e) {}
+      }
+    });
   } else {
-    autoInitFarmerEngine();
+    const userStr = localStorage.getItem('vetcare_user');
+    if (userStr) {
+      try {
+        const user = JSON.parse(userStr);
+        if (user && user.role === 'farmer') {
+          window.initFarmerDashboard();
+        }
+      } catch (e) {}
+    }
   }
 
 })();
