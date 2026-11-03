@@ -32,6 +32,11 @@
       100% { transform: scale(0.95); opacity: 0.8; }
     }
     .pulse-live { animation: pulse-ring 2s infinite ease-in-out; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fadeIn { animation: fadeIn 0.25s ease-out forwards; }
     @media print {
       body * { visibility: hidden; }
       #printableSlipArea, #printableSlipArea * { visibility: visible; }
@@ -71,7 +76,7 @@
             </div>
             <h2 class="text-sm sm:text-base font-black text-slate-900 leading-tight">Veterinary Practitioner<br><span class="text-xs font-bold text-blue-700">(पशु चिकित्सा व्यवसायी)</span></h2>
             <p class="text-[11px] text-slate-600 leading-relaxed">
-              48+ रोग मैट्रिक्स, 5-स्तरीय ड्रग थेरेपी, 1-Click व्हाट्सएप पर्ची, स्टॉक व 20-km GPS किसान नेविगेशन।
+              48+ रोग मैट्रिक्स, 5-स्तरीय ड्रग थेरेपी, दवा ज्ञानकोश (ब्रांड vs जेनेरिक), 1-Click व्हाट्सएप पर्ची, स्टॉक व 20-km GPS किसान नेविगेशन।
             </p>
           </div>
           <button class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-2xl text-xs shadow-md transition flex items-center justify-center gap-1.5">
@@ -88,7 +93,7 @@
             </div>
             <h2 class="text-sm sm:text-base font-black text-slate-900 leading-tight">Smart Farmer<br><span class="text-xs font-bold text-emerald-700">(स्मार्ट पशुपालक)</span></h2>
             <p class="text-[11px] text-slate-600 leading-relaxed">
-              25 प्रमाणित देसी नुस्खे (शून्य इंजेक्शन), मद काल ट्रैकर, संतुलित राशन व दैनिक दूध बिक्री बहीखाता।
+              अंग-वार 25+ प्रमाणित देसी नुस्खे (शून्य इंजेक्शन), बुल व सीमन बैंक (AI Live Search), सरकारी योजनाएं व दैनिक दूध बहीखाता।
             </p>
           </div>
           <button class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-2xl text-xs shadow-md transition flex items-center justify-center gap-1.5">
@@ -105,7 +110,7 @@
             </div>
             <h2 class="text-sm sm:text-base font-black text-slate-900 leading-tight">मुख्य एडमिन लॉगिन<br><span class="text-xs font-bold text-amber-700">(Admin Portal)</span></h2>
             <p class="text-[11px] text-slate-600 leading-relaxed">
-              मास्कड क्रेडेंशियल्स, ब्रांडिंग व लोगो संपादक, यूजर ट्रैकर, ड्यूल पोर्टल स्विच व अलग-अलग सब्सक्रिप्शन दरें।
+              मास्कड PIN (9297) व क्रेडेंशियल्स, ब्रांडिंग व लोगो संपादक, लाइव यूजर ट्रैकर, ड्यूल पोर्टल स्विच व अलग-अलग सब्सक्रिप्शन दरें।
             </p>
           </div>
           <button class="w-full bg-slate-900 hover:bg-black text-white font-bold py-2.5 rounded-2xl text-xs shadow-md transition flex items-center justify-center gap-1.5">
@@ -132,7 +137,7 @@
   <!-- ========================================================================= -->
   <div id="screenMainApp" class="hidden w-full max-w-4xl min-h-screen flex flex-col bg-white border-x border-slate-200 shadow-xl pb-24 relative">
 
-    <!-- STICKY TOP HEADER WITH DUAL TIMERS & BRANDING -->
+    <!-- STICKY TOP HEADER WITH DUAL TIMERS, BRANDING & CONTROLS -->
     <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 px-3 sm:px-6 py-2.5 flex items-center justify-between shadow-xs">
       <!-- App Logo & Clickable Title -->
       <div class="flex items-center space-x-2.5 cursor-pointer" onclick="window.navigateToView('viewServicesLauncher')">
@@ -153,16 +158,16 @@
 
       <!-- Controls: Language, Dual Timers, Switch Portal, Logout -->
       <div class="flex items-center gap-1.5 sm:gap-2">
-        <!-- Language Selector Dropdown -->
+        <!-- Language Selector Dropdown [Hinglish (हिंदी) | English (100%)] -->
         <select onchange="window.setAppLanguage(this.value)" class="bg-slate-50 border border-slate-200 text-slate-800 text-[10px] sm:text-xs font-bold rounded-xl px-2 py-1.5 outline-none cursor-pointer">
-          <option value="hinglish" selected>Hinglish</option>
+          <option value="hinglish" selected>Hinglish (हिंदी)</option>
+          <option value="english">English (100%)</option>
           <option value="hindi">हिन्दी</option>
-          <option value="english">English</option>
           <option value="punjabi">ਪੰਜਾਬੀ</option>
           <option value="marathi">मराठी</option>
         </select>
 
-        <!-- Dual Timers Badges -->
+        <!-- Dual Timers Badges (60-min session + 24-hr trial countdown) -->
         <div id="headerTimerContainer" class="hidden sm:flex items-center gap-1 font-mono text-[10px]">
           <span id="session-timer-badge" class="bg-slate-100 text-slate-700 font-bold px-2 py-1 rounded-lg border border-slate-200" title="Session Timeout">⏱️ 60:00</span>
           <span id="trial-timer-badge" class="bg-amber-50 text-amber-800 font-bold px-2 py-1 rounded-lg border border-amber-200" title="24-Hour Free Trial">⏳ 24h Trial</span>
@@ -180,9 +185,9 @@
       </div>
     </header>
 
-    <!-- TOP BACK-NAVIGATION BAR (ANTI-KICKOUT) -->
-    <div class="px-3 sm:px-6 pt-3 pb-1 flex items-center justify-between border-b border-slate-100 bg-slate-50/50">
-      <button onclick="window.navigateBack()" class="text-xs font-bold text-blue-700 hover:text-blue-900 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-xl border border-blue-200 transition flex items-center gap-1.5 shadow-xs">
+    <!-- STICKY TOP BACK-NAVIGATION BAR (ANTI-KICKOUT MANDATE) -->
+    <div class="sticky top-[53px] z-30 px-3 sm:px-6 py-2 flex items-center justify-between border-b border-slate-200 bg-white/95 backdrop-blur-xs shadow-2xs">
+      <button onclick="window.navigateBack()" class="text-xs font-bold text-blue-700 hover:text-blue-900 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-xl border border-blue-200 transition flex items-center gap-1.5 shadow-xs active:scale-95">
         <i class="fa-solid fa-arrow-left"></i> <span>← वापस जाएं (Back to Services)</span>
       </button>
       <span class="text-[10px] font-bold text-slate-400">सुरक्षित नेविगेशन रूट • Anti-Kickout Active</span>
@@ -194,15 +199,18 @@
       <!-- CENTRAL SERVICES LAUNCHER CONTAINER -->
       <section id="services-launcher-container"></section>
 
-      <!-- 4.1 DOCTOR WORKSPACE CONTAINER -->
+      <!-- =================================================================== -->
+      <!-- 4.1 VETERINARY PRACTITIONER (DOCTOR) WORKSPACE                      -->
+      <!-- =================================================================== -->
       <div id="doctor-workspace" class="space-y-4">
-        <!-- TAB: CLINICAL DIAGNOSIS -->
+        
+        <!-- TOOL 1: लक्षण मैट्रिक्स व डायग्नोसिस (Symptom Matrix) -->
         <section id="viewDiagnosis" class="space-y-4">
           <div id="panelDiagMatrix"></div>
           <div id="diseaseSearchResults" class="space-y-4"></div>
         </section>
 
-        <!-- TAB: DIGITAL OPD PAD -->
+        <!-- TOOL 4: डिजिटल केस पर्चा व 20km GPS ट्रैकर (Digital OPD Pad) -->
         <section id="viewRx" class="hidden space-y-4">
           <div class="bg-white border border-slate-200 rounded-3xl p-4 sm:p-5 shadow-xs space-y-3.5">
             <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
@@ -291,7 +299,7 @@
           </div>
         </section>
 
-        <!-- TAB: PATIENT RECORDS -->
+        <!-- PATIENT RECORDS ARCHIVE -->
         <section id="viewRecords" class="hidden space-y-3">
           <div class="flex items-center justify-between">
             <h2 class="text-sm font-bold text-slate-900 flex items-center gap-1">
@@ -309,12 +317,12 @@
           <div id="recordsList" class="space-y-2"></div>
         </section>
 
-        <!-- TAB: DRUG INVENTORY -->
+        <!-- TOOL 2: दवा ज्ञानकोश (Drugs Pharmacopeia with Ethical vs Generic Search & Substitutes) -->
         <section id="viewInventory" class="hidden space-y-4">
           <div id="inventoryContainer"></div>
         </section>
 
-        <!-- TAB: AI SURGEON CONSULTANT WITH PRE-FILLED CHIPS -->
+        <!-- AI VETERINARY SURGEON CONSULTANT -->
         <section id="viewAI" class="hidden space-y-4">
           <div class="bg-white border border-slate-200 rounded-3xl p-4 sm:p-5 shadow-xs space-y-3 text-xs">
             <div class="flex justify-between items-center border-b border-slate-100 pb-2">
@@ -351,16 +359,20 @@
 
             <textarea id="aiInputPrompt" rows="4" placeholder="उदा. 4 वर्षीय भैंस, तापमान 106°F, कॉफी रंग का पेशाब, खून की कमी और तेज सांस..." class="w-full bg-slate-50 border border-slate-200 rounded-2xl p-3 outline-none"></textarea>
             <button onclick="window.runAIConsultant()" id="btnRunAI" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 rounded-2xl shadow-md transition flex items-center justify-center gap-1.5">
-              <span>✨ AI से क्लिनICAL रिपोर्ट मांगें</span>
+              <span>✨ AI से क्लिनिकल रिपोर्ट मांगें</span>
             </button>
             <div id="aiOutputArea" class="hidden p-4 bg-purple-50/50 border border-purple-200 rounded-2xl whitespace-pre-wrap text-xs leading-relaxed text-slate-800"></div>
           </div>
         </section>
+
       </div>
 
-      <!-- 4.2 SMART FARMER WORKSPACE CONTAINER -->
+      <!-- =================================================================== -->
+      <!-- 4.2 SMART FARMER WORKSPACE                                          -->
+      <!-- =================================================================== -->
       <div id="farmer-workspace" class="space-y-4">
-        <!-- TAB: BREEDING & HEAT -->
+        
+        <!-- BREEDING HUB: SPECIES FILTER & BULL AI SEARCH -->
         <section id="viewBreeding" class="hidden space-y-4">
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div class="bg-white border border-slate-200 rounded-3xl p-4 sm:p-5 shadow-xs space-y-2.5">
@@ -372,56 +384,26 @@
               <div id="dischargeContainer" class="space-y-2 text-xs text-slate-700"></div>
             </div>
           </div>
+          
           <div class="bg-amber-50 border border-amber-200 rounded-3xl p-4 sm:p-5 text-xs space-y-2 text-amber-950">
             <h3 class="font-bold text-amber-900 flex items-center gap-1.5">⚠️ बार-बार फिरने (Repeat Breeding) के 4 पक्के समाधान:</h3>
             <ul id="repeatBreederList" class="space-y-1.5 list-disc pl-4"></ul>
           </div>
           
-          <!-- Bull Directory & Breeding Tips -->
-          <div class="bg-white border border-slate-200 rounded-3xl p-4 sm:p-5 text-xs space-y-3">
-            <h3 class="font-bold text-slate-900 flex items-center gap-1.5">🐂 प्रमाणित बुल डायरेक्टरी व वीर्य बैंक (Top Sires)</h3>
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-              <div class="p-3 bg-slate-50 border border-slate-200 rounded-2xl">
-                <div class="font-bold text-blue-700">मुर्रा बुल (SAG-4012)</div>
-                <div class="text-[10px] text-slate-500">मदर यील्ड: 4800L • फैट: 7.8%</div>
-                <div class="text-[10px] text-emerald-600 font-bold mt-1">सीमन उपलब्ध (A.I. स्टेशन)</div>
-              </div>
-              <div class="p-3 bg-slate-50 border border-slate-200 rounded-2xl">
-                <div class="font-bold text-emerald-700">साहीवाल बुल (NDDB-81)</div>
-                <div class="text-[10px] text-slate-500">मदर यील्ड: 3900L • A2 Milk</div>
-                <div class="text-[10px] text-emerald-600 font-bold mt-1">उच्च रोग प्रतिरोधक क्षमता</div>
-              </div>
-              <div class="p-3 bg-slate-50 border border-slate-200 rounded-2xl">
-                <div class="font-bold text-purple-700">गिर बुल (BR-22)</div>
-                <div class="text-[10px] text-slate-500">मदर यील्ड: 4200L • शुद्ध सौराष्ट्र लाइन</div>
-                <div class="text-[10px] text-emerald-600 font-bold mt-1">उच्च आनुवंशिक मेरिट</div>
-              </div>
-            </div>
-          </div>
+          <!-- Bull Directory Container (Injected dynamically via farmer-bulls.js) -->
+          <div id="bullDirectoryContainer"></div>
         </section>
 
-        <!-- TAB: BALANCED FEED CALCULATOR -->
+        <!-- BALANCED NUTRITION & FEED CALCULATOR -->
         <section id="viewFeed" class="hidden space-y-4"></section>
 
-        <!-- TAB: DAIRY LEDGER -->
+        <!-- DAIRY LEDGER & FINANCES -->
         <section id="viewFinance" class="hidden space-y-4"></section>
 
-        <!-- TAB: HELPDESK & 22 DESI DISEASES -->
+        <!-- DISEASE HUB & GOVT SCHEMES HUB -->
         <section id="viewHelpdesk" class="hidden space-y-4">
-          <!-- Government Schemes Section -->
-          <div class="bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-3xl p-4 sm:p-5 text-xs space-y-2.5">
-            <h3 class="font-bold text-emerald-900 flex items-center gap-1.5">🏛️ सरकारी पशुपालन योजनाएं व अनुदान (Govt Dairy Schemes)</h3>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-slate-700">
-              <div class="bg-white p-2.5 rounded-xl border border-emerald-100">
-                <div class="font-bold text-emerald-800">1. राष्ट्रीय पशुधन मिशन (NLM)</div>
-                <div class="text-[11px] text-slate-600">बकरी/भेड़/कुक्कुट पालन पर 50% तक पूंजीगत सब्सिडी।</div>
-              </div>
-              <div class="bg-white p-2.5 rounded-xl border border-emerald-100">
-                <div class="font-bold text-emerald-800">2. पशु किसान क्रेडिट कार्ड (Pashu KCC)</div>
-                <div class="text-[11px] text-slate-600">प्रति गाय ₹40,783 व प्रति भैंस ₹60,249 तक शून्य कोलेटरल पर 4% ब्याज दर ऋण।</div>
-              </div>
-            </div>
-          </div>
+          <!-- Dynamic Govt Schemes Hub Container -->
+          <div id="govtSchemesContainer"></div>
         </section>
       </div>
 
@@ -933,6 +915,9 @@
   <script src="./theme-engine.js"></script>
   <script src="./clinical-diseases.js"></script>
   <script src="./diseases-farmer.js"></script>
+  <script src="./doctor-drugs.js"></script>
+  <script src="./farmer-bulls.js"></script>
+  <script src="./farmer-schemes.js"></script>
   <script src="./admin-panel.js"></script>
   <script src="./doctor-engine.js"></script>
   <script src="./farmer-engine.js"></script>
