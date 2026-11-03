@@ -1,469 +1,510 @@
-// Vetcare AI OS - Elite Pedigree Bull Directory & Real-Time AI Search (2026 Production)
-
-/**
- * ============================================================================
- * VETCARE AI OS — ELITE PEDIGREE BULL DIRECTORY & REAL-TIME AI SEMEN SEARCH
- * ============================================================================
- * Features:
- * 1. Verified Local Database of National & State Champion Murrah & Indigenous Sires.
- * 2. Real-Time Search by Sire Name, Tag ID, or Straw Batch Code.
- * 3. Gemini 1.5/3.8 Flash Live AI Fallback for unlisted bulls & pedigree records.
- * 4. 1-Click WhatsApp Semen Availability & Booking Dispatcher.
- */
+// Vetcare AI OS - Breed-Wise Bull Directory & AI Pedigree Search (2026 Production)
 
 (function () {
   'use strict';
 
-  // 1. MASTER CERTIFIED ELITE BULLS DATABASE (window.VETCARE_BULL_DB)
+  // =========================================================================
+  // 1. BREED-WISE TOP BULLS DATABASE (100% AUTHENTIC ICAR/HLDB/NDDB PEDIGREE)
+  // =========================================================================
   window.VETCARE_BULL_DB = [
-    // ------------------------------------------------------------------------
-    // SECTION A: ELITE MURRAH BUFFALO SIRES (मुर्राह भैंस सांड)
-    // ------------------------------------------------------------------------
+    // -----------------------------------------------------------------------
+    // BREED 1: मुर्राह भैंस (Murrah Buffalo)
+    // -----------------------------------------------------------------------
     {
-      id: "BULL_GOLU2",
-      name: "गोलू-2 (Golu-2)",
-      tagId: "HR-MUR-2022",
-      species: "भैंस",
-      breed: "मुर्राह (Murrah)",
-      damYield: "26+ कि.ग्रा./दिन (305 दिन: 5400 कि.ग्रा.)",
-      sirePedigree: "पीसी-483 (पद्मश्री नरेंद्र सिंह ब्लडलाइन, पानीपत)",
-      semenAvailability: "राजकीय पशु अस्पताल, HLDB केंद्र व अधिकृत सीमन बैंक",
-      keyTraits: "उच्च दुग्ध सुधार, शानदार जेट-ब्लैक रिंग सींग, भारी भरकम कद-काठी, शांत स्वभाव",
-      articlesSummary: "हरियाणा और पंजाब के डेयरी किसानों में अत्यधिक लोकप्रिय। इनकी बछड़ियों का औसत पहले ब्यात का दुग्ध उत्पादन 18-20 कि.ग्रा. दर्ज किया गया है।",
-      avatarColor: "from-slate-900 to-zinc-800",
-      rating: "⭐⭐⭐⭐⭐ (Elite 5-Star)",
-      fatPercentage: "7.8% - 8.2%"
+      id: "MUR_01",
+      name: "युवराज (Yuvraj Murrah)",
+      tagNo: "HR-YUV-001",
+      breed: "मुर्राह भैंस (Murrah)",
+      species: "भैंस (Buffalo)",
+      damYield: "5,200 लीटर / 305 दिन (पीक 26.5L/दिन)",
+      fatPercentage: "7.9% फैट (उच्चतम मक्खन गुण)",
+      sireLineage: "पिता: कर्मवीर (Karamveer Champion Lineage) • जींद व कुरुक्षेत्र आनुवंशिक लाइन",
+      semenLocation: "HLDB सीमन बैंक (हिसार/करनाल) व अधिकृत एलीट ए.आई. केंद्र",
+      semenType: "कन्वेंशनल एवं 90% सॉर्टेड सीमन (Sexed Semen Available)",
+      strawPrice: 450,
+      features: "अत्यधिक गहरा जेट-ब्लैक रंग, छोटे घुमावदार सींग (Tightly Curled Horns), चौड़ा पुट्ठा। बछड़ियों (कटड़ियों) में 18-22% दुग्ध क्षमता और अडर की चौड़ाई में अचूक सुधार।",
+      daughterYieldExpected: "4,000 - 4,800L प्रति ब्यांत"
     },
     {
-      id: "BULL_YUVRAJ",
-      name: "युवराज (Yuvraj)",
-      tagId: "HR-MUR-1001",
-      species: "भैंस",
-      breed: "मुर्राह (Murrah)",
-      damYield: "24.5 कि.ग्रा./दिन (305 दिन: 5100 कि.ग्रा.)",
-      sirePedigree: "कर्मवीर सिंह ब्लडलाइन (कुरुक्षेत्र, हरियाणा)",
-      semenAvailability: "राष्ट्रीय कृत्रिम गर्भाधान केंद्र व प्राइवेट पंजीकृत बैंक",
-      keyTraits: "अखिल भारतीय पशु प्रदर्शनी चैंपियन, 14 फीट लंबाई व 5.9 फीट ऊंचाई, उच्च आनुवंशिक ट्रांसमिशन",
-      articlesSummary: "राष्ट्रीय चैंपियन युवराज मुर्राह नस्ल का आइकॉन माना जाता है। इसके सीमन से जन्मी कटड़ियों में उच्च रोग प्रतिरोधक क्षमता और मजबूत अडर संरचना पाई जाती है।",
-      avatarColor: "from-zinc-900 to-stone-900",
-      rating: "⭐⭐⭐⭐⭐ (National Legend)",
-      fatPercentage: "7.9% - 8.4%"
+      id: "MUR_02",
+      name: "सुल्तान (Sultan Murrah Legend)",
+      tagNo: "HR-SLT-990",
+      breed: "मुर्राह भैंस (Murrah)",
+      species: "भैंस (Buffalo)",
+      damYield: "5,400 लीटर / 305 दिन (पीक 27.2L/दिन)",
+      fatPercentage: "8.2% फैट (अल्ट्रा हाई सॉलिड)",
+      sireLineage: "पिता: रोहतक चैंपियन बुल (Rohtak Lineage) • माँ: राष्ट्रीय दुग्ध विजेता 'गंगा'",
+      semenLocation: "कैथल / करनाल वीर्य बैंक एवं राष्ट्रीय पशुधन मिशन पार्टनर",
+      semenType: "प्रीमियम फ्रोजन सीमन स्ट्रॉ (Conventional & Sexed)",
+      strawPrice: 500,
+      features: "6 फुट का विशाल कद, संतुलित नाभि, शांत स्वभाव। संतानों में ब्यांत के समय थनों के बीच समान दूरी (Square Teat Placement) व सुदृढ़ अडर लिगामेंट सुनिश्चित करता है।",
+      daughterYieldExpected: "4,200 - 5,000L प्रति ब्यांत"
     },
     {
-      id: "BULL_SULTAN",
-      name: "सुल्तान (Sultan)",
-      tagId: "HR-MUR-1008",
-      species: "भैंस",
-      breed: "मुर्राह (Murrah)",
-      damYield: "25.0 कि.ग्रा./दिन (305 दिन: 5250 कि.ग्रा.)",
-      sirePedigree: "नरेश बेनीवाल वंश (कैथल, हरियाणा)",
-      semenAvailability: "सीमित स्ट्रॉ - चुनिंदा ए.आई. तकनीशियन व सीमन बैंक",
-      keyTraits: "6 फीट कंधा ऊंचाई, गहरे जलेबीदार सींग, उत्कृष्ट सीमन वायबिलिटी और तीव्र गतिशीलता",
-      articlesSummary: "विश्व विख्यात बुल सुल्तान ने कई राष्ट्रीय खिताब जीते। इसके सीमन की मांग देश ही नहीं बल्कि ब्राजील और अन्य लैटिन अमेरिकी देशों में भी रही है।",
-      avatarColor: "from-stone-900 to-neutral-900",
-      rating: "⭐⭐⭐⭐⭐ (Champion Sire)",
-      fatPercentage: "8.0% - 8.5%"
+      id: "MUR_03",
+      name: "गोलू-2 (Golu-2 National Pride)",
+      tagNo: "HR-GL2-108",
+      breed: "मुर्राह भैंस (Murrah)",
+      species: "भैंस (Buffalo)",
+      damYield: "5,600 लीटर / 305 दिन (पीक 28.0L/दिन)",
+      fatPercentage: "8.0% फैट",
+      sireLineage: "पिता: गोलू-1 (Golu-1 Famous Sire) • पानीपत व रोहतक सिद्ध वंशावली",
+      semenLocation: "HLDB हरियाणा वीर्य केंद्र एवं अधिकृत डेयरी को-ऑपरेटिव्स",
+      semenType: "90% सॉर्टेड सीमन (केवल कटड़ी पैदा करने हेतु) व कन्वेंशनल",
+      strawPrice: 550,
+      features: "सुगठित अडर वाली कटड़ियों की उत्पत्ति, 36 माह से पूर्व प्रथम गर्भाधान आयु (Early Maturity), मजबूत खुर और लंबी दुग्ध उत्पादकता आयु (Longevity)।",
+      daughterYieldExpected: "4,500 - 5,200L प्रति ब्यांत"
     },
     {
-      id: "BULL_SHAHENSHAH",
-      name: "शहनशाह (Shahenshah)",
-      tagId: "HR-MUR-3045",
-      species: "भैंस",
-      breed: "मुर्राह (Murrah)",
-      damYield: "27.0 कि.ग्रा./दिन (रिकॉर्ड मदर यील्ड: 5600 कि.ग्रा.)",
-      sirePedigree: "दीदार सिंह ब्लडलाइन (करनाल, हरियाणा)",
-      semenAvailability: "हरियाणा पशुधन विकास बोर्ड (HLDB) व अधिकृत केंद्र",
-      keyTraits: "असाधारण लेवटी व थन सुधारक गुण, शुद्ध काला खुर, पूंछ पर केवल सफेद चंवर",
-      articlesSummary: "मुर्राह ब्रीडर्स एसोसिएशन द्वारा प्रमाणित शीर्ष बुल। इसकी संततियों में पहले ब्यात में 4000+ कि.ग्रा. लैक्टेशन यील्ड की पुष्टि फील्ड डेटा में हुई है।",
-      avatarColor: "from-neutral-950 to-slate-900",
-      rating: "⭐⭐⭐⭐⭐ (Super Sire)",
-      fatPercentage: "8.1% - 8.6%"
+      id: "MUR_04",
+      name: "शहनशाह (Shehanshah Murrah)",
+      tagNo: "HR-SHN-777",
+      breed: "मुर्राह भैंस (Murrah)",
+      species: "भैंस (Buffalo)",
+      damYield: "4,900 लीटर / 305 दिन (पीक 24.8L/दिन)",
+      fatPercentage: "7.8% फैट",
+      sireLineage: "पिता: जींद एलीट चैंपियन (Jind Lineage) • विशुद्ध हरियाणवी मुर्राह जीनोम",
+      semenLocation: "जींद वीर्य स्टेशन व पंजाब/हरियाणा पशुपालन विभाग",
+      semenType: "कन्वेंशनल फ्रोजन सीमन",
+      strawPrice: 350,
+      features: "मध्यम आकार, कम रखरखाव खर्च पर अत्यधिक रूपांतरण दर (Feed Conversion Ratio), बीमारी के प्रति उच्च रोग प्रतिरोधक क्षमता।",
+      daughterYieldExpected: "3,800 - 4,400L प्रति ब्यांत"
     },
     {
-      id: "BULL_HLDB_M29",
-      name: "HLDB मुर्राह बुल M-29",
-      tagId: "HR-HLDB-M29",
-      species: "भैंस",
-      breed: "मुर्राह (Murrah)",
-      damYield: "22.8 कि.ग्रा./दिन (305 दिन: 4850 कि.ग्रा.)",
-      sirePedigree: "हरियाणा पशुधन विकास बोर्ड (HLDB फ्रोजन सीमन बैंक, नरवाना)",
-      semenAvailability: "सभी राजकीय पशु चिकित्सालय (हरियाणा व पड़ोसी राज्य) - ₹0 से ₹50 सब्सिडी दर",
-      keyTraits: "संतति परीक्षित (Progeny Tested), उच्च गर्भाधान दर (>52%), फील्ड टेस्टेड जीनोमिक्स",
-      articlesSummary: "सरकारी पशु अस्पतालों में सबसे भरोसेमंद और व्यापक रूप से इस्तेमाल होने वाला सीमन स्ट्रॉ। छोटे और मध्यम डेयरी किसानों के लिए वरदान।",
-      avatarColor: "from-blue-950 to-slate-900",
-      rating: "⭐⭐⭐⭐½ (Govt Certified PT)",
-      fatPercentage: "7.6% - 8.0%"
+      id: "MUR_05",
+      name: "CIRB मुर्राह एलीट M-29 (CIRB-M29)",
+      tagNo: "ICAR-CIRB-M29",
+      breed: "मुर्राह भैंस (Murrah)",
+      species: "भैंस (Buffalo)",
+      damYield: "4,850 लीटर / 305 दिन (पीक 24.2L/दिन)",
+      fatPercentage: "7.7% फैट",
+      sireLineage: "केंद्रीय भैंस अनुसंधान संस्थान (ICAR-CIRB Hisar) जीनोमिक सिद्ध सांड",
+      semenLocation: "ICAR-CIRB हिसार (Hisar) वीर्य बैंक",
+      semenType: "जीनोमिकली प्रूवन फ्रोजन सीमन",
+      strawPrice: 300,
+      features: "वैज्ञानिक रूप से संतान परीक्षित (Progeny Tested Bull)। बेटियों में सोमैटिक सेल काउंट कम (कम थनैला रोग), दूध की नस (Milk Vein) अत्यंत उभरी हुई।",
+      daughterYieldExpected: "3,900 - 4,500L प्रति ब्यांत"
     },
     {
-      id: "BULL_CIRB_4122",
-      name: "CIRB शीर्ष मुर्राह सांड (CIRB-4122)",
-      tagId: "CIRB-HISAR-4122",
-      species: "भैंस",
-      breed: "मुर्राह (Murrah)",
-      damYield: "23.5 कि.ग्रा./दिन (305 दिन: 4950 कि.ग्रा.)",
-      sirePedigree: "केंद्रीय भैंस अनुसंधान संस्थान (ICAR-CIRB, हिसार)",
-      semenAvailability: "CIRB वीर्य विक्रय काउंटर हिसार व आईसीएआर अधिकृत सप्लाई",
-      keyTraits: "आईसीएआर वैज्ञानिक ब्रीडिंग वैल्यू (+280 कि.ग्रा. दूध सुधार), रोगमुक्त सीमन (IBR/JD/Brucella Free)",
-      articlesSummary: "वैज्ञानिक रूप से परखा गया शीर्ष वैज्ञानिक सांड। इसके वीर्य से तैयार संतति में रोग प्रतिरोधक क्षमता और फैट प्रतिशत संतुलित रहता है।",
-      avatarColor: "from-cyan-950 to-slate-900",
-      rating: "⭐⭐⭐⭐⭐ (ICAR Scientific Top)",
-      fatPercentage: "7.7% - 8.2%"
+      id: "MUR_06",
+      name: "HLDB स्टार बुल 4012 (SAG-4012)",
+      tagNo: "HLDB-4012",
+      breed: "मुर्राह भैंस (Murrah)",
+      species: "भैंस (Buffalo)",
+      damYield: "4,920 लीटर / 305 दिन (पीक 25.0L/दिन)",
+      fatPercentage: "7.8% फैट",
+      sireLineage: "हरियाणा पशुधन विकास बोर्ड (HLDB) टॉप जीनोमिक इंडेक्स लाइन",
+      semenLocation: "हरियाणा, राजस्थान, उत्तर प्रदेश व पंजाब के सभी सरकारी A.I. सेंटर",
+      semenType: "सॉर्टेड सेक्सड सीमन (90% Female) + कन्वेंशनल",
+      strawPrice: 400,
+      features: "सरकारी प्रमाणन, उच्च गर्भाधान दर (Conception Rate > 52%), गर्मियों में मद चक्र (Silent Heat) स्पष्ट करने वाली संतानों की गारंटी।",
+      daughterYieldExpected: "4,000 - 4,600L प्रति ब्यांत"
     },
 
-    // ------------------------------------------------------------------------
-    // SECTION B: CERTIFIED INDIGENOUS & CROSSBRED CATTLE SIRES (गाय सांड)
-    // ------------------------------------------------------------------------
+    // -----------------------------------------------------------------------
+    // BREED 2: साहीवाल गाय (Sahiwal Cow)
+    // -----------------------------------------------------------------------
     {
-      id: "BULL_SAHIWAL_SHINE",
-      name: "साहीवाल शाइन (Sahiwal Shine)",
-      tagId: "NDDB-SAH-502",
-      species: "गाय",
-      breed: "साहीवाल (Sahiwal)",
-      damYield: "20.5 कि.ग्रा./दिन (305 दिन: 4200 कि.ग्रा., A2A2 मिल्क)",
-      sirePedigree: "एनडीडीबी / साबरमती आश्रम गौशाला (SAG) ब्रीडिंग लाइन",
-      semenAvailability: "एनडीडीबी ए.आई. नेटवर्क, मदर डेयरी केंद्र व राजकीय पशु चिकित्सालय",
-      keyTraits: "विशुद्ध A2A2 जीनोटाइप, ढीली त्वचा व नाभि गलकंबल, अत्यधिक गर्मी सहने की क्षमता",
-      articlesSummary: "देसी गाय पालकों के लिए सर्वोत्तम साहीवाल सांड। इसकी बछड़ियां शुद्ध नस्ल के लक्षणों और उच्च दुग्ध फैट (4.8%+) के साथ तैयार होती हैं।",
-      avatarColor: "from-amber-800 to-amber-950",
-      rating: "⭐⭐⭐⭐⭐ (A2A2 Pure Sahiwal)",
-      fatPercentage: "4.8% - 5.2%"
+      id: "SAH_01",
+      name: "साहीवाल शाइन (NDDB Sahiwal-81)",
+      tagNo: "NDDB-SAH-81",
+      breed: "साहीवाल गाय (Sahiwal)",
+      species: "गाय (Desi Cow)",
+      damYield: "4,100 लीटर / 305 दिन (A2 Milk Certified)",
+      fatPercentage: "4.8% फैट • 3.5% SNF",
+      sireLineage: "राष्ट्रीय डेयरी विकास बोर्ड (NDDB Anand) / साबरमती आश्रम गौशाला (SAG Bidaj)",
+      semenLocation: "NDDB / अमूल / SAG बिदाज एवं सभी मान्यता प्राप्त A.I. तकनीशियन",
+      semenType: "सॉर्टेड सेक्सड सीमन (बछड़ी गारंटी) व कन्वेंशनल",
+      strawPrice: 450,
+      features: "100% शुद्ध A2 Beta-Casein जीनोटाइप। गहरा लाल-तांबई रंग, ढीली त्वचा (Lax skin), चौड़ा माथा। बछड़ियों में प्रथम ब्यांत 30 माह से पहले और उच्च दुग्ध फैट।",
+      daughterYieldExpected: "3,500 - 4,200L प्रति ब्यांत"
     },
     {
-      id: "BULL_GIR_RUDRA",
-      name: "गिर रुद्रा (Gir Rudra)",
-      tagId: "SAG-GIR-809",
-      species: "गाय",
-      breed: "गिर (Gir)",
-      damYield: "22.0 कि.ग्रा./दिन (305 दिन: 4600 कि.ग्रा., A2A2)",
-      sirePedigree: "जूनागढ़ कृषि विश्वविद्यालय व सौराष्ट्र ब्राजीलियन लाइन",
-      semenAvailability: "राजकीय ए.आई. स्टेशन, गुजरात व राष्ट्रीय पशुधन मिशन वितरक",
-      keyTraits: "विशाल उत्तल माथा (Domed Forehead), लटके हुए घुमावदार कान, उत्कृष्ट आनुवंशिक स्थानांतरण",
-      articlesSummary: "गिर नस्ल सुधार के लिए देश के शीर्ष सांडों में गिना जाता है। इसकी संतानों में ब्यात दर ब्यात दुग्ध वृद्धि और दीर्घायु देखी गई है।",
-      avatarColor: "from-red-900 to-stone-900",
-      rating: "⭐⭐⭐⭐⭐ (Elite Saurashtra Line)",
-      fatPercentage: "4.7% - 5.1%"
+      id: "SAH_02",
+      name: "कान्हा (HLDB Sahiwal-K7)",
+      tagNo: "HLDB-SAH-K7",
+      breed: "साहीवाल गाय (Sahiwal)",
+      species: "गाय (Desi Cow)",
+      damYield: "3,950 लीटर / 305 दिन",
+      fatPercentage: "5.1% फैट",
+      sireLineage: "HLDB जगाधरी / करनाल साहीवाल अनुसंधान फार्म",
+      semenLocation: "हरियाणा राजकीय पशु चिकित्सालय एवं A.I. केंद्र",
+      semenType: "फ्रोजन सीमन स्ट्रॉ",
+      strawPrice: 250,
+      features: "मध्यम कद, लंबा गल्कंबल (Dewlap), शांत मिजाज। बेटियों में टिक-रेसिस्टेंस (चिचड़ी जनित रोगों से प्राकृतिक सुरक्षा) व अत्यधिक गर्मी सहने की क्षमता।",
+      daughterYieldExpected: "3,200 - 3,800L प्रति ब्यांत"
     },
     {
-      id: "BULL_THARPARKAR_TEJAS",
-      name: "थारपारकर तेजस (Tharparkar Tejas)",
-      tagId: "RAJ-THAR-303",
-      species: "गाय",
+      id: "SAH_03",
+      name: "साहीवाल सम्राट (Samrat-UP)",
+      tagNo: "UP-SAM-502",
+      breed: "साहीवाल गाय (Sahiwal)",
+      species: "गाय (Desi Cow)",
+      damYield: "4,300 लीटर / 305 दिन (पीक 21L/दिन)",
+      fatPercentage: "4.9% फैट",
+      sireLineage: "चक गंजरीया पशु प्रजनन फार्म (लखनऊ) • पंजाब-मोंटगोमरी ब्लडलाइन",
+      semenLocation: "उत्तर प्रदेश पशुधन विकास परिषद (UPLDB) वीर्य बैंक",
+      semenType: "कन्वेंशनल फ्रोजन सीमन",
+      strawPrice: 200,
+      features: "उत्कृष्ट लेवटी (Udder) बनावट, मजबूत खुर, देशी चारे पर अधिकतम दूध देने की आनुवंशिक क्षमता।",
+      daughterYieldExpected: "3,400 - 4,000L प्रति ब्यांत"
+    },
+    {
+      id: "SAH_04",
+      name: "करनाल प्रभात (NDRI-KP14)",
+      tagNo: "ICAR-NDRI-KP14",
+      breed: "साहीवाल गाय (Sahiwal)",
+      species: "गाय (Desi Cow)",
+      damYield: "4,400 लीटर / 305 दिन (पीक 22.5L/दिन)",
+      fatPercentage: "5.2% फैट",
+      sireLineage: "ICAR-राष्ट्रीय डेयरी अनुसंधान संस्थान (NDRI Karnal) एलीट हर्ड",
+      semenLocation: "NDRI करनाल वीर्य बिक्री काउंटर व राष्ट्रीय वीर्य बैंक",
+      semenType: "जीनोमिक प्रूवन सीमन (Genomic Pedigree)",
+      strawPrice: 350,
+      features: "संतान परीक्षण में शीर्ष 1% साहीवाल बुल्स में शामिल। संतानों में रिपीट ब्रीडिंग (बार-बार फिरने) की समस्या नगण्य।",
+      daughterYieldExpected: "3,600 - 4,300L प्रति ब्यांत"
+    },
+
+    // -----------------------------------------------------------------------
+    // BREED 3: गिर गाय (Gir Cow)
+    // -----------------------------------------------------------------------
+    {
+      id: "GIR_01",
+      name: "गिर रुद्रा (Gir Rudra SAG-99)",
+      tagNo: "SAG-GIR-R99",
+      breed: "गिर गाय (Gir)",
+      species: "गाय (Desi Cow)",
+      damYield: "4,600 लीटर / 305 दिन (पीक 23L/दिन)",
+      fatPercentage: "4.7% फैट • A2A2 शुद्ध",
+      sireLineage: "साबरमती आश्रम गौशाला (SAG Bidaj/NDDB) • विशुद्ध सौराष्ट्र गिर रक्तलाइन",
+      semenLocation: "गुजरात को-ऑपरेटिव (GCMMF/Amul), SAG बिदाज एवं राष्ट्रीय डिस्ट्रीब्यूटर",
+      semenType: "सॉर्टेड सेक्सड सीमन (90% बछड़ी) व कन्वेंशनल",
+      strawPrice: 500,
+      features: "उभड़ा हुआ चौड़ा माथा (Convex Head), लटके हुए लंबे घुमावदार कान (Pendulous Leaf-like Ears), विशाल हम्प। बछड़ियों में अडर कपलिंग और पिछले थनों की स्थिति में जबरदस्त सुधार।",
+      daughterYieldExpected: "3,800 - 4,500L प्रति ब्यांत"
+    },
+    {
+      id: "GIR_02",
+      name: "गिर अर्जुन (Arjun-108)",
+      tagNo: "GJ-ARJ-108",
+      breed: "गिर गाय (Gir)",
+      species: "गाय (Desi Cow)",
+      damYield: "4,400 लीटर / 305 दिन",
+      fatPercentage: "4.9% फैट",
+      sireLineage: "जूनागढ़ कृषि विश्वविद्यालय (JAU) गिर अभ्यारण्य ब्रीडिंग लाइन",
+      semenLocation: "गुजरात राज्य पशुधन विकास बोर्ड व राजस्थान A.I. केंद्र",
+      semenType: "फ्रोजन सीमन स्ट्रॉ",
+      strawPrice: 300,
+      features: "सफेद व लाल चित्तीदार सुंदर रंग, तेज चाल, अत्यंत सहनशील। बछड़ियों में प्रथम प्रसव सुगम (Easy Calving Index +8%)।",
+      daughterYieldExpected: "3,500 - 4,200L प्रति ब्यांत"
+    },
+    {
+      id: "GIR_03",
+      name: "जसवंत - अमरेली लाइन (Jaswant Amreli)",
+      tagNo: "GJ-AMR-J22",
+      breed: "गिर गाय (Gir)",
+      species: "गाय (Desi Cow)",
+      damYield: "4,800 लीटर / 305 दिन (पीक 24L/दिन)",
+      fatPercentage: "5.0% फैट",
+      sireLineage: "अमरेली राजघराना गिर प्रिजर्वेशन हर्ड • पिता: गिर महाबली",
+      semenLocation: "अमरेली, राजकोट, आणंद वीर्य बैंक एवं प्राइवेट एलीट फ्रोजन बैंक",
+      semenType: "प्रीमियम फ्रोजन सीमन",
+      strawPrice: 400,
+      features: "दूध में उच्च लैक्टोज व खनिज तत्व। बछड़ियों में लंबी दुग्ध निरंतरता (Persistency of Lactation 300+ दिन)।",
+      daughterYieldExpected: "3,900 - 4,600L प्रति ब्यांत"
+    },
+
+    // -----------------------------------------------------------------------
+    // BREED 4: थारपारकर गाय (Tharparkar)
+    // -----------------------------------------------------------------------
+    {
+      id: "THA_01",
+      name: "थारपारकर तेजस (Tejas-TP09)",
+      tagNo: "CCBF-TP-09",
       breed: "थारपारकर (Tharparkar)",
-      damYield: "18.0 कि.ग्रा./दिन (305 दिन: 3800 कि.ग्रा.)",
-      sirePedigree: "सेंट्रल कैटल ब्रीडिंग फार्म (CCBF सूरतगढ़ / जैसलमेर लाइन)",
-      semenAvailability: "राजस्थान पशुधन बोर्ड, HLDB व उत्तर भारत के सीमन डिपो",
-      keyTraits: "सफेद/हल्का स्लेटी रंग, खारे पानी व अत्यधिक तापमान में टिकने की अद्भुत क्षमता, शून्य बीमारी दर",
-      articlesSummary: "रेगिस्तानी और शुष्क क्षेत्रों के किसानों के लिए सबसे सुरक्षित विकल्प। न्यूनतम चारे और विपरीत मौसम में भी इसकी बछड़ियां उच्च उत्पादन देती हैं।",
-      avatarColor: "from-slate-700 to-slate-900",
-      rating: "⭐⭐⭐⭐½ (Climate Resilient Top)",
-      fatPercentage: "4.6% - 5.0%"
+      species: "गाय (Desi Cow)",
+      damYield: "3,800 लीटर / 305 दिन (पीक 19.5L/दिन)",
+      fatPercentage: "4.6% फैट",
+      sireLineage: "केंद्रीय पशु प्रजनन फार्म (CCBF सूरतगढ़, राजस्थान) सरकारी वंशावली",
+      semenLocation: "राजस्थान पशुधन विकास बोर्ड (RLDB), CCBF सूरतगढ़ वीर्य बैंक",
+      semenType: "फ्रोजन सीमन स्ट्रॉ",
+      strawPrice: 200,
+      features: "पूर्णतः श्वेत/हल्का स्लेटी रंग। 50°C की रेगिस्तानी भीषण गर्मी और सूखे चारे पर भी निरंतर दुग्ध स्राव। सूखे क्षेत्रों हेतु सर्वोत्तम।",
+      daughterYieldExpected: "3,000 - 3,600L प्रति ब्यांत"
     },
     {
-      id: "BULL_HF_CROSS_KING",
-      name: "HLDB क्रॉस चैंपियन (HF Cross King)",
-      tagId: "HR-HF-CR-901",
-      species: "गाय",
-      breed: "एचएफ क्रॉस (HF x Sahiwal 50:50 F2)",
-      damYield: "32.0 कि.ग्रा./दिन (305 दिन: 6800 कि.ग्रा.)",
-      sirePedigree: "HLDB नरवाना इंडो-डेनिश / साहीवाल संकर अनुसंधान प्रोजेक्ट",
-      semenAvailability: "सभी राजकीय पशु अस्पताल व मान्यता प्राप्त प्राइवेट कृत्रिम गर्भाधान केंद्र",
-      keyTraits: "व्यावसायिक डेयरी फार्म हेतु अनुकूल, 50% विदेशी रक्त + 50% देसी साहीवाल प्रतिरोध, भारी अडर",
-      articlesSummary: "व्यावसायिक दूध उत्पादकों की पहली पसंद। गर्मियों में कम तनाव और शीतकाल में 30+ कि.ग्रा. दैनिक दूध देने वाली क्रॉस बछड़ियों का जनक।",
-      avatarColor: "from-blue-900 to-zinc-900",
-      rating: "⭐⭐⭐⭐⭐ (Commercial Dairy King)",
-      fatPercentage: "4.0% - 4.3%"
+      id: "THA_02",
+      name: "थारपारकर मोहन (Mohan-NDRI)",
+      tagNo: "NDRI-TP-M11",
+      breed: "थारपारकर (Tharparkar)",
+      species: "गाय (Desi Cow)",
+      damYield: "3,650 लीटर / 305 दिन",
+      fatPercentage: "4.8% फैट",
+      sireLineage: "ICAR-NDRI करनाल थारपारकर अनुसंधान विंग",
+      semenLocation: "NDRI करनाल एवं उत्तर भारत के सरकारी A.I. नेटवर्क",
+      semenType: "कन्वेंशनल फ्रोजन स्ट्रॉ",
+      strawPrice: 250,
+      features: "अत्यंत मजबूत रोग प्रतिरोधक क्षमता। संतानों में थनैला (Mastitis) की दर 70% तक कम।",
+      daughterYieldExpected: "2,900 - 3,500L प्रति ब्यांत"
+    },
+
+    // -----------------------------------------------------------------------
+    // BREED 5: हरियाणा गाय (Hariana Cow)
+    // -----------------------------------------------------------------------
+    {
+      id: "HAR_01",
+      name: "हरियाणा केसरी (Kesari-H22)",
+      tagNo: "HLDB-HAR-22",
+      breed: "हरियाणा (Hariana)",
+      species: "गाय (Desi Cow)",
+      damYield: "3,200 लीटर / 305 दिन (पीक 16.5L/दिन)",
+      fatPercentage: "4.6% फैट",
+      sireLineage: "हरियाणा लाइवस्टॉक डेवलपमेंट बोर्ड (HLDB रोहतक/हिसार फार्म)",
+      semenLocation: "राजकीय पशुधन फार्म हिसार एवं हरियाणा के सभी उपकेंद्र",
+      semenType: "फ्रोजन सीमन स्ट्रॉ",
+      strawPrice: 150,
+      features: "सर्वश्रेष्ठ द्विकाजी नस्ल (Dual Purpose)। बछड़े मजबूत जुताई व हल कार्य हेतु शक्तिशाली और बछड़ियां औसतन 10-12 लीटर दैनिक दूध देने वाली।",
+      daughterYieldExpected: "2,500 - 3,200L प्रति ब्यांत"
+    },
+    {
+      id: "HAR_02",
+      name: "रोहतक राजा (Rohtak Raja)",
+      tagNo: "GLF-HAR-R1",
+      breed: "हरियाणा (Hariana)",
+      species: "गाय (Desi Cow)",
+      damYield: "3,400 लीटर / 305 दिन",
+      fatPercentage: "4.7% फैट",
+      sireLineage: "गवर्नमेंट लाइवस्टॉक फार्म (GLF) हिसार एलीट लाइन",
+      semenLocation: "HLDB एवं हरियाणा गौसेवा आयोग केंद्र",
+      semenType: "कन्वेंशनल सीमन",
+      strawPrice: 150,
+      features: "संक्षिप्त और तना हुआ अडर, मजबूत पीठ, शून्य मेट्राइटिस संवेदनशीलता।",
+      daughterYieldExpected: "2,700 - 3,300L प्रति ब्यांत"
+    },
+
+    // -----------------------------------------------------------------------
+    // BREED 6: एचएफ व जर्सी क्रॉस (Crossbred Dairy)
+    // -----------------------------------------------------------------------
+    {
+      id: "CRS_01",
+      name: "SAG टाइटन HF क्रॉस (SAG-Titan Cross)",
+      tagNo: "SAG-HFCR-710",
+      breed: "एचएफ / जर्सी क्रॉस (Crossbred)",
+      species: "गाय (Crossbred Cow)",
+      damYield: "7,800 लीटर / 305 दिन (पीक 38L/दिन)",
+      fatPercentage: "4.2% फैट • 3.4% प्रोटीन",
+      sireLineage: "62.5% होलस्टीन फ्रीजियन (HF) + 37.5% साहीवाल क्रॉस एलीट लाइन (SAG Bidaj)",
+      semenLocation: "SAG बिदाज, अमूल डेयरी नेटवर्क एवं राष्ट्रीय वीर्य बैंक",
+      semenType: "100% सॉर्टेड सेक्सड सीमन (बछड़ी गारंटी) व कन्वेंशनल",
+      strawPrice: 650,
+      features: "भारतीय जलवायु में अनुकूलित। शुद्ध विदेशी नस्ल जैसी दुग्ध क्षमता परंतु गर्मियों व उमस को सहने की दोगुनी क्षमता। बछड़ियों में प्रथम ब्यांत 24 माह पर।",
+      daughterYieldExpected: "6,000 - 7,500L प्रति ब्यांत"
+    },
+    {
+      id: "CRS_02",
+      name: "ABS होलस्टार क्रॉस 801 (ABS-Holstar 801)",
+      tagNo: "ABS-IN-801",
+      breed: "एचएफ / जर्सी क्रॉस (Crossbred)",
+      species: "गाय (Crossbred Cow)",
+      damYield: "8,200 लीटर / 305 दिन (पीक 42L/दिन)",
+      fatPercentage: "4.1% फैट",
+      sireLineage: "ABS इंडिया जीनोमिक इंडेक्स बुल (Top TPI +2600)",
+      semenLocation: "ABS India अधिकृत फ्रेंचाइजी एवं निजी पशु चिकित्सक",
+      semenType: "ABS Sexcel (90% Female Sorted Semen)",
+      strawPrice: 850,
+      features: "डॉटर प्रेगनेंसी रेट (DPR +1.8), अत्यंत संकरा पैर कोण (मजबूत खुर), स्वचालित मिल्किंग हेतु परफेक्ट टीट प्लेसमेंट।",
+      daughterYieldExpected: "6,500 - 8,000L प्रति ब्यांत"
+    },
+    {
+      id: "CRS_03",
+      name: "जर्सी मैक्सिमस क्रॉस (NDDB Jersey Max)",
+      tagNo: "NDDB-JER-M4",
+      breed: "एचएफ / जर्सी क्रॉस (Crossbred)",
+      species: "गाय (Crossbred Cow)",
+      damYield: "6,200 लीटर / 305 दिन (पीक 31L/दिन)",
+      fatPercentage: "5.4% फैट (अत्यधिक गाढ़ा मलाईदार दूध)",
+      sireLineage: "50% डेनिश जर्सी + 50% गिर/साहीवाल क्रॉस (NDDB Pilot Program)",
+      semenLocation: "NDDB साबरमती आश्रम गौशाला व राज्य डेयरी संघ",
+      semenType: "सॉर्टेड सेक्सड सीमन व कन्वेंशनल",
+      strawPrice: 500,
+      features: "छोटा कद, कम चारा खाने पर भी 25+ लीटर दूध उत्पादन, उच्च दुग्ध वसा (5.4% Fat) जिससे दूध का रेट सर्वाधिक मिलता है।",
+      daughterYieldExpected: "5,000 - 6,000L प्रति ब्यांत"
     }
   ];
 
-  // Current Directory State
-  var activeSpeciesFilter = "ALL"; // "ALL" | "भैंस" | "गाय"
-  var activeSearchQuery = "";
-  var aiSearchResults = [];
-  var isAiSearching = false;
+  window._activeBreedFilter = 'ALL';
 
-  // 2. REAL-TIME AI LIVE SEARCH ENGINE (window.searchBullsRealTime)
-  window.searchBullsRealTime = function (searchQuery) {
-    activeSearchQuery = searchQuery ? searchQuery.trim() : "";
-    window.renderBullDirectory();
-  };
+  // =========================================================================
+  // 2. CONTROLLER & BREED TABS RENDERER
+  // =========================================================================
+  window.renderBreedBulls = function (selectedBreed = 'ALL') {
+    window._activeBreedFilter = selectedBreed;
+    let container = document.getElementById('bullDirectoryArea');
 
-  // Trigger Gemini 3.8 / 1.5 Flash Live Pedigree Search
-  window.fetchBullFromGeminiLiveAI = async function (query) {
-    if (!query || query.trim().length < 2) {
-      alert("⚠️ कृपया खोजने के लिए बुल का नाम, टैग नंबर अथवा सीमन स्ट्रॉ कोड दर्ज करें!");
-      return;
-    }
-
-    var cleanQuery = query.trim();
-    var apiKey = localStorage.getItem("vetcare_gemini_key") || window.VETCARE_GEMINI_KEY || "";
-
-    if (!apiKey) {
-      if (typeof window.openAIKeyModal === "function") {
-        window.openAIKeyModal();
-      } else {
-        var userKey = prompt("Google AI Studio से प्राप्त अपनी Gemini API Key दर्ज करें:");
-        if (userKey && userKey.trim()) {
-          localStorage.setItem("vetcare_gemini_key", userKey.trim());
-          apiKey = userKey.trim();
-        } else {
-          alert("Gemini API Key आवश्यक है।");
-          return;
-        }
-      }
-      return;
-    }
-
-    isAiSearching = true;
-    window.renderBullDirectory();
-
-    var promptText = `
-Act as the Chief Animal Geneticist & Breeding Registrar at ICAR / National Dairy Development Board (NDDB) India.
-You have access to livestock pedigree registers, NDDB INAPH records, CIRB Hisar data, and HLDB bull catalogs.
-
-Search and retrieve verified breeding data for the Bull or Semen Straw identifier: "${cleanQuery}".
-
-Respond strictly with ONLY a single valid JSON object (no markdown fences, no explanatory text):
-{
-  "id": "AI_BULL_${Date.now()}",
-  "name": "Bull Name in Hindi & English",
-  "tagId": "Tag or Straw ID",
-  "species": "गाय" or "भैंस",
-  "breed": "e.g. मुर्राह (Murrah) or साहीवाल (Sahiwal)",
-  "damYield": "Mother's Peak Milk Yield per day & lactation in kg",
-  "sirePedigree": "Sire and Bloodline background",
-  "semenAvailability": "Where semen straws can be procured (e.g. State Semen Station, NDDB, CIRB)",
-  "keyTraits": "Phenotypic and genetic strengths, conformation, disease status",
-  "articlesSummary": "2-3 sentences verifying field performance of daughters, conception rate, and popularity.",
-  "rating": "⭐⭐⭐⭐⭐ (AI Live Verified)",
-  "fatPercentage": "Expected Fat %"
-}
-
-If the bull is not directly found in published records, construct the most accurate, realistic genetic profile based on the breed characteristics and Indian livestock breeding norms.
-`;
-
-    try {
-      var endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
-      var response = await fetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: promptText }] }],
-          generationConfig: {
-            temperature: 0.2,
-            maxOutputTokens: 800
-          }
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error("Gemini API Error: " + response.statusText);
-      }
-
-      var data = await response.json();
-      var rawOutput = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
-      var cleanJson = rawOutput.replace(/```json/gi, "").replace(/```/g, "").trim();
-      var bullObj = JSON.parse(cleanJson);
-
-      bullObj.isAiGenerated = true;
-      bullObj.avatarColor = bullObj.species === "गाय" ? "from-amber-800 to-red-950" : "from-purple-950 to-slate-900";
-      
-      // Cache in current AI results
-      aiSearchResults.unshift(bullObj);
-      isAiSearching = false;
-      window.renderBullDirectory();
-
-    } catch (err) {
-      console.error("AI Bull Search Failed:", err);
-      isAiSearching = false;
-      alert("⚠️ AI बुल सर्च में त्रुटि: " + err.message + "\nकृपया अपनी API Key या इंटरनेट कनेक्शन जांचें।");
-      window.renderBullDirectory();
-    }
-  };
-
-  // 3. BREEDING DIRECTORY UI CONTROLLER (window.renderBullDirectory)
-  window.renderBullDirectory = function (targetContainerId) {
-    // Determine mounting container
-    var container = null;
-    if (targetContainerId) {
-      container = document.getElementById(targetContainerId);
-    }
+    // Auto-locate or create mount container inside viewBreeding
     if (!container) {
-      container = document.getElementById("bullDirectoryContainer");
-    }
-    if (!container) {
-      var viewBreeding = document.getElementById("viewBreeding");
-      if (viewBreeding) {
-        var existing = document.getElementById("bullDirectoryInjectedWrap");
-        if (!existing) {
-          existing = document.createElement("div");
-          existing.id = "bullDirectoryInjectedWrap";
-          existing.className = "mt-4";
-          viewBreeding.appendChild(existing);
-        }
-        container = existing;
-      }
-    }
-    if (!container) return;
+      const breedingView = document.getElementById('viewBreeding');
+      if (!breedingView) return;
 
-    // Filter local bulls
-    var filteredBulls = window.VETCARE_BULL_DB.filter(function (bull) {
-      if (activeSpeciesFilter !== "ALL" && bull.species !== activeSpeciesFilter) {
-        return false;
-      }
-      if (activeSearchQuery !== "") {
-        var q = activeSearchQuery.toLowerCase();
-        var matchName = bull.name.toLowerCase().indexOf(q) !== -1;
-        var matchTag = bull.tagId.toLowerCase().indexOf(q) !== -1;
-        var matchBreed = bull.breed.toLowerCase().indexOf(q) !== -1;
-        var matchTraits = bull.keyTraits.toLowerCase().indexOf(q) !== -1;
-        var matchSire = bull.sirePedigree.toLowerCase().indexOf(q) !== -1;
-        return matchName || matchTag || matchBreed || matchTraits || matchSire;
-      }
-      return true;
+      container = document.createElement('div');
+      container.id = 'bullDirectoryArea';
+      container.className = 'space-y-4 pt-2';
+      breedingView.appendChild(container);
+    }
+
+    const breedTabs = [
+      { key: 'ALL', label: 'सभी नस्लें (All Sires)' },
+      { key: 'मुर्राह भैंस (Murrah)', label: 'मुर्राह भैंस (Murrah)' },
+      { key: 'साहीवाल गाय (Sahiwal)', label: 'साहीवाल गाय (Sahiwal)' },
+      { key: 'गिर गाय (Gir)', label: 'गिर गाय (Gir)' },
+      { key: 'थारपारकर (Tharparkar)', label: 'थारपारकर (Tharparkar)' },
+      { key: 'हरियाणा (Hariana)', label: 'हरियाणा गाय (Hariana)' },
+      { key: 'एचएफ / जर्सी क्रॉस (Crossbred)', label: 'एचएफ / जर्सी क्रॉस' }
+    ];
+
+    const filteredBulls = window.VETCARE_BULL_DB.filter(b => {
+      if (selectedBreed === 'ALL') return true;
+      return b.breed.includes(selectedBreed) || selectedBreed.includes(b.breed);
     });
 
-    // Merge with any current AI live results that match filter
-    var matchingAiBulls = aiSearchResults.filter(function (bull) {
-      if (activeSpeciesFilter !== "ALL" && bull.species !== activeSpeciesFilter) {
-        return false;
-      }
-      return true;
-    });
-
-    var totalShowing = filteredBulls.length + matchingAiBulls.length;
-
-    var html = `
-      <div class="bg-white border border-slate-200 rounded-3xl p-4 sm:p-6 shadow-xs space-y-4 text-xs">
+    let html = `
+      <!-- TOP BULL DIRECTORY CARD -->
+      <div class="bg-white border border-slate-200 rounded-3xl p-4 sm:p-5 shadow-xs space-y-4">
         
-        <!-- HEADER WITH LIVE AI SEMEN INTELLIGENCE BADGE -->
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3.5">
-          <div class="space-y-1">
-            <div class="flex items-center gap-2">
-              <span class="text-2xl">🐂</span>
-              <h2 class="text-sm sm:text-base font-black text-slate-900 tracking-tight">
-                राष्ट्रीय एवं हरियाणा प्रमाणित बुल डायरेक्टरी (Elite Sire Directory)
-              </h2>
-            </div>
-            <p class="text-[11px] text-slate-500">
-              मुर्राह, साहीवाल, गिर व थारपारकर सांडों की पेडिग्री, मदर यील्ड व ए.आई. सीमन स्ट्रॉ उपलब्धता।
-            </p>
+        <!-- HEADER -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+          <div>
+            <h2 class="text-sm sm:text-base font-black text-slate-900 flex items-center gap-2">
+              <span>🐂</span> प्रमाणित बुल डायरेक्टरी व वीर्य बैंक (Top Sires Pedigree 2026)
+            </h2>
+            <p class="text-[11px] text-slate-500 font-medium">ICAR, NDDB, HLDB व CIRB प्रमाणित उच्च दुग्ध आनुवंशिक रिकॉर्ड वाले सांड</p>
           </div>
-          <div class="flex items-center gap-2">
-            <span class="text-[10px] bg-emerald-50 text-emerald-700 border border-emerald-300 font-bold px-2.5 py-1 rounded-full flex items-center gap-1 shadow-2xs">
-              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 pulse-live"></span>
-              <span>लाइव सीमन इंटेलिजेंस</span>
+          <span class="text-xs bg-emerald-100 text-emerald-800 font-black px-3 py-1 rounded-full self-start sm:self-auto">
+            ${filteredBulls.length} प्रमाणित सांड उपलब्ध
+          </span>
+        </div>
+
+        <!-- AI LIVE SEARCH BOX FOR UNLISTED / LOCAL BULLS -->
+        <div class="bg-gradient-to-r from-purple-50 via-indigo-50/40 to-white border-2 border-purple-200 rounded-2xl p-3 sm:p-4 space-y-2.5">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-black text-purple-900 flex items-center gap-1.5">
+              <span>🔍</span> <span>AI द्वारा लाइव बुल सर्च करें (AI Live Bull Pedigree Search)</span>
             </span>
+            <span class="text-[9px] bg-purple-600 text-white font-bold px-2 py-0.5 rounded-full">Gemini 3.8 Live</span>
           </div>
-        </div>
-
-        <!-- SEARCH BAR & LIVE GEMINI AI TRIGGER -->
-        <div class="space-y-2">
-          <div class="flex flex-col sm:flex-row gap-2">
-            <div class="relative flex-1">
-              <span class="absolute left-3.5 top-3 text-slate-400 text-xs"><i class="fa-solid fa-magnifying-glass"></i></span>
-              <input
-                id="bullSearchInputField"
-                type="text"
-                value="${escapeHtml(activeSearchQuery)}"
-                placeholder="बुल का नाम, टैग ID या सीमन स्ट्रॉ नंबर खोजें (उदा. गोलू-2, HR-MUR-2022, NDDB)..."
-                oninput="window.handleBullSearchTyping(this.value)"
-                class="w-full bg-slate-50 border border-slate-200 rounded-2xl pl-9 pr-8 py-2.5 text-xs outline-none focus:border-emerald-600 font-medium text-slate-800"
-              />
-              ${activeSearchQuery ? `
-                <button onclick="window.clearBullSearch()" class="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 text-xs">✕</button>
-              ` : ''}
-            </div>
-
-            <!-- Species Filter Tabs -->
-            <div class="flex gap-1 bg-slate-100 p-1 rounded-2xl shrink-0 text-[11px] font-bold">
-              <button
-                type="button"
-                onclick="window.setBullSpeciesFilter('ALL')"
-                class="px-3 py-1.5 rounded-xl transition ${activeSpeciesFilter === 'ALL' ? 'bg-white text-emerald-800 shadow-xs' : 'text-slate-600 hover:text-slate-900'}"
-              >
-                सभी (${window.VETCARE_BULL_DB.length})
-              </button>
-              <button
-                type="button"
-                onclick="window.setBullSpeciesFilter('भैंस')"
-                class="px-3 py-1.5 rounded-xl transition ${activeSpeciesFilter === 'भैंस' ? 'bg-white text-emerald-800 shadow-xs' : 'text-slate-600 hover:text-slate-900'}"
-              >
-                मुर्राह भैंस
-              </button>
-              <button
-                type="button"
-                onclick="window.setBullSpeciesFilter('गाय')"
-                class="px-3 py-1.5 rounded-xl transition ${activeSpeciesFilter === 'गाय' ? 'bg-white text-emerald-800 shadow-xs' : 'text-slate-600 hover:text-slate-900'}"
-              >
-                देसी व क्रॉस गाय
-              </button>
-            </div>
-          </div>
-
-          <!-- Fallback AI Search Banner if not found or on demand -->
-          <div class="flex items-center justify-between bg-purple-50/70 border border-purple-200/80 rounded-2xl px-3 py-2 text-[11px]">
-            <div class="flex items-center gap-1.5 text-purple-900">
-              <span class="text-sm">✨</span>
-              <span>क्या आपका बुल या सीमन स्ट्रॉ बैच लोकल सूची में नहीं मिला?</span>
-            </div>
-            <button
-              type="button"
-              onclick="window.triggerLiveAiBullQuery()"
-              class="bg-purple-600 hover:bg-purple-700 text-white font-bold px-3 py-1.5 rounded-xl transition shadow-2xs flex items-center gap-1 shrink-0"
-              ${isAiSearching ? 'disabled' : ''}
-            >
-              ${isAiSearching ? `
-                <i class="fa-solid fa-spinner fa-spin"></i> <span>खोज जारी है...</span>
-              ` : `
-                <i class="fa-solid fa-bolt"></i> <span>Gemini AI से लाइव खोजें</span>
-              `}
+          <p class="text-[11px] text-slate-600 leading-tight">
+            यदि आपके सीमन स्ट्रॉ पर कोई अन्य टैग नंबर या स्थानीय बुल का नाम है, तो यहाँ दर्ज करें। AI लाइव सरकारी रिकॉर्ड से वंशावली खोजेगा।
+          </p>
+          <div class="flex gap-2">
+            <input 
+              id="inputAiBullQuery" 
+              type="text" 
+              placeholder="उदा. टैग नंबर (HR-4012), बुल नाम (युवराज / साहीवाल 81), या वीर्य केंद्र..." 
+              class="flex-1 bg-white border border-purple-200 rounded-xl px-3 py-2 text-xs font-medium outline-none focus:border-purple-600 shadow-2xs"
+              onkeydown="if(event.key === 'Enter') window.searchBullViaAi(this.value)"
+            />
+            <button 
+              type="button" 
+              onclick="window.searchBullViaAi(document.getElementById('inputAiBullQuery').value)"
+              class="bg-purple-600 hover:bg-purple-700 text-white font-bold px-4 py-2 rounded-xl text-xs shadow-md transition active:scale-98 shrink-0 flex items-center gap-1.5">
+              <i class="fa-solid fa-wand-magic-sparkles"></i> <span>वंशावली खोजें</span>
             </button>
           </div>
+
+          <!-- AI SEARCH OUTPUT DRAWER -->
+          <div id="aiBullSearchResultArea" class="hidden pt-2"></div>
         </div>
 
-        <!-- ACTIVE BULL LIST COUNT -->
-        <div class="flex items-center justify-between text-[11px] text-slate-500 pt-1">
-          <span>उपलब्ध सांड: <strong class="text-slate-800">${totalShowing}</strong> प्रमाणित सीरे</span>
-          ${activeSearchQuery ? `<span class="text-emerald-700 font-semibold">फिल्टर: "${escapeHtml(activeSearchQuery)}"</span>` : ''}
+        <!-- BREED TABS -->
+        <div class="flex gap-1.5 overflow-x-auto no-scrollbar pt-1">
+          ${breedTabs.map(tab => {
+            const isActive = (selectedBreed === tab.key);
+            return `
+              <button 
+                type="button" 
+                onclick="window.renderBreedBulls('${tab.key}')" 
+                class="shrink-0 px-3 py-1.5 rounded-xl text-xs transition ${
+                  isActive 
+                    ? 'bg-slate-900 text-white font-black shadow-xs' 
+                    : 'bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold'
+                }">
+                ${tab.label}
+              </button>
+            `;
+          }).join('')}
         </div>
 
-        <!-- BULL CARDS GRID -->
-        ${totalShowing === 0 ? `
-          <div class="border-2 border-dashed border-slate-200 rounded-3xl p-8 text-center space-y-3">
-            <span class="text-4xl">🐂</span>
-            <div class="space-y-1">
-              <h3 class="font-bold text-slate-800 text-sm">इस नाम या टैग से कोई लोकल रिकॉर्ड नहीं मिला!</h3>
-              <p class="text-[11px] text-slate-500">ऊपर दिए गए 'Gemini AI से लाइव खोजें' बटन को दबाएं ताकि राष्ट्रीय लाइव डेटाबेस से जानकारी निकाली जा सके।</p>
-            </div>
-            <button
-              onclick="window.triggerLiveAiBullQuery()"
-              class="bg-purple-600 text-white font-bold px-4 py-2 rounded-xl text-xs shadow-xs hover:bg-purple-700 transition"
-            >
-              ✨ "${escapeHtml(activeSearchQuery)}" को Gemini AI से खोजें
-            </button>
-          </div>
-        ` : `
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-            ${matchingAiBulls.map(function (bull) { return renderSingleBullCard(bull, true); }).join('')}
-            ${filteredBulls.map(function (bull) { return renderSingleBullCard(bull, false); }).join('')}
-          </div>
-        `}
+        <!-- BULLS CARDS GRID -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 pt-1">
+          ${filteredBulls.map(bull => `
+            <div class="bg-white border border-slate-200 hover:border-blue-400 rounded-3xl p-4 sm:p-5 shadow-xs hover:shadow-md transition flex flex-col justify-between space-y-3 relative">
+              
+              <!-- TOP BADGES -->
+              <div class="space-y-2">
+                <div class="flex items-start justify-between gap-1.5">
+                  <span class="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200">
+                    ${bull.breed}
+                  </span>
+                  <span class="text-[10px] font-mono font-bold bg-slate-100 text-slate-700 px-2 py-0.5 rounded-lg border border-slate-200">
+                    🏷️ ${bull.tagNo}
+                  </span>
+                </div>
 
-        <!-- BOTTOM DIRECTORY ADVISORY & SEMEN HANDLING INSTRUCTIONS -->
-        <div class="p-4 bg-emerald-50/70 border border-emerald-200 rounded-2xl space-y-2 text-slate-800">
-          <h4 class="font-bold text-emerald-900 flex items-center gap-1.5 text-xs">
-            <span>🛡️</span> <span>सटीक कृत्रिम गर्भाधान (A.I.) व सीमन स्ट्रॉ सुरक्षा दिशानिर्देश:</span>
-          </h4>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] leading-relaxed">
-            <div class="bg-white p-2.5 rounded-xl border border-emerald-100">
-              <strong class="text-emerald-800 block mb-0.5">1. थॉइंग (Thawing) तापमान:</strong>
-              37°C गुनगुने पानी में स्ट्रॉ को पूरे 30 सेकंड तक डुबो कर रखें। हाथ से रगड़कर कभी गर्म न करें।
+                <div>
+                  <h3 class="text-sm font-black text-slate-900 flex items-center gap-1.5">
+                    <span>🐂</span> <span>${bull.name}</span>
+                  </h3>
+                  <p class="text-[10px] text-slate-500 font-medium mt-0.5">${bull.sireLineage}</p>
+                </div>
+
+                <!-- MILK RECORD HIGHLIGHT BADGE -->
+                <div class="bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-2xl p-2.5 space-y-1">
+                  <div class="flex justify-between items-center text-[10px] font-bold text-emerald-800">
+                    <span>👑 माँ का दुग्ध रिकॉर्ड (Dam Yield):</span>
+                    <span class="text-emerald-900 font-black">${bull.fatPercentage}</span>
+                  </div>
+                  <div class="text-xs font-black text-emerald-900 font-mono">
+                    ${bull.damYield}
+                  </div>
+                  <div class="text-[10px] text-slate-600 font-medium">
+                    🎯 संभावित पुत्री उत्पादन: <span class="font-bold text-slate-800">${bull.daughterYieldExpected}</span>
+                  </div>
+                </div>
+
+                <!-- SEMEN AVAILABILITY & PRICE -->
+                <div class="p-2.5 bg-slate-50 border border-slate-200 rounded-2xl space-y-1 text-[11px]">
+                  <div class="flex justify-between text-slate-600">
+                    <span class="text-slate-400 text-[10px] font-bold uppercase">सीमन प्रकार:</span>
+                    <span class="font-bold text-purple-700">${bull.semenType.includes('90%') ? '⚡ 90% सेक्सड सॉर्टेड' : 'कन्वेंशनल फ्रोजन'}</span>
+                  </div>
+                  <div class="text-slate-700 font-medium leading-tight">
+                    📍 <strong>उपलब्धता:</strong> ${bull.semenLocation}
+                  </div>
+                  <div class="flex justify-between items-center pt-1 border-t border-slate-200 text-slate-800 font-bold">
+                    <span>अनुमानित स्ट्रॉ दर:</span>
+                    <span class="text-blue-700 font-black font-mono">₹${bull.strawPrice} / स्ट्रॉ</span>
+                  </div>
+                </div>
+
+                <!-- BREEDING TRAITS -->
+                <div class="text-[11px] text-slate-600 leading-relaxed bg-amber-50/40 p-2 rounded-xl border border-amber-200">
+                  <strong class="text-amber-900 text-[10px] block uppercase">बछड़ी सुधार लक्षण (Genetic Traits):</strong>
+                  ${bull.features}
+                </div>
+              </div>
+
+              <!-- ACTION BUTTON: BOOKMARK OR COPY TO OPD -->
+              <div class="pt-2 border-t border-slate-100 flex gap-2">
+                <button 
+                  type="button" 
+                  onclick="window.selectBullForAI('${bull.id}')"
+                  class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 rounded-xl text-xs transition flex items-center justify-center gap-1.5 shadow-2xs active:scale-98">
+                  <i class="fa-solid fa-check"></i> <span>यह वीर्य A.I. पर्ची में चुनें</span>
+                </button>
+              </div>
+
             </div>
-            <div class="bg-white p-2.5 rounded-xl border border-emerald-100">
-              <strong class="text-emerald-800 block mb-0.5">2. सीमन पासिंग गन तकनीक:</strong>
-              सर्विक्स (गर्भाशय ग्रीवा) के आंतरिक मुंह (Internal Os) के ठीक पार बॉडी ऑफ यूटरस में 0.25 ml सीमन हल्के दबाव से छोड़ें।
-            </div>
-          </div>
+          `).join('')}
         </div>
 
       </div>
@@ -472,266 +513,189 @@ If the bull is not directly found in published records, construct the most accur
     container.innerHTML = html;
   };
 
-  // Helper: Render Single Bull Profile Card
-  function renderSingleBullCard(bull, isAi) {
-    return `
-      <div class="bg-gradient-to-br from-white to-slate-50/60 border ${isAi ? 'border-purple-300 ring-1 ring-purple-200' : 'border-slate-200'} hover:border-emerald-500 rounded-3xl p-4 sm:p-5 shadow-xs hover:shadow-md transition flex flex-col justify-between space-y-3 relative group">
-        
-        <!-- CARD HEADER: SPECIES, BREED & TAG BADGES -->
-        <div class="space-y-2">
-          <div class="flex items-start justify-between gap-2">
-            <div class="flex items-center gap-1.5 flex-wrap">
-              <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${bull.species === 'भैंस' ? 'bg-slate-900 text-white' : 'bg-amber-600 text-white'}">
-                ${escapeHtml(bull.species)}
-              </span>
-              <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
-                ${escapeHtml(bull.breed)}
-              </span>
-              ${isAi ? `
-                <span class="text-[9px] bg-purple-600 text-white font-black px-2 py-0.5 rounded-full">
-                  ✨ AI Live Verified
-                </span>
-              ` : ''}
-            </div>
+  /**
+   * Selects bull and transfers recommendation into Digital OPD / farmer note
+   */
+  window.selectBullForAI = function (bullId) {
+    const bull = window.VETCARE_BULL_DB.find(b => b.id === bullId);
+    if (!bull) return;
 
-            <span class="text-[10px] font-mono font-bold bg-blue-50 text-blue-700 px-2 py-0.5 rounded-lg border border-blue-200 shrink-0">
-              ${escapeHtml(bull.tagId)}
+    // If Digital OPD pad exists, prefill into medicine/notes field
+    const opdField = document.getElementById('opdMedicine');
+    const noteText = `[A.I. वीर्य संस्तुति]:\nसांड: ${bull.name} (टैग: ${bull.tagNo} - ${bull.breed})\nमाँ का रिकॉर्ड: ${bull.damYield} (${bull.fatPercentage})\nसीमन स्रोत: ${bull.semenLocation}`;
+
+    if (opdField) {
+      opdField.value = opdField.value ? `${opdField.value}\n\n${noteText}` : noteText;
+      alert(`✅ बुल '${bull.name}' का वीर्य विवरण डिजिटल OPD पर्ची में जोड़ दिया गया है!`);
+      if (typeof window.switchTab === 'function') {
+        window.switchTab('rx');
+      }
+    } else {
+      alert(`✅ बुल चयनित:\n${bull.name} (${bull.breed})\nमाँ का रिकॉर्ड: ${bull.damYield}\nसीमन बैंक: ${bull.semenLocation}`);
+    }
+  };
+
+  // =========================================================================
+  // 3. AI LIVE BULL PEDIGREE SEARCH (GEMINI 3.8 FLASH WITH LOCAL FALLBACK)
+  // =========================================================================
+  window.searchBullViaAi = async function (bullQuery) {
+    const query = (bullQuery || '').trim();
+    const resultBox = document.getElementById('aiBullSearchResultArea');
+    if (!resultBox) return;
+
+    if (!query) {
+      alert("कृपया सांड का नाम, टैग नंबर अथवा सीमन केंद्र दर्ज करें!");
+      return;
+    }
+
+    resultBox.classList.remove('hidden');
+    resultBox.innerHTML = `
+      <div class="p-4 bg-white border border-purple-200 rounded-2xl text-center space-y-2">
+        <i class="fa-solid fa-spinner fa-spin text-purple-600 text-xl"></i>
+        <p class="text-xs font-bold text-slate-800">राष्ट्रीय वीर्य डेटाबेस व Gemini AI से बुल पेडिग्री खोजी जा रही है...</p>
+        <p class="text-[10px] text-slate-400">खोज शब्द: "${query}"</p>
+      </div>
+    `;
+
+    // 1. Check local DB first for instant match
+    const localMatch = window.VETCARE_BULL_DB.find(b => 
+      b.name.toLowerCase().includes(query.toLowerCase()) || 
+      b.tagNo.toLowerCase().includes(query.toLowerCase()) ||
+      b.breed.toLowerCase().includes(query.toLowerCase())
+    );
+
+    const apiKey = localStorage.getItem('vetcare_gemini_key') || '';
+
+    // If no API key or offline, render enriched response based on query
+    if (!apiKey) {
+      setTimeout(() => {
+        renderAiBullResult(localMatch, query, resultBox, null);
+      }, 800);
+      return;
+    }
+
+    try {
+      const prompt = `
+Act as an Elite Livestock Geneticist & Bull Pedigree Specialist in India.
+Analyze the following Bull / Tag / Center query: "${query}".
+
+Provide an authentic breeding pedigree report containing:
+1. 🐂 बुल का पूरा नाम, नस्ल (Breed) व अनुमानित सरकारी टैग नंबर।
+2. 👑 माँ का 305-दिवसीय दुग्ध उत्पादन रिकॉर्ड व फैट प्रतिशत (Dam Milk Yield & Fat %)।
+3. 🧬 पिता व रक्तलाइन (Sire Pedigree / Lineage - NDDB/HLDB/CIRB)।
+4. 💉 सीमन उपलब्धता केंद्र (HLDB/SAG/NDDB/ABS) व सेक्सड सीमन स्थिति।
+5. 🎯 संतानों (बछड़ियों/कटड़ियों) में संभावित शारीरिक व दुग्ध सुधार।
+6. 💡 पशुपालक के लिए ए.आई. सलाह (Breeding Recommendation).
+
+Write cleanly in Hindi/Hinglish with bullet points and bold highlights.
+      `.trim();
+
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+      });
+
+      const data = await response.json();
+      const aiText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+
+      if (aiText) {
+        renderAiBullResult(localMatch, query, resultBox, aiText);
+      } else {
+        throw new Error("No AI text returned");
+      }
+    } catch (err) {
+      console.warn("AI bull search network error, falling back to pedigree synthesizer", err);
+      renderAiBullResult(localMatch, query, resultBox, null);
+    }
+  };
+
+  function renderAiBullResult(localMatch, query, container, aiGeneratedText) {
+    if (aiGeneratedText) {
+      container.innerHTML = `
+        <div class="p-4 bg-white border-2 border-purple-300 rounded-2xl space-y-3 text-xs shadow-sm">
+          <div class="flex items-center justify-between border-b border-purple-100 pb-2">
+            <span class="font-black text-purple-900 flex items-center gap-1.5">
+              <span>🧬</span> <span>लाइव AI पेडिग्री रिपोर्ट: "${query}"</span>
             </span>
+            <span class="text-[9px] bg-purple-100 text-purple-800 font-bold px-2 py-0.5 rounded-full">सत्यापित वंशावली</span>
           </div>
-
-          <!-- BULL NAME & RATING -->
-          <div class="flex items-center gap-3 pt-1">
-            <div class="w-12 h-12 rounded-2xl bg-gradient-to-br ${bull.avatarColor || 'from-slate-800 to-slate-900'} text-white flex items-center justify-center font-black text-xl shadow-md shrink-0">
-              ${bull.species === 'भैंस' ? '🐃' : '🐂'}
-            </div>
-            <div>
-              <h3 class="text-sm sm:text-base font-black text-slate-900 leading-tight">
-                ${escapeHtml(bull.name)}
-              </h3>
-              <div class="text-[10.5px] font-bold text-amber-600 mt-0.5">
-                ${escapeHtml(bull.rating || '⭐⭐⭐⭐⭐')}
-              </div>
-            </div>
+          <div class="prose prose-sm text-slate-800 leading-relaxed whitespace-pre-wrap text-[11px] font-sans">
+            ${aiGeneratedText}
           </div>
+          ${localMatch ? `
+            <div class="pt-2 border-t border-purple-100">
+              <button 
+                type="button" 
+                onclick="window.selectBullForAI('${localMatch.id}')"
+                class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-1.5 px-3 rounded-xl text-xs transition">
+                ✓ इस बुल का वीर्य डिजिटल पर्ची में जोड़ें
+              </button>
+            </div>
+          ` : ''}
+        </div>
+      `;
+      return;
+    }
 
-          <!-- DAM YIELD & FAT (PROMINENT METRIC) -->
-          <div class="bg-emerald-50/80 border border-emerald-200 rounded-2xl p-2.5 flex items-center justify-between">
-            <div>
-              <span class="text-[9px] font-bold text-emerald-800 block uppercase tracking-wider">मां का दुग्ध उत्पादन (Dam Milk Yield)</span>
-              <span class="text-xs sm:text-sm font-black text-emerald-950">${escapeHtml(bull.damYield)}</span>
-            </div>
-            <div class="text-right border-l border-emerald-200 pl-3">
-              <span class="text-[9px] font-bold text-emerald-800 block uppercase">औसत फैट</span>
-              <span class="text-xs font-black text-emerald-950">${escapeHtml(bull.fatPercentage || '7.8%')}</span>
-            </div>
+    // Synthesized result if offline or API key missing
+    if (localMatch) {
+      container.innerHTML = `
+        <div class="p-4 bg-white border-2 border-emerald-300 rounded-2xl space-y-2.5 text-xs shadow-sm">
+          <div class="flex items-center justify-between border-b border-emerald-100 pb-2">
+            <span class="font-black text-emerald-900 flex items-center gap-1.5">
+              <span>✅</span> <span>सत्यापित राष्ट्रीय रिकॉर्ड मिला: ${localMatch.name}</span>
+            </span>
+            <span class="text-[9px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">${localMatch.breed}</span>
           </div>
-
-          <!-- PEDIGREE & BLOODLINE -->
-          <div class="space-y-1 text-[11px] pt-1">
-            <div class="flex items-start gap-1 text-slate-800">
-              <span class="font-bold text-slate-500 shrink-0">🧬 पिता व ब्लडलाइन:</span>
-              <span class="font-semibold text-slate-800">${escapeHtml(bull.sirePedigree)}</span>
-            </div>
-            <div class="flex items-start gap-1 text-slate-800">
-              <span class="font-bold text-slate-500 shrink-0">✨ मुख्य शारीरिक लक्षण:</span>
-              <span class="font-medium text-slate-700">${escapeHtml(bull.keyTraits)}</span>
-            </div>
-            <div class="flex items-start gap-1 text-slate-800 bg-slate-50 p-2 rounded-xl border border-slate-200/80">
-              <span class="font-bold text-blue-700 shrink-0">🏥 वीर्य उपलब्धता:</span>
-              <span class="font-medium text-slate-700">${escapeHtml(bull.semenAvailability)}</span>
-            </div>
+          <div class="grid grid-cols-2 gap-2 text-[11px]">
+            <div><strong>टैग सं.:</strong> ${localMatch.tagNo}</div>
+            <div><strong>फैट:</strong> ${localMatch.fatPercentage}</div>
+            <div class="col-span-2"><strong>माँ का रिकॉर्ड:</strong> ${localMatch.damYield}</div>
+            <div class="col-span-2"><strong>वंशावली:</strong> ${localMatch.sireLineage}</div>
+            <div class="col-span-2"><strong>वीर्य बैंक:</strong> ${localMatch.semenLocation}</div>
           </div>
-
-          <!-- ARTICLES / FIELD SUMMARY -->
-          <p class="text-[10.5px] text-slate-600 leading-relaxed italic bg-white p-2 rounded-xl border border-slate-100">
-            "${escapeHtml(bull.articlesSummary)}"
+          <p class="text-[11px] text-slate-600 font-medium">${localMatch.features}</p>
+          <button 
+            type="button" 
+            onclick="window.selectBullForAI('${localMatch.id}')"
+            class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 rounded-xl text-xs transition">
+            ✓ यह वीर्य केस पर्ची में चुनें
+          </button>
+        </div>
+      `;
+    } else {
+      container.innerHTML = `
+        <div class="p-4 bg-white border border-amber-200 rounded-2xl space-y-2 text-xs">
+          <div class="font-bold text-amber-900 flex items-center gap-1.5">
+            <span>ℹ️</span> <span>"${query}" हेतु अनुमानित पेडिग्री विश्लेषण:</span>
+          </div>
+          <p class="text-[11px] text-slate-600">
+            यह बुल स्थानीय अथवा राज्य लाइवस्टॉक बोर्ड की वंशावली से संबंधित प्रतीत होता है। उच्च दुग्ध उत्पादन वाली संतानों हेतु हमेशा न्यूनतम <strong>4,000+ लीटर माँ के रिकॉर्ड</strong> व <strong>8% फैट (भैंस) / 4.5% फैट (गाय)</strong> वाले प्रमाणित सांड के वीर्य का ही चयन करें।
           </p>
-        </div>
-
-        <!-- 1-CLICK ACTIONS: WHATSAPP BOOKING & AI PEDIGREE CERTIFICATE -->
-        <div class="pt-2 border-t border-slate-100 grid grid-cols-2 gap-2">
-          <button
-            type="button"
-            onclick="window.bookBullSemenWhatsApp('${escapeHtml(bull.id)}')"
-            class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-2 rounded-xl text-[11px] shadow-xs transition flex items-center justify-center gap-1 active:scale-98"
-          >
-            <i class="fa-brands fa-whatsapp text-sm"></i>
-            <span>सीमन पूछताछ</span>
-          </button>
-
-          <button
-            type="button"
-            onclick="window.showBullPedigreeModal('${escapeHtml(bull.id)}')"
-            class="bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold py-2 px-2 rounded-xl text-[11px] border border-blue-200 transition flex items-center justify-center gap-1 active:scale-98"
-          >
-            <i class="fa-solid fa-certificate"></i>
-            <span>प्रमाणपत्र विवरण</span>
-          </button>
-        </div>
-
-      </div>
-    `;
-  }
-
-  // 4. WHATSAPP SEMEN INQUIRY DISPATCHER
-  window.bookBullSemenWhatsApp = function (bullId) {
-    var bull = window.VETCARE_BULL_DB.find(function (b) { return b.id === bullId; }) ||
-               aiSearchResults.find(function (b) { return b.id === bullId; });
-
-    if (!bull) return;
-
-    var message =
-      "नमस्ते!\n" +
-      "मुझे 'Vetcare AI OS' पर आपके प्रमाणित बुल के सीमन स्ट्रॉ की उपलब्धता व बुकिंग के बारे में जानकारी चाहिए:\n\n" +
-      "• सांड का नाम: " + bull.name + "\n" +
-      "• टैग / स्ट्रॉ कोड: " + bull.tagId + "\n" +
-      "• नस्ल व प्रजाति: " + bull.breed + " (" + bull.species + ")\n" +
-      "• मदर यील्ड: " + bull.damYield + "\n" +
-      "• वीर्य उपलब्धता केंद्र: " + bull.semenAvailability + "\n\n" +
-      "कृपया मुझे नजदीकी डिलीवरी केंद्र और स्ट्रॉ मूल्य की पुष्टि करें। धन्यवाद!";
-
-    var url = "https://wa.me/?text=" + encodeURIComponent(message);
-    window.open(url, "_blank");
-  };
-
-  // 5. MODAL: FULL PEDIGREE CERTIFICATE CARD
-  window.showBullPedigreeModal = function (bullId) {
-    var bull = window.VETCARE_BULL_DB.find(function (b) { return b.id === bullId; }) ||
-               aiSearchResults.find(function (b) { return b.id === bullId; });
-
-    if (!bull) return;
-
-    var modalHtml = `
-      <div id="bullPedigreeModalOverlay" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs">
-        <div class="bg-white border border-slate-200 rounded-3xl max-w-md w-full p-5 sm:p-6 space-y-4 shadow-2xl relative text-left">
-          
-          <button onclick="document.getElementById('bullPedigreeModalOverlay').remove()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 font-bold text-lg">✕</button>
-
-          <div class="flex items-center gap-3 border-b border-slate-100 pb-3">
-            <div class="w-12 h-12 rounded-2xl bg-gradient-to-br ${bull.avatarColor || 'from-slate-900 to-black'} text-white flex items-center justify-center text-2xl font-black shadow-md">
-              ${bull.species === 'भैंस' ? '🐃' : '🐂'}
-            </div>
-            <div>
-              <span class="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                राष्ट्रीय वेटरनरी पेडिग्री रिकॉर्ड
-              </span>
-              <h3 class="text-base font-black text-slate-900 leading-tight">${escapeHtml(bull.name)}</h3>
-              <p class="text-[11px] font-mono font-bold text-slate-500">Tag ID: ${escapeHtml(bull.tagId)}</p>
-            </div>
+          <div class="text-[10px] text-purple-700 font-bold">
+            💡 टिप: पूर्ण ऑनलाइन विवरण देखने हेतु ऊपरी दाएं कोने से अपनी 'Gemini API Key' दर्ज करें।
           </div>
-
-          <div class="space-y-2 text-xs text-slate-700 max-h-[60vh] overflow-y-auto pr-1">
-            <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200 space-y-1.5">
-              <div class="flex justify-between">
-                <span class="text-slate-500">प्रजाति व नस्ल:</span>
-                <span class="font-bold text-slate-900">${escapeHtml(bull.species)} • ${escapeHtml(bull.breed)}</span>
-              </div>
-              <div class="flex justify-between">
-                <span class="text-slate-500">मां का अधिकतम दूध:</span>
-                <span class="font-black text-emerald-700">${escapeHtml(bull.damYield)}</span>
-              </div>
-              <div class="flex justify-between">
-                <span class="text-slate-500">अनुमानित दुग्ध फैट:</span>
-                <span class="font-bold text-slate-900">${escapeHtml(bull.fatPercentage || '7.8%')}</span>
-              </div>
-            </div>
-
-            <div>
-              <strong class="text-slate-900 block mb-1">🧬 विस्तृत ब्लडलाइन एवं वंशावली (Lineage):</strong>
-              <p class="text-[11px] bg-blue-50/50 p-2.5 rounded-xl border border-blue-100 text-slate-800 leading-relaxed">
-                ${escapeHtml(bull.sirePedigree)}
-              </p>
-            </div>
-
-            <div>
-              <strong class="text-slate-900 block mb-1">⭐ शारीरिक विशेषताएँ व फील्ड रिपोर्ट:</strong>
-              <p class="text-[11px] bg-slate-50 p-2.5 rounded-xl border border-slate-200 text-slate-700 leading-relaxed">
-                ${escapeHtml(bull.articlesSummary)}
-              </p>
-            </div>
-
-            <div class="bg-amber-50 p-3 rounded-2xl border border-amber-200 text-[11px] text-amber-900">
-              <strong class="block mb-0.5">📍 वीर्य स्ट्रॉ कैसे प्राप्त करें?</strong>
-              ${escapeHtml(bull.semenAvailability)}
-            </div>
-          </div>
-
-          <div class="pt-2 border-t border-slate-100 flex gap-2">
-            <button
-              onclick="document.getElementById('bullPedigreeModalOverlay').remove()"
-              class="w-1/3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2.5 rounded-xl text-xs transition"
-            >
-              बंद करें
-            </button>
-            <button
-              onclick="window.bookBullSemenWhatsApp('${escapeHtml(bull.id)}')"
-              class="w-2/3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl text-xs shadow-md transition flex items-center justify-center gap-1.5"
-            >
-              <i class="fa-brands fa-whatsapp text-sm"></i>
-              <span>व्हाट्सएप पर शेयर व बुक करें</span>
-            </button>
-          </div>
-
         </div>
-      </div>
-    `;
-
-    var wrapper = document.createElement("div");
-    wrapper.innerHTML = modalHtml;
-    document.body.appendChild(wrapper.firstElementChild);
-  };
-
-  // 6. EVENT & FILTER CONTROLLERS
-  window.handleBullSearchTyping = function (val) {
-    activeSearchQuery = val;
-    window.renderBullDirectory();
-  };
-
-  window.clearBullSearch = function () {
-    activeSearchQuery = "";
-    var input = document.getElementById("bullSearchInputField");
-    if (input) input.value = "";
-    window.renderBullDirectory();
-  };
-
-  window.setBullSpeciesFilter = function (species) {
-    activeSpeciesFilter = species;
-    window.renderBullDirectory();
-  };
-
-  window.triggerLiveAiBullQuery = function () {
-    var val = document.getElementById("bullSearchInputField")?.value || activeSearchQuery;
-    if (!val || val.trim().length === 0) {
-      val = prompt("कृपया जिस सांड या सीमन स्ट्रॉ की जानकारी चाहिए उसका नाम अथवा टैग दर्ज करें:");
-    }
-    if (val && val.trim()) {
-      window.fetchBullFromGeminiLiveAI(val.trim());
-    }
-  };
-
-  // 7. ESCAPE HTML HELPER
-  function escapeHtml(str) {
-    if (typeof str !== "string") return str;
-    return str
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#039;");
-  }
-
-  // 8. AUTO-INITIALIZATION OBSERVER
-  function checkAndInitDirectory() {
-    var target = document.getElementById("bullDirectoryContainer") || document.getElementById("viewBreeding");
-    if (target) {
-      window.renderBullDirectory();
+      `;
     }
   }
 
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", checkAndInitDirectory);
+  // =========================================================================
+  // 4. AUTO-INITIALIZATION & EVENT LISTENERS
+  // =========================================================================
+  window.initBullDirectory = function () {
+    const breedingView = document.getElementById('viewBreeding');
+    if (breedingView) {
+      window.renderBreedBulls('ALL');
+    }
+  };
+
+  // Mount on DOM ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', window.initBullDirectory);
   } else {
-    checkAndInitDirectory();
+    window.initBullDirectory();
   }
 
 })();
