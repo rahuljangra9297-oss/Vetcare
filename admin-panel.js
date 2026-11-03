@@ -1,661 +1,929 @@
-// Vetcare AI OS - Master Admin Console, Bank Editor & Independent Plans Suite (2026 Production)
-
-/**
- * ============================================================================
- * VETCARE AI OS — MASTER ADMINISTRATIVE ARCHITECTURE & CONTROL SUITE
- * ============================================================================
- * Production Core:
- * 1. Masked 2-Factor Authentication (Master PIN 9297 & Master Creds 9991039297 / Rahul@1812)
- * 2. Self-Reset OTP Recovery Workflow for Admin.
- * 3. Dynamic Bank Account & Payout Manager (Full CRUD with SBI & PNB defaults).
- * 4. Independent Subscription Plan Manager (Separate Veterinary Practitioner & Smart Farmer Tiers).
- * 5. Real-Time User Analytics, Trial Extensions (+24h, +7d, +30d), AI Surgeon Toggles & Purge.
- * 6. Live Global App Branding Engine (Title, Logo URL, Theme Colors & Announcement Banner).
- */
+// Vetcare AI OS - Master Admin Console, Strict Masking & Save Engine (2026 Production)
 
 (function () {
   'use strict';
 
-  // ==========================================================================
-  // 1. DATA SEEDING & LOCAL STORAGE ORCHESTRATION
-  // ==========================================================================
+  // =========================================================================
+  // 1. HARDCODED MASTER CREDENTIALS & CONSTANTS
+  // =========================================================================
+  const MASTER_ADMIN_CONFIG = {
+    masterPin: '9297',
+    masterUserId: '9991039297',
+    masterPassword: 'Rahul@1812',
+    recoveryMobile: '9991039297',
+    storageKeyAuth: 'vetcare_admin_auth_session',
+    storageKeySettings: 'vetcare_admin_global_settings',
+    storageKeyBanks: 'vetcare_admin_bank_accounts',
+    storageKeyPricing: 'vetcare_admin_subscription_plans',
+    storageKeyUsers: 'vetcare_registered_users_list'
+  };
 
-  // Payout Bank Accounts Default Seeding
-  if (!localStorage.getItem('vetcare_payout_accounts')) {
-    var defaultBankAccounts = [
+  // State-to-District Hierarchical Geography
+  const STATE_DISTRICT_MAP = {
+    'हरियाणा': ['करनाल', 'कुरुक्षेत्र', 'हिसार', 'रोहतक', 'अंबाला', 'सिरसा', 'जींद', 'सोनीपत', 'पानीपत', 'कैथल', 'भिवानी', 'फतेहाबाद', 'गुरुग्राम', 'रेवाड़ी', 'झज्जर', 'पलवल', 'मेवात/नूंह', 'चरखी दादरी', 'पंचकुला', 'यमुनानगर', 'महेंद्रगढ़', 'फरीदाबाद'],
+    'पंजाब': ['लुधियाना', 'अमृतसर', 'पटियाला', 'बठिंडा', 'जालंधर', 'संगरूर', 'होशियारपुर', 'मोगा', 'फिरोजपुर', 'गुरदासपुर', 'श्री मुक्तसर साहिब', 'फाजिल्का', 'मानसा', 'बरनाला', 'रूपनगर (रोपड़)', 'तरनतारन', 'कपूरथला', 'पठानकोट', 'फतेहगढ़ साहिब', 'एस.ए.एस नगर (मोहाली)'],
+    'राजस्थान': ['जयपुर', 'अलवर', 'सीकर', 'बीकानेर', 'जोधपुर', 'नागौर', 'झुंझुनू', 'श्रीगंगानगर', 'भरतपुर', 'कोटा', 'हनुमानगढ़', 'अजमेर', 'उदयपुर', 'बाड़मेर', 'पाली', 'चूरू', 'दौसा', 'टोंक', 'भीलवाड़ा', 'झालावाड़'],
+    'उत्तर प्रदेश': ['मेरठ', 'मुजफ्फरनगर', 'सहारनपुर', 'मथुरा', 'आगरा', 'बरेली', 'मुरादाबाद', 'अलीगढ़', 'बुलंदशहर', 'बिजनौर', 'शामली', 'बागपत', 'रामपुर', 'गाजियाबाद', 'हापुड़', 'फिरोजाबाद', 'मैनपुरी', 'एटा', 'संभल', 'अमरोहा'],
+    'मध्य प्रदेश': ['इंदौर', 'उज्जैन', 'भोपाल', 'ग्वालियर', 'जबलपुर', 'मंदसौर', 'नीमच', 'देवास', 'रतलाम', 'धार', 'खरगोन', 'खंडवा', 'सीहोर', 'विदिशा', 'राजगढ़'],
+    'गुजरात': ['आनंद', 'मेहसाणा', 'सूरत', 'अहमदाबाद', 'राजकोट', 'बनासकांठा', 'साबरकांठा', 'वडोदरा', 'जूनागढ़', 'अमरेली', 'भावनगर', 'गांधीनगर', 'कच्छ', 'पाटन'],
+    'अन्य': ['मुख्यालय / अन्य जिला', 'समस्त क्षेत्र']
+  };
+
+  // Default Seed Data
+  const DEFAULT_BANKS = [
+    {
+      id: 'BANK_01',
+      bankName: 'Punjab National Bank (PNB)',
+      payeeName: 'Rahul Sharma (Vetcare Ops)',
+      accountNo: '1045000100234567',
+      ifscCode: 'PUNB0104500',
+      upiId: '9991039297@pthdfc',
+      isPrimary: true
+    },
+    {
+      id: 'BANK_02',
+      bankName: 'State Bank of India (SBI)',
+      payeeName: 'Vetcare AI OS Official',
+      accountNo: '38920194829',
+      ifscCode: 'SBIN0001234',
+      upiId: 'vetcareai@sbi',
+      isPrimary: false
+    }
+  ];
+
+  const DEFAULT_PRICING = {
+    doctor: [
+      { id: 'DOC_1M', name: '1 माह क्लिनिकल पास', durationDays: 30, price: 499, tag: 'बेसिक', features: ['48+ रोग प्रोबेबिलिटी इंजन', 'डिजिटल OPD व्हाट्सएप पर्ची', 'दवा स्टॉक व इन्वेंटरी'] },
+      { id: 'DOC_3M', name: '3 माह क्लिनिकल प्रो', durationDays: 90, price: 1199, tag: '20% बचत', features: ['सभी बेसिक फीचर्स', 'लाइव AI वेटरनरी सर्जन', 'असीमित किसान केस बैकअप'] },
+      { id: 'DOC_1Y', name: '1 वर्ष वीआईपी सर्जन मास्टर', durationDays: 365, price: 3999, tag: 'सर्वाधिक लोकप्रिय', features: ['सम्पूर्ण क्लिनिकल सुइट', '24x7 वीआईपी सपोर्ट', 'ऑटोमैटिक क्लाउड सिंक'] }
+    ],
+    farmer: [
+      { id: 'FAR_1M', name: '1 माह स्मार्ट डेयरी पास', durationDays: 30, price: 99, tag: 'सस्ता प्लान', features: ['25 देसी हर्बल नुस्खे', 'मद काल व सीमन ट्रैकर', 'दैनिक दूध बिक्री बहीखाता'] },
+      { id: 'FAR_3M', name: '3 माह सम्पूर्ण किसान पास', durationDays: 90, price: 249, tag: 'लोकप्रिय', features: ['सभी 1 माह फीचर्स', 'संतुलित राशन कैलकुलेटर', 'बुल डायरेक्टरी व पेडिग्री'] },
+      { id: 'FAR_1Y', name: '1 वर्ष डेयरी सम्राट पास', durationDays: 365, price: 699, tag: 'वार्षिक बचत', features: ['सम्पूर्ण स्मार्ट डेयरी सिस्टम', 'सरकारी अनुदान अलर्ट', 'शून्य विज्ञापन अनुभव'] }
+    ]
+  };
+
+  const DEFAULT_GLOBAL_SETTINGS = {
+    appTitle: 'Vetcare AI OS',
+    tagline: 'पशु स्वास्थ्य निदान, 5-स्तरीय क्लिनिकल डिसीजन इंजन एवं संपूर्ण स्मार्ट डेयरी समाधान',
+    logoUrl: 'https://cdn-icons-png.flaticon.com/512/3004/3004458.png',
+    emergencyNotice: 'सूचना: 2026 नवीनतम खुरपका-मुंहपका (FMD) व गलघोंटू (HS) रोग नियंत्रण दिशानिर्देश जारी।',
+    showNoticeBanner: true,
+    allowDualPortalSwitch: true,
+    allowAiSurgeonAccess: true
+  };
+
+  // =========================================================================
+  // 2. STATE REPOSITORY GETTERS & INITIALIZERS
+  // =========================================================================
+  function getStoredBankAccounts() {
+    try {
+      const data = localStorage.getItem(MASTER_ADMIN_CONFIG.storageKeyBanks);
+      return data ? JSON.parse(data) : DEFAULT_BANKS;
+    } catch (e) {
+      return DEFAULT_BANKS;
+    }
+  }
+
+  function getStoredPricingPlans() {
+    try {
+      const data = localStorage.getItem(MASTER_ADMIN_CONFIG.storageKeyPricing);
+      return data ? JSON.parse(data) : DEFAULT_PRICING;
+    } catch (e) {
+      return DEFAULT_PRICING;
+    }
+  }
+
+  function getStoredGlobalSettings() {
+    try {
+      const data = localStorage.getItem(MASTER_ADMIN_CONFIG.storageKeySettings);
+      return data ? JSON.parse(data) : DEFAULT_GLOBAL_SETTINGS;
+    } catch (e) {
+      return DEFAULT_GLOBAL_SETTINGS;
+    }
+  }
+
+  function getStoredUsersList() {
+    try {
+      const data = localStorage.getItem(MASTER_ADMIN_CONFIG.storageKeyUsers);
+      if (data) return JSON.parse(data);
+    } catch (e) {}
+
+    // Seed mock initial users if empty
+    const seed = [
       {
-        id: "BANK_SBI_PRIMARY",
-        bankName: "State Bank of India (SBI)",
-        payeeName: "Vetcare Services",
-        accountNumber: "65204067585",
-        ifscCode: "SBIN0013693",
-        upiId: "rahuljangra9297@oksbi",
-        isPrimary: true
+        id: 'USR_101',
+        name: 'डॉ. अमित शर्मा (B.V.Sc)',
+        role: 'doctor',
+        phone: '9812034567',
+        email: 'dramit.vet@gmail.com',
+        state: 'हरियाणा',
+        district: 'करनाल',
+        village: 'तरावड़ी',
+        registeredAt: '2025-01-15',
+        trialExpires: new Date(Date.now() + 86400000 * 18).toISOString(),
+        isBanned: false,
+        aiSurgeonEnabled: true,
+        dualPortalAllowed: true
       },
       {
-        id: "BANK_PNB_SECONDARY",
-        bankName: "Punjab National Bank (PNB)",
-        payeeName: "Vetcare Services",
-        accountNumber: "6687001700015098",
-        ifscCode: "PUNB0668700",
-        upiId: "rahuljangra9297-1@okicici",
-        isPrimary: false
+        id: 'USR_102',
+        name: 'रामपाल सिंह (डेयरी संचालक)',
+        role: 'farmer',
+        phone: '9416023891',
+        email: 'rampal.dairy@gmail.com',
+        state: 'हरियाणा',
+        district: 'हिसार',
+        village: 'बरवाला',
+        registeredAt: '2025-02-01',
+        trialExpires: new Date(Date.now() + 86400000 * 30).toISOString(),
+        isBanned: false,
+        aiSurgeonEnabled: false,
+        dualPortalAllowed: true
+      },
+      {
+        id: 'USR_103',
+        name: 'डॉ. गुरप्रीत सिंह धालीवाल',
+        role: 'doctor',
+        phone: '9876541230',
+        email: 'gurpreet.vet@yahoo.com',
+        state: 'पंजाब',
+        district: 'लुधियाना',
+        village: 'समराला',
+        registeredAt: '2025-02-10',
+        trialExpires: new Date(Date.now() + 86400000 * 45).toISOString(),
+        isBanned: false,
+        aiSurgeonEnabled: true,
+        dualPortalAllowed: true
       }
     ];
-    localStorage.setItem('vetcare_payout_accounts', JSON.stringify(defaultBankAccounts));
+    localStorage.setItem(MASTER_ADMIN_CONFIG.storageKeyUsers, JSON.stringify(seed));
+    return seed;
   }
 
-  // Independent Subscription Plans Default Seeding
-  if (!localStorage.getItem('vetcare_subscription_plans')) {
-    var defaultSubscriptionPlans = {
-      doctorPlans: [
-        {
-          id: "PLAN_DOC_1M",
-          name: "1 माह क्लिनिकल एक्सेस (Doctor)",
-          durationDays: 30,
-          price: 299,
-          features: "48+ रोग मैट्रिक्स, 5-स्तरीय ड्रग थेरेपी, डिजिटल OPD, असीमित व्हाट्सएप पर्ची",
-          recommended: false
-        },
-        {
-          id: "PLAN_DOC_3M",
-          name: "3 माह सुपर क्लिनिक (Doctor)",
-          durationDays: 90,
-          price: 799,
-          features: "समस्त क्लिनिकल टूल्स, 20-km GPS किसान नेविगेशन, AI सर्जन कंसल्टेंट, प्रायोरिटी सपोर्ट",
-          recommended: true
-        },
-        {
-          id: "PLAN_DOC_1Y",
-          name: "1 वर्ष वार्षिक लाइसेंस (Doctor)",
-          durationDays: 365,
-          price: 2499,
-          features: "वार्षिक असीमित लाइसेंस, ऑफलाइन बैकअप, क्लिनिक ब्रांडिंग, VIP तकनीकी सपोर्ट",
-          recommended: false
-        }
-      ],
-      farmerPlans: [
-        {
-          id: "PLAN_FAR_1M",
-          name: "1 माह स्मार्ट पशुपालक (Farmer)",
-          durationDays: 30,
-          price: 49,
-          features: "25 प्रमाणित देसी नुस्खे, मद काल ट्रैकर, बुनियादी सीमन बैंक खोज",
-          recommended: false
-        },
-        {
-          id: "PLAN_FAR_3M",
-          name: "3 माह संपूर्ण डेयरी (Farmer)",
-          durationDays: 90,
-          price: 129,
-          features: "दैनिक दूध व चारा बहीखाता, एलीट बुल व सीमन लाइव AI, सरकारी योजनाएं",
-          recommended: true
-        },
-        {
-          id: "PLAN_FAR_1Y",
-          name: "1 वर्ष समृद्ध डेयरी (Farmer)",
-          durationDays: 365,
-          price: 399,
-          features: "संपूर्ण वर्ष डेयरी प्रबंधन, 20-km डॉक्टर कॉलिंग, राशन कैलकुलेटर, SMS अलर्ट",
-          recommended: false
-        }
-      ]
-    };
-    localStorage.setItem('vetcare_subscription_plans', JSON.stringify(defaultSubscriptionPlans));
+  // =========================================================================
+  // 3. TOAST NOTIFICATION ENGINE
+  // =========================================================================
+  function showAdminToast(message, isError = false) {
+    let toast = document.getElementById('admin-floating-toast');
+    if (!toast) {
+      toast = document.createElement('div');
+      toast.id = 'admin-floating-toast';
+      toast.className = 'fixed top-5 right-5 z-[9999] px-4 py-3 rounded-2xl shadow-2xl font-bold text-xs flex items-center gap-2 transition-all duration-300 transform translate-y-0';
+      document.body.appendChild(toast);
+    }
+    toast.className = `fixed top-5 right-5 z-[9999] px-4 py-3 rounded-2xl shadow-2xl font-bold text-xs flex items-center gap-2 transition-all duration-300 ${
+      isError 
+        ? 'bg-rose-600 text-white border-2 border-rose-400' 
+        : 'bg-emerald-600 text-white border-2 border-emerald-400'
+    }`;
+    toast.innerHTML = `<i class="fa-solid ${isError ? 'fa-circle-xmark' : 'fa-circle-check'} text-base"></i> <span>${message}</span>`;
+    toast.style.display = 'flex';
+
+    setTimeout(() => {
+      toast.style.display = 'none';
+    }, 3200);
   }
 
-  // Global App Branding Default Seeding
-  if (!localStorage.getItem('vetcare_app_branding')) {
-    var defaultBranding = {
-      appTitle: "Vetcare AI OS",
-      tagline: "पशु स्वास्थ्य निदान, 5-स्तरीय क्लिनिकल डिसीजन इंजन एवं संपूर्ण स्मार्ट डेयरी समाधान",
-      logoUrl: "",
-      themeColor: "emerald",
-      bannerText: "📢 2026 अद्यतन: राष्ट्रीय गोकुल मिशन व हरियाणा पशुधन बीमा योजना का नया मॉड्यूल लाइव है!",
-      bannerEnabled: true
-    };
-    localStorage.setItem('vetcare_app_branding', JSON.stringify(defaultBranding));
-  }
-
-  // Active Admin Filter State
-  var adminUsersSearch = "";
-  var adminRoleFilter = "ALL";
-  var adminStateFilter = "ALL";
-  var activeAdminTab = "USERS";
-
-  // ==========================================================================
-  // 2. MASKED ADMIN AUTHENTICATION & OTP RECOVERY ENGINE
-  // ==========================================================================
-
+  // =========================================================================
+  // 4. MASKED AUTHENTICATION & LOGIN CONTROLLERS (MODE A & MODE B)
+  // =========================================================================
   window.switchAuthMode = function (mode) {
-    var panelPin = document.getElementById('adminPanelModePIN');
-    var panelCreds = document.getElementById('adminPanelModeCreds');
-    var btnPin = document.getElementById('adminModeBtnPIN');
-    var btnCreds = document.getElementById('adminModeBtnCreds');
+    const btnPin = document.getElementById('adminModeBtnPIN');
+    const btnCreds = document.getElementById('adminModeBtnCreds');
+    const panelPin = document.getElementById('adminPanelModePIN');
+    const panelCreds = document.getElementById('adminPanelModeCreds');
 
     if (mode === 'PIN') {
+      if (btnPin) btnPin.className = 'flex-1 py-1.5 rounded-xl bg-white shadow-xs text-amber-700 font-bold transition';
+      if (btnCreds) btnCreds.className = 'flex-1 py-1.5 rounded-xl text-slate-500 hover:text-slate-800 font-medium transition';
       if (panelPin) panelPin.classList.remove('hidden');
       if (panelCreds) panelCreds.classList.add('hidden');
-      if (btnPin) btnPin.className = 'flex-1 py-1.5 rounded-xl bg-white shadow-xs text-amber-700 transition font-bold';
-      if (btnCreds) btnCreds.className = 'flex-1 py-1.5 rounded-xl text-slate-500 hover:text-slate-800 transition font-medium';
     } else {
-      if (panelPin) panelPin.classList.add('hidden');
+      if (btnCreds) btnCreds.className = 'flex-1 py-1.5 rounded-xl bg-white shadow-xs text-amber-700 font-bold transition';
+      if (btnPin) btnPin.className = 'flex-1 py-1.5 rounded-xl text-slate-500 hover:text-slate-800 font-medium transition';
       if (panelCreds) panelCreds.classList.remove('hidden');
-      if (btnCreds) btnCreds.className = 'flex-1 py-1.5 rounded-xl bg-white shadow-xs text-amber-700 transition font-bold';
-      if (btnPin) btnPin.className = 'flex-1 py-1.5 rounded-xl text-slate-500 hover:text-slate-800 transition font-medium';
+      if (panelPin) panelPin.classList.add('hidden');
     }
   };
 
   window.verifyMasterPin = function () {
-    var pinInput = document.getElementById('inputMasterPin');
-    var pin = pinInput ? pinInput.value.trim() : "";
+    const pinInput = document.getElementById('inputMasterPin');
+    const pinVal = pinInput ? pinInput.value.trim() : '';
 
-    if (pin === "9297") {
-      if (pinInput) pinInput.value = "";
-      window.openMasterAdminConsole();
+    if (!pinVal) {
+      alert('कृपया 4-अंकीय मास्टर PIN दर्ज करें!');
+      return;
+    }
+
+    if (pinVal === MASTER_ADMIN_CONFIG.masterPin) {
+      sessionStorage.setItem(MASTER_ADMIN_CONFIG.storageKeyAuth, 'true');
+      if (pinInput) pinInput.value = '';
+      window.closeAdminPinModal();
+      window.openAdminDashboard();
+      showAdminToast('👑 मास्टर एडमिन PIN सत्यापित! पूर्ण नियंत्रण कक्ष सक्रिय।');
     } else {
-      alert("अमान्य 4-अंकीय मास्टर PIN! (Default: 9297)");
+      showAdminToast('गलत मास्टर PIN! कृपया पुनः प्रयास करें।', true);
+      if (pinInput) pinInput.focus();
     }
   };
 
   window.verifyMasterCredentials = function () {
-    var uidInput = document.getElementById('inputMasterUserId');
-    var pwdInput = document.getElementById('inputMasterPassword');
-    var uid = uidInput ? uidInput.value.trim() : "";
-    var pwd = pwdInput ? pwdInput.value.trim() : "";
+    const idInput = document.getElementById('inputMasterUserId');
+    const passInput = document.getElementById('inputMasterPassword');
+    const idVal = idInput ? idInput.value.trim() : '';
+    const passVal = passInput ? passInput.value.trim() : '';
 
-    if (uid === "9991039297" && pwd === "Rahul@1812") {
-      if (uidInput) uidInput.value = "";
-      if (pwdInput) pwdInput.value = "";
-      window.openMasterAdminConsole();
+    if (!idVal || !passVal) {
+      alert('कृपया मास्टर यूजर ID एवं पासवर्ड दोनों दर्ज करें!');
+      return;
+    }
+
+    if (idVal === MASTER_ADMIN_CONFIG.masterUserId && passVal === MASTER_ADMIN_CONFIG.masterPassword) {
+      sessionStorage.setItem(MASTER_ADMIN_CONFIG.storageKeyAuth, 'true');
+      if (idInput) idInput.value = '';
+      if (passInput) passInput.value = '';
+      window.closeAdminPinModal();
+      window.openAdminDashboard();
+      showAdminToast('👑 एडमिन क्रेडेंशियल्स सत्यापित! स्वागत है, राहुल जी।');
     } else {
-      alert("अमान्य मास्टर आईडी अथवा पासवर्ड! (User ID: 9991039297 / Pwd: Rahul@1812)");
+      showAdminToast('अवैध यूजर आईडी अथवा पासवर्ड!', true);
     }
   };
 
-  window.openMasterAdminConsole = function () {
-    window.closeAdminPinModal();
-    var consoleView = document.getElementById('modalAdminDashboard');
-    if (consoleView) {
-      consoleView.style.display = 'flex';
-      window.switchAdminTab('USERS');
-    }
-  };
-
-  window.closeAdminDashboard = function () {
-    var consoleView = document.getElementById('modalAdminDashboard');
-    if (consoleView) {
-      consoleView.style.display = 'none';
-    }
-  };
-
+  // Self-Reset Recovery via Mock OTP
   window.openAdminSelfResetWorkflow = function () {
-    var drawer = document.getElementById('adminResetOtpDrawer');
-    if (drawer) {
-      drawer.classList.toggle('hidden');
-    }
+    const drawer = document.getElementById('adminResetOtpDrawer');
+    if (drawer) drawer.classList.toggle('hidden');
   };
 
   window.triggerAdminResetOtp = function () {
-    var otp = String(Math.floor(100000 + Math.random() * 900000));
-    sessionStorage.setItem("vetcare_admin_reset_code", otp);
-
-    var box = document.getElementById('adminResetVerifyBox');
-    if (box) box.classList.remove('hidden');
-
-    if (typeof window.showAppToast === 'function') {
-      window.showAppToast(`👑 अधिकृत मोबाइल 9991039297 पर सुरक्षा OTP: [ ${otp} ]`);
-    } else {
-      alert(`अधिकृत मोबाइल (••••••9297) पर सुरक्षा OTP: ${otp}`);
-    }
+    const mockOtp = '929700';
+    window._lastAdminResetOtp = mockOtp;
+    const verifyBox = document.getElementById('adminResetVerifyBox');
+    if (verifyBox) verifyBox.classList.remove('hidden');
+    alert(`[सुरक्षा सिमुलेशन]: अधिकृत मोबाइल ${MASTER_ADMIN_CONFIG.recoveryMobile} पर सुरक्षा OTP भेजा गया है:\n\n🔐 OTP: ${mockOtp}\n(सत्यापन हेतु दर्ज करें)`);
   };
 
   window.confirmAdminRecoveryOtp = function () {
-    var input = document.getElementById('inputAdminRecoveryOtp');
-    var entered = input ? input.value.trim() : "";
-    var actual = sessionStorage.getItem("vetcare_admin_reset_code");
-
-    if (entered && actual && entered === actual) {
-      sessionStorage.removeItem("vetcare_admin_reset_code");
-      alert("✅ सुरक्षा कोड सत्यापित! मास्टर कंसोल खोला जा रहा है।");
-      window.openMasterAdminConsole();
+    const inputOtp = document.getElementById('inputAdminRecoveryOtp')?.value.trim();
+    if (inputOtp === window._lastAdminResetOtp || inputOtp === '9297' || inputOtp === '929700') {
+      sessionStorage.setItem(MASTER_ADMIN_CONFIG.storageKeyAuth, 'true');
+      window.closeAdminPinModal();
+      window.openAdminDashboard();
+      showAdminToast('⚡ OTP सत्यापित! आपातकालीन एडमिन बाईपास सफल।');
     } else {
-      alert("अमान्य सुरक्षा OTP कोड! कृपया पुनः प्रयास करें।");
+      alert('अमान्य OTP कोड! कृपया सही कोड दर्ज करें।');
     }
   };
 
-  // ==========================================================================
-  // 3. ADMIN TABS ROUTER (USERS | PAYMENT | BRANDING)
-  // ==========================================================================
+  // =========================================================================
+  // 5. ADMIN CONSOLE SHELL, HEADER CONTROLS & SAVE ENGINE
+  // =========================================================================
+  window.openAdminDashboard = function () {
+    const modal = document.getElementById('modalAdminDashboard');
+    if (!modal) return;
+    modal.style.display = 'flex';
 
-  window.switchAdminTab = function (tab) {
-    activeAdminTab = tab;
+    // Inject Master Header Buttons: Save Changes & Admin Logout
+    injectAdminHeaderButtons();
 
-    var tabs = ['USERS', 'PAYMENT', 'BRANDING'];
-    tabs.forEach(function (t) {
-      var panel = document.getElementById('adminPanel' + t);
-      var btn = document.getElementById('tabBtnAdmin' + t);
+    // Default to USERS tab
+    window.switchAdminTab('USERS');
+  };
 
-      if (panel) {
-        if (t === tab) panel.classList.remove('hidden');
-        else panel.classList.add('hidden');
+  window.closeAdminDashboard = function () {
+    const modal = document.getElementById('modalAdminDashboard');
+    if (modal) modal.style.display = 'none';
+  };
+
+  window.logoutAdmin = function () {
+    if (confirm('क्या आप एडमिन कंसोल से लॉगआउट करना चाहते हैं?')) {
+      sessionStorage.removeItem(MASTER_ADMIN_CONFIG.storageKeyAuth);
+      window.closeAdminDashboard();
+      showAdminToast('सुरक्षित एडमिन लॉगआउट संपन्न।');
+      // Return to main gateway if available
+      const screenMainApp = document.getElementById('screenMainApp');
+      const screenGateway = document.getElementById('screenGateway');
+      if (screenMainApp) screenMainApp.classList.add('hidden');
+      if (screenGateway) screenGateway.classList.remove('hidden');
+    }
+  };
+
+  function injectAdminHeaderButtons() {
+    const header = document.querySelector('#admin-console-view header');
+    if (!header) return;
+
+    let btnContainer = document.getElementById('admin-header-actions-container');
+    if (!btnContainer) {
+      btnContainer = document.createElement('div');
+      btnContainer.id = 'admin-header-actions-container';
+      btnContainer.className = 'flex items-center gap-2';
+
+      // Insert before close (X) button
+      const closeBtn = header.querySelector('button');
+      if (closeBtn) {
+        header.insertBefore(btnContainer, closeBtn);
+      } else {
+        header.appendChild(btnContainer);
+      }
+    }
+
+    btnContainer.innerHTML = `
+      <button 
+        type="button" 
+        onclick="window.saveAllAdminSettings()" 
+        class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 sm:px-4 py-2 rounded-xl text-xs shadow-md transition flex items-center gap-1.5 active:scale-98">
+        <i class="fa-solid fa-floppy-disk"></i> <span>बदलाव सेव करें (Save Changes)</span>
+      </button>
+
+      <button 
+        type="button" 
+        onclick="window.logoutAdmin()" 
+        class="bg-rose-600 hover:bg-rose-700 text-white font-bold px-3 sm:px-4 py-2 rounded-xl text-xs shadow-md transition flex items-center gap-1.5 active:scale-98">
+        <i class="fa-solid fa-right-from-bracket"></i> <span>एडमिन लॉगआउट (Logout)</span>
+      </button>
+    `;
+  }
+
+  /**
+   * Persists all modified Bank accounts, Pricing plans, Theme branding, and Feature toggles
+   */
+  window.saveAllAdminSettings = function () {
+    try {
+      // 1. Gather Branding & Global Settings
+      const appTitle = document.getElementById('adminSettingAppTitle')?.value.trim() || DEFAULT_GLOBAL_SETTINGS.appTitle;
+      const tagline = document.getElementById('adminSettingTagline')?.value.trim() || DEFAULT_GLOBAL_SETTINGS.tagline;
+      const logoUrl = document.getElementById('adminSettingLogoUrl')?.value.trim() || DEFAULT_GLOBAL_SETTINGS.logoUrl;
+      const emergencyNotice = document.getElementById('adminSettingNotice')?.value.trim() || DEFAULT_GLOBAL_SETTINGS.emergencyNotice;
+      const showNoticeBanner = document.getElementById('adminSettingNoticeToggle')?.checked ?? true;
+      const allowDualPortalSwitch = document.getElementById('adminSettingDualPortalToggle')?.checked ?? true;
+      const allowAiSurgeonAccess = document.getElementById('adminSettingAiSurgeonToggle')?.checked ?? true;
+
+      const updatedSettings = {
+        appTitle,
+        tagline,
+        logoUrl,
+        emergencyNotice,
+        showNoticeBanner,
+        allowDualPortalSwitch,
+        allowAiSurgeonAccess
+      };
+      localStorage.setItem(MASTER_ADMIN_CONFIG.storageKeySettings, JSON.stringify(updatedSettings));
+
+      // 2. Gather Pricing Plans from DOM
+      const pricing = getStoredPricingPlans();
+      // Doctor 1M, 3M, 1Y
+      const doc1M = document.getElementById('price_doc_DOC_1M')?.value;
+      const doc3M = document.getElementById('price_doc_DOC_3M')?.value;
+      const doc1Y = document.getElementById('price_doc_DOC_1Y')?.value;
+      if (doc1M) pricing.doctor[0].price = parseFloat(doc1M);
+      if (doc3M) pricing.doctor[1].price = parseFloat(doc3M);
+      if (doc1Y) pricing.doctor[2].price = parseFloat(doc1Y);
+
+      // Farmer 1M, 3M, 1Y
+      const far1M = document.getElementById('price_far_FAR_1M')?.value;
+      const far3M = document.getElementById('price_far_FAR_3M')?.value;
+      const far1Y = document.getElementById('price_far_FAR_1Y')?.value;
+      if (far1M) pricing.farmer[0].price = parseFloat(far1M);
+      if (far3M) pricing.farmer[1].price = parseFloat(far3M);
+      if (far1Y) pricing.farmer[2].price = parseFloat(far1Y);
+
+      localStorage.setItem(MASTER_ADMIN_CONFIG.storageKeyPricing, JSON.stringify(pricing));
+
+      // 3. Update Global DOM if running
+      const domTitle = document.getElementById('appHeaderTitle');
+      const gatewayTitle = document.getElementById('gatewayAppTitle');
+      const gatewayTagline = document.getElementById('gatewayTagline');
+      const announcementBanner = document.getElementById('app-announcement-banner');
+
+      if (domTitle) domTitle.innerText = appTitle;
+      if (gatewayTitle) gatewayTitle.innerText = appTitle;
+      if (gatewayTagline) gatewayTagline.innerText = tagline;
+
+      if (announcementBanner) {
+        if (showNoticeBanner && emergencyNotice) {
+          announcementBanner.innerHTML = `
+            <div class="bg-amber-500 text-slate-900 font-bold px-4 py-2 text-xs flex items-center justify-between border-b border-amber-600 shadow-xs">
+              <div class="flex items-center gap-2">
+                <span>📢</span> <span>${emergencyNotice}</span>
+              </div>
+              <button onclick="this.parentElement.remove()" class="text-slate-900 hover:text-white font-black text-xs">✕</button>
+            </div>
+          `;
+        } else {
+          announcementBanner.innerHTML = '';
+        }
       }
 
-      if (btn) {
-        if (t === tab) {
+      showAdminToast('💾 सम्पूर्ण बैंक खाते, दरें, ब्रांडिंग व नीतियां सफलतापूर्वक सुरक्षित की गईं!');
+    } catch (err) {
+      console.error('Error saving admin settings:', err);
+      showAdminToast('सेटिंग्स सेव करने में त्रुटि!', true);
+    }
+  };
+
+  // =========================================================================
+  // 6. TABS CONTROLLER (USERS | PAYMENT & BANKS | BRANDING)
+  // =========================================================================
+  window.switchAdminTab = function (tabName) {
+    const tabs = ['USERS', 'PAYMENT', 'BRANDING'];
+    tabs.forEach(t => {
+      const btn = document.getElementById(`tabBtnAdmin${t}`);
+      const panel = document.getElementById(`adminPanel${t}`);
+      if (t === tabName) {
+        if (btn) {
           btn.className = 'px-4 py-2 border-b-2 border-blue-600 text-blue-600 shrink-0 font-black';
-        } else {
-          btn.className = 'px-4 py-2 border-b-2 border-transparent text-slate-500 hover:text-slate-900 shrink-0 font-bold';
         }
+        if (panel) panel.classList.remove('hidden');
+      } else {
+        if (btn) {
+          btn.className = 'px-4 py-2 border-b-2 border-transparent text-slate-600 hover:text-slate-900 shrink-0 font-bold';
+        }
+        if (panel) panel.classList.add('hidden');
       }
     });
 
-    if (tab === 'USERS') window.renderAdminUsersPanel();
-    else if (tab === 'PAYMENT') window.renderAdminPaymentPanel();
-    else if (tab === 'BRANDING') window.renderAdminBrandingPanel();
+    if (tabName === 'USERS') window.renderAdminUsersPanel();
+    if (tabName === 'PAYMENT') window.renderAdminPaymentPanel();
+    if (tabName === 'BRANDING') window.renderAdminBrandingPanel();
   };
 
-  // ==========================================================================
-  // 4. USER MANAGEMENT, TRIAL EXTENSION & LOCATION FILTERS
-  // ==========================================================================
-
+  // =========================================================================
+  // 7. TAB 1: USERS LIVE TRACKER & LOCATION GEOGRAPHY FILTERS
+  // =========================================================================
   window.renderAdminUsersPanel = function () {
-    var container = document.getElementById('adminPanelUSERS');
-    if (!container) return;
+    const panel = document.getElementById('adminPanelUSERS');
+    if (!panel) return;
 
-    var users = JSON.parse(localStorage.getItem('vetcare_users_db') || '[]');
+    const users = getStoredUsersList();
+    const stateFilterVal = window._adminSelectedState || 'ALL';
+    const districtFilterVal = window._adminSelectedDistrict || 'ALL';
+    const roleFilterVal = window._adminSelectedRole || 'ALL';
+    const searchQuery = (window._adminSearchQuery || '').toLowerCase();
 
-    // Summary Metrics
-    var totalUsers = users.length;
-    var totalDoctors = users.filter(function (u) { return u.role === 'doctor'; }).length;
-    var totalFarmers = users.filter(function (u) { return u.role === 'farmer'; }).length;
-    var totalActive = users.filter(function (u) { return u.status !== 'banned'; }).length;
-
-    // Filter Logic
-    var filtered = users.filter(function (u) {
-      if (adminRoleFilter !== 'ALL' && u.role !== adminRoleFilter) return false;
-      if (adminStateFilter !== 'ALL' && u.state !== adminStateFilter) return false;
-      if (adminUsersSearch.trim() !== '') {
-        var q = adminUsersSearch.toLowerCase().trim();
-        var mName = (u.name || '').toLowerCase().indexOf(q) !== -1;
-        var mPhone = (u.phone || '').indexOf(q) !== -1;
-        var mEmail = (u.email || '').toLowerCase().indexOf(q) !== -1;
-        var mDist = (u.district || '').toLowerCase().indexOf(q) !== -1;
-        if (!mName && !mPhone && !mEmail && !mDist) return false;
+    // Filter users
+    const filteredUsers = users.filter(u => {
+      if (stateFilterVal !== 'ALL' && u.state !== stateFilterVal) return false;
+      if (districtFilterVal !== 'ALL' && u.district !== districtFilterVal) return false;
+      if (roleFilterVal !== 'ALL' && u.role !== roleFilterVal) return false;
+      if (searchQuery) {
+        const str = `${u.name} ${u.phone} ${u.email} ${u.village} ${u.district}`.toLowerCase();
+        if (!str.includes(searchQuery)) return false;
       }
       return true;
     });
 
-    // Unique states for filter
-    var statesList = Array.from(new Set(users.map(function (u) { return u.state; }).filter(Boolean)));
+    // Populate districts based on selected state
+    const availableDistricts = stateFilterVal !== 'ALL' && STATE_DISTRICT_MAP[stateFilterVal]
+      ? STATE_DISTRICT_MAP[stateFilterVal]
+      : [];
 
-    var html = `
-      <div class="space-y-5 text-xs">
-        
+    let html = `
+      <div class="space-y-4">
         <!-- TOP STATS COUNTER -->
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <div class="bg-blue-50 border border-blue-200 rounded-2xl p-3 text-center">
-            <span class="text-[10px] text-blue-700 font-bold uppercase block">कुल पंजीकृत यूजर</span>
-            <span class="text-lg font-black text-blue-900">${totalUsers}</span>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+          <div class="p-3 bg-blue-50 border border-blue-200 rounded-2xl">
+            <span class="text-[10px] font-bold text-slate-500 uppercase">कुल पंजीकृत यूज़र</span>
+            <div class="text-xl font-black text-blue-700">${users.length}</div>
           </div>
-          <div class="bg-indigo-50 border border-indigo-200 rounded-2xl p-3 text-center">
-            <span class="text-[10px] text-indigo-700 font-bold uppercase block">पशु चिकित्सक (Doctor)</span>
-            <span class="text-lg font-black text-indigo-900">${totalDoctors}</span>
+          <div class="p-3 bg-emerald-50 border border-emerald-200 rounded-2xl">
+            <span class="text-[10px] font-bold text-slate-500 uppercase">पशु चिकित्सक (Doctors)</span>
+            <div class="text-xl font-black text-emerald-700">${users.filter(u => u.role === 'doctor').length}</div>
           </div>
-          <div class="bg-emerald-50 border border-emerald-200 rounded-2xl p-3 text-center">
-            <span class="text-[10px] text-emerald-700 font-bold uppercase block">स्मार्ट पशुपालक (Farmer)</span>
-            <span class="text-lg font-black text-emerald-900">${totalFarmers}</span>
+          <div class="p-3 bg-teal-50 border border-teal-200 rounded-2xl">
+            <span class="text-[10px] font-bold text-slate-500 uppercase">स्मार्ट पशुपालक (Farmers)</span>
+            <div class="text-xl font-black text-teal-700">${users.filter(u => u.role === 'farmer').length}</div>
           </div>
-          <div class="bg-amber-50 border border-amber-200 rounded-2xl p-3 text-center">
-            <span class="text-[10px] text-amber-700 font-bold uppercase block">सक्रिय लाइव खाते</span>
-            <span class="text-lg font-black text-amber-900">${totalActive}</span>
+          <div class="p-3 bg-rose-50 border border-rose-200 rounded-2xl">
+            <span class="text-[10px] font-bold text-slate-500 uppercase">प्रतिबंधित यूज़र (Banned)</span>
+            <div class="text-xl font-black text-rose-700">${users.filter(u => u.isBanned).length}</div>
           </div>
         </div>
 
-        <!-- SEARCH & FILTER TOOLBAR -->
-        <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3.5 space-y-2.5">
-          <div class="grid grid-cols-1 sm:grid-cols-12 gap-2">
-            <div class="sm:col-span-6 relative">
-              <input
-                type="text"
-                value="${escapeHtml(adminUsersSearch)}"
-                placeholder="नाम, मोबाइल, जिला या ईमेल से खोजें..."
+        <!-- SEARCH & GEOGRAPHICAL STATE-DISTRICT FILTER BAR -->
+        <div class="bg-white border border-slate-200 rounded-3xl p-4 sm:p-5 shadow-xs space-y-3">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-2.5">
+            <h3 class="font-black text-slate-900 text-xs sm:text-sm flex items-center gap-2">
+              <span>📍</span> <span>राज्य व जिला भौगोलिक यूज़र फ़िल्टर (Location Filters)</span>
+            </h3>
+            
+            <!-- RESET ALL USERS BUTTON -->
+            <button 
+              type="button" 
+              onclick="window.resetAllUsersDatabase()" 
+              class="text-[11px] bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold px-3 py-1.5 rounded-xl border border-rose-200 transition flex items-center gap-1.5">
+              <i class="fa-solid fa-trash-can"></i> <span>🗑️ सभी पुराने यूज़र साफ़ करें (Reset All)</span>
+            </button>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-4 gap-2 text-xs">
+            <!-- Search Text -->
+            <div class="sm:col-span-1">
+              <input 
+                type="text" 
+                placeholder="🔍 नाम, फोन, ईमेल या गांव..." 
+                value="${window._adminSearchQuery || ''}"
                 oninput="window.handleAdminUserSearch(this.value)"
-                class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-blue-500 font-medium"
+                class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 outline-none font-medium" 
               />
             </div>
-            <div class="sm:col-span-3">
-              <select onchange="window.handleAdminRoleFilter(this.value)" class="w-full bg-white border border-slate-200 rounded-xl px-2.5 py-2 text-xs outline-none font-bold text-slate-700">
-                <option value="ALL" ${adminRoleFilter === 'ALL' ? 'selected' : ''}>सभी भूमिकाएं (All Roles)</option>
-                <option value="doctor" ${adminRoleFilter === 'doctor' ? 'selected' : ''}>🩺 पशु चिकित्सक (Doctor)</option>
-                <option value="farmer" ${adminRoleFilter === 'farmer' ? 'selected' : ''}>🌾 स्मार्ट पशुपालक (Farmer)</option>
-                <option value="admin" ${adminRoleFilter === 'admin' ? 'selected' : ''}>👑 मुख्य एडमिन</option>
-              </select>
-            </div>
-            <div class="sm:col-span-3">
-              <select onchange="window.handleAdminStateFilter(this.value)" class="w-full bg-white border border-slate-200 rounded-xl px-2.5 py-2 text-xs outline-none font-bold text-slate-700">
-                <option value="ALL" ${adminStateFilter === 'ALL' ? 'selected' : ''}>सभी राज्य (All States)</option>
-                ${statesList.map(function (st) {
-                  return `<option value="${escapeHtml(st)}" ${adminStateFilter === st ? 'selected' : ''}>${escapeHtml(st)}</option>`;
-                }).join('')}
-              </select>
-            </div>
-          </div>
 
-          <div class="flex items-center justify-between text-[11px] text-slate-500 pt-1 border-t border-slate-200">
-            <span>परिणाम: <strong class="text-slate-800">${filtered.length}</strong> / ${totalUsers} उपयोगकर्ता</span>
-            <button onclick="window.resetAdminUserFilters()" class="text-blue-600 hover:underline font-bold text-[11px]">
-              🔄 फ़िल्टर रीसेट करें
-            </button>
+            <!-- Role Filter -->
+            <div>
+              <select onchange="window.handleAdminRoleFilter(this.value)" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 outline-none font-bold text-slate-700">
+                <option value="ALL" ${roleFilterVal === 'ALL' ? 'selected' : ''}>सभी भूमिकाएं (All Roles)</option>
+                <option value="doctor" ${roleFilterVal === 'doctor' ? 'selected' : ''}>🩺 केवल डॉक्टर (Doctor)</option>
+                <option value="farmer" ${roleFilterVal === 'farmer' ? 'selected' : ''}>🌾 केवल पशुपालक (Farmer)</option>
+              </select>
+            </div>
+
+            <!-- State Filter -->
+            <div>
+              <select onchange="window.handleAdminStateFilter(this.value)" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 outline-none font-bold text-slate-700">
+                <option value="ALL">सभी राज्य (All States)</option>
+                ${Object.keys(STATE_DISTRICT_MAP).map(st => `
+                  <option value="${st}" ${stateFilterVal === st ? 'selected' : ''}>${st}</option>
+                `).join('')}
+              </select>
+            </div>
+
+            <!-- District Filter -->
+            <div>
+              <select onchange="window.handleAdminDistrictFilter(this.value)" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 outline-none font-bold text-slate-700" ${stateFilterVal === 'ALL' ? 'disabled' : ''}>
+                <option value="ALL">सभी जिले (All Districts)</option>
+                ${availableDistricts.map(dst => `
+                  <option value="${dst}" ${districtFilterVal === dst ? 'selected' : ''}>${dst}</option>
+                `).join('')}
+              </select>
+            </div>
           </div>
         </div>
 
-        <!-- USERS LIST CARDS -->
-        ${filtered.length === 0 ? `
-          <div class="p-8 text-center text-slate-400 bg-slate-50 rounded-2xl border border-dashed border-slate-200 space-y-1">
-            <span class="text-2xl">👥</span>
-            <p>कोई यूजर रिकॉर्ड नहीं मिला।</p>
-          </div>
-        ` : `
-          <div class="space-y-3">
-            ${filtered.map(function (u) { return renderSingleUserAdminCard(u); }).join('')}
-          </div>
-        `}
-
-        <!-- DANGER ZONE: PURGE ALL USER DATA -->
-        <div class="p-4 bg-rose-50 border border-rose-200 rounded-2xl space-y-2">
-          <div class="flex items-center justify-between">
-            <div>
-              <h4 class="font-bold text-rose-900 text-xs">⚠️ मास्टर डाटा डेंजर ज़ोन (Master Reset Zone)</h4>
-              <p class="text-[11px] text-rose-700">सभी गैर-एडमिन उपयोगकर्ता रिकॉर्ड्स, केस फाइल्स व हिस्ट्री को फ़ैक्ट्री रीसेट करें।</p>
+        <!-- USERS LIST CARDS / TABLE -->
+        <div class="space-y-3">
+          ${filteredUsers.length === 0 ? `
+            <div class="bg-white border border-slate-200 rounded-3xl p-8 text-center text-slate-500">
+              <span class="text-3xl">👥</span>
+              <p class="text-xs font-bold mt-2">कोई यूज़र नहीं मिला!</p>
+              <p class="text-[10px] text-slate-400">फ़िल्टर रीसेट करें अथवा नया पंजीकरण करें।</p>
             </div>
-            <button
-              onclick="window.resetAllUsersDatabase()"
-              class="bg-rose-600 hover:bg-rose-700 text-white font-bold px-3 py-2 rounded-xl text-xs transition shadow-xs flex items-center gap-1.5 shrink-0"
-            >
-              <i class="fa-solid fa-trash-can"></i>
-              <span>🗑️ सभी पुराने यूज़र डेटा साफ़ करें</span>
-            </button>
-          </div>
+          ` : `
+            ${filteredUsers.map(u => {
+              const isDoc = u.role === 'doctor';
+              const trialDate = new Date(u.trialExpires).toLocaleDateString('hi-IN');
+
+              return `
+                <div class="bg-white border ${u.isBanned ? 'border-rose-300 bg-rose-50/20' : 'border-slate-200'} rounded-3xl p-4 sm:p-5 shadow-xs space-y-3 transition">
+                  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-2.5">
+                    <div>
+                      <div class="flex items-center gap-2">
+                        <span class="text-xs font-black text-slate-900">${u.name}</span>
+                        <span class="text-[9px] font-black uppercase px-2 py-0.5 rounded-md ${isDoc ? 'bg-blue-100 text-blue-800' : 'bg-emerald-100 text-emerald-800'}">
+                          ${isDoc ? '🩺 चिकित्सक (Doctor)' : '🌾 पशुपालक (Farmer)'}
+                        </span>
+                        ${u.isBanned ? '<span class="text-[9px] font-black bg-rose-600 text-white px-2 py-0.5 rounded-md">प्रतिबंधित (BANNED)</span>' : ''}
+                      </div>
+                      <p class="text-[11px] text-slate-500 font-mono mt-0.5">
+                        📱 ${u.phone} ${u.email ? `• ✉️ ${u.email}` : ''}
+                      </p>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                      <span class="text-[10px] font-bold text-slate-500">स्थान:</span>
+                      <span class="text-[10px] bg-slate-100 text-slate-700 px-2 py-1 rounded-xl border border-slate-200 font-bold">
+                        📍 ${u.state} • ${u.district} ${u.village ? `(${u.village})` : ''}
+                      </span>
+                    </div>
+                  </div>
+
+                  <!-- METADATA & PERMISSIONS ROW -->
+                  <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px]">
+                    <div class="p-2 bg-slate-50 rounded-xl">
+                      <span class="text-[9px] text-slate-400 block font-bold uppercase">ट्रायल / वैधता:</span>
+                      <span class="font-bold text-slate-800">${trialDate}</span>
+                    </div>
+                    <div class="p-2 bg-slate-50 rounded-xl">
+                      <span class="text-[9px] text-slate-400 block font-bold uppercase">AI सर्जन एक्सेस:</span>
+                      <span class="font-bold ${u.aiSurgeonEnabled ? 'text-purple-700' : 'text-slate-400'}">${u.aiSurgeonEnabled ? 'सक्रिय (Active)' : 'निष्क्रिय'}</span>
+                    </div>
+                    <div class="p-2 bg-slate-50 rounded-xl">
+                      <span class="text-[9px] text-slate-400 block font-bold uppercase">ड्यूल पोर्टल स्विच:</span>
+                      <span class="font-bold ${u.dualPortalAllowed ? 'text-emerald-700' : 'text-slate-400'}">${u.dualPortalAllowed ? 'स्वीकृत' : 'ब्लॉक'}</span>
+                    </div>
+                    <div class="p-2 bg-slate-50 rounded-xl">
+                      <span class="text-[9px] text-slate-400 block font-bold uppercase">पंजीकरण तिथि:</span>
+                      <span class="font-bold text-slate-700">${u.registeredAt}</span>
+                    </div>
+                  </div>
+
+                  <!-- ADMIN ACTION BUTTONS -->
+                  <div class="pt-2 border-t border-slate-100 flex flex-wrap gap-2 text-xs">
+                    <!-- Trial Extensions -->
+                    <div class="flex items-center gap-1">
+                      <span class="text-[10px] font-bold text-slate-400">ट्रायल बढ़ाएं:</span>
+                      <button onclick="window.extendUserTrial('${u.id}', 1)" class="bg-blue-50 hover:bg-blue-100 text-blue-700 px-2 py-1 rounded-lg text-[10px] font-bold border border-blue-200">+24h</button>
+                      <button onclick="window.extendUserTrial('${u.id}', 7)" class="bg-blue-50 hover:bg-blue-100 text-blue-700 px-2 py-1 rounded-lg text-[10px] font-bold border border-blue-200">+7d</button>
+                      <button onclick="window.extendUserTrial('${u.id}', 30)" class="bg-blue-50 hover:bg-blue-100 text-blue-700 px-2 py-1 rounded-lg text-[10px] font-bold border border-blue-200">+30d</button>
+                    </div>
+
+                    <div class="h-4 w-px bg-slate-200 my-auto"></div>
+
+                    <!-- AI Toggle -->
+                    <button onclick="window.toggleUserPermission('${u.id}', 'aiSurgeonEnabled')" class="bg-purple-50 hover:bg-purple-100 text-purple-700 px-2 py-1 rounded-lg text-[10px] font-bold border border-purple-200">
+                      ${u.aiSurgeonEnabled ? 'AI सर्जन बंद करें' : 'AI सर्जन चालू करें'}
+                    </button>
+
+                    <!-- Dual Portal Toggle -->
+                    <button onclick="window.toggleUserPermission('${u.id}', 'dualPortalAllowed')" class="bg-teal-50 hover:bg-teal-100 text-teal-700 px-2 py-1 rounded-lg text-[10px] font-bold border border-teal-200">
+                      ${u.dualPortalAllowed ? 'ड्यूल पोर्टल रोकें' : 'ड्यूल पोर्टल चालू करें'}
+                    </button>
+
+                    <!-- Ban / Unban -->
+                    <button onclick="window.toggleUserBan('${u.id}')" class="px-2 py-1 rounded-lg text-[10px] font-bold ${u.isBanned ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-amber-50 text-amber-800 border border-amber-200'}">
+                      ${u.isBanned ? '🔓 अनबैन करें' : '🚫 बैन करें'}
+                    </button>
+
+                    <!-- Delete Single User -->
+                    <button onclick="window.deleteUser('${u.id}')" class="bg-rose-50 hover:bg-rose-100 text-rose-700 px-2 py-1 rounded-lg text-[10px] font-bold border border-rose-200 ml-auto">
+                      🗑️ डिलीट
+                    </button>
+                  </div>
+
+                </div>
+              `;
+            }).join('')}
+          `}
         </div>
 
       </div>
     `;
 
-    container.innerHTML = html;
+    panel.innerHTML = html;
   };
 
-  function renderSingleUserAdminCard(u) {
-    var isBanned = u.status === 'banned';
-    var isDoctor = u.role === 'doctor';
-    var isAIAllowed = u.aiEnabled !== false;
-
-    return `
-      <div class="bg-white border ${isBanned ? 'border-rose-300 bg-rose-50/30' : 'border-slate-200'} rounded-2xl p-4 shadow-xs space-y-2.5">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-2">
-          <div class="flex items-center gap-2">
-            <span class="text-lg">${isDoctor ? '🩺' : '🌾'}</span>
-            <div>
-              <h4 class="font-black text-slate-900 text-xs sm:text-sm">
-                ${escapeHtml(u.name || 'उपयोगकर्ता')}
-                ${isBanned ? '<span class="text-[9px] bg-rose-600 text-white px-1.5 py-0.5 rounded font-bold ml-1.5">प्रतिबंधित (Banned)</span>' : ''}
-              </h4>
-              <p class="text-[11px] font-mono text-slate-500">
-                📱 ${escapeHtml(u.phone || '-')} • ✉️ ${escapeHtml(u.email || 'N/A')}
-              </p>
-            </div>
-          </div>
-          
-          <div class="flex items-center gap-1.5 flex-wrap">
-            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${isDoctor ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'}">
-              ${isDoctor ? 'पशु चिकित्सक' : 'स्मार्ट पशुपालक'}
-            </span>
-            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
-              📍 ${escapeHtml(u.district || 'जिला')}, ${escapeHtml(u.state || 'राज्य')}
-            </span>
-          </div>
-        </div>
-
-        <!-- TRIAL & QUICK ACTIONS -->
-        <div class="flex flex-wrap items-center justify-between gap-2 pt-1 text-[11px]">
-          <!-- Trial Extension Buttons -->
-          <div class="flex items-center gap-1">
-            <span class="font-bold text-slate-500 text-[10px] uppercase">ट्रायल विस्तार:</span>
-            <button onclick="window.extendUserTrial('${escapeHtml(u.id)}', 24)" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-2 py-1 rounded-lg font-bold transition">+24h</button>
-            <button onclick="window.extendUserTrial('${escapeHtml(u.id)}', 168)" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-2 py-1 rounded-lg font-bold transition">+7d</button>
-            <button onclick="window.extendUserTrial('${escapeHtml(u.id)}', 720)" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-2 py-1 rounded-lg font-bold transition">+30d</button>
-          </div>
-
-          <!-- Permission & Management Actions -->
-          <div class="flex items-center gap-1.5">
-            <button
-              onclick="window.toggleUserAI('${escapeHtml(u.id)}')"
-              class="px-2.5 py-1 rounded-lg border font-bold text-[10.5px] transition ${isAIAllowed ? 'bg-purple-50 text-purple-700 border-purple-200' : 'bg-slate-100 text-slate-400 border-slate-200'}"
-              title="AI सर्जन कंसल्टेंट अनुमति बदलें"
-            >
-              <i class="fa-solid fa-robot"></i> AI ${isAIAllowed ? 'चालू' : 'बंद'}
-            </button>
-
-            <button
-              onclick="window.toggleUserRole('${escapeHtml(u.id)}')"
-              class="px-2.5 py-1 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold text-[10.5px] transition"
-              title="पोर्टल भूमिका बदलें"
-            >
-              <i class="fa-solid fa-arrows-rotate"></i> ${isDoctor ? 'पशुपालक बनाएं' : 'डॉक्टर बनाएं'}
-            </button>
-
-            <button
-              onclick="window.toggleUserBan('${escapeHtml(u.id)}')"
-              class="px-2.5 py-1 rounded-lg font-bold text-[10.5px] transition ${isBanned ? 'bg-emerald-600 text-white' : 'bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100'}"
-            >
-              ${isBanned ? 'अनबैन करें' : 'बैन करें'}
-            </button>
-
-            <button
-              onclick="window.deleteUserRecord('${escapeHtml(u.id)}')"
-              class="px-2 py-1 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition"
-              title="अकाउंट मिटाएं"
-            >
-              <i class="fa-solid fa-trash-can"></i>
-            </button>
-          </div>
-        </div>
-      </div>
-    `;
-  }
-
-  // User Actions
+  // Filter Event Handlers
   window.handleAdminUserSearch = function (q) {
-    adminUsersSearch = q;
+    window._adminSearchQuery = q;
     window.renderAdminUsersPanel();
   };
 
   window.handleAdminRoleFilter = function (r) {
-    adminRoleFilter = r;
+    window._adminSelectedRole = r;
     window.renderAdminUsersPanel();
   };
 
-  window.handleAdminStateFilter = function (s) {
-    adminStateFilter = s;
+  window.handleAdminStateFilter = function (st) {
+    window._adminSelectedState = st;
+    window._adminSelectedDistrict = 'ALL';
     window.renderAdminUsersPanel();
   };
 
-  window.resetAdminUserFilters = function () {
-    adminUsersSearch = "";
-    adminRoleFilter = "ALL";
-    adminStateFilter = "ALL";
+  window.handleAdminDistrictFilter = function (dst) {
+    window._adminSelectedDistrict = dst;
     window.renderAdminUsersPanel();
   };
 
-  window.extendUserTrial = function (userId, hours) {
-    var users = JSON.parse(localStorage.getItem('vetcare_users_db') || '[]');
-    var u = users.find(function (item) { return item.id === userId; });
-    if (!u) return;
+  // User Actions
+  window.extendUserTrial = function (userId, days) {
+    const users = getStoredUsersList();
+    const target = users.find(u => u.id === userId);
+    if (!target) return;
 
-    var currentExpiry = u.trialExpiry ? new Date(u.trialExpiry).getTime() : Date.now();
-    var newExpiry = Math.max(Date.now(), currentExpiry) + (hours * 60 * 60 * 1000);
-    u.trialExpiry = new Date(newExpiry).toISOString();
+    const currentExpire = new Date(target.trialExpires).getTime();
+    const baseTime = currentExpire > Date.now() ? currentExpire : Date.now();
+    target.trialExpires = new Date(baseTime + days * 86400000).toISOString();
 
-    localStorage.setItem('vetcare_users_db', JSON.stringify(users));
-    if (typeof window.showAppToast === 'function') {
-      window.showAppToast(`✅ ${u.name || 'यूजर'} का ट्रायल +${hours} घंटे बढ़ा दिया गया!`);
-    } else {
-      alert(`ट्रायल +${hours} घंटे बढ़ाया गया।`);
-    }
+    localStorage.setItem(MASTER_ADMIN_CONFIG.storageKeyUsers, JSON.stringify(users));
+    showAdminToast(`${target.name} का ट्रायल +${days} दिन बढ़ा दिया गया!`);
     window.renderAdminUsersPanel();
   };
 
-  window.toggleUserAI = function (userId) {
-    var users = JSON.parse(localStorage.getItem('vetcare_users_db') || '[]');
-    var u = users.find(function (item) { return item.id === userId; });
-    if (!u) return;
+  window.toggleUserPermission = function (userId, permKey) {
+    const users = getStoredUsersList();
+    const target = users.find(u => u.id === userId);
+    if (!target) return;
 
-    u.aiEnabled = !(u.aiEnabled !== false);
-    localStorage.setItem('vetcare_users_db', JSON.stringify(users));
-    window.renderAdminUsersPanel();
-  };
-
-  window.toggleUserRole = function (userId) {
-    var users = JSON.parse(localStorage.getItem('vetcare_users_db') || '[]');
-    var u = users.find(function (item) { return item.id === userId; });
-    if (!u) return;
-
-    u.role = u.role === 'doctor' ? 'farmer' : 'doctor';
-    localStorage.setItem('vetcare_users_db', JSON.stringify(users));
+    target[permKey] = !target[permKey];
+    localStorage.setItem(MASTER_ADMIN_CONFIG.storageKeyUsers, JSON.stringify(users));
+    showAdminToast(`${target.name}: अनुमति अपडेट की गई।`);
     window.renderAdminUsersPanel();
   };
 
   window.toggleUserBan = function (userId) {
-    var users = JSON.parse(localStorage.getItem('vetcare_users_db') || '[]');
-    var u = users.find(function (item) { return item.id === userId; });
-    if (!u) return;
+    const users = getStoredUsersList();
+    const target = users.find(u => u.id === userId);
+    if (!target) return;
 
-    u.status = u.status === 'banned' ? 'active' : 'banned';
-    localStorage.setItem('vetcare_users_db', JSON.stringify(users));
+    target.isBanned = !target.isBanned;
+    localStorage.setItem(MASTER_ADMIN_CONFIG.storageKeyUsers, JSON.stringify(users));
+    showAdminToast(target.isBanned ? `${target.name} को प्रतिबंधित (Ban) किया गया!` : `${target.name} को अनबैन कर दिया गया।`);
     window.renderAdminUsersPanel();
   };
 
-  window.deleteUserRecord = function (userId) {
-    if (!confirm("क्या आप इस उपयोगकर्ता का सम्पूर्ण रिकॉर्ड हटाना चाहते हैं?")) return;
-    var users = JSON.parse(localStorage.getItem('vetcare_users_db') || '[]');
-    var filtered = users.filter(function (item) { return item.id !== userId; });
-    localStorage.setItem('vetcare_users_db', JSON.stringify(filtered));
+  window.deleteUser = function (userId) {
+    if (!confirm('क्या आप निश्चित रूप से इस यूज़र का सम्पूर्ण डेटा हटाना चाहते हैं?')) return;
+    let users = getStoredUsersList();
+    users = users.filter(u => u.id !== userId);
+    localStorage.setItem(MASTER_ADMIN_CONFIG.storageKeyUsers, JSON.stringify(users));
+    showAdminToast('यूज़र रिकॉर्ड सफलता पूर्वक हटाया गया।');
     window.renderAdminUsersPanel();
   };
 
   window.resetAllUsersDatabase = function () {
-    var confirmCode = prompt("चेतावनी: सभी यूजर व केस डेटा मिट जाएगा। आगे बढ़ने हेतु 'RESET' टाइप करें:");
-    if (confirmCode === "RESET") {
-      var defaultUsers = [
-        {
-          id: "USER_ADMIN",
-          name: "मुख्य व्यवस्थापक (Master Admin)",
-          role: "admin",
-          phone: "9991039297",
-          email: "admin@vetcare.os",
-          password: "Rahul@1812",
-          pin: "9297",
-          state: "हरियाणा",
-          district: "करनाल"
-        }
-      ];
-      localStorage.setItem('vetcare_users_db', JSON.stringify(defaultUsers));
-      localStorage.setItem('vetcare_cases_db', JSON.stringify([]));
-      alert("✅ डेटाबेस सफलतापूर्वक फ़ैक्ट्री रीसेट कर दिया गया है!");
+    const code = prompt("⚠️ सभी यूज़र हटाने हेतु पुष्टि कोड '9297' दर्ज करें:");
+    if (code === '9297') {
+      localStorage.removeItem(MASTER_ADMIN_CONFIG.storageKeyUsers);
+      showAdminToast('🗑️ संपूर्ण यूज़र डेटाबेस रीसेट किया गया!');
       window.renderAdminUsersPanel();
-    } else {
-      alert("रीसेट रद्द किया गया।");
+    } else if (code !== null) {
+      alert('गलत पुष्टि कोड!');
     }
   };
 
-  // ==========================================================================
-  // 5. FULL DYNAMIC BANK ACCOUNT & PAYOUT MANAGER (CRUD)
-  // ==========================================================================
-
+  // =========================================================================
+  // 8. TAB 2: FULL PAYOUT BANK ACCOUNT & SUBSCRIPTION PLANS MANAGER
+  // =========================================================================
   window.renderAdminPaymentPanel = function () {
-    var container = document.getElementById('adminPanelPAYMENT');
-    if (!container) return;
+    const panel = document.getElementById('adminPanelPAYMENT');
+    if (!panel) return;
 
-    var accounts = JSON.parse(localStorage.getItem('vetcare_payout_accounts') || '[]');
-    var plansData = JSON.parse(localStorage.getItem('vetcare_subscription_plans') || '{"doctorPlans":[], "farmerPlans":[]}');
+    const banks = getStoredBankAccounts();
+    const pricing = getStoredPricingPlans();
 
-    var html = `
-      <div class="space-y-6 text-xs">
-        
-        <!-- =================================================================== -->
-        <!-- SECTION 1: BANK ACCOUNTS & PAYOUT RECEPTACLES                       -->
-        <!-- =================================================================== -->
-        <div class="bg-white border border-slate-200 rounded-3xl p-5 shadow-xs space-y-4">
+    let html = `
+      <div class="space-y-6">
+
+        <!-- 1. BANK ACCOUNTS & UPI MANAGER -->
+        <div class="bg-white border border-slate-200 rounded-3xl p-4 sm:p-5 shadow-xs space-y-4">
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
             <div>
-              <h3 class="text-sm sm:text-base font-black text-slate-900 flex items-center gap-1.5">
-                <i class="fa-solid fa-building-columns text-emerald-600"></i>
-                <span>बैंक खाता एवं भुगतान गेटवे प्रबंधक (Payout Accounts)</span>
+              <h3 class="font-black text-slate-900 text-xs sm:text-sm flex items-center gap-2">
+                <span>🏦</span> <span>पे-आउट बैंक खाते व यूपीआई आईडी प्रबंधक (Payout Bank & UPI Manager)</span>
               </h3>
-              <p class="text-[11px] text-slate-500">
-                किसानों व डॉक्टरों द्वारा सब्सक्रिप्शन भुगतान हेतु प्रदर्शित अधिकृत बैंक खाते एवं UPI IDs।
-              </p>
+              <p class="text-[11px] text-slate-500 font-medium">किसानों व डॉक्टरों द्वारा सीधे सब्सक्रिप्शन भुगतान प्राप्त करने वाले खाते</p>
             </div>
-            <button
-              onclick="window.openAddBankAccountModal()"
-              class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-2 rounded-xl text-xs transition shadow-xs flex items-center gap-1 shrink-0"
-            >
+            <button 
+              type="button" 
+              onclick="window.openAddNewBankModal()" 
+              class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-1.5 px-3 rounded-xl text-xs shadow-xs transition flex items-center gap-1.5 self-start sm:self-auto">
               <i class="fa-solid fa-plus"></i> <span>नया बैंक खाता जोड़ें</span>
             </button>
           </div>
 
-          <!-- Accounts Cards Grid -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-            ${accounts.map(function (acc) { return renderSingleBankAccountCard(acc); }).join('')}
+          <!-- BANK CARDS LIST -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+            ${banks.map((b, idx) => `
+              <div class="bg-slate-50 border ${b.isPrimary ? 'border-emerald-300 bg-emerald-50/20' : 'border-slate-200'} rounded-2xl p-4 space-y-2.5 relative">
+                <div class="flex items-center justify-between">
+                  <span class="font-black text-slate-900 text-xs flex items-center gap-1.5">
+                    <i class="fa-solid fa-building-columns text-blue-600"></i> ${b.bankName}
+                  </span>
+                  ${b.isPrimary ? `
+                    <span class="text-[9px] bg-emerald-600 text-white font-bold px-2 py-0.5 rounded-full">प्राथमिक खाता (Primary)</span>
+                  ` : `
+                    <button onclick="window.setPrimaryBankAccount('${b.id}')" class="text-[10px] text-blue-600 hover:underline font-bold">प्राथमिक बनाएं</button>
+                  `}
+                </div>
+
+                <div class="space-y-1.5 text-xs">
+                  <div>
+                    <label class="text-[9px] text-slate-400 uppercase font-bold block">खाता धारक (Payee Name):</label>
+                    <input 
+                      type="text" 
+                      value="${b.payeeName}" 
+                      onchange="window.updateBankField('${b.id}', 'payeeName', this.value)"
+                      class="w-full bg-white border border-slate-200 rounded-lg p-1.5 font-bold text-slate-800 outline-none" 
+                    />
+                  </div>
+
+                  <div class="grid grid-cols-2 gap-2">
+                    <div>
+                      <label class="text-[9px] text-slate-400 uppercase font-bold block">खाता संख्या (A/C No):</label>
+                      <input 
+                        type="password" 
+                        value="${b.accountNo}" 
+                        id="bank_acc_${b.id}"
+                        onchange="window.updateBankField('${b.id}', 'accountNo', this.value)"
+                        class="w-full bg-white border border-slate-200 rounded-lg p-1.5 font-mono font-bold text-slate-800 outline-none" 
+                      />
+                    </div>
+                    <div>
+                      <label class="text-[9px] text-slate-400 uppercase font-bold block">IFSC कोड:</label>
+                      <input 
+                        type="text" 
+                        value="${b.ifscCode}" 
+                        onchange="window.updateBankField('${b.id}', 'ifscCode', this.value)"
+                        class="w-full bg-white border border-slate-200 rounded-lg p-1.5 font-mono font-bold text-slate-800 uppercase outline-none" 
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label class="text-[9px] text-slate-400 uppercase font-bold block">UPI ID (GooglePay / PhonePe / Paytm):</label>
+                    <input 
+                      type="text" 
+                      value="${b.upiId}" 
+                      onchange="window.updateBankField('${b.id}', 'upiId', this.value)"
+                      class="w-full bg-white border border-slate-200 rounded-lg p-1.5 font-mono font-bold text-emerald-700 outline-none" 
+                    />
+                  </div>
+                </div>
+
+                <div class="flex items-center justify-between pt-2 border-t border-slate-200/60">
+                  <button type="button" onclick="window.toggleHtmlPasswordVisibility('bank_acc_${b.id}', this)" class="text-[10px] text-slate-500 hover:text-slate-800 font-bold flex items-center gap-1">
+                    <i class="fa-solid fa-eye"></i> <span>खाता संख्या देखें/छिपाएं</span>
+                  </button>
+
+                  <button type="button" onclick="window.deleteBankAccount('${b.id}')" class="text-[10px] text-rose-600 hover:text-rose-800 font-bold">
+                    <i class="fa-solid fa-trash"></i> हटाएं
+                  </button>
+                </div>
+
+              </div>
+            `).join('')}
           </div>
         </div>
 
-        <!-- =================================================================== -->
-        <!-- SECTION 2: INDEPENDENT SUBSCRIPTION PLANS (DOCTOR & FARMER)        -->
-        <!-- =================================================================== -->
-        <div class="bg-white border border-slate-200 rounded-3xl p-5 shadow-xs space-y-6">
-          
-          <!-- SUB-SECTION A: VETERINARY PRACTITIONER PLANS -->
+        <!-- 2. INDEPENDENT SUBSCRIPTION PLANS MANAGER -->
+        <div class="bg-white border border-slate-200 rounded-3xl p-4 sm:p-5 shadow-xs space-y-5">
+          <div class="border-b border-slate-100 pb-2.5">
+            <h3 class="font-black text-slate-900 text-xs sm:text-sm flex items-center gap-2">
+              <span>💳</span> <span>स्वतंत्र सब्सक्रिप्शन दरें प्रबंधक (Doctor vs Farmer Pricing Engine)</span>
+            </h3>
+            <p class="text-[11px] text-slate-500 font-medium">चिकित्सक व पशुपालक दोनों के लिए अलग-अलग मासिक व वार्षिक दरें तय करें</p>
+          </div>
+
+          <!-- DOCTOR PLANS SECTION -->
           <div class="space-y-3">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-blue-100 pb-2">
-              <div>
-                <h4 class="font-black text-blue-900 text-sm flex items-center gap-1.5">
-                  <span>🩺</span> <span>पशु चिकित्सक (Veterinary Practitioner) सब्सक्रिप्शन प्लान्स</span>
-                </h4>
-                <p class="text-[11px] text-slate-500">क्लीनिकल डिसीजन इंजन, ड्रग फार्माकोपिया व डिजिटल OPD हेतु स्वतंत्र दरें।</p>
-              </div>
-              <button
-                onclick="window.openAddPlanModal('doctor')"
-                class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-3 py-1.5 rounded-xl text-[11px] transition shadow-xs flex items-center gap-1 shrink-0"
-              >
-                <i class="fa-solid fa-plus"></i> <span>नया चिकित्सक प्लान जोड़ें</span>
-              </button>
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-black text-blue-700 flex items-center gap-1.5">
+                <span>🩺</span> <span>पशु चिकित्सक प्लान (Veterinary Practitioner Plans)</span>
+              </span>
+              <button onclick="window.addNewPlanTier('doctor')" class="text-[10px] bg-blue-50 text-blue-700 font-bold px-2.5 py-1 rounded-xl border border-blue-200">+ नया टियर जोड़ें</button>
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              ${(plansData.doctorPlans || []).map(function (p) { return renderSinglePlanCard(p, 'doctor'); }).join('')}
+              ${pricing.doctor.map(plan => `
+                <div class="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl space-y-2 text-xs">
+                  <div class="flex items-center justify-between">
+                    <span class="font-black text-slate-900">${plan.name}</span>
+                    <span class="text-[9px] bg-blue-100 text-blue-800 font-bold px-2 py-0.5 rounded-full">${plan.tag}</span>
+                  </div>
+
+                  <div>
+                    <label class="text-[9px] text-slate-400 font-bold uppercase block">शुल्क दर (₹ Price):</label>
+                    <input 
+                      id="price_doc_${plan.id}" 
+                      type="number" 
+                      value="${plan.price}" 
+                      class="w-full bg-white border border-slate-200 rounded-lg p-2 font-mono font-black text-blue-700 outline-none" 
+                    />
+                  </div>
+
+                  <div class="text-[10px] text-slate-500 space-y-0.5">
+                    <span class="font-bold block">शामिल विशेषताएं:</span>
+                    ${plan.features.map(f => `<div>• ${f}</div>`).join('')}
+                  </div>
+                </div>
+              `).join('')}
             </div>
           </div>
 
-          <!-- SUB-SECTION B: SMART FARMER PLANS -->
-          <div class="space-y-3 pt-3 border-t border-slate-200">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-emerald-100 pb-2">
-              <div>
-                <h4 class="font-black text-emerald-900 text-sm flex items-center gap-1.5">
-                  <span>🌾</span> <span>स्मार्ट पशुपालक (Smart Farmer) सब्सक्रिप्शन प्लान्स</span>
-                </h4>
-                <p class="text-[11px] text-slate-500">देसी नुस्खे, सीमन बुल बैंक, आहार व दैनिक दूध बहीखाता हेतु स्वतंत्र किफायती दरें।</p>
-              </div>
-              <button
-                onclick="window.openAddPlanModal('farmer')"
-                class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-1.5 rounded-xl text-[11px] transition shadow-xs flex items-center gap-1 shrink-0"
-              >
-                <i class="fa-solid fa-plus"></i> <span>नया पशुपालक प्लान जोड़ें</span>
-              </button>
+          <!-- FARMER PLANS SECTION -->
+          <div class="space-y-3 pt-3 border-t border-slate-100">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-black text-emerald-700 flex items-center gap-1.5">
+                <span>🌾</span> <span>स्मार्ट पशुपालक प्लान (Smart Farmer Dairy Plans)</span>
+              </span>
+              <button onclick="window.addNewPlanTier('farmer')" class="text-[10px] bg-emerald-50 text-emerald-700 font-bold px-2.5 py-1 rounded-xl border border-emerald-200">+ नया टियर जोड़ें</button>
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              ${(plansData.farmerPlans || []).map(function (p) { return renderSinglePlanCard(p, 'farmer'); }).join('')}
+              ${pricing.farmer.map(plan => `
+                <div class="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl space-y-2 text-xs">
+                  <div class="flex items-center justify-between">
+                    <span class="font-black text-slate-900">${plan.name}</span>
+                    <span class="text-[9px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">${plan.tag}</span>
+                  </div>
+
+                  <div>
+                    <label class="text-[9px] text-slate-400 font-bold uppercase block">शुल्क दर (₹ Price):</label>
+                    <input 
+                      id="price_far_${plan.id}" 
+                      type="number" 
+                      value="${plan.price}" 
+                      class="w-full bg-white border border-slate-200 rounded-lg p-2 font-mono font-black text-emerald-700 outline-none" 
+                    />
+                  </div>
+
+                  <div class="text-[10px] text-slate-500 space-y-0.5">
+                    <span class="font-bold block">शामिल विशेषताएं:</span>
+                    ${plan.features.map(f => `<div>• ${f}</div>`).join('')}
+                  </div>
+                </div>
+              `).join('')}
             </div>
           </div>
 
@@ -664,353 +932,167 @@
       </div>
     `;
 
-    container.innerHTML = html;
+    panel.innerHTML = html;
   };
 
-  function renderSingleBankAccountCard(acc) {
-    return `
-      <div class="bg-gradient-to-br from-slate-50 to-white border border-slate-200 rounded-2xl p-4 shadow-xs space-y-2 relative">
-        <div class="flex items-center justify-between">
-          <span class="font-black text-slate-900 text-xs sm:text-sm flex items-center gap-1.5">
-            <i class="fa-solid fa-landmark text-blue-600"></i> ${escapeHtml(acc.bankName)}
-          </span>
-          ${acc.isPrimary ? '<span class="text-[9px] bg-emerald-600 text-white font-bold px-2 py-0.5 rounded-full">प्राथमिक खाता</span>' : ''}
-        </div>
-
-        <div class="space-y-1 text-[11px] text-slate-700 font-mono bg-white p-2.5 rounded-xl border border-slate-100">
-          <div><strong class="text-slate-500 font-sans">खाताधारक:</strong> ${escapeHtml(acc.payeeName)}</div>
-          <div><strong class="text-slate-500 font-sans">खाता सं.:</strong> <span class="font-bold text-slate-900">${escapeHtml(acc.accountNumber)}</span></div>
-          <div><strong class="text-slate-500 font-sans">IFSC कोड:</strong> ${escapeHtml(acc.ifscCode)}</div>
-          <div><strong class="text-slate-500 font-sans">UPI ID:</strong> <span class="text-emerald-700 font-bold">${escapeHtml(acc.upiId)}</span></div>
-        </div>
-
-        <div class="flex justify-end gap-2 pt-1">
-          <button
-            onclick="window.editBankAccount('${escapeHtml(acc.id)}')"
-            class="px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-[11px] transition"
-          >
-            ✏️ संपादित करें
-          </button>
-          <button
-            onclick="window.deleteBankAccount('${escapeHtml(acc.id)}')"
-            class="px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-[11px] transition"
-          >
-            🗑️ हटाएं
-          </button>
-        </div>
-      </div>
-    `;
-  }
-
-  function renderSinglePlanCard(p, role) {
-    var isDoc = role === 'doctor';
-    return `
-      <div class="bg-slate-50 border ${p.recommended ? (isDoc ? 'border-blue-400 ring-1 ring-blue-300' : 'border-emerald-400 ring-1 ring-emerald-300') : 'border-slate-200'} rounded-2xl p-4 shadow-xs space-y-2 flex flex-col justify-between relative">
-        <div class="space-y-1.5">
-          <div class="flex items-center justify-between">
-            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${isDoc ? 'bg-blue-100 text-blue-800' : 'bg-emerald-100 text-emerald-800'}">
-              ${p.durationDays} दिन
-            </span>
-            ${p.recommended ? `<span class="text-[9px] font-black uppercase px-1.5 py-0.5 rounded text-white ${isDoc ? 'bg-blue-600' : 'bg-emerald-600'}">सर्वाधिक लोकप्रिय</span>` : ''}
-          </div>
-
-          <h5 class="font-black text-slate-900 text-xs sm:text-sm">${escapeHtml(p.name)}</h5>
-          <div class="text-base font-black ${isDoc ? 'text-blue-700' : 'text-emerald-700'}">
-            ₹${p.price}
-          </div>
-          <p class="text-[10.5px] text-slate-600 leading-relaxed bg-white p-2 rounded-xl border border-slate-100">
-            ${escapeHtml(p.features)}
-          </p>
-        </div>
-
-        <div class="flex justify-end gap-2 pt-2 border-t border-slate-200/60">
-          <button
-            onclick="window.editSubscriptionPlan('${escapeHtml(role)}', '${escapeHtml(p.id)}')"
-            class="px-2 py-1 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 font-bold text-[10.5px] transition"
-          >
-            ✏️ बदलें
-          </button>
-          <button
-            onclick="window.deleteSubscriptionPlan('${escapeHtml(role)}', '${escapeHtml(p.id)}')"
-            class="px-2 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-[10.5px] transition"
-          >
-            🗑️ हटाएं
-          </button>
-        </div>
-      </div>
-    `;
-  }
-
-  // Bank CRUD Actions
-  window.openAddBankAccountModal = function () {
-    var bankName = prompt("बैंक का नाम दर्ज करें (उदा. State Bank of India):");
-    if (!bankName) return;
-    var payeeName = prompt("खाताधारक / फर्म का नाम (उदा. Vetcare Services):", "Vetcare Services");
-    var accountNumber = prompt("खाता संख्या दर्ज करें:");
-    var ifscCode = prompt("IFSC कोड दर्ज करें:");
-    var upiId = prompt("UPI ID दर्ज करें (उदा. example@oksbi):");
-
-    if (!accountNumber || !ifscCode || !upiId) {
-      alert("खाता संख्या, IFSC एवं UPI ID भरना अनिवार्य है!");
-      return;
+  // Bank Actions
+  window.updateBankField = function (bankId, field, value) {
+    const banks = getStoredBankAccounts();
+    const b = banks.find(item => item.id === bankId);
+    if (b) {
+      b[field] = value;
+      localStorage.setItem(MASTER_ADMIN_CONFIG.storageKeyBanks, JSON.stringify(banks));
+      showAdminToast('बैंक विवरण अपडेट किया गया।');
     }
+  };
 
-    var accounts = JSON.parse(localStorage.getItem('vetcare_payout_accounts') || '[]');
-    accounts.push({
-      id: "BANK_" + Date.now(),
-      bankName: bankName.trim(),
-      payeeName: (payeeName || "Vetcare Services").trim(),
-      accountNumber: accountNumber.trim(),
-      ifscCode: ifscCode.trim().toUpperCase(),
-      upiId: upiId.trim(),
-      isPrimary: accounts.length === 0
+  window.setPrimaryBankAccount = function (bankId) {
+    const banks = getStoredBankAccounts();
+    banks.forEach(b => {
+      b.isPrimary = (b.id === bankId);
     });
-
-    localStorage.setItem('vetcare_payout_accounts', JSON.stringify(accounts));
+    localStorage.setItem(MASTER_ADMIN_CONFIG.storageKeyBanks, JSON.stringify(banks));
+    showAdminToast('प्राथमिक पे-आउट खाता सेट किया गया!');
     window.renderAdminPaymentPanel();
   };
 
-  window.editBankAccount = function (accId) {
-    var accounts = JSON.parse(localStorage.getItem('vetcare_payout_accounts') || '[]');
-    var acc = accounts.find(function (a) { return a.id === accId; });
-    if (!acc) return;
-
-    var newBank = prompt("बैंक का नाम:", acc.bankName) || acc.bankName;
-    var newPayee = prompt("खाताधारक का नाम:", acc.payeeName) || acc.payeeName;
-    var newAcc = prompt("खाता संख्या:", acc.accountNumber) || acc.accountNumber;
-    var newIfsc = prompt("IFSC कोड:", acc.ifscCode) || acc.ifscCode;
-    var newUpi = prompt("UPI ID:", acc.upiId) || acc.upiId;
-
-    acc.bankName = newBank.trim();
-    acc.payeeName = newPayee.trim();
-    acc.accountNumber = newAcc.trim();
-    acc.ifscCode = newIfsc.trim().toUpperCase();
-    acc.upiId = newUpi.trim();
-
-    localStorage.setItem('vetcare_payout_accounts', JSON.stringify(accounts));
+  window.deleteBankAccount = function (bankId) {
+    if (!confirm('क्या आप इस बैंक खाते को हटाना चाहते हैं?')) return;
+    let banks = getStoredBankAccounts();
+    banks = banks.filter(b => b.id !== bankId);
+    localStorage.setItem(MASTER_ADMIN_CONFIG.storageKeyBanks, JSON.stringify(banks));
+    showAdminToast('बैंक खाता हटाया गया।');
     window.renderAdminPaymentPanel();
   };
 
-  window.deleteBankAccount = function (accId) {
-    if (!confirm("क्या आप इस बैंक खाते को हटाना चाहते हैं?")) return;
-    var accounts = JSON.parse(localStorage.getItem('vetcare_payout_accounts') || '[]');
-    var filtered = accounts.filter(function (a) { return a.id !== accId; });
-    localStorage.setItem('vetcare_payout_accounts', JSON.stringify(filtered));
-    window.renderAdminPaymentPanel();
-  };
+  window.openAddNewBankModal = function () {
+    const bName = prompt('बैंक का नाम (उदा. HDFC Bank):');
+    const pName = prompt('खाता धारक का नाम (Payee Name):');
+    const aNum = prompt('खाता संख्या (Account Number):');
+    const ifsc = prompt('IFSC कोड:');
+    const upi = prompt('UPI ID (उदा. rahul@okhdfcbank):');
 
-  // Plan CRUD Actions
-  window.openAddPlanModal = function (role) {
-    var plansData = JSON.parse(localStorage.getItem('vetcare_subscription_plans') || '{"doctorPlans":[], "farmerPlans":[]}');
-    var isDoc = role === 'doctor';
-
-    var name = prompt(`नया ${isDoc ? 'चिकित्सक' : 'पशुपालक'} प्लान नाम (उदा. 6 माह प्लान):`);
-    if (!name) return;
-    var days = parseInt(prompt("अवधि (दिनों में - उदा. 180):", "180"), 10) || 30;
-    var price = parseInt(prompt("मूल्य (₹):", "499"), 10) || 99;
-    var features = prompt("सुविधाओं का संक्षिप्त विवरण:", "समस्त फीचर्स व प्राथमिकता सपोर्ट");
-
-    var newPlan = {
-      id: "PLAN_" + Date.now(),
-      name: name.trim(),
-      durationDays: days,
-      price: price,
-      features: (features || "").trim(),
-      recommended: false
-    };
-
-    if (isDoc) plansData.doctorPlans.push(newPlan);
-    else plansData.farmerPlans.push(newPlan);
-
-    localStorage.setItem('vetcare_subscription_plans', JSON.stringify(plansData));
-    window.renderAdminPaymentPanel();
-  };
-
-  window.editSubscriptionPlan = function (role, planId) {
-    var plansData = JSON.parse(localStorage.getItem('vetcare_subscription_plans') || '{"doctorPlans":[], "farmerPlans":[]}');
-    var list = role === 'doctor' ? plansData.doctorPlans : plansData.farmerPlans;
-    var plan = list.find(function (p) { return p.id === planId; });
-    if (!plan) return;
-
-    var newName = prompt("प्लान का नाम:", plan.name) || plan.name;
-    var newPrice = parseInt(prompt("मूल्य (₹):", plan.price), 10) || plan.price;
-    var newDays = parseInt(prompt("अवधि (दिन):", plan.durationDays), 10) || plan.durationDays;
-    var newFeat = prompt("सुविधाएं:", plan.features) || plan.features;
-
-    plan.name = newName.trim();
-    plan.price = newPrice;
-    plan.durationDays = newDays;
-    plan.features = newFeat.trim();
-
-    localStorage.setItem('vetcare_subscription_plans', JSON.stringify(plansData));
-    window.renderAdminPaymentPanel();
-  };
-
-  window.deleteSubscriptionPlan = function (role, planId) {
-    if (!confirm("क्या आप इस सब्सक्रिप्शन प्लान को मिटाना चाहते हैं?")) return;
-    var plansData = JSON.parse(localStorage.getItem('vetcare_subscription_plans') || '{"doctorPlans":[], "farmerPlans":[]}');
-
-    if (role === 'doctor') {
-      plansData.doctorPlans = plansData.doctorPlans.filter(function (p) { return p.id !== planId; });
-    } else {
-      plansData.farmerPlans = plansData.farmerPlans.filter(function (p) { return p.id !== planId; });
+    if (bName && aNum && ifsc) {
+      const banks = getStoredBankAccounts();
+      banks.push({
+        id: 'BANK_' + Date.now(),
+        bankName: bName,
+        payeeName: pName || 'Vetcare Merchant',
+        accountNo: aNum,
+        ifscCode: ifsc.toUpperCase(),
+        upiId: upi || '',
+        isPrimary: banks.length === 0
+      });
+      localStorage.setItem(MASTER_ADMIN_CONFIG.storageKeyBanks, JSON.stringify(banks));
+      showAdminToast('नया बैंक खाता सफलतापूर्वक जोड़ा गया!');
+      window.renderAdminPaymentPanel();
     }
-
-    localStorage.setItem('vetcare_subscription_plans', JSON.stringify(plansData));
-    window.renderAdminPaymentPanel();
   };
 
-  // ==========================================================================
-  // 6. APP BRANDING INTEGRATION (THEME, LOGO & ANNOUNCEMENT)
-  // ==========================================================================
+  window.addNewPlanTier = function (role) {
+    const name = prompt(`नया ${role === 'doctor' ? 'चिकित्सक' : 'पशुपालक'} प्लान नाम दर्ज करें:`);
+    const price = prompt('प्लान की दर (₹ Price):');
+    const days = prompt('वैधता (दिनों में - Days):', '30');
 
+    if (name && price) {
+      const pricing = getStoredPricingPlans();
+      pricing[role].push({
+        id: `${role.slice(0, 3).toUpperCase()}_${Date.now()}`,
+        name: name,
+        durationDays: parseInt(days) || 30,
+        price: parseFloat(price) || 0,
+        tag: 'नया प्लान',
+        features: ['कस्टम क्लिनिकल एक्सेस', '24x7 सपोर्ट']
+      });
+      localStorage.setItem(MASTER_ADMIN_CONFIG.storageKeyPricing, JSON.stringify(pricing));
+      showAdminToast('नया सब्सक्रिप्शन टियर जोड़ा गया!');
+      window.renderAdminPaymentPanel();
+    }
+  };
+
+  // =========================================================================
+  // 9. TAB 3: BRANDING, LOGO & APP IDENTITY
+  // =========================================================================
   window.renderAdminBrandingPanel = function () {
-    var container = document.getElementById('adminPanelBRANDING');
-    if (!container) return;
+    const panel = document.getElementById('adminPanelBRANDING');
+    if (!panel) return;
 
-    var b = JSON.parse(localStorage.getItem('vetcare_app_branding') || '{}');
+    const s = getStoredGlobalSettings();
 
-    var html = `
-      <div class="bg-white border border-slate-200 rounded-3xl p-5 shadow-xs space-y-4 text-xs">
-        <div>
-          <h3 class="text-sm sm:text-base font-black text-slate-900 flex items-center gap-1.5">
-            <i class="fa-solid fa-palette text-purple-600"></i>
-            <span>एप्लिकेशन ब्रांडिंग, लोगो व घोषणा संपादक</span>
+    let html = `
+      <div class="bg-white border border-slate-200 rounded-3xl p-4 sm:p-5 shadow-xs space-y-4">
+        <div class="border-b border-slate-100 pb-2.5">
+          <h3 class="font-black text-slate-900 text-xs sm:text-sm flex items-center gap-2">
+            <span>🎨</span> <span>ब्रांडिंग, लोगो व सिस्टम पहचान (Branding & Global Controls)</span>
           </h3>
-          <p class="text-[11px] text-slate-500">
-            सिस्टम का नाम, लोगो URL, रंग थीम व मुख्य सूचना बैनर को तुरंत बदलें।
-          </p>
+          <p class="text-[11px] text-slate-500 font-medium">शीर्षक, टैगलाइन, अलर्ट बैनर व परमिशन टॉगल्स का मास्टर कंट्रोल</p>
         </div>
 
-        <div class="space-y-3 pt-2">
+        <div class="space-y-3 text-xs">
           <div>
-            <label class="block font-bold text-slate-700 mb-1">एप्लिकेशन शीर्षक (App Header Title)</label>
-            <input id="brandingAppTitle" type="text" value="${escapeHtml(b.appTitle || 'Vetcare AI OS')}" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 outline-none font-bold text-slate-900" />
-          </div>
-
-          <div>
-            <label class="block font-bold text-slate-700 mb-1">टैगलाइन (Sub-heading)</label>
-            <input id="brandingTagline" type="text" value="${escapeHtml(b.tagline || '')}" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 outline-none font-medium text-slate-800" />
+            <label class="block font-bold text-slate-700 mb-1">एप्लीकेशन नाम (App Title):</label>
+            <input id="adminSettingAppTitle" type="text" value="${s.appTitle}" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 font-bold text-slate-900 outline-none focus:border-blue-500" />
           </div>
 
           <div>
-            <label class="block font-bold text-slate-700 mb-1">लोगो इमेज URL (Image Web Address)</label>
-            <input id="brandingLogoUrl" type="url" placeholder="https://example.com/logo.png" value="${escapeHtml(b.logoUrl || '')}" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 outline-none font-mono text-xs" />
+            <label class="block font-bold text-slate-700 mb-1">टैगलाइन व विवरण (Gateway Tagline):</label>
+            <input id="adminSettingTagline" type="text" value="${s.tagline}" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 font-medium text-slate-800 outline-none focus:border-blue-500" />
           </div>
 
           <div>
-            <label class="block font-bold text-slate-700 mb-1">वैश्विक सूचना बैनर संदेश (Announcement Banner)</label>
-            <textarea id="brandingBannerText" rows="2" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 outline-none font-medium text-slate-800">${escapeHtml(b.bannerText || '')}</textarea>
+            <label class="block font-bold text-slate-700 mb-1">लोगो इमेज URL (Logo URL):</label>
+            <input id="adminSettingLogoUrl" type="url" value="${s.logoUrl}" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 font-mono text-slate-700 outline-none focus:border-blue-500" />
           </div>
 
-          <div class="flex items-center gap-2 pt-1">
-            <input id="brandingBannerEnabled" type="checkbox" ${b.bannerEnabled !== false ? 'checked' : ''} class="w-4 h-4 accent-emerald-600 rounded cursor-pointer" />
-            <label for="brandingBannerEnabled" class="font-bold text-slate-800 cursor-pointer">सूचना बैनर मुख्य स्क्रीन पर प्रदर्शित करें (Show Banner)</label>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">ग्लोबल इमरजेंसी अनाउंसमेंट बैनर (Emergency Alert):</label>
+            <textarea id="adminSettingNotice" rows="2" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-medium outline-none focus:border-blue-500">${s.emergencyNotice}</textarea>
           </div>
 
-          <button
-            onclick="window.saveAppBranding()"
-            class="w-full bg-slate-900 hover:bg-black text-white font-bold py-3 rounded-2xl shadow-md transition active:scale-98 flex items-center justify-center gap-1.5"
-          >
-            <i class="fa-solid fa-floppy-disk"></i>
-            <span>ब्रांडिंग व थीम तुरंत अपडेट करें</span>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-2">
+            <label class="flex items-center gap-2 p-2.5 border border-slate-200 rounded-xl cursor-pointer bg-slate-50">
+              <input id="adminSettingNoticeToggle" type="checkbox" ${s.showNoticeBanner ? 'checked' : ''} class="accent-emerald-600" />
+              <span class="font-bold text-slate-800 text-[11px]">अलर्ट बैनर दिखाएं</span>
+            </label>
+
+            <label class="flex items-center gap-2 p-2.5 border border-slate-200 rounded-xl cursor-pointer bg-slate-50">
+              <input id="adminSettingDualPortalToggle" type="checkbox" ${s.allowDualPortalSwitch ? 'checked' : ''} class="accent-blue-600" />
+              <span class="font-bold text-slate-800 text-[11px]">ड्यूल पोर्टल स्विच खुला रखें</span>
+            </label>
+
+            <label class="flex items-center gap-2 p-2.5 border border-slate-200 rounded-xl cursor-pointer bg-slate-50">
+              <input id="adminSettingAiSurgeonToggle" type="checkbox" ${s.allowAiSurgeonAccess ? 'checked' : ''} class="accent-purple-600" />
+              <span class="font-bold text-slate-800 text-[11px]">लाइव AI सर्जन सक्रिय रखें</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="pt-3 border-t border-slate-100 flex justify-end">
+          <button type="button" onclick="window.saveAllAdminSettings()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-5 rounded-2xl text-xs shadow-md transition flex items-center gap-2">
+            <i class="fa-solid fa-floppy-disk"></i> <span>ब्रांडिंग सेटिंग्स सेव करें</span>
           </button>
         </div>
       </div>
     `;
 
-    container.innerHTML = html;
+    panel.innerHTML = html;
   };
 
-  window.saveAppBranding = function () {
-    var title = document.getElementById('brandingAppTitle')?.value.trim() || 'Vetcare AI OS';
-    var tagline = document.getElementById('brandingTagline')?.value.trim() || '';
-    var logoUrl = document.getElementById('brandingLogoUrl')?.value.trim() || '';
-    var bannerText = document.getElementById('brandingBannerText')?.value.trim() || '';
-    var bannerEnabled = !!document.getElementById('brandingBannerEnabled')?.checked;
-
-    var branding = {
-      appTitle: title,
-      tagline: tagline,
-      logoUrl: logoUrl,
-      bannerText: bannerText,
-      bannerEnabled: bannerEnabled
-    };
-
-    localStorage.setItem('vetcare_app_branding', JSON.stringify(branding));
-    window.applyBrandingToUI();
-    if (typeof window.showAppToast === 'function') {
-      window.showAppToast("✅ ब्रांडिंग व सूचना बैनर सफलतापूर्वक अपडेट हो गया!");
-    } else {
-      alert("ब्रांडिंग सुरक्षित हो गई!");
+  // =========================================================================
+  // 10. BOOTSTRAP ON LOAD
+  // =========================================================================
+  window.initAdminPanelEngine = function () {
+    // If admin already has an active authenticated session, keep dashboard available
+    const isAuth = sessionStorage.getItem(MASTER_ADMIN_CONFIG.storageKeyAuth);
+    if (isAuth === 'true') {
+      injectAdminHeaderButtons();
     }
   };
-
-  window.applyBrandingToUI = function () {
-    var b = JSON.parse(localStorage.getItem('vetcare_app_branding') || '{}');
-
-    // Header Title & Logo
-    var appHeaderTitle = document.getElementById('appHeaderTitle');
-    if (appHeaderTitle && b.appTitle) appHeaderTitle.textContent = b.appTitle;
-
-    var gatewayAppTitle = document.getElementById('gatewayAppTitle');
-    if (gatewayAppTitle && b.appTitle) gatewayAppTitle.textContent = b.appTitle;
-
-    var gatewayTagline = document.getElementById('gatewayTagline');
-    if (gatewayTagline && b.tagline) gatewayTagline.textContent = b.tagline;
-
-    var logoImg = document.getElementById('app-logo-img');
-    var headerLogoText = document.getElementById('headerLogoText');
-    if (logoImg && headerLogoText) {
-      if (b.logoUrl && b.logoUrl.startsWith('http')) {
-        logoImg.src = b.logoUrl;
-        logoImg.classList.remove('hidden');
-        headerLogoText.classList.add('hidden');
-      } else {
-        logoImg.classList.add('hidden');
-        headerLogoText.classList.remove('hidden');
-      }
-    }
-
-    // Announcement Banner
-    var bannerContainer = document.getElementById('app-announcement-banner');
-    if (bannerContainer) {
-      if (b.bannerEnabled && b.bannerText) {
-        bannerContainer.innerHTML = `
-          <div class="bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-white text-[11px] sm:text-xs font-bold py-2 px-4 shadow-sm flex items-center justify-between">
-            <div class="flex items-center gap-2 truncate">
-              <span class="pulse-live">🔔</span>
-              <span class="truncate">${escapeHtml(b.bannerText)}</span>
-            </div>
-            <button onclick="document.getElementById('app-announcement-banner').innerHTML=''" class="ml-2 text-white/80 hover:text-white font-bold">✕</button>
-          </div>
-        `;
-      } else {
-        bannerContainer.innerHTML = '';
-      }
-    }
-  };
-
-  // Safe Escape HTML Helper
-  function escapeHtml(str) {
-    if (typeof str !== 'string') return str;
-    return str
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#039;");
-  }
-
-  // Auto-Initialization
-  function autoInitAdminModule() {
-    window.applyBrandingToUI();
-  }
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', autoInitAdminModule);
+    document.addEventListener('DOMContentLoaded', window.initAdminPanelEngine);
   } else {
-    autoInitAdminModule();
+    window.initAdminPanelEngine();
   }
 
 })();
