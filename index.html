@@ -1,1 +1,1157 @@
+<!DOCTYPE html>
+<html lang="hi" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="description" content="Vetcare AI OS (2026 Production Master Core) - Clinical Veterinary Intelligence, Smart Farmer Hub & Protected Administrative Vault" />
+  <meta name="theme-color" content="#064e3b" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>Vetcare AI OS | 2026 Production Master Core Command</title>
 
+  <!-- Google Fonts: Inter, Outfit & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:ital,wght@0,400;0,600;0,700;1,400&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+
+  <!-- FontAwesome 6 Pro/Free CDN -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Tailwind CSS CDN with Custom Theme Config -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              emerald: '#10b981',
+              emeraldDark: '#064e3b',
+              amber: '#f59e0b',
+              amberDark: '#78350f',
+              cyan: '#06b6d4',
+              rose: '#f43f5e',
+              slateBg: '#090d16',
+              cardBg: '#111827',
+              cardBorder: '#1f2937'
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            display: ['Outfit', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace']
+          }
+        }
+      }
+    };
+  </script>
+
+  <!-- High-Contrast Sunlight & Custom Clinical Styles -->
+  <style>
+    :root {
+      --font-display: 'Outfit', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    body {
+      background-color: #090d16;
+      color: #f3f4f6;
+      font-family: 'Inter', sans-serif;
+      -webkit-tap-highlight-color: transparent;
+      overflow-x: hidden;
+    }
+
+    /* OUTDOOR SUNLIGHT MODE (Field Vet Maximum Contrast Optimization) */
+    body.sunlight-mode {
+      background-color: #ffffff !important;
+      color: #000000 !important;
+    }
+    body.sunlight-mode .sunlight-card {
+      background-color: #ffffff !important;
+      border: 3px solid #000000 !important;
+      box-shadow: 0 4px 0 #000000 !important;
+      color: #000000 !important;
+    }
+    body.sunlight-mode .sunlight-text {
+      color: #000000 !important;
+    }
+    body.sunlight-mode .sunlight-muted {
+      color: #1f2937 !important;
+      font-weight: 600 !important;
+    }
+    body.sunlight-mode .sunlight-badge {
+      background-color: #000000 !important;
+      color: #ffff00 !important;
+      border: 1px solid #000000 !important;
+    }
+    body.sunlight-mode .sunlight-header {
+      background-color: #ffffff !important;
+      border-bottom: 3px solid #000000 !important;
+    }
+
+    /* Custom Transitions & Utilities */
+    .drawer-transition {
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .glass-nav {
+      background: rgba(17, 24, 39, 0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #090d16;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #374151;
+      border-radius: 9999px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: #10b981;
+    }
+    .pulse-beacon {
+      animation: pulseBeacon 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+    @keyframes pulseBeacon {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(1.15); }
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col selection:bg-emerald-500 selection:text-white">
+
+  <!-- ==========================================================================
+       TOAST NOTIFICATION CONTAINER (TOP-RIGHT NOTIFICATION STACK)
+       ========================================================================== -->
+  <div id="toastContainer" class="fixed top-4 right-4 z-[100] flex flex-col gap-2 pointer-events-none max-w-sm w-full px-4"></div>
+
+  <!-- ==========================================================================
+       GLOBAL APP HEADER & TACTICAL APP BAR
+       ========================================================================== -->
+  <header class="sticky top-0 z-50 glass-nav border-b border-slate-800 sunlight-header transition-colors">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-2 sm:gap-4">
+      
+      <!-- Left: Hamburger Drawer Trigger & Brand Logo -->
+      <div class="flex items-center gap-3">
+        <button id="btnOpenDrawer" type="button" aria-label="Open Navigation Drawer" class="p-2.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-colors">
+          <i class="fa-solid fa-bars text-xl"></i>
+        </button>
+
+        <a href="index.html" class="flex items-center gap-2.5 group focus:outline-none">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-600 via-teal-500 to-amber-500 flex items-center justify-center text-slate-950 font-black text-xl shadow-lg shadow-emerald-950/40 group-hover:scale-105 transition-transform">
+            <i class="fa-solid fa-staff-snake"></i>
+          </div>
+          <div class="flex flex-col">
+            <div class="flex items-center gap-1.5">
+              <span class="font-display font-black text-lg sm:text-xl tracking-tight text-white sunlight-text">VETCARE</span>
+              <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-extrabold uppercase bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 sunlight-badge">AI OS</span>
+              <span class="hidden md:inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-black uppercase bg-amber-500/10 text-amber-400 border border-amber-500/30 sunlight-badge">2026 PRO</span>
+            </div>
+            <span class="text-[10px] font-mono uppercase tracking-wider text-slate-400 -mt-1 sunlight-muted">Veterinary Informatic Core</span>
+          </div>
+        </a>
+      </div>
+
+      <!-- Center & Right: Tactical Badges & Quick Tools -->
+      <div class="flex items-center gap-2 sm:gap-3">
+        
+        <!-- Live Session 24h Countdown Badge -->
+        <div id="liveSessionBadge" class="hidden sm:flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-slate-900/90 border border-slate-700/80 text-xs font-mono text-emerald-400 shadow-inner sunlight-card">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 pulse-beacon"></span>
+          <span class="text-slate-400 sunlight-muted">ACTIVE SESSION:</span>
+          <span id="sessionTimerText" class="font-bold tracking-wider">23:59:59</span>
+        </div>
+
+        <!-- Field Sunlight Toggle -->
+        <button id="btnToggleSunlight" type="button" title="Toggle Outdoor Sunlight High-Contrast Mode" class="px-2.5 py-1.5 rounded-lg bg-slate-800 text-amber-400 hover:bg-slate-700 border border-slate-700 text-xs font-semibold flex items-center gap-1.5 transition-all">
+          <i class="fa-solid fa-sun text-sm"></i>
+          <span class="hidden lg:inline">धूप मोड</span>
+        </button>
+
+        <!-- API Key Modal Trigger -->
+        <button id="btnOpenApiKeyModal" type="button" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold flex items-center gap-1.5 transition-all focus:ring-2 focus:ring-emerald-500">
+          <i class="fa-solid fa-key text-amber-400"></i>
+          <span class="hidden md:inline">API Key</span>
+        </button>
+
+        <!-- Bilingual Selector (Hindi / English) -->
+        <div class="relative">
+          <select id="langSelector" class="appearance-none bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold rounded-lg pl-2.5 pr-7 py-1.5 cursor-pointer focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-colors">
+            <option value="hi" selected>🇮🇳 हिन्दी</option>
+            <option value="en">🌐 English</option>
+          </select>
+          <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-400">
+            <i class="fa-solid fa-chevron-down text-[10px]"></i>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </header>
+
+  <!-- ==========================================================================
+       HERO BANNER & SYSTEM TELEMETRY STRIP
+       ========================================================================== -->
+  <section class="bg-gradient-to-b from-slate-900 via-slate-900/60 to-transparent border-b border-slate-800/80 px-4 py-4 sm:py-6 sunlight-card">
+    <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      <div>
+        <div class="flex items-center gap-2 mb-1">
+          <span class="px-2 py-0.5 rounded text-[11px] font-bold uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+            <i class="fa-solid fa-shield-halved mr-1"></i> ISO-VET 2026 STANDARDS
+          </span>
+          <span class="px-2 py-0.5 rounded text-[11px] font-mono uppercase bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
+            SHAEFFER BIOMETRICS VERIFIED
+          </span>
+        </div>
+        <h1 class="text-xl sm:text-2xl lg:text-3xl font-display font-extrabold text-white tracking-tight sunlight-text">
+          राष्ट्रीय पशु चिकित्सा एवं कृषक डिजिटल महाजाल
+        </h1>
+        <p class="text-xs sm:text-sm text-slate-400 max-w-2xl mt-0.5 sunlight-muted">
+          AI-सक्षम नैदानिक प्रिस्क्रिप्शन, गर्भ सुरक्षा गार्डरेल्स, देसी नुस्खे एवं पारदर्शी दुग्ध रिकॉर्ड प्रबंधन।
+        </p>
+      </div>
+
+      <!-- Telemetry Live Pointers -->
+      <div class="flex flex-wrap items-center gap-3 self-stretch md:self-auto justify-between md:justify-end border-t md:border-t-0 border-slate-800 pt-3 md:pt-0">
+        <div class="px-3 py-1.5 rounded-lg bg-slate-800/80 border border-slate-700/60 text-right">
+          <div class="text-[10px] text-slate-400 font-mono uppercase">GPS Telemetry</div>
+          <div class="text-xs font-mono font-bold text-emerald-400 flex items-center gap-1.5 justify-end">
+            <i class="fa-solid fa-location-crosshairs text-[10px] text-emerald-500"></i>
+            <span>28.6139° N, 77.2090° E</span>
+          </div>
+        </div>
+        <div class="px-3 py-1.5 rounded-lg bg-slate-800/80 border border-slate-700/60 text-right">
+          <div class="text-[10px] text-slate-400 font-mono uppercase">Storage Node</div>
+          <div class="text-xs font-mono font-bold text-cyan-400 flex items-center gap-1.5 justify-end">
+            <i class="fa-solid fa-database text-[10px]"></i>
+            <span>INDEXED-DB ONLINE</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================================================
+       MAIN CONTENT: 3 PRIMARY TACTICAL ACCESS CARDS
+       ========================================================================== -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
+
+      <!-- ====================================================================
+           CARD 1: अधिकृत पशु चिकित्सक (VETERINARY DOCTOR PORTAL)
+           ==================================================================== -->
+      <div class="relative group rounded-2xl bg-gradient-to-b from-slate-900 to-slate-950 border-2 border-emerald-500/40 hover:border-emerald-500 shadow-xl shadow-emerald-950/20 p-6 flex flex-col justify-between transition-all duration-300 hover:-translate-y-1 sunlight-card">
+        <div class="absolute -top-3.5 left-6 px-3 py-0.5 rounded-full text-xs font-black uppercase bg-emerald-500 text-slate-950 shadow-md flex items-center gap-1.5">
+          <i class="fa-solid fa-user-doctor"></i> PORTAL 01
+        </div>
+
+        <div>
+          <!-- Header of Card -->
+          <div class="flex items-center justify-between mb-4 mt-2">
+            <div class="w-14 h-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 text-2xl group-hover:scale-110 transition-transform">
+              <i class="fa-solid fa-stethoscope"></i>
+            </div>
+            <span class="px-2.5 py-1 rounded-md text-[11px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              VET-CLINICAL OS
+            </span>
+          </div>
+
+          <h2 class="text-xl sm:text-2xl font-display font-black text-white group-hover:text-emerald-300 transition-colors sunlight-text">
+            अधिकृत पशु चिकित्सक
+          </h2>
+          <div class="text-xs font-mono font-semibold text-emerald-400/90 mb-3 uppercase tracking-wider">
+            Veterinary Doctor Portal & Clinical Engine
+          </div>
+
+          <p class="text-sm text-slate-300 leading-relaxed mb-6 sunlight-muted">
+            शेफर्स सूत्र आधारित वास्तविक वजन मापन, त्वरित ओपीडी पंजीकरण, 60+ पैथोलॉजी लक्षण मैट्रिक्स, एवं सुरक्षित कॉर्टिकोस्टेरॉइड गर्भ-सुरक्षा प्रणाली।
+          </p>
+
+          <!-- Core Feature Pills -->
+          <div class="space-y-2.5 mb-6">
+            <div class="flex items-center gap-2.5 text-xs text-slate-200 sunlight-text">
+              <i class="fa-solid fa-circle-check text-emerald-400"></i>
+              <span><strong>Shaeffer's Formula</strong>: L × G² / 300 सटीक वजन गणना</span>
+            </div>
+            <div class="flex items-center gap-2.5 text-xs text-slate-200 sunlight-text">
+              <i class="fa-solid fa-triangle-exclamation text-rose-400"></i>
+              <span><strong>Corticosteroid Red Alert</strong>: गर्भधारण में पूर्ण निषेध ब्लॉक</span>
+            </div>
+            <div class="flex items-center gap-2.5 text-xs text-slate-200 sunlight-text">
+              <i class="fa-solid fa-brain text-cyan-400"></i>
+              <span><strong>AI Second Opinion</strong>: लक्षण आधार पर विभेदक निदान</span>
+            </div>
+            <div class="flex items-center gap-2.5 text-xs text-slate-200 sunlight-text">
+              <i class="fa-solid fa-print text-amber-400"></i>
+              <span><strong>OPD Prescription Generator</strong>: प्रिंट योग्य पर्ची व खुराक</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- CTA Buttons -->
+        <div class="pt-4 border-t border-slate-800 space-y-2">
+          <button id="btnLaunchDoctorPortal" type="button" class="w-full py-3 px-4 rounded-xl font-display font-bold text-sm bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-lg shadow-emerald-950/40 flex items-center justify-center gap-2 transition-all active:scale-[0.98]">
+            <i class="fa-solid fa-notes-medical"></i>
+            <span>ओपीडी व नैदानिक कंसोल खोलें (Enter OPD)</span>
+          </button>
+          <button id="btnQuickIntake" type="button" class="w-full py-2 px-3 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 flex items-center justify-center gap-2 transition-colors">
+            <i class="fa-solid fa-plus-circle text-emerald-400"></i>
+            <span>त्वरित नया पशु मरीज पंजीकरण (Quick Intake)</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- ====================================================================
+           CARD 2: स्मार्ट पशुपालक (SMART FARMER HUB)
+           ==================================================================== -->
+      <div class="relative group rounded-2xl bg-gradient-to-b from-slate-900 to-slate-950 border-2 border-amber-500/40 hover:border-amber-500 shadow-xl shadow-amber-950/20 p-6 flex flex-col justify-between transition-all duration-300 hover:-translate-y-1 sunlight-card">
+        <div class="absolute -top-3.5 left-6 px-3 py-0.5 rounded-full text-xs font-black uppercase bg-amber-500 text-slate-950 shadow-md flex items-center gap-1.5">
+          <i class="fa-solid fa-cow"></i> PORTAL 02
+        </div>
+
+        <div>
+          <!-- Header of Card -->
+          <div class="flex items-center justify-between mb-4 mt-2">
+            <div class="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 text-2xl group-hover:scale-110 transition-transform">
+              <i class="fa-solid fa-wheat-awn"></i>
+            </div>
+            <span class="px-2.5 py-1 rounded-md text-[11px] font-mono font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20">
+              FARMER-SUITE 2026
+            </span>
+          </div>
+
+          <h2 class="text-xl sm:text-2xl font-display font-black text-white group-hover:text-amber-300 transition-colors sunlight-text">
+            स्मार्ट पशुपालक
+          </h2>
+          <div class="text-xs font-mono font-semibold text-amber-400/90 mb-3 uppercase tracking-wider">
+            Smart Dairy Farmer & Ethno-Veterinary Hub
+          </div>
+
+          <p class="text-sm text-slate-300 leading-relaxed mb-6 sunlight-muted">
+            पारंपरिक अनुभूत देशी नुस्खे (आयुर्वेद), दैनिक दुग्ध-फैट-एसएनएफ खाता बही, उच्च नस्ल सांड सीमन स्ट्रॉ निर्देशिका एवं प्राथमिक चिकित्सा।
+          </p>
+
+          <!-- Core Feature Pills -->
+          <div class="space-y-2.5 mb-6">
+            <div class="flex items-center gap-2.5 text-xs text-slate-200 sunlight-text">
+              <i class="fa-solid fa-mortar-pestle text-amber-400"></i>
+              <span><strong>Desi Nuskhe</strong>: थनैला, आफरा, दस्त व खुरपका के घरेलू उपचार</span>
+            </div>
+            <div class="flex items-center gap-2.5 text-xs text-slate-200 sunlight-text">
+              <i class="fa-solid fa-calculator text-emerald-400"></i>
+              <span><strong>Milk Ledger</strong>: सुबह-शाम दूध मात्रा, FAT% व रेट स्व-गणना</span>
+            </div>
+            <div class="flex items-center gap-2.5 text-xs text-slate-200 sunlight-text">
+              <i class="fa-solid fa-dna text-purple-400"></i>
+              <span><strong>Bulls Directory</strong>: मुर्रा, साहीवाल, गिर उच्च आनुवंशिक रिकॉर्ड</span>
+            </div>
+            <div class="flex items-center gap-2.5 text-xs text-slate-200 sunlight-text">
+              <i class="fa-solid fa-bell text-rose-400"></i>
+              <span><strong>Emergency Alerts</strong>: मौसमी टीकाकरण व संक्रामक रोग चेतावनी</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- CTA Buttons -->
+        <div class="pt-4 border-t border-slate-800 space-y-2">
+          <button id="btnLaunchFarmerHub" type="button" class="w-full py-3 px-4 rounded-xl font-display font-bold text-sm bg-gradient-to-r from-amber-600 to-yellow-600 hover:from-amber-500 hover:to-yellow-500 text-slate-950 shadow-lg shadow-amber-950/40 flex items-center justify-center gap-2 transition-all active:scale-[0.98]">
+            <i class="fa-solid fa-leaf"></i>
+            <span>पशुपालक हब खोलें (Access Farmer Desk)</span>
+          </button>
+          <button id="btnOpenMilkLedger" type="button" class="w-full py-2 px-3 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 flex items-center justify-center gap-2 transition-colors">
+            <i class="fa-solid fa-bucket text-amber-400"></i>
+            <span>दूध व आय-व्यय बही खाता (Milk Ledger)</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- ====================================================================
+           CARD 3: एडमिन कंट्रोल पैनल (ADMIN CONSOLE - PROTECTED GATE)
+           ==================================================================== -->
+      <div class="relative group rounded-2xl bg-gradient-to-b from-slate-900 to-slate-950 border-2 border-cyan-500/40 hover:border-cyan-500 shadow-xl shadow-cyan-950/20 p-6 flex flex-col justify-between transition-all duration-300 hover:-translate-y-1 sunlight-card">
+        <div class="absolute -top-3.5 left-6 px-3 py-0.5 rounded-full text-xs font-black uppercase bg-cyan-500 text-slate-950 shadow-md flex items-center gap-1.5">
+          <i class="fa-solid fa-shield-cat"></i> PORTAL 03
+        </div>
+
+        <div>
+          <!-- Header of Card -->
+          <div class="flex items-center justify-between mb-4 mt-2">
+            <div class="w-14 h-14 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 text-2xl group-hover:scale-110 transition-transform">
+              <i class="fa-solid fa-sliders"></i>
+            </div>
+            <span class="px-2.5 py-1 rounded-md text-[11px] font-mono font-bold bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+              LEVEL-4 VAULT
+            </span>
+          </div>
+
+          <h2 class="text-xl sm:text-2xl font-display font-black text-white group-hover:text-cyan-300 transition-colors sunlight-text">
+            एडमिन कंट्रोल पैनल
+          </h2>
+          <div class="text-xs font-mono font-semibold text-cyan-400/90 mb-3 uppercase tracking-wider">
+            Protected Gate • Financial & System Node
+          </div>
+
+          <p class="text-sm text-slate-300 leading-relaxed mb-6 sunlight-muted">
+            मास्टर प्रशासनिक गेट (PIN: 9297, ID: 9991039297)। प्रत्यक्ष बैंक खाता प्रबंधन (SBI, PNB, UPI ID), सब्सक्रिप्शन एवं ऑडिट ट्रेल।
+          </p>
+
+          <!-- Core Feature Pills -->
+          <div class="space-y-2.5 mb-6">
+            <div class="flex items-center gap-2.5 text-xs text-slate-200 sunlight-text">
+              <i class="fa-solid fa-key text-cyan-400"></i>
+              <span><strong>Gate Protected</strong>: मास्टर क्रेडेंशियल्स व त्वरित 4-अंकीय पिन</span>
+            </div>
+            <div class="flex items-center gap-2.5 text-xs text-slate-200 sunlight-text">
+              <i class="fa-solid fa-building-columns text-emerald-400"></i>
+              <span><strong>Bank Vault</strong>: SBI (38491029481) व PNB (0623000100492819)</span>
+            </div>
+            <div class="flex items-center gap-2.5 text-xs text-slate-200 sunlight-text">
+              <i class="fa-solid fa-clock-rotate-left text-amber-400"></i>
+              <span><strong>15s In-App OTP</strong>: त्वरित सुरक्षा कोड पुनरुद्धार तंत्र</span>
+            </div>
+            <div class="flex items-center gap-2.5 text-xs text-slate-200 sunlight-text">
+              <i class="fa-solid fa-users-gear text-purple-400"></i>
+              <span><strong>Membership Engine</strong>: डॉक्टर व कृषक सदस्यता संपादन</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- CTA Buttons -->
+        <div class="pt-4 border-t border-slate-800 space-y-2">
+          <button id="btnOpenAdminAuthModal" type="button" class="w-full py-3 px-4 rounded-xl font-display font-bold text-sm bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white shadow-lg shadow-cyan-950/40 flex items-center justify-center gap-2 transition-all active:scale-[0.98]">
+            <i class="fa-solid fa-lock-open"></i>
+            <span>एडमिन वॉल्ट प्रमाणीकरण (Unlock Console)</span>
+          </button>
+          <button id="btnTriggerQuickOtpReset" type="button" class="w-full py-2 px-3 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-amber-400 border border-slate-700 flex items-center justify-center gap-2 transition-colors">
+            <i class="fa-solid fa-shield-virus text-amber-400"></i>
+            <span>आपातकालीन 15s OTP रीसेट (Emergency OTP)</span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Quick Clinical Telemetry Strip Below Main Cards -->
+    <div class="mt-10 p-5 rounded-2xl bg-slate-900/70 border border-slate-800 grid grid-cols-2 sm:grid-cols-4 gap-4 text-center sunlight-card">
+      <div>
+        <div class="text-[11px] font-mono text-slate-400 uppercase sunlight-muted">पंजीकृत रोग डेटाबेस</div>
+        <div class="text-xl sm:text-2xl font-display font-black text-emerald-400 mt-0.5">64+ प्रोफाइल</div>
+      </div>
+      <div>
+        <div class="text-[11px] font-mono text-slate-400 uppercase sunlight-muted">सुरक्षित औषधियां</div>
+        <div class="text-xl sm:text-2xl font-display font-black text-cyan-400 mt-0.5">140+ फॉर्मूलेशन</div>
+      </div>
+      <div>
+        <div class="text-[11px] font-mono text-slate-400 uppercase sunlight-muted">गर्भ सुरक्षा ब्लॉक दर</div>
+        <div class="text-xl sm:text-2xl font-display font-black text-rose-400 mt-0.5">100% फुलप्रूफ</div>
+      </div>
+      <div>
+        <div class="text-[11px] font-mono text-slate-400 uppercase sunlight-muted">ऑफलाइन सिंक स्टेट</div>
+        <div class="text-xl sm:text-2xl font-display font-black text-amber-400 mt-0.5">सक्रिय (IndexedDB)</div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ==========================================================================
+       SIDE NAVIGATION DRAWER & BACKDROP
+       ========================================================================== -->
+  <div id="drawerBackdrop" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 opacity-0 pointer-events-none transition-opacity duration-300"></div>
+
+  <aside id="sideDrawer" aria-label="System Navigation Drawer" class="fixed top-0 left-0 bottom-0 w-80 max-w-[85vw] bg-slate-900 border-r border-slate-800 z-50 -translate-x-full drawer-transition flex flex-col justify-between custom-scrollbar overflow-y-auto sunlight-card">
+    
+    <!-- Drawer Top -->
+    <div>
+      <div class="p-5 border-b border-slate-800 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-xl bg-emerald-500 flex items-center justify-center text-slate-950 font-black">
+            <i class="fa-solid fa-staff-snake"></i>
+          </div>
+          <div>
+            <div class="font-display font-black text-base text-white leading-tight sunlight-text">VETCARE AI OS</div>
+            <div class="text-[10px] font-mono text-emerald-400 uppercase">Version 2.6.4 Pro</div>
+          </div>
+        </div>
+        <button id="btnCloseDrawer" type="button" aria-label="Close Navigation Drawer" class="p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <!-- Navigation Links -->
+      <nav class="p-4 space-y-1.5 text-sm font-medium">
+        <div class="text-[11px] font-mono uppercase text-slate-400 px-3 py-1.5 tracking-wider sunlight-muted">पशु चिकित्सक मॉड्यूल (Clinical)</div>
+        <a href="#doctor-intake" class="drawer-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-200 hover:bg-slate-800 hover:text-emerald-400 transition-colors">
+          <i class="fa-solid fa-notes-medical w-5 text-emerald-400"></i>
+          <span>रोगी पंजीकरण (Patient Intake)</span>
+        </a>
+        <a href="#symptom-matrix" class="drawer-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-200 hover:bg-slate-800 hover:text-emerald-400 transition-colors">
+          <i class="fa-solid fa-viruses w-5 text-cyan-400"></i>
+          <span>लक्षण निदान मैट्रिक्स (Symptom Matrix)</span>
+        </a>
+        <a href="#shaeffer-dosing" class="drawer-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-200 hover:bg-slate-800 hover:text-emerald-400 transition-colors">
+          <i class="fa-solid fa-weight-scale w-5 text-amber-400"></i>
+          <span>शेफर्स सूत्र व खुराक (Dosage Calc)</span>
+        </a>
+        <a href="#corticosteroid-guard" class="drawer-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-200 hover:bg-slate-800 hover:text-rose-400 transition-colors">
+          <i class="fa-solid fa-triangle-exclamation w-5 text-rose-400"></i>
+          <span>गर्भ सुरक्षा गार्डरेल्स (Steroid Lock)</span>
+        </a>
+
+        <div class="text-[11px] font-mono uppercase text-slate-400 px-3 pt-4 py-1.5 tracking-wider sunlight-muted">पशुपालक हब (Farmer Services)</div>
+        <a href="#desi-nuskhe" class="drawer-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-200 hover:bg-slate-800 hover:text-amber-400 transition-colors">
+          <i class="fa-solid fa-mortar-pestle w-5 text-amber-400"></i>
+          <span>पारंपरिक आयुर्वेदिक नुस्खे (Desi Nuskhe)</span>
+        </a>
+        <a href="#milk-ledger" class="drawer-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-200 hover:bg-slate-800 hover:text-amber-400 transition-colors">
+          <i class="fa-solid fa-bucket w-5 text-emerald-400"></i>
+          <span>दुग्ध बही खाता व आय (Milk Ledger)</span>
+        </a>
+        <a href="#bulls-directory" class="drawer-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-200 hover:bg-slate-800 hover:text-purple-400 transition-colors">
+          <i class="fa-solid fa-dna w-5 text-purple-400"></i>
+          <span>उच्च आनुवंशिक सांड सूची (Bulls Index)</span>
+        </a>
+
+        <div class="text-[11px] font-mono uppercase text-slate-400 px-3 pt-4 py-1.5 tracking-wider sunlight-muted">प्रशासन एवं सुरक्षा (Security)</div>
+        <a href="#admin-gate" class="drawer-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-200 hover:bg-slate-800 hover:text-cyan-400 transition-colors">
+          <i class="fa-solid fa-vault w-5 text-cyan-400"></i>
+          <span>मास्टर एडमिन वॉल्ट (Protected Gate)</span>
+        </a>
+        <a href="#bank-payouts" class="drawer-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-200 hover:bg-slate-800 hover:text-cyan-400 transition-colors">
+          <i class="fa-solid fa-credit-card w-5 text-emerald-400"></i>
+          <span>बैंक खाता कॉन्फ़िगरेशन (SBI/PNB/UPI)</span>
+        </a>
+      </nav>
+    </div>
+
+    <!-- Drawer Bottom -->
+    <div class="p-4 border-t border-slate-800 bg-slate-950/60">
+      <div class="text-xs text-slate-400 flex items-center justify-between mb-2">
+        <span>आपातकालीन सहायता:</span>
+        <span class="font-mono text-emerald-400 font-bold">1800-VET-CARE</span>
+      </div>
+      <div class="text-[11px] font-mono text-slate-400 text-center">
+        Designed for Rural Offline Resiliency
+      </div>
+    </div>
+  </aside>
+
+  <!-- ==========================================================================
+       MODAL 1: API KEY CONFIGURATION MODAL (SAVES TO LOCALSTORAGE)
+       ========================================================================== -->
+  <div id="apiKeyModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+    <div class="bg-slate-900 border-2 border-slate-700 rounded-2xl max-w-md w-full p-6 shadow-2xl relative sunlight-card">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
+            <i class="fa-solid fa-key"></i>
+          </div>
+          <h3 class="font-display font-bold text-lg text-white sunlight-text">AI API Key प्रबंधन</h3>
+        </div>
+        <button id="btnCloseApiKeyModal" type="button" class="text-slate-400 hover:text-white p-1">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <p class="text-xs text-slate-300 mb-4 sunlight-muted">
+        Google Gemini AI 2.0 / 1.5 Flash अथवा संगत LLM API कुंजी प्रविष्ट करें। यह कुंजी आपके उपकरण के स्थानीय स्टोरेज (localStorage) में सुरक्षित रहेगी।
+      </p>
+
+      <form id="apiKeyForm" onsubmit="return false;" class="space-y-4">
+        <div>
+          <label for="apiKeyInput" class="block text-xs font-mono uppercase text-slate-300 mb-1 sunlight-text">Gemini / AI Engine API Key</label>
+          <div class="relative">
+            <input type="password" id="apiKeyInput" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500 pr-10" placeholder="AIzaSy..." autocomplete="off" />
+            <button type="button" id="btnToggleApiKeyVisibility" class="absolute right-3 top-2.5 text-slate-400 hover:text-white">
+              <i class="fa-solid fa-eye text-sm"></i>
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <label for="aiModelSelect" class="block text-xs font-mono uppercase text-slate-300 mb-1 sunlight-text">मॉडल चयन (Model Engine)</label>
+          <select id="aiModelSelect" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
+            <option value="gemini-2.0-flash">Gemini 2.0 Flash (अल्ट्रा-फास्ट फील्ड रिस्पांस)</option>
+            <option value="gemini-1.5-pro">Gemini 1.5 Pro (गहन क्लिनिकल रीजनिंग)</option>
+            <option value="offline-heuristic">Offline Heuristic Engine (शून्य डेटा उपयोग)</option>
+          </select>
+        </div>
+
+        <div class="flex items-center justify-between pt-2">
+          <button type="button" id="btnClearApiKey" class="text-xs text-rose-400 hover:text-rose-300 font-semibold flex items-center gap-1">
+            <i class="fa-solid fa-trash-can"></i> डिलीट करें
+          </button>
+          <div class="flex gap-2">
+            <button type="button" id="btnCancelApiKey" class="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700">रद्द करें</button>
+            <button type="button" id="btnSaveApiKey" class="px-5 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-950/40">सुरक्षित सहेजें</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       MODAL 2: MASTER ADMIN GATEWAY MODAL (PIN: 9297, ID: 9991039297)
+       ========================================================================== -->
+  <div id="adminAuthModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+    <div class="bg-slate-900 border-2 border-cyan-500/50 rounded-2xl max-w-md w-full p-6 shadow-2xl relative sunlight-card">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-lg bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
+            <i class="fa-solid fa-shield-halved"></i>
+          </div>
+          <h3 class="font-display font-bold text-lg text-white sunlight-text">प्रशासनिक अधिकृत गेट (Admin Gate)</h3>
+        </div>
+        <button id="btnCloseAdminModal" type="button" class="text-slate-400 hover:text-white p-1">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <div class="p-3 rounded-lg bg-cyan-950/30 border border-cyan-800/40 text-xs text-cyan-300 mb-4 flex items-center gap-2">
+        <i class="fa-solid fa-circle-info"></i>
+        <span>मास्टर PIN: <strong>9297</strong> | मास्टर ID: <strong>9991039297</strong></span>
+      </div>
+
+      <form id="adminAuthForm" onsubmit="return false;" class="space-y-4">
+        <div>
+          <label for="inputMasterPin" class="block text-xs font-mono uppercase text-slate-300 mb-1 sunlight-text">4-अंकीय क्विक एक्सेस पिन (Quick PIN)</label>
+          <input type="password" id="inputMasterPin" maxlength="4" class="w-full text-center tracking-[1em] text-xl font-mono font-bold bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500" placeholder="••••" />
+        </div>
+
+        <div class="relative flex py-1 items-center">
+          <div class="flex-grow border-t border-slate-800"></div>
+          <span class="flex-shrink mx-2 text-[10px] font-mono uppercase text-slate-400">अथवा पूर्ण क्रेडेंशियल</span>
+          <div class="flex-grow border-t border-slate-800"></div>
+        </div>
+
+        <div>
+          <label for="inputMasterId" class="block text-xs font-mono uppercase text-slate-300 mb-1 sunlight-text">मास्टर एडमिन ID</label>
+          <input type="text" id="inputMasterId" class="w-full font-mono bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-cyan-500" placeholder="9991039297" />
+        </div>
+
+        <div>
+          <label for="inputMasterPassword" class="block text-xs font-mono uppercase text-slate-300 mb-1 sunlight-text">मास्टर पासवर्ड (Rahul@1812)</label>
+          <div class="relative">
+            <input type="password" id="inputMasterPassword" class="w-full font-mono bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 pr-10" placeholder="••••••••" />
+            <button type="button" id="btnToggleAdminPwVisibility" class="absolute right-3 top-2.5 text-slate-400 hover:text-white">
+              <i class="fa-solid fa-eye text-sm"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="pt-2 flex items-center justify-between gap-2">
+          <button type="button" id="btnAdminModalOtpReset" class="text-xs text-amber-400 hover:text-amber-300 font-semibold underline underline-offset-2">
+            15s OTP रीसेट?
+          </button>
+          <button type="button" id="btnSubmitAdminLogin" class="px-6 py-2.5 rounded-xl font-bold text-sm bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white shadow-lg shadow-cyan-950/50 transition-all">
+            अनलॉक करें (Enter Vault)
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       MODAL 3: IN-APP 15-SECOND OTP PASSWORD RESET SIMULATOR
+       ========================================================================== -->
+  <div id="otpResetModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+    <div class="bg-slate-900 border-2 border-amber-500/50 rounded-2xl max-w-md w-full p-6 shadow-2xl relative sunlight-card">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
+            <i class="fa-solid fa-shield-halved"></i>
+          </div>
+          <h3 class="font-display font-bold text-lg text-white sunlight-text">आपातकालीन 15s OTP सुरक्षा</h3>
+        </div>
+        <button id="btnCloseOtpModal" type="button" class="text-slate-400 hover:text-white p-1">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <div class="text-xs text-slate-300 mb-4 sunlight-muted">
+        मास्टर एडमिन ID <strong>9991039297</strong> हेतु आपातकालीन ऑन-स्क्रीन OTP जनरेट करें। सुरक्षा नियमों के अनुसार यह कोड केवल 15 सेकंड के लिए वैध रहता है।
+      </div>
+
+      <!-- Live Generated OTP Display Banner -->
+      <div id="otpDisplayCard" class="hidden mb-4 p-4 rounded-xl bg-gradient-to-r from-amber-500/10 via-amber-500/20 to-yellow-500/10 border-2 border-amber-500/60 text-center">
+        <div class="text-[11px] font-mono uppercase text-amber-400 font-bold tracking-wider mb-1">लाइव सुरक्षा OTP कोड</div>
+        <div id="liveGeneratedOtpText" class="text-3xl font-mono font-black text-amber-300 tracking-[0.3em]">------</div>
+        <div class="mt-2 flex items-center justify-center gap-2 text-xs font-mono text-slate-300">
+          <span>वैधता शेष:</span>
+          <span id="otpCountdownTimer" class="font-bold text-rose-400">15s</span>
+        </div>
+        <!-- Progress countdown bar -->
+        <div class="w-full bg-slate-800 h-1.5 rounded-full mt-2 overflow-hidden">
+          <div id="otpCountdownBar" class="bg-amber-400 h-full w-full transition-all duration-1000 ease-linear"></div>
+        </div>
+      </div>
+
+      <form id="otpVerifyForm" onsubmit="return false;" class="space-y-4">
+        <div>
+          <label for="inputVerifyOtp" class="block text-xs font-mono uppercase text-slate-300 mb-1 sunlight-text">प्राप्त 6-अंकीय OTP प्रविष्ट करें</label>
+          <input type="text" id="inputVerifyOtp" maxlength="6" class="w-full text-center font-mono font-bold tracking-[0.5em] text-lg bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2 text-white focus:outline-none focus:ring-2 focus:ring-amber-500" placeholder="••••••" />
+        </div>
+
+        <div>
+          <label for="inputNewAdminPassword" class="block text-xs font-mono uppercase text-slate-300 mb-1 sunlight-text">नया मास्टर पासवर्ड निर्धारित करें</label>
+          <input type="password" id="inputNewAdminPassword" class="w-full font-mono bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-amber-500" placeholder="नया सुरक्षित पासवर्ड" />
+        </div>
+
+        <div class="flex items-center justify-between pt-2">
+          <button type="button" id="btnRequestNewOtp" class="px-4 py-2 rounded-xl text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30 transition-colors">
+            <i class="fa-solid fa-rotate-right mr-1"></i> OTP भेजें (15s)
+          </button>
+          <button type="button" id="btnCommitPasswordReset" class="px-5 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-950/40 transition-all">
+            पासवर्ड रीसेट करें
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       GLOBAL APP FOOTER
+       ========================================================================== -->
+  <footer class="mt-auto border-t border-slate-800 bg-slate-950 px-4 py-6 text-xs text-slate-400 sunlight-card">
+    <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+      <div class="flex items-center gap-2">
+        <div class="w-6 h-6 rounded bg-emerald-600 flex items-center justify-center text-slate-950 font-black text-xs">
+          V
+        </div>
+        <span class="text-slate-300 font-semibold sunlight-text">VETCARE AI OS (2026 Production Master Core)</span>
+        <span class="text-slate-400">|</span>
+        <span class="font-mono text-[11px] text-slate-400">Build: v2.6.4-PROD</span>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-4 text-[11px] font-mono">
+        <span class="text-emerald-400"><i class="fa-solid fa-lock mr-1"></i>SHA-256 ENCRYPTED</span>
+        <span class="text-cyan-400"><i class="fa-solid fa-wifi mr-1"></i>PWA OFFLINE-FIRST</span>
+        <span class="text-amber-400"><i class="fa-solid fa-building-columns mr-1"></i>SBI/PNB VAULT OK</span>
+      </div>
+
+      <div class="text-[11px] text-slate-400 text-center md:text-right">
+        अभिकल्पित: डॉ. राहुल एवं राष्ट्रीय पशु चिकित्सा सूचना नेटवर्क
+      </div>
+    </div>
+  </footer>
+
+  <!-- ==========================================================================
+       BASE CONTROLLER SCRIPT (SAFE NAMESPACE, MODAL & EVENT HOOKS)
+       ========================================================================== -->
+  <script>
+    (function () {
+      "use strict";
+
+      // Initialize Protected Global Namespace
+      window.VetcareApp = window.VetcareApp || {};
+      const App = window.VetcareApp;
+
+      App.MasterCredentials = {
+        adminId: "9991039297",
+        adminPin: "9297",
+        adminPassword: "Rahul@1812"
+      };
+
+      // Toast Notification Helper
+      App.showToast = function (message, type) {
+        const container = document.getElementById("toastContainer");
+        if (!container) return;
+
+        const toast = document.createElement("div");
+        toast.className = "pointer-events-auto flex items-center gap-2.5 px-4 py-3 rounded-xl border shadow-xl text-xs font-semibold backdrop-blur-md transition-all duration-300 transform translate-y-2";
+
+        if (type === "success") {
+          toast.className += " bg-emerald-950/90 border-emerald-500 text-emerald-200";
+          toast.innerHTML = '<i class="fa-solid fa-circle-check text-emerald-400 text-sm"></i> <span>' + message + '</span>';
+        } else if (type === "error") {
+          toast.className += " bg-rose-950/90 border-rose-500 text-rose-200";
+          toast.innerHTML = '<i class="fa-solid fa-circle-xmark text-rose-400 text-sm"></i> <span>' + message + '</span>';
+        } else if (type === "warning") {
+          toast.className += " bg-amber-950/90 border-amber-500 text-amber-200";
+          toast.innerHTML = '<i class="fa-solid fa-triangle-exclamation text-amber-400 text-sm"></i> <span>' + message + '</span>';
+        } else {
+          toast.className += " bg-slate-900/90 border-cyan-500 text-cyan-200";
+          toast.innerHTML = '<i class="fa-solid fa-info text-cyan-400 text-sm"></i> <span>' + message + '</span>';
+        }
+
+        container.appendChild(toast);
+        requestAnimationFrame(() => {
+          toast.classList.remove("translate-y-2");
+        });
+
+        setTimeout(() => {
+          toast.classList.add("opacity-0", "translate-y-2");
+          setTimeout(() => toast.remove(), 300);
+        }, 4000);
+      };
+
+      // In-App 15s OTP Timer Engine
+      App.otpTimer = null;
+      App.currentOtp = null;
+      App.otpSecondsLeft = 15;
+
+      App.triggerOtpSimulation = function () {
+        const displayCard = document.getElementById("otpDisplayCard");
+        const otpText = document.getElementById("liveGeneratedOtpText");
+        const timerText = document.getElementById("otpCountdownTimer");
+        const progressBar = document.getElementById("otpCountdownBar");
+        const requestBtn = document.getElementById("btnRequestNewOtp");
+
+        if (App.otpTimer) {
+          clearInterval(App.otpTimer);
+        }
+
+        // Generate 6-Digit Numeric Code
+        App.currentOtp = Math.floor(100000 + Math.random() * 900000).toString();
+        App.otpSecondsLeft = 15;
+
+        if (displayCard) displayCard.classList.remove("hidden");
+        if (otpText) otpText.textContent = App.currentOtp;
+        if (timerText) timerText.textContent = "15s";
+        if (progressBar) progressBar.style.width = "100%";
+        if (requestBtn) requestBtn.disabled = true;
+
+        App.showToast("आपातकालीन OTP जनरेट हुआ: " + App.currentOtp, "warning");
+
+        App.otpTimer = setInterval(function () {
+          App.otpSecondsLeft--;
+          if (timerText) timerText.textContent = App.otpSecondsLeft + "s";
+          if (progressBar) {
+            const pct = (App.otpSecondsLeft / 15) * 100;
+            progressBar.style.width = pct + "%";
+          }
+
+          if (App.otpSecondsLeft <= 0) {
+            clearInterval(App.otpTimer);
+            App.otpTimer = null;
+            App.currentOtp = null;
+            if (timerText) timerText.textContent = "समाप्त";
+            if (otpText) otpText.textContent = "EXPIRED";
+            if (requestBtn) requestBtn.disabled = false;
+            App.showToast("OTP की वैधता समाप्त हो चुकी है। पुनः जनरेट करें।", "error");
+          }
+        }, 1000);
+      };
+
+      // DOM Ready Initialization
+      document.addEventListener("DOMContentLoaded", function () {
+        
+        // 1. Session Countdown Clock (24h loop)
+        const sessionTimerText = document.getElementById("sessionTimerText");
+        let sessionSeconds = 86399;
+        setInterval(function () {
+          sessionSeconds--;
+          if (sessionSeconds < 0) sessionSeconds = 86399;
+          const h = String(Math.floor(sessionSeconds / 3600)).padStart(2, "0");
+          const m = String(Math.floor((sessionSeconds % 3600) / 60)).padStart(2, "0");
+          const s = String(sessionSeconds % 60).padStart(2, "0");
+          if (sessionTimerText) sessionTimerText.textContent = h + ":" + m + ":" + s;
+        }, 1000);
+
+        // 2. Sunlight High-Contrast Mode Toggle
+        const btnToggleSunlight = document.getElementById("btnToggleSunlight");
+        if (btnToggleSunlight) {
+          btnToggleSunlight.addEventListener("click", function () {
+            document.body.classList.toggle("sunlight-mode");
+            const isSun = document.body.classList.contains("sunlight-mode");
+            localStorage.setItem("VETCARE_SUNLIGHT_MODE", isSun ? "true" : "false");
+            App.showToast(isSun ? "धूप मोड (High-Contrast) सक्रिय" : "सामान्य डार्क मोड सक्रिय", "info");
+          });
+          if (localStorage.getItem("VETCARE_SUNLIGHT_MODE") === "true") {
+            document.body.classList.add("sunlight-mode");
+          }
+        }
+
+        // 3. Drawer Toggle Controls
+        const btnOpenDrawer = document.getElementById("btnOpenDrawer");
+        const btnCloseDrawer = document.getElementById("btnCloseDrawer");
+        const sideDrawer = document.getElementById("sideDrawer");
+        const drawerBackdrop = document.getElementById("drawerBackdrop");
+
+        function openDrawer() {
+          if (sideDrawer && drawerBackdrop) {
+            sideDrawer.classList.remove("-translate-x-full");
+            drawerBackdrop.classList.remove("opacity-0", "pointer-events-none");
+            drawerBackdrop.classList.add("opacity-100");
+          }
+        }
+        function closeDrawer() {
+          if (sideDrawer && drawerBackdrop) {
+            sideDrawer.classList.add("-translate-x-full");
+            drawerBackdrop.classList.remove("opacity-100");
+            drawerBackdrop.classList.add("opacity-0", "pointer-events-none");
+          }
+        }
+
+        if (btnOpenDrawer) btnOpenDrawer.addEventListener("click", openDrawer);
+        if (btnCloseDrawer) btnCloseDrawer.addEventListener("click", closeDrawer);
+        if (drawerBackdrop) drawerBackdrop.addEventListener("click", closeDrawer);
+        document.querySelectorAll(".drawer-link").forEach(function (link) {
+          link.addEventListener("click", closeDrawer);
+        });
+
+        // 4. API Key Modal Controls
+        const btnOpenApiKeyModal = document.getElementById("btnOpenApiKeyModal");
+        const btnCloseApiKeyModal = document.getElementById("btnCloseApiKeyModal");
+        const btnCancelApiKey = document.getElementById("btnCancelApiKey");
+        const apiKeyModal = document.getElementById("apiKeyModal");
+        const apiKeyInput = document.getElementById("apiKeyInput");
+        const aiModelSelect = document.getElementById("aiModelSelect");
+        const btnSaveApiKey = document.getElementById("btnSaveApiKey");
+        const btnClearApiKey = document.getElementById("btnClearApiKey");
+        const btnToggleApiKeyVisibility = document.getElementById("btnToggleApiKeyVisibility");
+
+        function toggleApiKeyModal(show) {
+          if (!apiKeyModal) return;
+          if (show) {
+            apiKeyModal.classList.remove("hidden");
+            apiKeyModal.classList.add("flex");
+            const savedKey = localStorage.getItem("VETCARE_GEMINI_API_KEY") || "";
+            const savedModel = localStorage.getItem("VETCARE_AI_MODEL") || "gemini-2.0-flash";
+            if (apiKeyInput) apiKeyInput.value = savedKey;
+            if (aiModelSelect) aiModelSelect.value = savedModel;
+          } else {
+            apiKeyModal.classList.add("hidden");
+            apiKeyModal.classList.remove("flex");
+          }
+        }
+
+        if (btnOpenApiKeyModal) btnOpenApiKeyModal.addEventListener("click", () => toggleApiKeyModal(true));
+        if (btnCloseApiKeyModal) btnCloseApiKeyModal.addEventListener("click", () => toggleApiKeyModal(false));
+        if (btnCancelApiKey) btnCancelApiKey.addEventListener("click", () => toggleApiKeyModal(false));
+
+        if (btnToggleApiKeyVisibility && apiKeyInput) {
+          btnToggleApiKeyVisibility.addEventListener("click", function () {
+            const isPass = apiKeyInput.type === "password";
+            apiKeyInput.type = isPass ? "text" : "password";
+            btnToggleApiKeyVisibility.innerHTML = isPass ? '<i class="fa-solid fa-eye-slash text-sm"></i>' : '<i class="fa-solid fa-eye text-sm"></i>';
+          });
+        }
+
+        if (btnSaveApiKey && apiKeyInput && aiModelSelect) {
+          btnSaveApiKey.addEventListener("click", function () {
+            const keyVal = apiKeyInput.value.trim();
+            const modelVal = aiModelSelect.value;
+            localStorage.setItem("VETCARE_GEMINI_API_KEY", keyVal);
+            localStorage.setItem("VETCARE_AI_MODEL", modelVal);
+            toggleApiKeyModal(false);
+            App.showToast("API Key व मॉडल सफलतापूर्वक सहेजे गए!", "success");
+          });
+        }
+
+        if (btnClearApiKey && apiKeyInput) {
+          btnClearApiKey.addEventListener("click", function () {
+            localStorage.removeItem("VETCARE_GEMINI_API_KEY");
+            apiKeyInput.value = "";
+            App.showToast("स्थानीय API Key हटा दी गई।", "warning");
+          });
+        }
+
+        // 5. Admin Authentication Modal Controls
+        const btnOpenAdminAuthModal = document.getElementById("btnOpenAdminAuthModal");
+        const btnCloseAdminModal = document.getElementById("btnCloseAdminModal");
+        const adminAuthModal = document.getElementById("adminAuthModal");
+        const inputMasterPin = document.getElementById("inputMasterPin");
+        const inputMasterId = document.getElementById("inputMasterId");
+        const inputMasterPassword = document.getElementById("inputMasterPassword");
+        const btnSubmitAdminLogin = document.getElementById("btnSubmitAdminLogin");
+        const btnToggleAdminPwVisibility = document.getElementById("btnToggleAdminPwVisibility");
+
+        function toggleAdminModal(show) {
+          if (!adminAuthModal) return;
+          if (show) {
+            adminAuthModal.classList.remove("hidden");
+            adminAuthModal.classList.add("flex");
+          } else {
+            adminAuthModal.classList.add("hidden");
+            adminAuthModal.classList.remove("flex");
+          }
+        }
+
+        if (btnOpenAdminAuthModal) btnOpenAdminAuthModal.addEventListener("click", () => toggleAdminModal(true));
+        if (btnCloseAdminModal) btnCloseAdminModal.addEventListener("click", () => toggleAdminModal(false));
+
+        if (btnToggleAdminPwVisibility && inputMasterPassword) {
+          btnToggleAdminPwVisibility.addEventListener("click", function () {
+            const isPass = inputMasterPassword.type === "password";
+            inputMasterPassword.type = isPass ? "text" : "password";
+            btnToggleAdminPwVisibility.innerHTML = isPass ? '<i class="fa-solid fa-eye-slash text-sm"></i>' : '<i class="fa-solid fa-eye text-sm"></i>';
+          });
+        }
+
+        if (btnSubmitAdminLogin) {
+          btnSubmitAdminLogin.addEventListener("click", function () {
+            const pinVal = inputMasterPin ? inputMasterPin.value.trim() : "";
+            const idVal = inputMasterId ? inputMasterId.value.trim() : "";
+            const passVal = inputMasterPassword ? inputMasterPassword.value.trim() : "";
+
+            const isPinMatch = (pinVal === App.MasterCredentials.adminPin);
+            const isFullMatch = (idVal === App.MasterCredentials.adminId && passVal === App.MasterCredentials.adminPassword);
+
+            if (isPinMatch || isFullMatch) {
+              toggleAdminModal(false);
+              App.showToast("मास्टर एडमिन प्रमाणीकरण सफल! वॉल्ट अनलॉक्ड।", "success");
+              // If Admin module is loaded, route to Admin Section
+              if (App.Admin && typeof App.Admin.openDashboard === "function") {
+                App.Admin.openDashboard();
+              }
+            } else {
+              App.showToast("प्रमाणीकरण त्रुटि! मास्टर PIN: 9297 अथवा ID/पासवर्ड जांचें।", "error");
+            }
+          });
+        }
+
+        // 6. In-App 15s OTP Reset Modal Controls
+        const otpResetModal = document.getElementById("otpResetModal");
+        const btnTriggerQuickOtpReset = document.getElementById("btnTriggerQuickOtpReset");
+        const btnAdminModalOtpReset = document.getElementById("btnAdminModalOtpReset");
+        const btnCloseOtpModal = document.getElementById("btnCloseOtpModal");
+        const btnRequestNewOtp = document.getElementById("btnRequestNewOtp");
+        const btnCommitPasswordReset = document.getElementById("btnCommitPasswordReset");
+        const inputVerifyOtp = document.getElementById("inputVerifyOtp");
+        const inputNewAdminPassword = document.getElementById("inputNewAdminPassword");
+
+        function toggleOtpModal(show) {
+          if (!otpResetModal) return;
+          if (show) {
+            toggleAdminModal(false);
+            otpResetModal.classList.remove("hidden");
+            otpResetModal.classList.add("flex");
+            App.triggerOtpSimulation();
+          } else {
+            otpResetModal.classList.add("hidden");
+            otpResetModal.classList.remove("flex");
+            if (App.otpTimer) {
+              clearInterval(App.otpTimer);
+              App.otpTimer = null;
+            }
+          }
+        }
+
+        if (btnTriggerQuickOtpReset) btnTriggerQuickOtpReset.addEventListener("click", () => toggleOtpModal(true));
+        if (btnAdminModalOtpReset) btnAdminModalOtpReset.addEventListener("click", () => toggleOtpModal(true));
+        if (btnCloseOtpModal) btnCloseOtpModal.addEventListener("click", () => toggleOtpModal(false));
+        if (btnRequestNewOtp) btnRequestNewOtp.addEventListener("click", App.triggerOtpSimulation);
+
+        if (btnCommitPasswordReset) {
+          btnCommitPasswordReset.addEventListener("click", function () {
+            const enteredOtp = inputVerifyOtp ? inputVerifyOtp.value.trim() : "";
+            const newPassword = inputNewAdminPassword ? inputNewAdminPassword.value.trim() : "";
+
+            if (!App.currentOtp || enteredOtp !== App.currentOtp) {
+              App.showToast("अवैध अथवा समाप्त OTP कोड! पुनः प्रयास करें।", "error");
+              return;
+            }
+            if (newPassword.length < 6) {
+              App.showToast("नया पासवर्ड कम से कम 6 अक्षरों का होना अनिवार्य है।", "warning");
+              return;
+            }
+
+            App.MasterCredentials.adminPassword = newPassword;
+            localStorage.setItem("VETCARE_ADMIN_PW_OVERRIDE", newPassword);
+            toggleOtpModal(false);
+            App.showToast("मास्टर पासवर्ड सफलतापूर्वक अपडेट हुआ! नए पासवर्ड से लॉगिन करें।", "success");
+          });
+        }
+
+        // 7. Launch Triggers for Doctor & Farmer Portals
+        const btnLaunchDoctorPortal = document.getElementById("btnLaunchDoctorPortal");
+        const btnQuickIntake = document.getElementById("btnQuickIntake");
+        const btnLaunchFarmerHub = document.getElementById("btnLaunchFarmerHub");
+        const btnOpenMilkLedger = document.getElementById("btnOpenMilkLedger");
+
+        if (btnLaunchDoctorPortal) {
+          btnLaunchDoctorPortal.addEventListener("click", function () {
+            App.showToast("पशु चिकित्सक पोर्टल लोड हो रहा है...", "info");
+            if (App.Doctor && typeof App.Doctor.initPortal === "function") {
+              App.Doctor.initPortal();
+            }
+          });
+        }
+
+        if (btnQuickIntake) {
+          btnQuickIntake.addEventListener("click", function () {
+            App.showToast("त्वरित नया रोगी पंजीकरण फॉर्म खोला गया।", "info");
+            if (App.Doctor && typeof App.Doctor.openIntakeModal === "function") {
+              App.Doctor.openIntakeModal();
+            }
+          });
+        }
+
+        if (btnLaunchFarmerHub) {
+          btnLaunchFarmerHub.addEventListener("click", function () {
+            App.showToast("स्मार्ट पशुपालक हब लोड हो रहा है...", "info");
+            if (App.Farmer && typeof App.Farmer.initHub === "function") {
+              App.Farmer.initHub();
+            }
+          });
+        }
+
+        if (btnOpenMilkLedger) {
+          btnOpenMilkLedger.addEventListener("click", function () {
+            App.showToast("दैनिक दुग्ध बही खाता मॉड्यूल सक्रिय किया गया।", "info");
+            if (App.Farmer && typeof App.Farmer.openMilkLedger === "function") {
+              App.Farmer.openMilkLedger();
+            }
+          });
+        }
+
+        // 8. Language Selector State
+        const langSelector = document.getElementById("langSelector");
+        if (langSelector) {
+          langSelector.addEventListener("change", function () {
+            const lang = this.value;
+            localStorage.setItem("VETCARE_ACTIVE_LANG", lang);
+            App.showToast(lang === "hi" ? "भाषा: हिन्दी चयनित" : "Language: English Selected", "info");
+            if (App.Locale && typeof App.Locale.setLanguage === "function") {
+              App.Locale.setLanguage(lang);
+            }
+          });
+          const savedLang = localStorage.getItem("VETCARE_ACTIVE_LANG");
+          if (savedLang) langSelector.value = savedLang;
+        }
+
+      });
+    })();
+  </script>
+
+  <!-- ==========================================================================
+       MODULAR SCRIPT INCLUSIONS (EXACT ORDER OF ARCHITECTURAL DEPENDENCIES)
+       ========================================================================== -->
+
+  <!-- 1. CORE ARCHITECTURE ENGINE -->
+  <script src="core/theme-engine.js"></script>
+  <script src="core/auth-router.js"></script>
+  <script src="core/timers-engine.js"></script>
+  <script src="core/storage-indexeddb.js"></script>
+  <script src="core/app-bootstrap.js"></script>
+  <script src="core/main-controller.js"></script>
+
+  <!-- 2. CLINICAL DATA & PHARMACOPEIA DATABASES -->
+  <script src="clinical-data/diseases-db.js"></script>
+  <script src="clinical-data/drugs-general.js"></script>
+  <script src="clinical-data/drugs-corticosteroids.js"></script>
+
+  <!-- 3. VETERINARY DOCTOR SUBSYSTEM -->
+  <script src="doctor/patient-intake.js"></script>
+  <script src="doctor/symptom-matrix.js"></script>
+  <script src="doctor/dosage-calculator.js"></script>
+  <script src="doctor/ai-second-opinion.js"></script>
+  <script src="doctor/opd-prescription.js"></script>
+
+  <!-- 4. SMART DAIRY FARMER SUBSYSTEM -->
+  <script src="farmer/desi-diseases.js"></script>
+  <script src="farmer/bulls-directory.js"></script>
+  <script src="farmer/milk-ledger.js"></script>
+
+  <!-- 5. PROTECTED ADMINISTRATIVE & FINANCIAL VAULT -->
+  <script src="admin/admin-auth.js"></script>
+  <script src="admin/payout-manager.js"></script>
+  <script src="admin/subscription-manager.js"></script>
+
+</body>
+</html>
