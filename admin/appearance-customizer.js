@@ -1,3 +1,19 @@
+// Vetcare AI OS - No-Code Appearance & Template Customizer (2026 Production)
+(function (window, document) { "use strict";
+
+// Ensure application global namespace window.VetcareApp = window.VetcareApp ||
+{};
+
+/**
+
+  - AppearanceCustomizer Module
+  - Enterprise-grade visual appearance engine allowing administrators to
+    redesign
+  - colors, typography, component elevations, and clinic branding without
+    coding. */ const AppearanceCustomizer = (function () { const STORAGE_KEY =
+    "vetcare_appearance_settings"; const STYLE_TAG_ID =
+    "vetcare-dynamic-appearance-vars";
+
 // -------------------------------------------------------------
 // FACTORY DEFAULT CONFIGURATION (Hospital Clean White)
 // -------------------------------------------------------------
@@ -681,3 +697,10 @@ return {
   },
   closeModal: closeModal
 };
+
+})();
+
+// Expose to App namespace window.VetcareApp.AppearanceCustomizer =
+AppearanceCustomizer;
+
+})(window, document);
