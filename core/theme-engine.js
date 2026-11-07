@@ -1,515 +1,385 @@
-// Vetcare AI OS - Theme Engine, Dynamic Branding & Outdoor High-Contrast UI (2026 Production)
+const THEMES = {
+  CLINICAL_LIGHT: "light",
+  SUNLIGHT_HIGH_CONTRAST: "sunlight",
+  CLINICAL_MUTED: "clinical-muted"
+};
 
-(function (window, document) {
-  "use strict";
+const CLINICAL_PALETTE = {
+  canvas: "#f8fafc",            // Clean hospital room background
+  canvasMuted: "#f1f5f9",       // Recessed clinical surfaces
+  surface: "#ffffff",           // Pure elevated examination white
+  surfaceElevated: "#ffffff",   // Diagnostic cards & modals
+  surfaceGlass: "rgba(255, 255, 255, 0.94)",
+  border: "#e2e8f0",            // Clean sterile division lines
+  borderSubtle: "#cbd5e1",      // Interactive input bounds
+  borderStrong: "#94a3b8",      // Focused clinical boundaries
 
-  // 1. GLOBAL NAMESPACE & STATE ATTACHMENT
-  window.VetcareApp = window.VetcareApp || {};
+  // Medical & Clinical Signaling Colors
+  primaryCyan: "#0284c7",       // Medical Cyan Primary (Active tools)
+  primaryHover: "#0369a1",      // Deep Medical Cyan
+  primaryDeep: "#0f172a",       // Sapphire Medical Deep Slate
+  primarySoft: "#e0f2fe",       // Cyan Wash Tint (Highlights)
 
-  const Theme = {
-    branding: {
-      appName: "Vetcare AI OS",
-      version: "2026.4.1",
-      subtitle: "Clinical Veterinary Intelligence & Farmer Hub",
-      organization: "National Veterinary Tele-Health Systems",
-      copyrightYear: 2026,
-      storageKeys: {
-        theme: "vetcare_theme_mode",
-        sunlight: "vetcare_sunlight_mode",
-        audio: "vetcare_audio_cues"
-      }
-    },
-    state: {
-      activeTheme: "dark", // 'dark' | 'light'
-      isSunlightMode: false,
-      isAudioEnabled: true,
-      audioContext: null
-    },
-    selectors: {
-      sunlightToggleButtons: [
-        "#btnToggleSunlight",
-        "[data-action='toggle-sunlight']",
-        ".btn-sunlight-toggle"
-      ],
-      themeToggleButtons: [
-        "#btnToggleTheme",
-        "[data-action='toggle-theme']",
-        ".btn-theme-toggle"
-      ],
-      toastContainerId: "toastContainer"
-    }
-  };
+  accentEmerald: "#059669",     // Healthy vitals / Normal ECG green
+  accentEmeraldSoft: "#d1fae5", // Vitals badge background
+  accentCrimson: "#dc2626",     // Emergency Triage / Steroid red alert
+  accentCrimsonSoft: "#fee2e2", // Emergency badge background
+  accentAmber: "#d97706",       // Clinical caution / Observation amber
+  accentAmberSoft: "#fef3c7",   // Caution badge background
+  accentPurple: "#7c3aed",      // High genetics / Specialty diagnostics
+  accentPurpleSoft: "#ede9fe",  // Specialty badge background
 
-  // Safely assign to root app namespace
-  window.VetcareApp.Theme = Theme;
+  // Crisp Ultra-Contrast Typography
+  textHeading: "#0f172a",       // Ultra-dark clinical slate for headers
+  textBody: "#334155",          // Crisp readability for pathology & dosages
+  textMuted: "#64748b",         // Secondary clinical metadata & units
+  textInverted: "#ffffff",      // Contrast text for solid primary buttons
 
-  // 2. DYNAMIC CSS VARIABLES & HIGH-CONTRAST SUNLIGHT INJECTION
-  Theme.injectThemeStyles = function () {
-    const existingStyle = document.getElementById("vetcare-theme-variables");
-    if (existingStyle) {
-      return;
-    }
+  // Shadows & Depths
+  shadowCard: "0 1px 3px 0 rgba(15, 23, 42, 0.06), 0 1px 2px -1px rgba(15, 23, 42, 0.06)",
+  shadowElevated: "0 10px 15px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -4px rgba(15, 23, 42, 0.04)",
+  shadowModal: "0 20px 25px -5px rgba(15, 23, 42, 0.12), 0 8px 10px -6px rgba(15, 23, 42, 0.06)"
+};
 
-    const styleEl = document.createElement("style");
-    styleEl.id = "vetcare-theme-variables";
-    styleEl.type = "text/css";
-    styleEl.textContent = `
-      :root {
-        --primary: #059669;
-        --primary-dark: #047857;
-        --accent: #f59e0b;
-        --surface-bg: #0f172a;
-        --surface-card: #1e293b;
-        --text-main: #f8fafc;
-        --text-muted: #94a3b8;
-        --border-color: #334155;
-        --danger: #ef4444;
-        --info: #0284c7;
-        --success: #10b981;
-        --warning: #f59e0b;
-        --toast-bg: rgba(30, 41, 59, 0.96);
-        --toast-border: #334155;
-        --toast-text: #f8fafc;
-        --app-font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-        --app-font-display: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
-        --app-font-mono: 'JetBrains Mono', monospace;
-      }
+// -------------------------------------------------------------
+// IMMEDIATE ANTI-FLASH EXECUTION (ZERO-LATENCY ENFORCEMENT)
+// -------------------------------------------------------------
+// Strip initial 'dark' class from index.html instantly before repaint
+if (document.documentElement.classList.contains("dark")) {
+  document.documentElement.classList.remove("dark");
+}
+document.documentElement.classList.add("light");
+document.documentElement.setAttribute("data-theme", "light");
+document.documentElement.style.colorScheme = "light";
 
-      body.theme-light {
-        --primary: #059669;
-        --primary-dark: #047857;
-        --accent: #d97706;
-        --surface-bg: #f8fafc;
-        --surface-card: #ffffff;
-        --text-main: #0f172a;
-        --text-muted: #64748b;
-        --border-color: #cbd5e1;
-        --toast-bg: rgba(255, 255, 255, 0.98);
-        --toast-border: #cbd5e1;
-        --toast-text: #0f172a;
-      }
+// -------------------------------------------------------------
+// DYNAMIC CLINICAL STYLESHEET INJECTION
+// -------------------------------------------------------------
+function injectClinicalStyles() {
+  const styleId = "vetcare-clinical-theme-stylesheet";
+  let styleTag = document.getElementById(styleId);
 
-      /* ULTRA-HIGH CONTRAST OUTDOOR SUNLIGHT MODE (RURAL FIELD OPERATION) */
-      body.sunlight-mode {
-        --primary: #005a2b !important;
-        --primary-dark: #003619 !important;
-        --accent: #b45309 !important;
-        --surface-bg: #ffffff !important;
-        --surface-card: #ffffff !important;
-        --text-main: #000000 !important;
-        --text-muted: #111827 !important;
-        --border-color: #000000 !important;
-        --danger: #990000 !important;
-        --info: #003366 !important;
-        --success: #006600 !important;
-        --warning: #994d00 !important;
-        --toast-bg: #ffffff !important;
-        --toast-border: #000000 !important;
-        --toast-text: #000000 !important;
-        background-color: #ffffff !important;
-        color: #000000 !important;
-      }
-
-      body.sunlight-mode * {
-        text-shadow: none !important;
-      }
-
-      body.sunlight-mode .card,
-      body.sunlight-mode .sunlight-card,
-      body.sunlight-mode [class*="bg-slate-9"],
-      body.sunlight-mode [class*="bg-slate-8"] {
-        background-color: #ffffff !important;
-        border-color: #000000 !important;
-        color: #000000 !important;
-        box-shadow: 0 0 0 2px #000000 !important;
-      }
-
-      body.sunlight-mode button,
-      body.sunlight-mode input,
-      body.sunlight-mode select,
-      body.sunlight-mode textarea {
-        border-color: #000000 !important;
-        color: #000000 !important;
-        font-weight: 700 !important;
-      }
-
-      body.sunlight-mode button:not([class*="bg-transparent"]) {
-        border: 2px solid #000000 !important;
-      }
-
-      body.sunlight-mode .badge,
-      body.sunlight-mode [class*="badge-"] {
-        background-color: #000000 !important;
-        color: #ffff00 !important;
-        border: 1px solid #000000 !important;
-        font-weight: 900 !important;
-      }
-
-      /* TOAST NOTIFICATION STYLING & ANIMATION */
-      .vetcare-toast-enter {
-        animation: toastSlideIn 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-      }
-      .vetcare-toast-exit {
-        animation: toastSlideOut 0.25s cubic-bezier(0.7, 0, 0.84, 0) forwards;
-      }
-
-      @keyframes toastSlideIn {
-        from {
-          opacity: 0;
-          transform: translateY(-16px) scale(0.96);
-        }
-        to {
-          opacity: 1;
-          transform: translateY(0) scale(1);
-        }
-      }
-
-      @keyframes toastSlideOut {
-        from {
-          opacity: 1;
-          transform: translateY(0) scale(1);
-        }
-        to {
-          opacity: 0;
-          transform: translateY(-12px) scale(0.92);
-        }
-      }
-    `;
-
-    document.head.appendChild(styleEl);
-  };
-
-  // 3. SYNTHESIZED WEB AUDIO API CUES
-  Theme.playAudioCue = function (type) {
-    if (!Theme.state.isAudioEnabled) {
-      return;
-    }
-
-    try {
-      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-      if (!AudioContextClass) {
-        return;
-      }
-
-      if (!Theme.state.audioContext) {
-        Theme.state.audioContext = new AudioContextClass();
-      }
-
-      if (Theme.state.audioContext.state === "suspended") {
-        Theme.state.audioContext.resume().catch(function () {});
-      }
-
-      const ctx = Theme.state.audioContext;
-      const now = ctx.currentTime;
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-
-      if (type === "success") {
-        // High ascending melodic chime (C5 -> E5 -> G5)
-        osc.type = "sine";
-        osc.frequency.setValueAtTime(523.25, now);
-        osc.frequency.exponentialRampToValueAtTime(659.25, now + 0.08);
-        osc.frequency.exponentialRampToValueAtTime(783.99, now + 0.16);
-        gain.gain.setValueAtTime(0.08, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.28);
-        osc.start(now);
-        osc.stop(now + 0.28);
-      } else if (type === "error") {
-        // Harsh buzz descending alert
-        osc.type = "sawtooth";
-        osc.frequency.setValueAtTime(260.0, now);
-        osc.frequency.linearRampToValueAtTime(140.0, now + 0.22);
-        gain.gain.setValueAtTime(0.12, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
-        osc.start(now);
-        osc.stop(now + 0.25);
-      } else if (type === "warning") {
-        // Double pulse alert tone
-        osc.type = "triangle";
-        osc.frequency.setValueAtTime(440.0, now);
-        gain.gain.setValueAtTime(0.1, now);
-        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
-        gain.gain.setValueAtTime(0.1, now + 0.1);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
-        osc.start(now);
-        osc.stop(now + 0.2);
-      } else {
-        // Subtle informative ping (E6)
-        osc.type = "sine";
-        osc.frequency.setValueAtTime(1318.51, now);
-        gain.gain.setValueAtTime(0.05, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
-        osc.start(now);
-        osc.stop(now + 0.15);
-      }
-    } catch (e) {
-      // Audio autoplay policy fallback or headless run
-    }
-  };
-
-  // 4. FLOATING TOAST & BANNER ENGINE
-  Theme.ensureToastContainer = function () {
-    let container = document.getElementById(Theme.selectors.toastContainerId);
-    if (!container) {
-      container = document.createElement("div");
-      container.id = Theme.selectors.toastContainerId;
-      container.className = "fixed top-4 right-4 z-[9999] flex flex-col gap-2.5 pointer-events-none max-w-md w-full px-4 sm:px-0";
-      document.body.appendChild(container);
-    }
-    return container;
-  };
-
-  Theme.showToast = function (message, type, durationMs) {
-    type = type || "info";
-    durationMs = typeof durationMs === "number" ? durationMs : 4000;
-
-    const container = Theme.ensureToastContainer();
-    const toast = document.createElement("div");
-
-    let borderColor = "#334155";
-    let iconClass = "fa-solid fa-circle-info text-cyan-400";
-    let bgStyle = "background-color: var(--toast-bg);";
-    let textColor = "color: var(--toast-text);";
-
-    if (type === "success") {
-      borderColor = "var(--success)";
-      iconClass = "fa-solid fa-circle-check text-emerald-400";
-    } else if (type === "error") {
-      borderColor = "var(--danger)";
-      iconClass = "fa-solid fa-circle-xmark text-rose-500";
-    } else if (type === "warning") {
-      borderColor = "var(--warning)";
-      iconClass = "fa-solid fa-triangle-exclamation text-amber-400";
-    } else {
-      borderColor = "var(--info)";
-      iconClass = "fa-solid fa-circle-info text-sky-400";
-    }
-
-    toast.className = "vetcare-toast-enter pointer-events-auto flex items-start justify-between gap-3 p-3.5 rounded-xl border shadow-2xl backdrop-blur-md transition-all";
-    toast.style.cssText = `${bgStyle} ${textColor} border-color: ${borderColor}; min-width: 280px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);`;
-
-    toast.innerHTML = `
-      <div class="flex items-start gap-2.5 flex-1">
-        <i class="${iconClass} text-base mt-0.5 flex-shrink-0"></i>
-        <div class="flex flex-col">
-          <span style="font-family: var(--app-font-sans); font-size: 13px; font-weight: 600; line-height: 1.4;">${message}</span>
-          <span style="font-family: var(--app-font-mono); font-size: 9px; opacity: 0.7; margin-top: 2px;">VETCARE AI OS • ${Theme.branding.version}</span>
-        </div>
-      </div>
-      <button type="button" aria-label="Close Notification" style="background:none; border:none; color:inherit; cursor:pointer; opacity:0.6; padding:0 4px; font-size:14px;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.6'">
-        <i class="fa-solid fa-xmark"></i>
-      </button>
-    `;
-
-    // Close button event
-    const closeBtn = toast.querySelector("button");
-    if (closeBtn) {
-      closeBtn.addEventListener("click", function () {
-        Theme.dismissToast(toast);
-      });
-    }
-
-    container.appendChild(toast);
-    Theme.playAudioCue(type);
-
-    // Auto-dismiss timer
-    if (durationMs > 0) {
-      setTimeout(function () {
-        Theme.dismissToast(toast);
-      }, durationMs);
-    }
-
-    return toast;
-  };
-
-  Theme.dismissToast = function (toastElement) {
-    if (!toastElement || toastElement.getAttribute("data-dismissed") === "true") {
-      return;
-    }
-    toastElement.setAttribute("data-dismissed", "true");
-    toastElement.classList.remove("vetcare-toast-enter");
-    toastElement.classList.add("vetcare-toast-exit");
-    setTimeout(function () {
-      if (toastElement.parentNode) {
-        toastElement.parentNode.removeChild(toastElement);
-      }
-    }, 250);
-  };
-
-  // Expose global shorthand as specified
-  window.showAppToast = function (message, type, durationMs) {
-    return Theme.showToast(message, type, durationMs);
-  };
-
-  // 5. HIGH-CONTRAST OUTDOOR SUNLIGHT ENGINE
-  Theme.setSunlightMode = function (enabled, persist) {
-    Theme.state.isSunlightMode = !!enabled;
-
-    if (Theme.state.isSunlightMode) {
-      document.body.classList.add("sunlight-mode");
-    } else {
-      document.body.classList.remove("sunlight-mode");
-    }
-
-    if (persist !== false) {
-      try {
-        localStorage.setItem(Theme.branding.storageKeys.sunlight, Theme.state.isSunlightMode ? "true" : "false");
-      } catch (err) {
-        console.warn("Storage write failure for sunlight mode", err);
-      }
-    }
-
-    Theme.syncToggleButtonsUI();
-  };
-
-  Theme.toggleSunlightMode = function () {
-    const newState = !Theme.state.isSunlightMode;
-    Theme.setSunlightMode(newState, true);
-    Theme.showToast(
-      newState ? "धूप मोड (Outdoor High-Contrast) सक्रिय" : "सामान्य डिस्प्ले मोड सक्रिय",
-      newState ? "warning" : "info",
-      2500
-    );
-    return newState;
-  };
-
-  // 6. THEME SWITCHING (DARK / LIGHT)
-  Theme.setTheme = function (themeName, persist) {
-    themeName = themeName === "light" ? "light" : "dark";
-    Theme.state.activeTheme = themeName;
-
-    if (themeName === "light") {
-      document.body.classList.add("theme-light");
-      document.documentElement.classList.remove("dark");
-    } else {
-      document.body.classList.remove("theme-light");
-      document.documentElement.classList.add("dark");
-    }
-
-    if (persist !== false) {
-      try {
-        localStorage.setItem(Theme.branding.storageKeys.theme, themeName);
-      } catch (err) {
-        console.warn("Storage write failure for theme mode", err);
-      }
-    }
-
-    Theme.syncToggleButtonsUI();
-  };
-
-  Theme.toggleTheme = function () {
-    const newTheme = Theme.state.activeTheme === "dark" ? "light" : "dark";
-    Theme.setTheme(newTheme, true);
-    Theme.showToast("थीम परिवर्तित: " + newTheme.toUpperCase(), "info", 2000);
-    return newTheme;
-  };
-
-  // 7. UI SYNCHRONIZATION & BRANDING ATTACHMENT
-  Theme.syncToggleButtonsUI = function () {
-    Theme.selectors.sunlightToggleButtons.forEach(function (selector) {
-      const elements = document.querySelectorAll(selector);
-      elements.forEach(function (btn) {
-        const textSpan = btn.querySelector("span");
-        if (Theme.state.isSunlightMode) {
-          btn.classList.add("bg-amber-400", "text-slate-950", "border-black");
-          btn.classList.remove("bg-slate-800", "text-amber-400");
-          if (textSpan) {
-            textSpan.textContent = "धूप मोड (ON)";
-          }
-        } else {
-          btn.classList.remove("bg-amber-400", "text-slate-950", "border-black");
-          btn.classList.add("bg-slate-800", "text-amber-400");
-          if (textSpan) {
-            textSpan.textContent = "धूप मोड";
-          }
-        }
-      });
-    });
-  };
-
-  Theme.applyBrandingElements = function () {
-    // Inject dynamic text to marked elements
-    const appNameEls = document.querySelectorAll("[data-branding='app-name']");
-    appNameEls.forEach(function (el) {
-      el.textContent = Theme.branding.appName;
-    });
-
-    const versionEls = document.querySelectorAll("[data-branding='version']");
-    versionEls.forEach(function (el) {
-      el.textContent = Theme.branding.version;
-    });
-
-    const subtitleEls = document.querySelectorAll("[data-branding='subtitle']");
-    subtitleEls.forEach(function (el) {
-      el.textContent = Theme.branding.subtitle;
-    });
-  };
-
-  Theme.bindActionListeners = function () {
-    // Bind sunlight toggle buttons
-    Theme.selectors.sunlightToggleButtons.forEach(function (selector) {
-      const elements = document.querySelectorAll(selector);
-      elements.forEach(function (btn) {
-        if (!btn.getAttribute("data-bound-sunlight")) {
-          btn.setAttribute("data-bound-sunlight", "true");
-          btn.addEventListener("click", function (evt) {
-            evt.preventDefault();
-            Theme.toggleSunlightMode();
-          });
-        }
-      });
-    });
-
-    // Bind general theme toggle buttons
-    Theme.selectors.themeToggleButtons.forEach(function (selector) {
-      const elements = document.querySelectorAll(selector);
-      elements.forEach(function (btn) {
-        if (!btn.getAttribute("data-bound-theme")) {
-          btn.setAttribute("data-bound-theme", "true");
-          btn.addEventListener("click", function (evt) {
-            evt.preventDefault();
-            Theme.toggleTheme();
-          });
-        }
-      });
-    });
-  };
-
-  // 8. LIFECYCLE INITIALIZER
-  Theme.init = function () {
-    Theme.injectThemeStyles();
-
-    // Read stored preferences
-    let savedTheme = "dark";
-    let savedSunlight = false;
-
-    try {
-      savedTheme = localStorage.getItem(Theme.branding.storageKeys.theme) || "dark";
-      savedSunlight = localStorage.getItem(Theme.branding.storageKeys.sunlight) === "true";
-      const savedAudio = localStorage.getItem(Theme.branding.storageKeys.audio);
-      if (savedAudio !== null) {
-        Theme.state.isAudioEnabled = savedAudio === "true";
-      }
-    } catch (err) {
-      console.warn("Storage read failure during Theme.init", err);
-    }
-
-    Theme.setTheme(savedTheme, false);
-    Theme.setSunlightMode(savedSunlight, false);
-    Theme.applyBrandingElements();
-    Theme.bindActionListeners();
-  };
-
-  // Self-initialize on DOM ready
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", function () {
-      Theme.init();
-    });
-  } else {
-    Theme.init();
+  if (!styleTag) {
+    styleTag = document.createElement("style");
+    styleTag.id = styleId;
+    document.head.appendChild(styleTag);
   }
 
-})(window, document);
+  styleTag.textContent = `
+    /* ==========================================================================
+       CLINICAL DESIGN SYSTEM TOKENS (PERMANENT HOSPITAL LIGHT PALETTE)
+       ========================================================================== */
+    :root, html.light {
+      --vet-canvas: ${CLINICAL_PALETTE.canvas};
+      --vet-canvas-muted: ${CLINICAL_PALETTE.canvasMuted};
+      --vet-surface: ${CLINICAL_PALETTE.surface};
+      --vet-surface-elevated: ${CLINICAL_PALETTE.surfaceElevated};
+      --vet-surface-glass: ${CLINICAL_PALETTE.surfaceGlass};
+      --vet-border: ${CLINICAL_PALETTE.border};
+      --vet-border-subtle: ${CLINICAL_PALETTE.borderSubtle};
+      --vet-border-strong: ${CLINICAL_PALETTE.borderStrong};
+
+      --vet-primary: ${CLINICAL_PALETTE.primaryCyan};
+      --vet-primary-hover: ${CLINICAL_PALETTE.primaryHover};
+      --vet-primary-deep: ${CLINICAL_PALETTE.primaryDeep};
+      --vet-primary-soft: ${CLINICAL_PALETTE.primarySoft};
+
+      --vet-emerald: ${CLINICAL_PALETTE.accentEmerald};
+      --vet-emerald-soft: ${CLINICAL_PALETTE.accentEmeraldSoft};
+      --vet-crimson: ${CLINICAL_PALETTE.accentCrimson};
+      --vet-crimson-soft: ${CLINICAL_PALETTE.accentCrimsonSoft};
+      --vet-amber: ${CLINICAL_PALETTE.accentAmber};
+      --vet-amber-soft: ${CLINICAL_PALETTE.accentAmberSoft};
+      --vet-purple: ${CLINICAL_PALETTE.accentPurple};
+      --vet-purple-soft: ${CLINICAL_PALETTE.accentPurpleSoft};
+
+      --vet-text-heading: ${CLINICAL_PALETTE.textHeading};
+      --vet-text-body: ${CLINICAL_PALETTE.textBody};
+      --vet-text-muted: ${CLINICAL_PALETTE.textMuted};
+      --vet-text-white: ${CLINICAL_PALETTE.textInverted};
+
+      --vet-shadow-card: ${CLINICAL_PALETTE.shadowCard};
+      --vet-shadow-elevated: ${CLINICAL_PALETTE.shadowElevated};
+      --vet-shadow-modal: ${CLINICAL_PALETTE.shadowModal};
+    }
+
+    /* Enforce Hospital Light Canvas across Root Body */
+    body {
+      background-color: var(--vet-canvas) !important;
+      color: var(--vet-text-body) !important;
+      transition: background-color 0.2s ease, color 0.2s ease;
+    }
+
+    /* Seamless Clinical Card Reskinning over Dark Tailwind Base */
+    html.light .bg-slate-900,
+    html.light .bg-slate-950,
+    html.light .bg-slate-900\\/70,
+    html.light .bg-slate-900\\/90,
+    html.light .bg-slate-900\\/80,
+    html.light .bg-slate-900\\/60,
+    html.light .bg-slate-800,
+    html.light .bg-slate-800\\/80 {
+      background-color: var(--vet-surface) !important;
+      color: var(--vet-text-body) !important;
+    }
+
+    /* Clinical Card Elevation & Crisp Sterile Borders */
+    html.light .border-slate-800,
+    html.light .border-slate-800\\/80,
+    html.light .border-slate-700,
+    html.light .border-slate-700\\/60,
+    html.light .border-slate-700\\/80 {
+      border-color: var(--vet-border) !important;
+    }
+
+    html.light .shadow-xl,
+    html.light .shadow-2xl {
+      box-shadow: var(--vet-shadow-elevated) !important;
+    }
+
+    /* Navigation Glass Bar in Clean Hospital Slate */
+    html.light .glass-nav {
+      background: var(--vet-surface-glass) !important;
+      border-bottom: 1px solid var(--vet-border) !important;
+      backdrop-filter: blur(12px) !important;
+      -webkit-backdrop-filter: blur(12px) !important;
+    }
+
+    /* Clinical Heading Typography Contrast */
+    html.light h1, 
+    html.light h2, 
+    html.light h3, 
+    html.light h4, 
+    html.light .text-white, 
+    html.light .sunlight-text {
+      color: var(--vet-text-heading) !important;
+    }
+
+    html.light p, 
+    html.light .text-slate-300, 
+    html.light .text-slate-200 {
+      color: var(--vet-text-body) !important;
+    }
+
+    html.light .text-slate-400, 
+    html.light .sunlight-muted {
+      color: var(--vet-text-muted) !important;
+    }
+
+    /* Interactive Clinical Inputs */
+    html.light input,
+    html.light select,
+    html.light textarea {
+      background-color: #ffffff !important;
+      border-color: var(--vet-border-subtle) !important;
+      color: var(--vet-text-heading) !important;
+    }
+
+    html.light input:focus,
+    html.light select:focus,
+    html.light textarea:focus {
+      border-color: var(--vet-primary) !important;
+      box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15) !important;
+    }
+
+    /* Clinical Modal Panels */
+    html.light #apiKeyModal > div,
+    html.light #adminAuthModal > div,
+    html.light #otpResetModal > div,
+    html.light #sideDrawer {
+      background-color: #ffffff !important;
+      border-color: var(--vet-border) !important;
+      box-shadow: var(--vet-shadow-modal) !important;
+    }
+
+    /* Telemetry & Secondary Button Elements */
+    html.light button.bg-slate-800 {
+      background-color: var(--vet-canvas-muted) !important;
+      color: var(--vet-text-heading) !important;
+      border-color: var(--vet-border) !important;
+    }
+    html.light button.bg-slate-800:hover {
+      background-color: #e2e8f0 !important;
+    }
+
+    /* Primary Clinical Call-to-Actions */
+    html.light .bg-gradient-to-r.from-emerald-600.to-teal-600 {
+      background: linear-gradient(135deg, #059669 0%, #0d9488 100%) !important;
+      color: #ffffff !important;
+    }
+    html.light .bg-gradient-to-r.from-amber-600.to-yellow-600 {
+      background: linear-gradient(135deg, #d97706 0%, #b45309 100%) !important;
+      color: #ffffff !important;
+    }
+    html.light .bg-gradient-to-r.from-cyan-600.to-blue-600 {
+      background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%) !important;
+      color: #ffffff !important;
+    }
+
+    /* High-Definition Clinical Scrollbars */
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: var(--vet-canvas-muted) !important;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #cbd5e1 !important;
+      border-radius: 9999px !important;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8 !important;
+    }
+  `;
+}
+
+// -------------------------------------------------------------
+// AUDIO NOTIFIER INTEGRATION
+// -------------------------------------------------------------
+function playThemeChime(mode) {
+  if (window.VetcareApp.TimersEngine && typeof window.VetcareApp.TimersEngine.playCueTone === "function") {
+    if (mode === "sunlight") {
+      window.VetcareApp.TimersEngine.playCueTone(1046.5, "triangle", 0.12);
+    } else {
+      window.VetcareApp.TimersEngine.playCueTone(523.25, "sine", 0.08);
+    }
+  }
+}
+
+// -------------------------------------------------------------
+// NOTIFICATION BRIDGE
+// -------------------------------------------------------------
+function notifyThemeChange(message, type = "info") {
+  if (typeof window.VetcareApp.showToast === "function") {
+    window.VetcareApp.showToast(message, type);
+  }
+}
+
+// -------------------------------------------------------------
+// CORE METHODS
+// -------------------------------------------------------------
+
+/**
+ * Enforces hospital clinical white theme as permanently standard.
+ */
+function applyClinicalTheme() {
+  document.documentElement.classList.remove("dark");
+  document.documentElement.classList.add("light");
+  document.documentElement.setAttribute("data-theme", "light");
+  document.body.classList.remove("sunlight-mode");
+
+  localStorage.setItem(THEME_STORAGE_KEY, THEMES.CLINICAL_LIGHT);
+  localStorage.setItem(SUNLIGHT_STORAGE_KEY, "false");
+
+  updateSunlightButtonUI(false);
+}
+
+/**
+ * Toggles Field Sunlight (Outdoor 100% contrast) mode.
+ */
+function toggleSunlightMode() {
+  const isCurrentlySunlight = document.body.classList.contains("sunlight-mode");
+  const targetState = !isCurrentlySunlight;
+
+  if (targetState) {
+    document.body.classList.add("sunlight-mode");
+    localStorage.setItem(SUNLIGHT_STORAGE_KEY, "true");
+    playThemeChime("sunlight");
+    notifyThemeChange("धूप मोड (Outdoor High-Contrast) सक्रिय", "warning");
+  } else {
+    document.body.classList.remove("sunlight-mode");
+    localStorage.setItem(SUNLIGHT_STORAGE_KEY, "false");
+    playThemeChime("light");
+    notifyThemeChange("प्राथमिक क्लिनिकल व्हाइट मोड सक्रिय", "success");
+  }
+
+  updateSunlightButtonUI(targetState);
+  return targetState;
+}
+
+function isSunlightMode() {
+  return document.body.classList.contains("sunlight-mode");
+}
+
+function updateSunlightButtonUI(isActive) {
+  const btn = document.getElementById("btnToggleSunlight");
+  if (!btn) return;
+
+  if (isActive) {
+    btn.classList.add("ring-2", "ring-amber-500", "bg-amber-100", "text-amber-900");
+    btn.classList.remove("bg-slate-800", "text-amber-400");
+  } else {
+    btn.classList.remove("ring-2", "ring-amber-500", "bg-amber-100", "text-amber-900");
+    btn.classList.add("bg-slate-800", "text-amber-400");
+  }
+}
+
+/**
+ * Prevents operating system preferences (prefers-color-scheme: dark)
+ * from overriding hospital diagnostic standards.
+ */
+function blockSystemDarkModeOverride() {
+  if (window.matchMedia) {
+    const colorSchemeQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    const handler = function () {
+      // Re-enforce clinical white regardless of OS events
+      if (!isSunlightMode()) {
+        applyClinicalTheme();
+      }
+    };
+
+    try {
+      colorSchemeQuery.addEventListener("change", handler);
+    } catch (e) {
+      try {
+        colorSchemeQuery.addListener(handler);
+      } catch (err) {}
+    }
+  }
+}
+
+/**
+ * Initialize theme state and listeners.
+ */
+function init() {
+  injectClinicalStyles();
+  blockSystemDarkModeOverride();
+
+  // Check saved sunlight state
+  const savedSunlight = localStorage.getItem(SUNLIGHT_STORAGE_KEY) === "true";
+  if (savedSunlight) {
+    document.body.classList.add("sunlight-mode");
+    updateSunlightButtonUI(true);
+  } else {
+    applyClinicalTheme();
+  }
+
+  // Sync existing toggle button if present in DOM
+  const btnSunlight = document.getElementById("btnToggleSunlight");
+  if (btnSunlight) {
+    btnSunlight.onclick = function (e) {
+      e.preventDefault();
+      toggleSunlightMode();
+    };
+  }
+}
+
+// Run initialization
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", init);
+} else {
+  init();
+}
+
+// -------------------------------------------------------------
+// Public API Surface
+// -------------------------------------------------------------
+return {
+  init: init,
+  applyClinicalTheme: applyClinicalTheme,
+  toggleSunlightMode: toggleSunlightMode,
+  isSunlightMode: isSunlightMode,
+  getPaletteTokens: function () {
+    return Object.assign({}, CLINICAL_PALETTE);
+  },
+  getCurrentTheme: function () {
+    return isSunlightMode() ? THEMES.SUNLIGHT_HIGH_CONTRAST : THEMES.CLINICAL_LIGHT;
+  }
+};
