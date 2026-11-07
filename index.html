@@ -1,165 +1,645 @@
-  <!-- Brand & Hospital Identity -->
-  <div class="flex items-center gap-3">
-    <a href="index.html" class="flex items-center gap-2.5 focus:outline-none group">
-      <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-sky-600 to-cyan-500 flex items-center justify-center text-white text-xl shadow-md shadow-sky-600/20 group-hover:scale-105 transition-transform">
-        <i class="fa-solid fa-staff-snake"></i>
+<!DOCTYPE html>
+<html lang="hi" class="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="description" content="Vetcare AI OS (2026 Production Master Core) - Clinical Veterinary Intelligence, Smart Farmer Hub & Protected Administrative Vault" />
+  <meta name="theme-color" content="#0284c7" />
+  <meta name="color-scheme" content="light" />
+
+  <!-- Apple iOS & High-DPI Mobile Display Metas -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Vetcare AI OS" />
+  <meta name="format-detection" content="telephone=no" />
+  <meta name="mobile-web-app-capable" content="yes" />
+
+  <!-- Web App Manifest -->
+  <link rel="manifest" href="manifest.json" />
+
+  <title>Vetcare AI OS | 2026 Clinical Intelligence Platform</title>
+
+  <!-- Typography: Inter, Noto Sans Devanagari, Outfit & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Noto+Sans+Devanagari:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800;900&display=swap" rel="stylesheet" />
+
+  <!-- FontAwesome 6 Pro/Free CDN -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Tailwind CSS CDN with High-Luminance Clinical Palette -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            clinical: {
+              canvas: '#f8fafc',
+              canvasMuted: '#f1f5f9',
+              surface: '#ffffff',
+              border: '#e2e8f0',
+              borderSubtle: '#cbd5e1',
+              primary: '#0284c7',
+              primaryHover: '#0369a1',
+              primaryDeep: '#0f172a',
+              primarySoft: '#e0f2fe',
+              emerald: '#10b981',
+              emeraldHover: '#059669',
+              emeraldSoft: '#d1fae5',
+              crimson: '#ef4444',
+              crimsonSoft: '#fee2e2',
+              amber: '#f59e0b',
+              amberSoft: '#fef3c7',
+              slateBg: '#0f172a',
+              textHeading: '#0f172a',
+              textBody: '#334155',
+              textMuted: '#64748b'
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'Noto Sans Devanagari', 'sans-serif'],
+            display: ['Outfit', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace']
+          },
+          boxShadow: {
+            clinical: '0 1px 3px 0 rgba(15, 23, 42, 0.05), 0 1px 2px -1px rgba(15, 23, 42, 0.05)',
+            elevated: '0 10px 15px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -4px rgba(15, 23, 42, 0.03)',
+            glowCyan: '0 0 20px -3px rgba(2, 132, 199, 0.35)',
+            glowEmerald: '0 0 20px -3px rgba(16, 185, 129, 0.35)'
+          }
+        }
+      }
+    };
+  </script>
+
+  <!-- High-Luminance Clinical Workspace Custom Styles -->
+  <style>
+    :root {
+      color-scheme: light;
+      --font-display: 'Outfit', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    body {
+      background-color: #f8fafc;
+      color: #334155;
+      font-family: 'Inter', 'Noto Sans Devanagari', sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      -webkit-tap-highlight-color: transparent;
+      overflow-x: hidden;
+    }
+
+    /* Outdoor Sunlight High-Contrast Mode */
+    body.sunlight-mode {
+      background-color: #ffffff !important;
+      color: #000000 !important;
+    }
+    body.sunlight-mode .clinical-card,
+    body.sunlight-mode .clinical-header,
+    body.sunlight-mode .clinical-footer {
+      background-color: #ffffff !important;
+      border: 2px solid #000000 !important;
+      color: #000000 !important;
+      box-shadow: 4px 4px 0 #000000 !important;
+    }
+    body.sunlight-mode .text-contrast {
+      color: #000000 !important;
+      font-weight: 800 !important;
+    }
+
+    /* Beacons & Pulses */
+    .pulse-emerald {
+      animation: pulseEmerald 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+    @keyframes pulseEmerald {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.35; transform: scale(1.25); }
+    }
+
+    /* Custom Clinical Scrollbars */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+  </style>
+</head>
+
+<body class="min-h-screen flex flex-col selection:bg-sky-500 selection:text-white">
+
+  <!-- ==========================================================================
+       TOAST NOTIFICATION STACK CONTAINER
+       ========================================================================== -->
+  <div id="toastContainer" class="fixed top-4 right-4 z-[100] flex flex-col gap-2.5 pointer-events-none max-w-sm w-full px-3"></div>
+
+  <!-- ==========================================================================
+       GLOBAL APP HEADER & TACTICAL APP BAR
+       ========================================================================== -->
+  <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/90 shadow-sm transition-colors clinical-header">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
+      
+      <!-- Left: Logo & Hospital Identity -->
+      <div class="flex items-center gap-3">
+        <a href="index.html" class="flex items-center gap-2.5 focus:outline-none group">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-sky-600 via-cyan-600 to-sky-500 flex items-center justify-center text-white text-xl shadow-md shadow-sky-600/25 group-hover:scale-105 transition-transform">
+            <i class="fa-solid fa-staff-snake"></i>
+          </div>
+          <div class="flex flex-col">
+            <div class="flex items-center gap-1.5">
+              <span class="font-display font-black text-lg sm:text-xl tracking-tight text-slate-900 text-contrast">VETCARE</span>
+              <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-extrabold uppercase bg-sky-100 text-sky-800 border border-sky-300">AI OS</span>
+              <span class="hidden sm:inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-black uppercase bg-emerald-100 text-emerald-800 border border-emerald-300">2026 PROD</span>
+            </div>
+            <span class="text-[10px] font-mono uppercase tracking-wider text-slate-500 -mt-0.5 font-semibold">Veterinary Informatic Core</span>
+          </div>
+        </a>
       </div>
-      <div class="flex flex-col">
-        <div class="flex items-center gap-1.5">
-          <span class="font-display font-extrabold text-lg sm:text-xl tracking-tight text-slate-900 text-contrast">VETCARE</span>
-          <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold uppercase bg-sky-100 text-sky-800 border border-sky-300">AI OS</span>
-          <span class="hidden sm:inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold uppercase bg-emerald-100 text-emerald-800 border border-emerald-300">2026 PROD</span>
+
+      <!-- Center: Role Switcher Navigation Tabs -->
+      <nav class="hidden md:flex items-center p-1 bg-slate-100 rounded-xl border border-slate-200" aria-label="Portal Role Selector">
+        <button id="btnRoleDoctor" type="button" class="px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-2 bg-white text-sky-700 shadow-sm border border-slate-200/60 transition-all">
+          <i class="fa-solid fa-stethoscope text-sky-600"></i>
+          <span>चिकित्सक (Doctor)</span>
+        </button>
+        <button id="btnRoleFarmer" type="button" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-2 text-slate-600 hover:text-slate-900 hover:bg-white/60 transition-all">
+          <i class="fa-solid fa-cow text-emerald-600"></i>
+          <span>पशुपालक (Farmer)</span>
+        </button>
+        <button id="btnRoleAdmin" type="button" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-2 text-slate-600 hover:text-slate-900 hover:bg-white/60 transition-all">
+          <i class="fa-solid fa-shield-cat text-slate-700"></i>
+          <span>एडमिन वॉल्ट (Admin)</span>
+        </button>
+      </nav>
+
+      <!-- Right: Live Status, Sunlight Toggle & Utilities -->
+      <div class="flex items-center gap-2.5">
+        
+        <!-- Live OPD Status Pill -->
+        <div id="liveOpdBadge" class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-xs font-mono font-semibold text-emerald-800 shadow-sm">
+          <span class="w-2 h-2 rounded-full bg-emerald-500 pulse-emerald"></span>
+          <span>ओपीडी सक्रिय:</span>
+          <span id="opdActiveCountText" class="font-bold bg-emerald-200/80 px-1.5 py-0.2 rounded text-[11px]">12</span>
         </div>
-        <span class="text-[10px] font-mono uppercase tracking-wider text-slate-500 -mt-0.5 font-semibold">Hospital & Clinical Intelligence</span>
+
+        <!-- Clinical System Status Pill -->
+        <div class="hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-sky-50 border border-sky-200 text-[11px] font-mono font-semibold text-sky-800">
+          <i class="fa-solid fa-circle-check text-sky-600"></i>
+          <span>क्लीनिकल सिस्टम: ऑनलाइन</span>
+        </div>
+
+        <!-- Outdoor Sunlight High-Contrast Toggle -->
+        <button id="btnToggleSunlight" type="button" title="Toggle Outdoor Sunlight Mode" class="p-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-amber-600 text-sm shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-sky-500">
+          <i class="fa-solid fa-sun"></i>
+        </button>
+
+        <!-- API Key Modal Trigger -->
+        <button id="btnOpenApiKeyModal" type="button" title="Configure AI & LLM Engine" class="p-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-sm shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-sky-500">
+          <i class="fa-solid fa-key text-sky-600"></i>
+        </button>
+
+        <!-- Bilingual Dropdown -->
+        <div class="relative">
+          <select id="langSelector" class="appearance-none bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-bold rounded-xl pl-2.5 pr-7 py-2 cursor-pointer focus:outline-none focus:ring-2 focus:ring-sky-500 shadow-sm">
+            <option value="hi" selected>🇮🇳 हिन्दी</option>
+            <option value="en">🌐 English</option>
+          </select>
+          <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-500">
+            <i class="fa-solid fa-chevron-down text-[10px]"></i>
+          </div>
+        </div>
+
       </div>
-    </a>
-  </div>
 
-  <!-- Center: Role Switcher Control -->
-  <nav class="hidden md:flex items-center p-1 bg-slate-100 rounded-xl border border-slate-200" aria-label="Portal Role Selector">
-    <button id="btnRoleDoctor" type="button" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-2 bg-white text-sky-700 shadow-sm transition-all">
-      <i class="fa-solid fa-user-doctor text-sky-600"></i>
-      <span>चिकित्सक (Doctor)</span>
-    </button>
-    <button id="btnRoleFarmer" type="button" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-2 text-slate-600 hover:text-slate-900 transition-all">
-      <i class="fa-solid fa-wheat-awn text-amber-600"></i>
-      <span>पशुपालक (Farmer)</span>
-    </button>
-    <button id="btnRoleAdmin" type="button" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-2 text-slate-600 hover:text-slate-900 transition-all">
-      <i class="fa-solid fa-shield-cat text-slate-600"></i>
-      <span>एडमिन (Vault)</span>
-    </button>
-  </nav>
+    </div>
+  </header>
 
-  <!-- Right Tools: Live OPD Pill, Sunlight Mode & Telemetry -->
-  <div class="flex items-center gap-2.5">
+  <!-- ==========================================================================
+       SUB-HEADER CLINICAL TELEMETRY STRIP
+       ========================================================================== -->
+  <section class="bg-white border-b border-slate-200 px-4 py-2.5 text-xs text-slate-600 clinical-card">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
+      
+      <!-- Left: Clock, Location & Standards -->
+      <div class="flex items-center gap-3">
+        <span class="inline-flex items-center gap-1.5 font-bold text-slate-800">
+          <i class="fa-solid fa-calendar-day text-sky-600"></i>
+          <span id="liveClockDateText">2026-03-29 | 09:30 IST</span>
+        </span>
+        <span class="text-slate-300">|</span>
+        <span class="font-mono text-[11px] text-sky-800 font-semibold flex items-center gap-1">
+          <i class="fa-solid fa-location-dot text-rose-500"></i>
+          <span>GPS: 28.6139° N, 77.2090° E</span>
+        </span>
+      </div>
+
+      <!-- Right: Security & Storage Nodes -->
+      <div class="flex items-center gap-4 font-mono text-[11px]">
+        <span class="text-emerald-700 font-medium flex items-center gap-1">
+          <i class="fa-solid fa-database text-emerald-600"></i>
+          <span>INDEXED-DB: PERSISTED</span>
+        </span>
+        <span class="text-slate-400">|</span>
+        <span class="text-sky-700 font-medium flex items-center gap-1">
+          <i class="fa-solid fa-shield-halved text-sky-600"></i>
+          <span>STEROID GUARD: ACTIVE</span>
+        </span>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ==========================================================================
+       DYNAMIC APPLICATION INJECTION CONTAINER (#app-root)
+       ========================================================================== -->
+  <main id="app-root" class="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
     
-    <!-- Live OPD Status Pill -->
-    <div id="opdStatusBadge" class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-xs font-mono font-semibold text-emerald-800 shadow-sm">
-      <span class="w-2 h-2 rounded-full bg-emerald-500 pulse-emerald"></span>
-      <span>OPD ACTIVE</span>
-      <span id="headerOpdCount" class="font-bold bg-emerald-200/80 px-1.5 py-0.2 rounded text-[10px]">12</span>
-    </div>
-
-    <!-- Sunlight Mode High Contrast Toggle -->
-    <button id="btnToggleSunlight" type="button" title="Toggle Outdoor Sunlight Mode" class="p-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-amber-600 text-sm shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-sky-500">
-      <i class="fa-solid fa-sun"></i>
-    </button>
-
-    <!-- API Config Modal Trigger -->
-    <button id="btnOpenApiKeyModal" type="button" title="Configure AI & LLM Engine" class="p-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-sm shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-sky-500">
-      <i class="fa-solid fa-key text-sky-600"></i>
-    </button>
-
-    <!-- Bilingual Dropdown -->
-    <div class="relative">
-      <select id="langSelector" class="appearance-none bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-bold rounded-xl pl-2.5 pr-7 py-2 cursor-pointer focus:outline-none focus:ring-2 focus:ring-sky-500 shadow-sm">
-        <option value="hi" selected>🇮🇳 हिन्दी</option>
-        <option value="en">🌐 English</option>
-      </select>
-      <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-500">
-        <i class="fa-solid fa-chevron-down text-[10px]"></i>
-      </div>
-    </div>
-
-  </div>
-
-</div>
-
-  <div class="flex items-center gap-4 font-mono text-[11px]">
-    <span class="text-slate-500">ISO-VET 2026 STANDARDS</span>
-    <span class="text-slate-500">GPS: 28.6139° N, 77.2090° E</span>
-  </div>
-</div>
-
-<!-- Clinical Dashboard Default Skeleton / Shell -->
-<div class="space-y-6">
-  
-  <!-- Primary Role Quick Switch for Mobile -->
-  <div class="flex md:hidden items-center justify-between p-1 bg-slate-100 rounded-xl border border-slate-200">
-    <button id="btnMobileRoleDoctor" type="button" class="flex-1 py-1.5 rounded-lg text-xs font-semibold text-center bg-white text-sky-700 shadow-sm">
-      चिकित्सक
-    </button>
-    <button id="btnMobileRoleFarmer" type="button" class="flex-1 py-1.5 rounded-lg text-xs font-semibold text-center text-slate-600">
-      पशुपालक
-    </button>
-    <button id="btnMobileRoleAdmin" type="button" class="flex-1 py-1.5 rounded-lg text-xs font-semibold text-center text-slate-600">
-      एडमिन
-    </button>
-  </div>
-
-  <!-- Welcome Banner -->
-  <div class="p-6 rounded-2xl bg-gradient-to-r from-sky-50 via-cyan-50 to-emerald-50 border border-sky-100 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4 clinical-card">
-    <div>
-      <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase bg-sky-100 text-sky-800 border border-sky-200 mb-2">
-        <i class="fa-solid fa-microchip"></i> AI-POWERED CLINICAL WORKSPACE
-      </div>
-      <h1 class="text-2xl sm:text-3xl font-display font-extrabold text-slate-900 tracking-tight text-contrast">
-        राष्ट्रीय पशु चिकित्सा एवं कृषक डिजिटल महाजाल
-      </h1>
-      <p class="text-xs sm:text-sm text-slate-600 max-w-2xl mt-1">
-        शेफर्स सूत्र आधारित सटीक वजन मापन, त्वरित रोगी ओपीडी, 60+ पैथोलॉजी लक्षण निदान एवं गर्भ-सुरक्षा गार्डरेल्स।
-      </p>
-    </div>
-    <div class="flex items-center gap-2.5">
-      <button id="btnQuickIntakeHeader" type="button" class="px-4 py-2.5 rounded-xl font-display font-bold text-xs bg-sky-600 hover:bg-sky-500 text-white shadow-md shadow-sky-600/20 flex items-center gap-2 transition-all">
-        <i class="fa-solid fa-plus-circle"></i>
-        <span>नया ओपीडी मरीज (Quick Intake)</span>
-      </button>
-    </div>
-  </div>
-
-  <!-- Dynamic Mount Stage -->
-  <div id="dynamicStage" class="grid grid-cols-1 md:grid-cols-3 gap-6">
-    
-    <!-- Portal Card 1: Doctor -->
-    <div class="p-6 rounded-2xl bg-white border border-slate-200 shadow-clinical flex flex-col justify-between hover:border-sky-400 transition-all clinical-card">
-      <div>
-        <div class="w-12 h-12 rounded-xl bg-sky-50 border border-sky-200 text-sky-600 flex items-center justify-center text-xl mb-4">
-          <i class="fa-solid fa-stethoscope"></i>
+    <!-- Workspace Hero & Quick Action Banner -->
+    <div class="mb-8 p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-sky-50 via-cyan-50 to-emerald-50 border border-sky-100/80 shadow-clinical flex flex-col md:flex-row items-start md:items-center justify-between gap-6 clinical-card">
+      <div class="max-w-3xl">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase bg-sky-100 text-sky-800 border border-sky-200 mb-3">
+          <i class="fa-solid fa-shield-virus text-sky-600"></i>
+          <span>ISO-VET 2026 CLINICAL PROTOCOLS</span>
         </div>
-        <h2 class="text-lg font-display font-bold text-slate-900 mb-1 text-contrast">पशु चिकित्सक कंसोल</h2>
-        <p class="text-xs text-slate-600 leading-relaxed mb-4">
-          ओपीडी रजिस्ट्रेशन, शेफर्स बॉडी वेट कैलकुलेटर, औषधि पर्ची व स्टेरॉयड गर्भावस्था निषेध गार्डरेल्स।
+        <h1 class="text-2xl sm:text-3xl lg:text-4xl font-display font-black text-slate-900 tracking-tight text-contrast">
+          राष्ट्रीय पशु चिकित्सा एवं कृषक डिजिटल महाजाल
+        </h1>
+        <p class="text-xs sm:text-sm text-slate-600 mt-2 leading-relaxed font-medium">
+          शेफर्स सूत्र आधारित सटीक वजन मापन, त्वरित ओपीडी, 60+ पैथोलॉजी लक्षण मैट्रिक्स, सुरक्षित स्टेरॉयड गार्डरेल्स एवं समग्र पशु स्वास्थ्य प्रणाली।
         </p>
       </div>
-      <button id="btnOpenDoctorView" type="button" class="w-full py-2.5 rounded-xl text-xs font-bold bg-sky-600 hover:bg-sky-700 text-white transition-colors">
-        ओपीडी कंसोल खोलें
-      </button>
-    </div>
 
-    <!-- Portal Card 2: Farmer -->
-    <div class="p-6 rounded-2xl bg-white border border-slate-200 shadow-clinical flex flex-col justify-between hover:border-amber-400 transition-all clinical-card">
-      <div>
-        <div class="w-12 h-12 rounded-xl bg-amber-50 border border-amber-200 text-amber-600 flex items-center justify-center text-xl mb-4">
-          <i class="fa-solid fa-cow"></i>
-        </div>
-        <h2 class="text-lg font-display font-bold text-slate-900 mb-1 text-contrast">स्मार्ट पशुपालक हब</h2>
-        <p class="text-xs text-slate-600 leading-relaxed mb-4">
-          आयुर्वेदिक देशी नुस्खे (थनैला, आफरा), दैनिक दुग्ध-फैट-एसएनएफ खाता बही व उच्च नस्ल सांड सीमन कैटलॉग।
-        </p>
+      <!-- Quick OPD Intake Action Button -->
+      <div class="flex-shrink-0">
+        <button id="btnQuickIntake" type="button" class="px-5 py-3.5 rounded-2xl font-display font-bold text-sm bg-gradient-to-r from-sky-600 to-cyan-600 hover:from-sky-500 hover:to-cyan-500 text-white shadow-elevated shadow-sky-600/25 flex items-center gap-2.5 transition-all transform hover:-translate-y-0.5 active:scale-95">
+          <div class="w-6 h-6 rounded-lg bg-white/20 flex items-center justify-center">
+            <i class="fa-solid fa-plus text-xs"></i>
+          </div>
+          <span>त्वरित नया ओपीडी मरीज (Quick Intake)</span>
+        </button>
       </div>
-      <button id="btnOpenFarmerView" type="button" class="w-full py-2.5 rounded-xl text-xs font-bold bg-amber-600 hover:bg-amber-700 text-white transition-colors">
-        पशुपालक हब खोलें
-      </button>
     </div>
 
-    <!-- Portal Card 3: Admin -->
-    <div class="p-6 rounded-2xl bg-white border border-slate-200 shadow-clinical flex flex-col justify-between hover:border-slate-400 transition-all clinical-card">
-      <div>
-        <div class="w-12 h-12 rounded-xl bg-slate-100 border border-slate-200 text-slate-700 flex items-center justify-center text-xl mb-4">
-          <i class="fa-solid fa-vault"></i>
+    <!-- Workspace Dashboard: 3 Primary Clinical Portal Cards -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
+
+      <!-- ====================================================================
+           CARD 1: DOCTOR CONSOLE (MEDICAL CYAN THEME)
+           ==================================================================== -->
+      <div class="relative group rounded-3xl bg-white border-2 border-sky-100 hover:border-sky-400 p-6 sm:p-7 shadow-clinical hover:shadow-glowCyan flex flex-col justify-between transition-all duration-300 hover:-translate-y-1 clinical-card">
+        <div>
+          <!-- Header Badge & Icon -->
+          <div class="flex items-center justify-between mb-5">
+            <div class="w-14 h-14 rounded-2xl bg-sky-50 border border-sky-200/80 flex items-center justify-center text-sky-600 text-2xl group-hover:scale-110 transition-transform">
+              <i class="fa-solid fa-user-doctor"></i>
+            </div>
+            <span class="px-3 py-1 rounded-full text-[11px] font-mono font-bold bg-sky-100 text-sky-800 border border-sky-200">
+              PORTAL 01
+            </span>
+          </div>
+
+          <h2 class="text-xl sm:text-2xl font-display font-black text-slate-900 group-hover:text-sky-700 transition-colors text-contrast">
+            अधिकृत पशु चिकित्सक
+          </h2>
+          <div class="text-xs font-mono font-semibold text-sky-600 mb-3 uppercase tracking-wider">
+            Doctor Portal & Clinical Engine
+          </div>
+
+          <p class="text-xs sm:text-sm text-slate-600 leading-relaxed mb-6">
+            शेफर्स सूत्र आधारित वास्तविक वजन मापन, त्वरित ओपीडी पंजीकरण, 60+ पैथोलॉजी लक्षण मैट्रिक्स, एवं सुरक्षित कॉर्टिकोस्टेरॉइड गर्भ-सुरक्षा प्रणाली।
+          </p>
+
+          <!-- Core Feature Bullets -->
+          <div class="space-y-3 mb-6">
+            <div class="flex items-center gap-2.5 text-xs text-slate-700 font-medium">
+              <i class="fa-solid fa-circle-check text-sky-600"></i>
+              <span><strong>त्वरित ओपीडी</strong>: डिजिटल केस हिस्ट्री व प्रिस्क्रिप्शन जनरेटर</span>
+            </div>
+            <div class="flex items-center gap-2.5 text-xs text-slate-700 font-medium">
+              <i class="fa-solid fa-triangle-exclamation text-rose-500"></i>
+              <span><strong>दवा सुरक्षा चेकर</strong>: स्टेरॉयड गर्भ-सुरक्षा 100% फुलप्रूफ ब्लॉक</span>
+            </div>
+            <div class="flex items-center gap-2.5 text-xs text-slate-700 font-medium">
+              <i class="fa-solid fa-weight-scale text-emerald-600"></i>
+              <span><strong>वेट कैलकुलेटर</strong>: L × G² / 300 शेफर्स सूत्र आधारित खुराक</span>
+            </div>
+          </div>
         </div>
-        <h2 class="text-lg font-display font-bold text-slate-900 mb-1 text-contrast">प्रशासनिक अधिकृत वॉल्ट</h2>
-        <p class="text-xs text-slate-600 leading-relaxed mb-4">
-          मास्टर पिन (9297) एवं ID सुरक्षा गेट। प्रत्यक्ष बैंक खाता प्रबंधन (SBI/PNB/UPI) व ऑडिट लॉग्स।
-        </p>
+
+        <!-- Action Button -->
+        <div class="pt-4 border-t border-slate-100">
+          <button id="btnLaunchDoctorPortal" type="button" class="w-full py-3.5 px-4 rounded-xl font-display font-bold text-sm bg-gradient-to-r from-sky-600 to-cyan-600 hover:from-sky-500 hover:to-cyan-500 text-white shadow-md shadow-sky-600/20 flex items-center justify-center gap-2 transition-all active:scale-[0.98]">
+            <i class="fa-solid fa-stethoscope"></i>
+            <span>ओपीडी कंसोल खोलें (Enter OPD)</span>
+          </button>
+        </div>
       </div>
-      <button id="btnOpenAdminView" type="button" class="w-full py-2.5 rounded-xl text-xs font-bold bg-slate-900 hover:bg-slate-800 text-white transition-colors">
-        एडमिन गेटवे खोलें
-      </button>
+
+      <!-- ====================================================================
+           CARD 2: FARMER HUB (EMERALD GREEN THEME)
+           ==================================================================== -->
+      <div class="relative group rounded-3xl bg-white border-2 border-emerald-100 hover:border-emerald-400 p-6 sm:p-7 shadow-clinical hover:shadow-glowEmerald flex flex-col justify-between transition-all duration-300 hover:-translate-y-1 clinical-card">
+        <div>
+          <!-- Header Badge & Icon -->
+          <div class="flex items-center justify-between mb-5">
+            <div class="w-14 h-14 rounded-2xl bg-emerald-50 border border-emerald-200/80 flex items-center justify-center text-emerald-600 text-2xl group-hover:scale-110 transition-transform">
+              <i class="fa-solid fa-wheat-awn"></i>
+            </div>
+            <span class="px-3 py-1 rounded-full text-[11px] font-mono font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+              PORTAL 02
+            </span>
+          </div>
+
+          <h2 class="text-xl sm:text-2xl font-display font-black text-slate-900 group-hover:text-emerald-700 transition-colors text-contrast">
+            स्मार्ट पशुपालक हब
+          </h2>
+          <div class="text-xs font-mono font-semibold text-emerald-600 mb-3 uppercase tracking-wider">
+            Smart Dairy Farmer & Ethno-Vet Hub
+          </div>
+
+          <p class="text-xs sm:text-sm text-slate-600 leading-relaxed mb-6">
+            पारंपरिक अनुभूत आयुर्वेदिक देसी नुस्खे, दैनिक दुग्ध-फैट-एसएनएफ खाता बही, उच्च नस्ल सांड सीमन स्ट्रॉ निर्देशिका एवं प्राथमिक चिकित्सा।
+          </p>
+
+          <!-- Core Feature Bullets -->
+          <div class="space-y-3 mb-6">
+            <div class="flex items-center gap-2.5 text-xs text-slate-700 font-medium">
+              <i class="fa-solid fa-leaf text-emerald-600"></i>
+              <span><strong>आयुर्वेदिक नुस्खे</strong>: थनैला, आफरा, दस्त व खुरपका के घरेलू उपचार</span>
+            </div>
+            <div class="flex items-center gap-2.5 text-xs text-slate-700 font-medium">
+              <i class="fa-solid fa-bucket text-sky-600"></i>
+              <span><strong>दुग्ध खाता बही</strong>: सुबह-शाम दूध मात्रा, FAT% व रेट स्व-गणना</span>
+            </div>
+            <div class="flex items-center gap-2.5 text-xs text-slate-700 font-medium">
+              <i class="fa-solid fa-dna text-purple-600"></i>
+              <span><strong>सीमन कैटलॉग</strong>: मुर्रा, साहीवाल, गिर उच्च आनुवंशिक रिकॉर्ड</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Button -->
+        <div class="pt-4 border-t border-slate-100">
+          <button id="btnLaunchFarmerHub" type="button" class="w-full py-3.5 px-4 rounded-xl font-display font-bold text-sm bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-md shadow-emerald-600/20 flex items-center justify-center gap-2 transition-all active:scale-[0.98]">
+            <i class="fa-solid fa-cow"></i>
+            <span>पशुपालक हब खोलें (Access Farmer Desk)</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- ====================================================================
+           CARD 3: ADMIN VAULT (DEEP SLATE / INDIGO THEME)
+           ==================================================================== -->
+      <div class="relative group rounded-3xl bg-white border-2 border-slate-200 hover:border-slate-500 p-6 sm:p-7 shadow-clinical hover:shadow-elevated flex flex-col justify-between transition-all duration-300 hover:-translate-y-1 clinical-card">
+        <div>
+          <!-- Header Badge & Icon -->
+          <div class="flex items-center justify-between mb-5">
+            <div class="w-14 h-14 rounded-2xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-800 text-2xl group-hover:scale-110 transition-transform">
+              <i class="fa-solid fa-shield-halved"></i>
+            </div>
+            <span class="px-3 py-1 rounded-full text-[11px] font-mono font-bold bg-slate-100 text-slate-800 border border-slate-200">
+              PORTAL 03
+            </span>
+          </div>
+
+          <h2 class="text-xl sm:text-2xl font-display font-black text-slate-900 group-hover:text-slate-800 transition-colors text-contrast">
+            प्रशासनिक अधिकृत वॉल्ट
+          </h2>
+          <div class="text-xs font-mono font-semibold text-slate-600 mb-3 uppercase tracking-wider">
+            Protected Gate • Financial & System Node
+          </div>
+
+          <p class="text-xs sm:text-sm text-slate-600 leading-relaxed mb-6">
+            मास्टर प्रशासनिक गेट (PIN: 9297, ID: 9991039297)। प्रत्यक्ष बैंक खाता प्रबंधन (SBI, PNB, UPI ID), सब्सक्रिप्शन एवं ऑडिट ट्रेल।
+          </p>
+
+          <!-- Core Feature Bullets -->
+          <div class="space-y-3 mb-6">
+            <div class="flex items-center gap-2.5 text-xs text-slate-700 font-medium">
+              <i class="fa-solid fa-key text-amber-500"></i>
+              <span><strong>मास्टर पिन 9297</strong>: 4-अंकीय त्वरित सुरक्षित गेटवे प्रमाणीकरण</span>
+            </div>
+            <div class="flex items-center gap-2.5 text-xs text-slate-700 font-medium">
+              <i class="fa-solid fa-clock-rotate-left text-sky-600"></i>
+              <span><strong>2FA सुरक्षा</strong>: इन-ऐप 15-सेकंड आपातकालीन OTP रीसेट इंजन</span>
+            </div>
+            <div class="flex items-center gap-2.5 text-xs text-slate-700 font-medium">
+              <i class="fa-solid fa-building-columns text-emerald-600"></i>
+              <span><strong>बैंक व ऑडिट लॉग्स</strong>: प्रत्यक्ष SBI/PNB पेआउट्स व गतिविधि ट्रैकर</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Button -->
+        <div class="pt-4 border-t border-slate-100">
+          <button id="btnOpenAdminAuthModal" type="button" class="w-full py-3.5 px-4 rounded-xl font-display font-bold text-sm bg-gradient-to-r from-slate-900 to-slate-800 hover:from-slate-800 hover:to-slate-700 text-white shadow-md shadow-slate-900/20 flex items-center justify-center gap-2 transition-all active:scale-[0.98]">
+            <i class="fa-solid fa-lock-open"></i>
+            <span>एडमिन वॉल्ट अनलॉक करें (Unlock Vault)</span>
+          </button>
+        </div>
+      </div>
+
     </div>
 
-  </div>
+    <!-- Quick Clinical Telemetry Strip -->
+    <div class="mt-8 p-5 rounded-2xl bg-white border border-slate-200 grid grid-cols-2 sm:grid-cols-4 gap-4 text-center shadow-sm clinical-card">
+      <div>
+        <div class="text-[11px] font-mono text-slate-500 uppercase font-semibold">पंजीकृत रोग डेटाबेस</div>
+        <div class="text-xl sm:text-2xl font-display font-black text-sky-700 mt-0.5">64+ प्रोफाइल</div>
+      </div>
+      <div>
+        <div class="text-[11px] font-mono text-slate-500 uppercase font-semibold">सुरक्षित औषधियां</div>
+        <div class="text-xl sm:text-2xl font-display font-black text-emerald-700 mt-0.5">140+ फॉर्मूलेशन</div>
+      </div>
+      <div>
+        <div class="text-[11px] font-mono text-slate-500 uppercase font-semibold">गर्भ सुरक्षा ब्लॉक दर</div>
+        <div class="text-xl sm:text-2xl font-display font-black text-rose-600 mt-0.5">100% फुलप्रूफ</div>
+      </div>
+      <div>
+        <div class="text-[11px] font-mono text-slate-500 uppercase font-semibold">ऑफलाइन सिंक स्टेट</div>
+        <div class="text-xl sm:text-2xl font-display font-black text-sky-700 mt-0.5">सक्रिय (IndexedDB)</div>
+      </div>
+    </div>
+  </main>
 
-</div>
+  <!-- ==========================================================================
+       GLOBAL MODAL PORTAL CONTAINER (#modal-root)
+       ========================================================================== -->
+  <div id="modal-root" class="relative z-50"></div>
+
+  <!-- ==========================================================================
+       GLOBAL APP FOOTER
+       ========================================================================== -->
+  <footer class="mt-auto border-t border-slate-200 bg-white px-4 py-6 text-xs text-slate-500 clinical-footer">
+    <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+      <div class="flex items-center gap-2">
+        <div class="w-6 h-6 rounded-lg bg-sky-600 flex items-center justify-center text-white font-black text-xs">
+          V
+        </div>
+        <span class="text-slate-800 font-bold text-contrast">VETCARE AI OS</span>
+        <span class="text-slate-300">|</span>
+        <span class="font-mono text-[11px] text-slate-500">2026 Production Master Core (v2.6.4-PROD)</span>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-4 text-[11px] font-mono font-semibold">
+        <span class="text-emerald-700"><i class="fa-solid fa-lock mr-1"></i>LIFETIME UNLIMITED ACCESS</span>
+        <span class="text-sky-700"><i class="fa-solid fa-wifi mr-1"></i>PWA OFFLINE-FIRST</span>
+        <span class="text-amber-700"><i class="fa-solid fa-building-columns mr-1"></i>SBI/PNB VAULT OK</span>
+      </div>
+
+      <div class="text-[11px] text-slate-500 text-center md:text-right">
+        अभिकल्पित: डॉ. राहुल एवं राष्ट्रीय पशु चिकित्सा सूचना नेटवर्क
+      </div>
+    </div>
+  </footer>
+
+  <!-- ==========================================================================
+       ALL 108 MODULAR SCRIPT TAGS IN SEQUENTIAL ARCHITECTURAL ORDER
+       ========================================================================== -->
+
+  <!-- ==========================================================================
+       1. CORE ARCHITECTURAL ENGINE (20 Scripts)
+       ========================================================================== -->
+  <script src="core/event-bus.js"></script>
+  <script src="core/state-store.js"></script>
+  <script src="core/theme-engine.js"></script>
+  <script src="core/timers-engine.js"></script>
+  <script src="core/security-guard.js"></script>
+  <script src="core/voice-engine.js"></script>
+  <script src="core/camera-engine.js"></script>
+  <script src="core/audio-sfx.js"></script>
+  <script src="core/offline-db.js"></script>
+  <script src="core/export-engine.js"></script>
+  <script src="core/print-engine.js"></script>
+  <script src="core/backup-engine.js"></script>
+  <script src="core/validation-engine.js"></script>
+  <script src="core/ui-notifications.js"></script>
+  <script src="core/modal-engine.js"></script>
+  <script src="core/api-bridge.js"></script>
+  <script src="core/analytics-tracker.js"></script>
+  <script src="core/telemetry-core.js"></script>
+  <script src="core/error-boundary.js"></script>
+  <script src="core/app-init.js"></script>
+
+  <!-- ==========================================================================
+       2. CLINICAL DATA & PHARMACOPEIA DATABASES (36 Scripts)
+       ========================================================================== -->
+  <script src="clinical-data/diseases-bovine.js"></script>
+  <script src="clinical-data/diseases-bubaline.js"></script>
+  <script src="clinical-data/diseases-caprine.js"></script>
+  <script src="clinical-data/diseases-canine.js"></script>
+  <script src="clinical-data/diseases-feline.js"></script>
+  <script src="clinical-data/diseases-equine.js"></script>
+  <script src="clinical-data/diseases-avian.js"></script>
+  <script src="clinical-data/drug-database.js"></script>
+  <script src="clinical-data/drug-interactions.js"></script>
+  <script src="clinical-data/toxicology-poisons.js"></script>
+  <script src="clinical-data/deworming-protocols.js"></script>
+  <script src="clinical-data/vaccination-schedules.js"></script>
+  <script src="clinical-data/surgical-protocols.js"></script>
+  <script src="clinical-data/lab-ranges-reference.js"></script>
+  <script src="clinical-data/differential-diagnostics.js"></script>
+  <script src="clinical-data/reproduction-gynecology.js"></script>
+  <script src="clinical-data/emergency-triage.js"></script>
+  <script src="clinical-data/pain-management-analgesia.js"></script>
+  <script src="clinical-data/antimicrobial-stewardship.js"></script>
+  <script src="clinical-data/fluid-electrolyte-therapy.js"></script>
+  <script src="clinical-data/feed-nutrition-matrix.js"></script>
+  <script src="clinical-data/zoonoses-onehealth.js"></script>
+  <script src="clinical-data/notifiable-diseases-reporting.js"></script>
+  <script src="clinical-data/desi-nuskhe.js"></script>
+  <script src="clinical-data/post-mortem-pathology.js"></script>
+  <script src="clinical-data/neonatology-pediatrics.js"></script>
+  <script src="clinical-data/geriatrics-palliative.js"></script>
+  <script src="clinical-data/dentistry-oral-health.js"></script>
+  <script src="clinical-data/ophthalmology-ent.js"></script>
+  <script src="clinical-data/dermatology-allergies.js"></script>
+  <script src="clinical-data/cardiorespiratory-medicine.js"></script>
+  <script src="clinical-data/diagnostic-imaging.js"></script>
+  <script src="clinical-data/clinical-calculators.js"></script>
+  <script src="clinical-data/breed-database.js"></script>
+  <script src="clinical-data/biosecurity-quarantine.js"></script>
+  <script src="clinical-data/symptom-matrix.js"></script>
+
+  <!-- ==========================================================================
+       3. SPECIALIZED CLINICAL & DIAGNOSTIC MODULES (36 Scripts)
+       ========================================================================== -->
+  <script src="modules/shaeffer-biometrics.js"></script>
+  <script src="modules/opd-manager.js"></script>
+  <script src="modules/prescription-generator.js"></script>
+  <script src="modules/corticosteroid-guard.js"></script>
+  <script src="modules/ai-diagnostic-engine.js"></script>
+  <script src="modules/vital-signs-tracker.js"></script>
+  <script src="modules/fluid-calculator.js"></script>
+  <script src="modules/anesthesia-monitor.js"></script>
+  <script src="modules/radiology-viewer.js"></script>
+  <script src="modules/ultrasound-notes.js"></script>
+  <script src="modules/lab-cbc-analyzer.js"></script>
+  <script src="modules/urinalysis-analyzer.js"></script>
+  <script src="modules/coprology-parasitology.js"></script>
+  <script src="modules/wound-care-tracker.js"></script>
+  <script src="modules/surgical-checklist.js"></script>
+  <script src="modules/dystocia-emergency.js"></script>
+  <script src="modules/ai-semen-tracker.js"></script>
+  <script src="modules/mastitis-calculator.js"></script>
+  <script src="modules/lameness-scoring.js"></script>
+  <script src="modules/rumen-health-index.js"></script>
+  <script src="modules/dairy-ration-formulator.js"></script>
+  <script src="modules/heat-stress-monitor.js"></script>
+  <script src="modules/outbreak-sentinel.js"></script>
+  <script src="modules/quarantine-manager.js"></script>
+  <script src="modules/one-health-zoonosis.js"></script>
+  <script src="modules/milk-fat-snf-calc.js"></script>
+  <script src="modules/herd-demographics.js"></script>
+  <script src="modules/bull-pedigree-engine.js"></script>
+  <script src="modules/ayurvedic-formulator.js"></script>
+  <script src="modules/tele-consult-video.js"></script>
+  <script src="modules/voice-dictation-emr.js"></script>
+  <script src="modules/offline-sync-worker.js"></script>
+  <script src="modules/adverse-drug-reactions.js"></script>
+  <script src="modules/inventory-pharmacy.js"></script>
+  <script src="modules/billing-pos.js"></script>
+  <script src="modules/audit-logger.js"></script>
+
+  <!-- ==========================================================================
+       4. VETERINARY DOCTOR SUBSYSTEM (6 Scripts)
+       ========================================================================== -->
+  <script src="doctor/patient-intake.js"></script>
+  <script src="doctor/symptom-matrix.js"></script>
+  <script src="doctor/dosage-calculator.js"></script>
+  <script src="doctor/ai-second-opinion.js"></script>
+  <script src="doctor/opd-prescription.js"></script>
+  <script src="doctor/doctor-dashboard.js"></script>
+
+  <!-- ==========================================================================
+       5. SMART DAIRY FARMER SUBSYSTEM (6 Scripts)
+       ========================================================================== -->
+  <script src="farmer/desi-diseases.js"></script>
+  <script src="farmer/bulls-directory.js"></script>
+  <script src="farmer/milk-ledger.js"></script>
+  <script src="farmer/deworming-vaccine-reminders.js"></script>
+  <script src="farmer/first-aid-field-guide.js"></script>
+  <script src="farmer/farmer-dashboard.js"></script>
+
+  <!-- ==========================================================================
+       6. PROTECTED ADMINISTRATIVE VAULT (4 Scripts)
+       ========================================================================== -->
+  <script src="admin/admin-auth.js"></script>
+  <script src="admin/payout-manager.js"></script>
+  <script src="admin/subscription-manager.js"></script>
+  <script src="admin/admin-dashboard.js"></script>
+
+</body>
+</html>
