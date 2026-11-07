@@ -1,414 +1,535 @@
-// Vetcare AI OS - Session Lifecycle, 60m Inactivity Timer & 24h Free Trial Countdown Engine (2026 Production)
+let consultationTimer = {
+  id: null,
+  consultationId: null,
+  startTime: 0,
+  elapsedSeconds: 0,
+  running: false,
+  intervalRef: null,
+  callbacks: new Set()
+};
 
-(function (window, document) {
-  'use strict';
+let autoSaveConfig = {
+  intervalRef: null,
+  intervalMs: 30000,
+  syncHandler: null,
+  lastSyncTimestamp: null,
+  isSyncing: false
+};
 
-  // 1. GLOBAL NAMESPACE & STATE INITIALIZATION
-  window.VetcareApp = window.VetcareApp || {};
-
-  var SESSION_DURATION_SECONDS = 3600; // 60 minutes
-  var SESSION_WARNING_THRESHOLD_SECONDS = 300; // 5 minutes
-  var TRIAL_DURATION_MS = 24 * 60 * 60 * 1000; // 24 Hours
-  var THROTTLE_DELAY_MS = 2000; // Throttle user interaction listener to 2 seconds
-
-  var Timers = {
-    sessionStartEpoch: Date.now(),
-    remainingSessionSec: SESSION_DURATION_SECONDS,
-    trialEndTimestamp: 0,
-    sessionIntervalId: null,
-    trialIntervalId: null,
-    warningFired: false,
-    isTrialExpired: false,
-    isSessionExpired: false,
-    lastInteractionEpoch: Date.now(),
-    lastThrottleCheck: 0
-  };
-
-  window.VetcareApp.Timers = Timers;
-
-  // Safe localStorage Access Utilities
-  function safeStorageGet(key) {
+// -------------------------------------------------------------
+// Audio Notification Synthesizer (Zero External Dependencies)
+// -------------------------------------------------------------
+const AudioNotifier = {
+  playTone: function (frequency = 880, type = "sine", duration = 0.15) {
     try {
-      return window.localStorage.getItem(key);
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContextClass) return;
+      
+      const audioCtx = new AudioContextClass();
+      const oscillator = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+
+      oscillator.type = type;
+      oscillator.frequency.setValueAtTime(frequency, audioCtx.currentTime);
+
+      gainNode.gain.setValueAtTime(0.12, audioCtx.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+
+      oscillator.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+
+      oscillator.start();
+      oscillator.stop(audioCtx.currentTime + duration);
+
+      setTimeout(function () {
+        if (audioCtx.state !== "closed") {
+          audioCtx.close().catch(function () {});
+        }
+      }, Math.ceil((duration + 0.1) * 1000));
     } catch (e) {
-      console.warn('[Vetcare Timers] LocalStorage read access blocked:', e);
-      return null;
+      // Audio cues gracefully degrade if hardware or permissions are restricted
     }
+  },
+
+  alertPulse: function () {
+    this.playTone(880, "sine", 0.12);
+    setTimeout(() => this.playTone(1174.66, "sine", 0.18), 140);
+  },
+
+  warningPulse: function () {
+    this.playTone(523.25, "triangle", 0.2);
+    setTimeout(() => this.playTone(493.88, "triangle", 0.3), 220);
   }
+};
 
-  function safeStorageSet(key, value) {
-    try {
-      window.localStorage.setItem(key, value);
-    } catch (e) {
-      console.warn('[Vetcare Timers] LocalStorage write access blocked:', e);
-    }
-  }
+// -------------------------------------------------------------
+// SECTION 1: PERMANENT LIFETIME ACCESS & TRIAL EXCLUSION ENGINE
+// -------------------------------------------------------------
 
-  // Toast Notification Dispatcher
-  function displayToast(message, type) {
-    if (typeof window.showAppToast === 'function') {
-      window.showAppToast(message, type);
-    } else if (window.VetcareApp.UI && typeof window.VetcareApp.UI.showToast === 'function') {
-      window.VetcareApp.UI.showToast(message, type);
-    } else {
-      console.log('[' + (type || 'info').toUpperCase() + '] ' + message);
-    }
-  }
+/**
+ * Permanent License & Access Controller
+ * Ensures zero trial barriers, bypasses trial expiry checks,
+ * and renders blocker elements inert.
+ */
+function isTrialExpired() {
+  return false;
+}
 
-  // Format MM:SS for Session Timer
-  function formatSessionTime(seconds) {
-    var clampedSec = Math.max(0, Math.floor(seconds));
-    var mins = Math.floor(clampedSec / 60);
-    var secs = clampedSec % 60;
-    var formattedMins = mins < 10 ? '0' + mins : mins;
-    var formattedSecs = secs < 10 ? '0' + secs : secs;
-    return 'सत्र: ' + formattedMins + ':' + formattedSecs;
-  }
+function getRemainingDays() {
+  return Infinity;
+}
 
-  // Format HH:MM:SS for Free Trial Countdown
-  function formatTrialTime(remainingMs) {
-    var totalSeconds = Math.max(0, Math.floor(remainingMs / 1000));
-    var hours = Math.floor(totalSeconds / 3600);
-    var minutes = Math.floor((totalSeconds % 3600) / 60);
-    var seconds = totalSeconds % 60;
-
-    var hh = hours < 10 ? '0' + hours : hours;
-    var mm = minutes < 10 ? '0' + minutes : minutes;
-    var ss = seconds < 10 ? '0' + seconds : seconds;
-
-    return 'ट्रायल: ' + hh + ':' + mm + ':' + ss;
-  }
-
-  // 2. 60-MINUTE SESSION & INACTIVITY CONTROLLER
-  Timers.startSessionTimer = function () {
-    if (Timers.sessionIntervalId) {
-      clearInterval(Timers.sessionIntervalId);
-    }
-
-    Timers.isSessionExpired = false;
-    Timers.sessionStartEpoch = Date.now();
-
-    function updateSessionTick() {
-      Timers.remainingSessionSec -= 1;
-
-      // Update UI Navigation Badge
-      var badge = document.getElementById('session-timer-badge');
-      if (badge) {
-        badge.textContent = formatSessionTime(Timers.remainingSessionSec);
-      }
-
-      // 5-Minute Warning Toast (300 Seconds)
-      if (Timers.remainingSessionSec === SESSION_WARNING_THRESHOLD_SECONDS && !Timers.warningFired) {
-        Timers.warningFired = true;
-        displayToast('सत्र समाप्त होने में 5 मिनट शेष हैं!', 'warning');
-      }
-
-      // Session Expiry Handling
-      if (Timers.remainingSessionSec <= 0) {
-        Timers.remainingSessionSec = 0;
-        Timers.isSessionExpired = true;
-        clearInterval(Timers.sessionIntervalId);
-        Timers.sessionIntervalId = null;
-
-        if (badge) {
-          badge.textContent = 'सत्र: 00:00 (समाप्त)';
-        }
-
-        displayToast('सत्र समाप्त हो गया है! कृपया पुनः लॉगिन करें।', 'error');
-
-        // Execute system logout if available
-        if (window.VetcareApp.Auth && typeof window.VetcareApp.Auth.logout === 'function') {
-          window.VetcareApp.Auth.logout();
-        } else {
-          setTimeout(function () {
-            window.location.reload();
-          }, 1500);
-        }
-      }
-    }
-
-    // Immediate initial sync
-    var sessionBadge = document.getElementById('session-timer-badge');
-    if (sessionBadge) {
-      sessionBadge.textContent = formatSessionTime(Timers.remainingSessionSec);
-    }
-
-    Timers.sessionIntervalId = setInterval(updateSessionTick, 1000);
+function getLicenseStatus() {
+  return {
+    status: "LIFETIME_ACTIVE",
+    tier: "ENTERPRISE_UNLIMITED_2026",
+    isExpired: false,
+    daysRemaining: Infinity,
+    clinicalAllowed: true,
+    farmerSuiteAllowed: true,
+    vaultAccessAllowed: true,
+    expiryTimestamp: null
   };
+}
 
-  Timers.resetSessionTimer = function () {
-    if (Timers.isSessionExpired) {
-      return;
-    }
-    Timers.remainingSessionSec = SESSION_DURATION_SECONDS;
-    Timers.warningFired = false;
-    Timers.lastInteractionEpoch = Date.now();
-
-    var badge = document.getElementById('session-timer-badge');
-    if (badge) {
-      badge.textContent = formatSessionTime(Timers.remainingSessionSec);
-    }
-  };
-
-  // Throttled User Activity Handlers
-  function handleUserInteraction() {
-    var now = Date.now();
-    if (now - Timers.lastThrottleCheck > THROTTLE_DELAY_MS) {
-      Timers.lastThrottleCheck = now;
-      Timers.resetSessionTimer();
-    }
+/**
+ * Strips and neutralizes any trial expiration modals or modal backdrops.
+ * Returns null immediately and refuses DOM injection.
+ */
+function renderTrialExpiredModal() {
+  const existingModal = document.getElementById("vetcare-trial-expired-modal");
+  if (existingModal && existingModal.parentNode) {
+    existingModal.parentNode.removeChild(existingModal);
   }
 
-  function bindInteractionListeners() {
-    var events = ['mousemove', 'keydown', 'touchstart', 'scroll'];
-    for (var i = 0; i < events.length; i++) {
-      window.addEventListener(events[i], handleUserInteraction, { passive: true });
-    }
+  const existingBackdrop = document.getElementById("vetcare-trial-expired-backdrop");
+  if (existingBackdrop && existingBackdrop.parentNode) {
+    existingBackdrop.parentNode.removeChild(existingBackdrop);
   }
 
-  // 3. 24-HOUR FREE TRIAL COUNTDOWN ENGINE
-  function isTrialBypassed() {
-    var activeSub = safeStorageGet('vetcare_subscription_active');
-    var userRole = safeStorageGet('vetcare_user_role');
+  return null;
+}
 
-    if (activeSub === 'true') {
-      return true;
+/**
+ * Passive guardian to ensure trial lock elements are immediately purged
+ * if injected into the active document.
+ */
+function sanitizeAccessState() {
+  const modalElements = document.querySelectorAll(
+    "#vetcare-trial-expired-modal, #vetcare-trial-expired-backdrop, .trial-expired-gate"
+  );
+  modalElements.forEach(function (el) {
+    if (el && el.parentNode) {
+      el.parentNode.removeChild(el);
     }
+  });
+  document.body.classList.remove("trial-locked", "gate-blocked");
+}
 
-    if (userRole === 'admin') {
-      return true;
-    }
+// -------------------------------------------------------------
+// SECTION 2: CLINICAL CONSULTATION STOPWATCH ENGINE
+// -------------------------------------------------------------
 
-    if (window.VetcareApp.currentUser && window.VetcareApp.currentUser.role === 'admin') {
-      return true;
-    }
-
-    return false;
+function startConsultation(consultationId, onTickCallback) {
+  if (consultationTimer.running) {
+    stopConsultation();
   }
 
-  function renderTrialExpiredModal() {
-    var existingModal = document.getElementById('vetcare-trial-expired-modal');
-    if (existingModal) {
-      existingModal.style.display = 'flex';
-      return;
-    }
+  consultationTimer.consultationId = consultationId || "CASE-" + Date.now();
+  consultationTimer.startTime = Date.now() - (consultationTimer.elapsedSeconds * 1000);
+  consultationTimer.running = true;
 
-    var modalOverlay = document.createElement('div');
-    modalOverlay.id = 'vetcare-trial-expired-modal';
-    modalOverlay.setAttribute(
-      'style',
-      'position: fixed; inset: 0; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(8px); ' +
-      'display: flex; align-items: center; justify-content: center; z-index: 999999; padding: 20px; font-family: system-ui, -apple-system, sans-serif;'
-    );
-
-    var card = document.createElement('div');
-    card.setAttribute(
-      'style',
-      'background: #ffffff; color: #0f172a; max-width: 500px; width: 100%; border-radius: 16px; ' +
-      'box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); padding: 32px; text-align: center; border: 1px solid #e2e8f0;'
-    );
-
-    card.innerHTML =
-      '<div style="width: 64px; height: 64px; margin: 0 auto 16px; background: #fee2e2; border-radius: 50%; display: flex; align-items: center; justify-content: center;">' +
-        '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
-          '<circle cx="12" cy="12" r="10"></circle>' +
-          '<polyline points="12 6 12 12 16 14"></polyline>' +
-        '</svg>' +
-      '</div>' +
-      '<h2 style="font-size: 1.5rem; font-weight: 700; margin: 0 0 10px; color: #1e293b;">निःशुल्क ट्रायल समाप्त (Trial Expired)</h2>' +
-      '<p style="color: #64748b; font-size: 0.95rem; line-height: 1.5; margin: 0 0 24px;">' +
-        'आपका 24 घंटे का Vetcare AI OS फ्री ट्रायल समाप्त हो गया है। AI डायग्नोस्टिक्स, ओपीडी (OPD) इंजन और अन्य उन्नत सुविधाओं का निरंतर उपयोग जारी रखने के लिए अपनी सदस्यता को अपग्रेड करें।' +
-      '</p>' +
-      '<div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">' +
-        '<button id="vetcare-btn-pricing" style="background: #2563eb; color: #ffffff; border: none; padding: 12px 24px; border-radius: 8px; font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: background 0.2s;">' +
-          'सब्सक्रिप्शन अपग्रेड करें (Upgrade Plan)' +
-        '</button>' +
-        '<button id="vetcare-btn-contact-support" style="background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; padding: 12px 20px; border-radius: 8px; font-size: 0.95rem; font-weight: 600; cursor: pointer;">' +
-          'सहायता केंद्र (Contact)' +
-        '</button>' +
-      '</div>';
-
-    modalOverlay.appendChild(card);
-    document.body.appendChild(modalOverlay);
-
-    var upgradeBtn = document.getElementById('vetcare-btn-pricing');
-    if (upgradeBtn) {
-      upgradeBtn.addEventListener('click', function () {
-        if (window.VetcareApp.Navigation && typeof window.VetcareApp.Navigation.navigate === 'function') {
-          window.VetcareApp.Navigation.navigate('pricing');
-        } else {
-          window.location.hash = '#/pricing';
-        }
-      });
-    }
-
-    var supportBtn = document.getElementById('vetcare-btn-contact-support');
-    if (supportBtn) {
-      supportBtn.addEventListener('click', function () {
-        displayToast('सपोर्ट टीम से संपर्क: support@vetcare.ai', 'info');
-      });
-    }
+  if (typeof onTickCallback === "function") {
+    consultationTimer.callbacks.add(onTickCallback);
   }
 
-  function applyFeatureRestrictions() {
-    if (isTrialBypassed()) {
-      return;
-    }
+  AudioNotifier.playTone(659.25, "sine", 0.08);
 
-    // Intercept clicks on premium AI tools and OPD diagnostic views
-    var premiumSelectors = [
-      '[data-feature="ai-diagnostics"]',
-      '[data-feature="opd-engine"]',
-      '.vetcare-premium-tool',
-      '#btn-ai-diagnose',
-      '#btn-opd-rx-generate'
-    ];
+  consultationTimer.intervalRef = setInterval(function () {
+    consultationTimer.elapsedSeconds++;
+    const formatted = formatSeconds(consultationTimer.elapsedSeconds);
 
-    document.querySelectorAll(premiumSelectors.join(',')).forEach(function (el) {
-      if (!el.dataset.trialGuarded) {
-        el.dataset.trialGuarded = 'true';
-        el.addEventListener('click', function (e) {
-          if (Timers.isTrialExpired && !isTrialBypassed()) {
-            e.preventDefault();
-            e.stopImmediatePropagation();
-            renderTrialExpiredModal();
-          }
-        }, true);
+    consultationTimer.callbacks.forEach(function (cb) {
+      try {
+        cb({
+          consultationId: consultationTimer.consultationId,
+          seconds: consultationTimer.elapsedSeconds,
+          formatted: formatted
+        });
+      } catch (err) {
+        console.error("[Vetcare Timers Engine] Tick callback error:", err);
       }
     });
+  }, 1000);
+
+  activeIntervals.set("CONSULTATION_MAIN", consultationTimer.intervalRef);
+
+  return {
+    consultationId: consultationTimer.consultationId,
+    started: true
+  };
+}
+
+function pauseConsultation() {
+  if (!consultationTimer.running) return;
+
+  if (consultationTimer.intervalRef) {
+    clearInterval(consultationTimer.intervalRef);
+    consultationTimer.intervalRef = null;
+    activeIntervals.delete("CONSULTATION_MAIN");
+  }
+  consultationTimer.running = false;
+  AudioNotifier.playTone(440, "sine", 0.06);
+}
+
+function resumeConsultation() {
+  if (consultationTimer.running) return;
+  if (!consultationTimer.consultationId) {
+    startConsultation(null, null);
+    return;
   }
 
-  Timers.checkTrialStatus = function () {
-    var bypassed = isTrialBypassed();
-    var now = Date.now();
-    var remainingMs = Math.max(0, Timers.trialEndTimestamp - now);
-    var isExpired = !bypassed && remainingMs <= 0;
+  consultationTimer.running = true;
+  consultationTimer.intervalRef = setInterval(function () {
+    consultationTimer.elapsedSeconds++;
+    const formatted = formatSeconds(consultationTimer.elapsedSeconds);
 
-    return {
-      isExpired: isExpired,
-      isBypassed: bypassed,
-      remainingMs: remainingMs,
-      formatted: bypassed ? 'प्रीमियम सक्रिय' : (isExpired ? 'ट्रायल समाप्त' : formatTrialTime(remainingMs))
-    };
+    consultationTimer.callbacks.forEach(function (cb) {
+      try {
+        cb({
+          consultationId: consultationTimer.consultationId,
+          seconds: consultationTimer.elapsedSeconds,
+          formatted: formatted
+        });
+      } catch (err) {
+        console.error("[Vetcare Timers Engine] Tick callback error:", err);
+      }
+    });
+  }, 1000);
+
+  activeIntervals.set("CONSULTATION_MAIN", consultationTimer.intervalRef);
+  AudioNotifier.playTone(880, "sine", 0.06);
+}
+
+function stopConsultation() {
+  if (consultationTimer.intervalRef) {
+    clearInterval(consultationTimer.intervalRef);
+    consultationTimer.intervalRef = null;
+    activeIntervals.delete("CONSULTATION_MAIN");
+  }
+
+  const summary = {
+    consultationId: consultationTimer.consultationId,
+    totalSeconds: consultationTimer.elapsedSeconds,
+    formattedDuration: formatSeconds(consultationTimer.elapsedSeconds),
+    completedAt: new Date().toISOString()
   };
 
-  Timers.initTrialCountdown = function () {
-    if (Timers.trialIntervalId) {
-      clearInterval(Timers.trialIntervalId);
-    }
+  consultationTimer.consultationId = null;
+  consultationTimer.elapsedSeconds = 0;
+  consultationTimer.running = false;
+  consultationTimer.callbacks.clear();
 
-    var storedStart = safeStorageGet('vetcare_trial_start');
-    var storedEnd = safeStorageGet('vetcare_trial_end');
-    var now = Date.now();
+  AudioNotifier.playTone(440, "sine", 0.1);
 
-    if (!storedStart) {
-      storedStart = now.toString();
-      safeStorageSet('vetcare_trial_start', storedStart);
-    }
+  return summary;
+}
 
-    if (!storedEnd) {
-      var calculatedEnd = parseInt(storedStart, 10) + TRIAL_DURATION_MS;
-      storedEnd = calculatedEnd.toString();
-      safeStorageSet('vetcare_trial_end', storedEnd);
-    }
+function getConsultationTime() {
+  return {
+    running: consultationTimer.running,
+    consultationId: consultationTimer.consultationId,
+    seconds: consultationTimer.elapsedSeconds,
+    formatted: formatSeconds(consultationTimer.elapsedSeconds)
+  };
+}
 
-    Timers.trialEndTimestamp = parseInt(storedEnd, 10);
+function formatSeconds(totalSecs) {
+  const hrs = Math.floor(totalSecs / 3600);
+  const mins = Math.floor((totalSecs % 3600) / 60);
+  const secs = totalSecs % 60;
 
-    function updateTrialTick() {
-      var status = Timers.checkTrialStatus();
-      var badge = document.getElementById('trial-timer-badge');
+  const pad = (n) => String(n).padStart(2, "0");
+  if (hrs > 0) {
+    return `${pad(hrs)}:${pad(mins)}:${pad(secs)}`;
+  }
+  return `${pad(mins)}:${pad(secs)}`;
+}
 
-      if (status.isBypassed) {
-        Timers.isTrialExpired = false;
-        if (badge) {
-          badge.textContent = 'सक्रिय लाइसेंस';
-          badge.classList.remove('trial-warning', 'trial-expired');
-          badge.classList.add('trial-bypassed');
-        }
-        return;
-      }
+// -------------------------------------------------------------
+// SECTION 3: CLINICAL MEDICATION & MONITORING ALARMS
+// -------------------------------------------------------------
 
-      if (status.isExpired) {
-        Timers.isTrialExpired = true;
-        if (badge) {
-          badge.textContent = 'ट्रायल समाप्त';
-          badge.classList.add('trial-expired');
-        }
-        clearInterval(Timers.trialIntervalId);
-        Timers.trialIntervalId = null;
-        applyFeatureRestrictions();
-        renderTrialExpiredModal();
-        return;
-      }
+/**
+ * Registers a recurring clinical reminder (e.g. vital check, anaesthesia depth).
+ * @param {string} reminderKey - Unique identifier.
+ * @param {number} intervalMinutes - Interval in minutes (e.g., 5, 10, 15).
+ * @param {string} label - Display message/label for the clinician.
+ * @param {Function} onTrigger - Custom function invoked on expiration.
+ */
+function registerClinicalAlarm(reminderKey, intervalMinutes, label, onTrigger) {
+  clearClinicalAlarm(reminderKey);
 
-      Timers.isTrialExpired = false;
-      if (badge) {
-        badge.textContent = status.formatted;
-      }
-    }
+  const ms = Math.max(1, intervalMinutes) * 60 * 1000;
+  const targetTime = Date.now() + ms;
 
-    // Initial render
-    updateTrialTick();
-
-    // Guard dynamic interactive tools immediately
-    applyFeatureRestrictions();
-
-    // Run interval only if not already expired/bypassed
-    var initialCheck = Timers.checkTrialStatus();
-    if (!initialCheck.isExpired && !initialCheck.isBypassed) {
-      Timers.trialIntervalId = setInterval(updateTrialTick, 1000);
-    }
+  const timerData = {
+    key: reminderKey,
+    label: label || "Clinical Milestone",
+    intervalMinutes: intervalMinutes,
+    targetTime: targetTime,
+    intervalRef: null,
+    callback: onTrigger
   };
 
-  Timers.extendTrial = function (hours) {
-    var validHours = parseFloat(hours);
-    if (isNaN(validHours) || validHours <= 0) {
-      console.error('[Vetcare Timers] Invalid extension duration provided.');
-      return false;
+  timerData.intervalRef = setInterval(function () {
+    AudioNotifier.alertPulse();
+    if (typeof window.VetcareApp.showToast === "function") {
+      window.VetcareApp.showToast(`[क्लिनिकल अलार्म] ${timerData.label}`, "warning");
     }
 
-    var addedMs = validHours * 60 * 60 * 1000;
-    var currentBase = Math.max(Date.now(), Timers.trialEndTimestamp);
-    var updatedExpiry = currentBase + addedMs;
-
-    Timers.trialEndTimestamp = updatedExpiry;
-    safeStorageSet('vetcare_trial_end', updatedExpiry.toString());
-    Timers.isTrialExpired = false;
-
-    // Remove expired modal if currently rendered
-    var existingModal = document.getElementById('vetcare-trial-expired-modal');
-    if (existingModal) {
-      existingModal.remove();
+    if (typeof timerData.callback === "function") {
+      try {
+        timerData.callback({
+          key: reminderKey,
+          label: timerData.label,
+          timestamp: new Date().toISOString()
+        });
+      } catch (e) {
+        console.error("[Vetcare Timers Engine] Alarm callback failed:", e);
+      }
     }
+  }, ms);
 
-    displayToast('ट्रायल को ' + validHours + ' घंटे बढ़ा दिया गया है।', 'success');
+  activeIntervals.set(`ALARM_${reminderKey}`, timerData.intervalRef);
+  reminders.set(reminderKey, timerData);
 
-    // Restart countdown
-    Timers.initTrialCountdown();
+  return {
+    key: reminderKey,
+    registered: true,
+    nextRunAt: new Date(targetTime).toLocaleTimeString()
+  };
+}
+
+function clearClinicalAlarm(reminderKey) {
+  if (reminders.has(reminderKey)) {
+    const data = reminders.get(reminderKey);
+    if (data.intervalRef) {
+      clearInterval(data.intervalRef);
+    }
+    activeIntervals.delete(`ALARM_${reminderKey}`);
+    reminders.delete(reminderKey);
     return true;
+  }
+  return false;
+}
+
+/**
+ * Special preset for Anaesthesia monitoring (5, 10, or 15 minute cycle).
+ */
+function startAnaesthesiaMonitoring(patientId, intervalMinutes = 5) {
+  const alarmKey = `ANAESTHESIA_${patientId || "GENERAL"}`;
+  const label = `पशु निगरानी (Patient: ${patientId || "General"}) - वाइटल्स / श्वसन जांच`;
+  return registerClinicalAlarm(alarmKey, intervalMinutes, label, function (data) {
+    console.warn(`[VETCARE ANAESTHESIA CHECK] ${data.label} at ${data.timestamp}`);
+  });
+}
+
+function stopAnaesthesiaMonitoring(patientId) {
+  const alarmKey = `ANAESTHESIA_${patientId || "GENERAL"}`;
+  return clearClinicalAlarm(alarmKey);
+}
+
+/**
+ * Calculates IV drip drop-rate timings.
+ * @param {number} totalVolumeMl - Fluid volume in ml.
+ * @param {number} durationHours - Infusion duration in hours.
+ * @param {number} dropFactor - Drops per ml (macro=15/20, micro=60).
+ */
+function calculateInfusionRate(totalVolumeMl, durationHours, dropFactor = 20) {
+  if (!totalVolumeMl || !durationHours || durationHours <= 0) {
+    return { dropsPerMinute: 0, mlPerHour: 0, secondsPerDrop: 0 };
+  }
+
+  const totalMinutes = durationHours * 60;
+  const totalDrops = totalVolumeMl * dropFactor;
+  const dropsPerMinute = Math.round(totalDrops / totalMinutes);
+  const mlPerHour = parseFloat((totalVolumeMl / durationHours).toFixed(2));
+  const secondsPerDrop = dropsPerMinute > 0 ? parseFloat((60 / dropsPerMinute).toFixed(2)) : 0;
+
+  return {
+    totalVolumeMl: totalVolumeMl,
+    durationHours: durationHours,
+    dropFactor: dropFactor,
+    mlPerHour: mlPerHour,
+    dropsPerMinute: dropsPerMinute,
+    secondsPerDrop: secondsPerDrop
   };
+}
 
-  // 4. AUTOMATIC LIFECYCLE INITIALIZATION
-  function bootstrapTimersEngine() {
-    Timers.startSessionTimer();
-    Timers.initTrialCountdown();
-    bindInteractionListeners();
+// -------------------------------------------------------------
+// SECTION 4: AUTO-SAVE DEBOUNCE & EMR SYNCHRONIZATION ENGINE
+// -------------------------------------------------------------
 
-    // Re-verify restrictions on dynamic DOM modifications
-    if (window.MutationObserver) {
-      var observer = new MutationObserver(function () {
-        if (Timers.isTrialExpired && !isTrialBypassed()) {
-          applyFeatureRestrictions();
-        }
-      });
-      observer.observe(document.body, { childList: true, subtree: true });
+/**
+ * Standard functional debounce wrapper.
+ */
+function debounce(func, delayMs = 300) {
+  let timer = null;
+  return function (...args) {
+    const context = this;
+    if (timer) clearTimeout(timer);
+    timer = setTimeout(function () {
+      func.apply(context, args);
+      timer = null;
+    }, delayMs);
+  };
+}
+
+/**
+ * Starts background auto-save cycle for EMR/IndexedDB.
+ * @param {Function} syncHandler - Async or sync execution unit to trigger.
+ * @param {number} intervalMs - Execution period (default 30,000ms = 30s).
+ */
+function startAutoSave(syncHandler, intervalMs = 30000) {
+  stopAutoSave();
+
+  if (typeof syncHandler !== "function") {
+    throw new TypeError("[Vetcare Timers Engine] AutoSave requires a valid sync callback.");
+  }
+
+  autoSaveConfig.syncHandler = syncHandler;
+  autoSaveConfig.intervalMs = Math.max(5000, intervalMs);
+
+  autoSaveConfig.intervalRef = setInterval(async function () {
+    if (autoSaveConfig.isSyncing) return;
+
+    autoSaveConfig.isSyncing = true;
+    try {
+      await autoSaveConfig.syncHandler();
+      autoSaveConfig.lastSyncTimestamp = new Date().toISOString();
+    } catch (err) {
+      console.error("[Vetcare Timers Engine] AutoSave synchronization failed:", err);
+    } finally {
+      autoSaveConfig.isSyncing = false;
+    }
+  }, autoSaveConfig.intervalMs);
+
+  activeIntervals.set("AUTOSAVE_ROUTINE", autoSaveConfig.intervalRef);
+
+  return {
+    enabled: true,
+    intervalMs: autoSaveConfig.intervalMs
+  };
+}
+
+function stopAutoSave() {
+  if (autoSaveConfig.intervalRef) {
+    clearInterval(autoSaveConfig.intervalRef);
+    autoSaveConfig.intervalRef = null;
+    activeIntervals.delete("AUTOSAVE_ROUTINE");
+  }
+  autoSaveConfig.isSyncing = false;
+}
+
+async function triggerInstantSave() {
+  if (typeof autoSaveConfig.syncHandler === "function" && !autoSaveConfig.isSyncing) {
+    autoSaveConfig.isSyncing = true;
+    try {
+      await autoSaveConfig.syncHandler();
+      autoSaveConfig.lastSyncTimestamp = new Date().toISOString();
+      return { success: true, timestamp: autoSaveConfig.lastSyncTimestamp };
+    } catch (err) {
+      console.error("[Vetcare Timers Engine] Manual trigger save failed:", err);
+      return { success: false, error: err };
+    } finally {
+      autoSaveConfig.isSyncing = false;
     }
   }
+  return { success: false, reason: "NO_HANDLER_OR_BUSY" };
+}
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', bootstrapTimersEngine);
-  } else {
-    bootstrapTimersEngine();
+// -------------------------------------------------------------
+// SECTION 5: SYSTEM LIFECYCLE & TEARDOWN SAFEGUARDS
+// -------------------------------------------------------------
+
+function destroy() {
+  // Clear all active intervals
+  activeIntervals.forEach(function (ref) {
+    clearInterval(ref);
+  });
+  activeIntervals.clear();
+
+  // Clear all active timeouts
+  activeTimeouts.forEach(function (ref) {
+    clearTimeout(ref);
+  });
+  activeTimeouts.clear();
+
+  // Clear alarms
+  reminders.forEach(function (alarm) {
+    if (alarm.intervalRef) clearInterval(alarm.intervalRef);
+  });
+  reminders.clear();
+
+  // Reset stopwatch state
+  if (consultationTimer.intervalRef) {
+    clearInterval(consultationTimer.intervalRef);
   }
+  consultationTimer.intervalRef = null;
+  consultationTimer.callbacks.clear();
+  consultationTimer.running = false;
 
-})(window, document);
+  // Reset autosave
+  if (autoSaveConfig.intervalRef) {
+    clearInterval(autoSaveConfig.intervalRef);
+  }
+  autoSaveConfig.intervalRef = null;
+  autoSaveConfig.syncHandler = null;
+}
+
+// Self-initialize cleanup of any legacy gate elements upon script execution
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", sanitizeAccessState);
+} else {
+  sanitizeAccessState();
+}
+
+// -------------------------------------------------------------
+// Public API Surface
+// -------------------------------------------------------------
+return {
+  // Access & Licensing
+  isTrialExpired: isTrialExpired,
+  getRemainingDays: getRemainingDays,
+  getLicenseStatus: getLicenseStatus,
+  renderTrialExpiredModal: renderTrialExpiredModal,
+  sanitizeAccessState: sanitizeAccessState,
+
+  // Audio & Cues
+  playCueTone: AudioNotifier.playTone.bind(AudioNotifier),
+  playAlertTone: AudioNotifier.alertPulse.bind(AudioNotifier),
+
+  // Clinical Stopwatch
+  startConsultation: startConsultation,
+  pauseConsultation: pauseConsultation,
+  resumeConsultation: resumeConsultation,
+  stopConsultation: stopConsultation,
+  getConsultationTime: getConsultationTime,
+
+  // Clinical Reminders & Alarms
+  registerClinicalAlarm: registerClinicalAlarm,
+  clearClinicalAlarm: clearClinicalAlarm,
+  startAnaesthesiaMonitoring: startAnaesthesiaMonitoring,
+  stopAnaesthesiaMonitoring: stopAnaesthesiaMonitoring,
+  calculateInfusionRate: calculateInfusionRate,
+
+  // AutoSave & Async Utilities
+  debounce: debounce,
+  startAutoSave: startAutoSave,
+  stopAutoSave: stopAutoSave,
+  triggerInstantSave: triggerInstantSave,
+
+  // Lifecycle
+  destroy: destroy
+};
