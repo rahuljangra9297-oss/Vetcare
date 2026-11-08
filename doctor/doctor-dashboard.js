@@ -1,1886 +1,1092 @@
-// Vetcare AI OS - Doctor Master Clinical Workspace, OPD Queue & Clinical KPIs Dashboard (2026 Production)
-
+// Vetcare AI OS - Veterinary Doctor Workspace & Clinical Command Console (2026 Production)
 (function (window, document) {
   "use strict";
 
-  // 1. GLOBAL NAMESPACE & SAFETY REGISTRATION
+  // Initialize Namespace
   window.VetcareApp = window.VetcareApp || {};
-  window.VetcareApp.Doctor = window.VetcareApp.Doctor || {};
-  window.VetcareApp.Modules = window.VetcareApp.Modules || {};
+  const App = window.VetcareApp;
 
-  // Standard Event Bus Fallback
-  if (!window.VetcareApp.EventBus) {
-    const listeners = {};
-    window.VetcareApp.EventBus = {
-      on: function (event, callback) {
-        if (!listeners[event]) listeners[event] = [];
-        listeners[event].push(callback);
+  // Active State Store
+  const State = {
+    selectedPatient: null,
+    patientsQueue: [
+      {
+        id: "OPD-2026-001",
+        token: 101,
+        time: "09:15 AM",
+        ownerName: "रामेश्वर शर्मा",
+        phone: "9876543210",
+        species: "गाय (HF Cross)",
+        tagId: "IN-29182",
+        age: "4.5 वर्ष",
+        isPregnant: true,
+        gestationDays: 210,
+        tempF: 104.2,
+        symptoms: "तीव्र थनैला (Mastitis), बायां पिछला थन कठोर व गर्म, दूध में छिछड़े",
+        status: "waiting", // 'waiting' | 'in_progress' | 'completed'
+        triageLevel: "urgent"
       },
-      off: function (event, callback) {
-        if (!listeners[event]) return;
-        listeners[event] = listeners[event].filter(cb => cb !== callback);
+      {
+        id: "OPD-2026-002",
+        token: 102,
+        time: "09:30 AM",
+        ownerName: "कुलदीप सिंह",
+        phone: "9812345678",
+        species: "भैंस (Murrah)",
+        tagId: "IN-99412",
+        age: "6 वर्ष",
+        isPregnant: false,
+        gestationDays: 0,
+        tempF: 101.5,
+        symptoms: "आफरा (Bloat / Tympany), रूमेन संकुचन शून्य, मुंह से झाग",
+        status: "in_progress",
+        triageLevel: "emergency"
       },
-      emit: function (event, payload) {
-        if (listeners[event]) {
-          listeners[event].forEach(cb => {
-            try { cb(payload); } catch (e) { console.error("[Vetcare EventBus Error]", e); }
-          });
-        }
-        window.dispatchEvent(new CustomEvent("vetcare:" + event, { detail: payload }));
+      {
+        id: "OPD-2026-003",
+        token: 103,
+        time: "09:45 AM",
+        ownerName: "जगदीश पटेल",
+        phone: "9723456789",
+        species: "बकरी (Sirohi)",
+        tagId: "TAG-402",
+        age: "2 वर्ष",
+        isPregnant: true,
+        gestationDays: 90,
+        tempF: 103.0,
+        symptoms: "खांसी, नाक से गाढ़ा स्राव (PPR संदिग्ध), चारा छोड़ना",
+        status: "waiting",
+        triageLevel: "routine"
+      },
+      {
+        id: "OPD-2026-004",
+        token: 104,
+        time: "10:00 AM",
+        ownerName: "विकास वर्मा",
+        phone: "9411223344",
+        species: "श्वान (German Shepherd)",
+        tagId: "CAN-091",
+        age: "3 वर्ष",
+        isPregnant: false,
+        gestationDays: 0,
+        tempF: 102.1,
+        symptoms: "रक्तमिश्रित उल्टी व दस्त, सुस्ती (Parvovirus संदिग्ध)",
+        status: "waiting",
+        triageLevel: "urgent"
       }
-    };
+    ],
+    rxDrugsList: [
+      { name: "Inj. Intacef (Ceftriaxone 3g)", dose: "3000 mg", route: "IM", freq: "OD", days: 3 },
+      { name: "Inj. Melonex (Meloxicam 20 ml)", dose: "0.5 mg/kg", route: "IM", freq: "OD", days: 3 },
+      { name: "Inj. Tribivet (B-Complex)", dose: "10 ml", route: "IM", freq: "OD", days: 3 }
+    ],
+    labDatabase: {
+      bovine: [
+        { test: "Hemoglobin (Hb)", normal: "8.0 - 12.0 g/dL", unit: "g/dL", desc: "रक्ताल्पता व बबेसियोसिस में गिरावट" },
+        { test: "Packed Cell Volume (PCV)", normal: "24 - 40 %", unit: "%", desc: "निर्जलीकरण में वृद्धि" },
+        { test: "Total Leukocyte Count (TLC)", normal: "4,000 - 12,000 /µL", unit: "/µL", desc: "तीव्र संक्रमण में ल्यूकोसाइटोसिस" },
+        { test: "Serum Calcium", normal: "8.5 - 10.5 mg/dL", unit: "mg/dL", desc: "< 6.0 mg/dL पर मिल्क फीवर (Hypocalcemia)" },
+        { test: "Serum Phosphorus", normal: "4.5 - 6.5 mg/dL", unit: "mg/dL", desc: "पोस्ट-पार्टुरिएंट हीमोग्लोबिन्यूरिया में न्यूनता" },
+        { test: "Blood Urea Nitrogen (BUN)", normal: "10 - 25 mg/dL", unit: "mg/dL", desc: "गुर्दे की कार्यक्षमता" },
+        { test: "Serum Creatinine", normal: "1.0 - 2.0 mg/dL", unit: "mg/dL", desc: "नेफ्राइटिस संकेतक" }
+      ],
+      canine: [
+        { test: "Hemoglobin (Hb)", normal: "12.0 - 18.0 g/dL", unit: "g/dL", desc: "एनीमिया व प्रोटोजोआ जांच" },
+        { test: "TLC / WBC", normal: "6,000 - 17,000 /µL", unit: "/µL", desc: "पार्वो में ल्यूकोपेनिया" },
+        { test: "Serum Creatinine", normal: "0.5 - 1.5 mg/dL", unit: "mg/dL", desc: "गुर्दा विफलता सूचकांक" },
+        { test: "ALT (SGPT)", normal: "10 - 100 U/L", unit: "U/L", desc: "यकृत क्षति संकेतक" },
+        { test: "Blood Glucose", normal: "70 - 110 mg/dL", unit: "mg/dL", desc: "हाइपोग्लाइसीमिया / डायबिटीज़" }
+      ],
+      caprine: [
+        { test: "Hemoglobin (Hb)", normal: "8.0 - 13.0 g/dL", unit: "g/dL", desc: "हेमोंकोसिस (फड़का) में अत्यधिक न्यूनता" },
+        { test: "PCV", normal: "22 - 38 %", unit: "%", desc: "रक्त की सांद्रता" },
+        { test: "TLC", normal: "4,000 - 13,000 /µL", unit: "/µL", desc: "निमोनिया व पीपीआर में असामान्यता" },
+        { test: "Serum Calcium", normal: "8.9 - 11.2 mg/dL", unit: "mg/dL", desc: "मिल्क फीवर जांच" }
+      ]
+    }
+  };
+
+  /**
+   * Helper: Safe Toast Notification Dispatch
+   */
+  function notify(msg, type = "info") {
+    if (App.showToast) {
+      App.showToast(msg, type);
+    } else {
+      console.log(`[${type.toUpperCase()}] ${msg}`);
+    }
   }
 
-  // 2. AUDIO SYNTHESIS ENGINE (TACTILE CLINICAL CHIMES & EMERGENCY SIRENS)
-  const ClinicalAudio = {
-    playTone: function (frequency, type, duration, volume) {
-      try {
-        const AudioCtx = window.AudioContext || window.webkitAudioContext;
-        if (!AudioCtx) return;
-        const ctx = new AudioCtx();
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = type || "sine";
-        osc.frequency.setValueAtTime(frequency || 440, ctx.currentTime);
-        gain.gain.setValueAtTime(volume || 0.1, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + (duration || 0.2));
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start();
-        osc.stop(ctx.currentTime + (duration || 0.2));
-      } catch (err) {
-        // Fallback or policy silent
-      }
-    },
-    chimeSuccess: function () {
-      ClinicalAudio.playTone(523.25, "sine", 0.15, 0.08);
-      setTimeout(() => ClinicalAudio.playTone(659.25, "sine", 0.2, 0.08), 100);
-    },
-    chimeEmergency: function () {
-      ClinicalAudio.playTone(880, "sawtooth", 0.2, 0.15);
-      setTimeout(() => ClinicalAudio.playTone(440, "sawtooth", 0.25, 0.18), 160);
-      setTimeout(() => ClinicalAudio.playTone(987.77, "sawtooth", 0.3, 0.2), 340);
-    },
-    chimeCallNext: function () {
-      ClinicalAudio.playTone(587.33, "triangle", 0.2, 0.12);
-      setTimeout(() => ClinicalAudio.playTone(880, "triangle", 0.3, 0.12), 150);
+  /**
+   * Main Render Entrypoint
+   */
+  function render(containerSelector) {
+    const targetEl = document.querySelector(containerSelector || "#app-root");
+    if (!targetEl) {
+      console.error("[DoctorDashboard] Mount target not found:", containerSelector);
+      return;
     }
-  };
 
-  // 3. PERSISTENCE ENGINE (INDEXED-DB WITH LOCALSTORAGE REDUNDANCY)
-  const StorageEngine = {
-    DB_NAME: "VetcareClinicalMasterDB",
-    DB_VERSION: 1,
-    STORE_NAME: "doctor_dashboard_state",
-    getDb: function () {
-      return new Promise((resolve, reject) => {
-        if (!window.indexedDB) {
-          reject(new Error("IndexedDB unavailable in this browser environment"));
-          return;
-        }
-        const req = window.indexedDB.open(StorageEngine.DB_NAME, StorageEngine.DB_VERSION);
-        req.onupgradeneeded = function (e) {
-          const db = e.target.result;
-          if (!db.objectStoreNames.contains(StorageEngine.STORE_NAME)) {
-            db.createObjectStore(StorageEngine.STORE_NAME, { keyPath: "key" });
-          }
-        };
-        req.onsuccess = function (e) { resolve(e.target.result); };
-        req.onerror = function (e) { reject(e.target.error); };
-      });
-    },
-    saveState: async function (stateObject) {
-      try {
-        const db = await StorageEngine.getDb();
-        const tx = db.transaction(StorageEngine.STORE_NAME, "readwrite");
-        const store = tx.objectStore(StorageEngine.STORE_NAME);
-        store.put({ key: "active_doctor_session", payload: stateObject, updatedAt: Date.now() });
-      } catch (err) {
-        // Transparent LocalStorage Failover
-        try {
-          localStorage.setItem("VETCARE_DOC_DASHBOARD_CACHE", JSON.stringify(stateObject));
-        } catch (e) {
-          console.warn("[Vetcare DB Warn] LocalStorage quota exceeded or disabled", e);
-        }
-      }
-    },
-    loadState: async function () {
-      try {
-        const db = await StorageEngine.getDb();
-        return new Promise(resolve => {
-          const tx = db.transaction(StorageEngine.STORE_NAME, "readonly");
-          const store = tx.objectStore(StorageEngine.STORE_NAME);
-          const req = store.get("active_doctor_session");
-          req.onsuccess = function () {
-            if (req.result && req.result.payload) {
-              resolve(req.result.payload);
-            } else {
-              resolve(StorageEngine.loadFallback());
-            }
-          };
-          req.onerror = function () { resolve(StorageEngine.loadFallback()); };
-        });
-      } catch (err) {
-        return StorageEngine.loadFallback();
-      }
-    },
-    loadFallback: function () {
-      try {
-        const cached = localStorage.getItem("VETCARE_DOC_DASHBOARD_CACHE");
-        return cached ? JSON.parse(cached) : null;
-      } catch (e) {
-        return null;
-      }
-    }
-  };
+    const doctorProfile = (App.Session && App.Session.user) ? App.Session.user : {
+      name: "डॉ. राहुल शर्मा",
+      vciReg: "VCI/2026/09482-HR",
+      clinic: "राजकीय प्रथम श्रेणी पशु चिकित्सालय, करनाल"
+    };
 
-  // 4. MAIN DASHBOARD MODULE IMPLEMENTATION
-  const Dashboard = {
-    // --- Reactive Internal State ---
-    state: {
-      doctorProfile: {
-        doctorId: "DOC-9297",
-        name: "Dr. Rahul Jangra",
-        qualification: "B.V.Sc & A.H., M.V.Sc (Medicine)",
-        regNo: "VCI-2026-9297",
-        currentDutyStation: "Veterinary Clinical Complex & Mobile Unit 01",
-        onDutyStatus: "AVAILABLE" // AVAILABLE | IN_CONSULTATION | IN_SURGERY | ON_EMERGENCY_CALL
-      },
-      todaysQueue: [
-        {
-          tokenNo: 101,
-          patientId: "PAT-BOV-8841",
-          tagNo: "IN-HR-2024-8841",
-          species: "bovine",
-          breed: "Murrah Buffalo",
-          gender: "Female",
-          age: "5.5 Yrs",
-          weightKg: 520,
-          ownerName: "Sukhbir Singh (Dhansu Village)",
-          chiefComplaint: "Acute Tympany, Left Paralumbar Fossa Severe Distension & Labored Grunting",
-          priority: "EMERGENCY_RED",
-          checkInTimestamp: Date.now() - 14 * 60 * 1000,
-          waitTimeMins: 14,
-          vitalSigns: { tempF: 101.4, pulseBpm: 88, respRate: 38 }
-        },
-        {
-          tokenNo: 102,
-          patientId: "PAT-BOV-1102",
-          tagNo: "IN-PB-2023-1102",
-          species: "bovine",
-          breed: "Sahiwal Cow",
-          gender: "Female",
-          age: "4.0 Yrs",
-          weightKg: 410,
-          ownerName: "Harpal Singh (Kalanwali)",
-          chiefComplaint: "S-Shaped Neck Posture, Recumbent (Downer Cow), Parturition 24h Ago (Hypocalcemia)",
-          priority: "EMERGENCY_RED",
-          checkInTimestamp: Date.now() - 22 * 60 * 1000,
-          waitTimeMins: 22,
-          vitalSigns: { tempF: 98.2, pulseBpm: 92, respRate: 24 }
-        },
-        {
-          tokenNo: 103,
-          patientId: "PAT-CAN-0921",
-          tagNo: "CAN-0921-HR",
-          species: "canine",
-          breed: "German Shepherd Dog",
-          gender: "Male",
-          age: "7 Months",
-          weightKg: 19.5,
-          ownerName: "Amit Sharma (Model Town)",
-          chiefComplaint: "Hemorrhagic Malodorous Diarrhea, Persistent Emesis & Lethargy (Parvoviral Susp.)",
-          priority: "URGENT_ORANGE",
-          checkInTimestamp: Date.now() - 35 * 60 * 1000,
-          waitTimeMins: 35,
-          vitalSigns: { tempF: 103.8, pulseBpm: 140, respRate: 42 }
-        },
-        {
-          tokenNo: 104,
-          patientId: "PAT-BOV-4409",
-          tagNo: "IN-HR-2025-4409",
-          species: "bovine",
-          breed: "Crossbred HF",
-          gender: "Female",
-          age: "6.0 Yrs",
-          weightKg: 480,
-          ownerName: "Rajender Kumar (Ladwa)",
-          chiefComplaint: "Right Forequarter Swelling, Hardness, Yellow Curdy Milk Flakes (Acute Clinical Mastitis)",
-          priority: "URGENT_ORANGE",
-          checkInTimestamp: Date.now() - 48 * 60 * 1000,
-          waitTimeMins: 48,
-          vitalSigns: { tempF: 103.2, pulseBpm: 76, respRate: 28 }
-        },
-        {
-          tokenNo: 105,
-          patientId: "PAT-CAP-4412",
-          tagNo: "CAP-4412-ROH",
-          species: "caprine",
-          breed: "Sirohi Doe",
-          gender: "Female",
-          age: "2.0 Yrs",
-          weightKg: 38,
-          ownerName: "Devender Yadav (Bhiwani)",
-          chiefComplaint: "Submandibular Bottle Jaw Edema, Pale Conjunctiva, Haemonchosis Suspicion",
-          priority: "ROUTINE_GREEN",
-          checkInTimestamp: Date.now() - 65 * 60 * 1000,
-          waitTimeMins: 65,
-          vitalSigns: { tempF: 102.6, pulseBpm: 84, respRate: 22 }
-        },
-        {
-          tokenNo: 106,
-          patientId: "PAT-EQU-7711",
-          tagNo: "EQU-7711-HIS",
-          species: "equine",
-          breed: "Marwari Mare",
-          gender: "Female",
-          age: "8.0 Yrs",
-          weightKg: 440,
-          ownerName: "Col. Vikram Rathore (R.O. Farms)",
-          chiefComplaint: "Quidding, Dropping Feed Balls, Bilateral Nasal Feed Specks (Molar Points / Dental Exam)",
-          priority: "ROUTINE_GREEN",
-          checkInTimestamp: Date.now() - 72 * 60 * 1000,
-          waitTimeMins: 72,
-          vitalSigns: { tempF: 100.1, pulseBpm: 40, respRate: 14 }
-        }
-      ],
-      admittedIpdCases: [
-        {
-          ipdId: "IPD-2026-004",
-          bedNo: "WARD-A-BAY-1",
-          tagNo: "IN-HR-2024-8841",
-          species: "Bovine (Murrah)",
-          ownerName: "Sukhbir Singh",
-          diagnosis: "Emergency C-Section (Uterine Torsion 360° Degrotational Realignment)",
-          admissionDate: "2026-03-29",
-          condition: "CRITICAL",
-          tempF: "101.8 °F",
-          pulseBpm: "78 bpm",
-          ivFluids: "DNS 4L + Ringers Lactate 2L ongoing",
-          lastRoundTime: "11:30 AM"
-        },
-        {
-          ipdId: "IPD-2026-007",
-          bedNo: "ICU-CAN-03",
-          tagNo: "CAN-0419-GUR",
-          species: "Canine (Labrador)",
-          ownerName: "Deepak Mehra",
-          diagnosis: "Post-Gastric Dilation Volvulus (GDV) Gastropexy Post-Op Day 1",
-          admissionDate: "2026-03-30",
-          condition: "STABLE",
-          tempF: "102.1 °F",
-          pulseBpm: "110 bpm",
-          ivFluids: "PlasmaLyte-A + Fentanyl CRI",
-          lastRoundTime: "12:15 PM"
-        },
-        {
-          ipdId: "IPD-2026-009",
-          bedNo: "WARD-E-EQUINE",
-          tagNo: "EQU-9011-FAR",
-          species: "Equine (Thoroughbred)",
-          ownerName: "Ranjit Dhillon",
-          diagnosis: "Spasmodic Cecal Impaction Colic under Continuous Enteral Hydration",
-          admissionDate: "2026-03-30",
-          condition: "OBSERVATION",
-          tempF: "100.4 °F",
-          pulseBpm: "44 bpm",
-          ivFluids: "Isotonic Enteral Saline via Nasogastric Tube",
-          lastRoundTime: "01:00 PM"
-        }
-      ],
-      pendingLabReports: [
-        {
-          reportId: "LAB-2026-9041",
-          tokenNo: 97,
-          patientId: "PAT-BOV-7712",
-          testType: "Automated CBC + Blood Smear Examination",
-          specimen: "EDTA Whole Blood",
-          sampleTime: "09:45 AM",
-          status: "CRITICAL_VALUES",
-          flaggedFindings: "Intraerythrocytic Babesia bigemina piriform bodies detected (++). PCV 14.8% (Severe Anemia), Platelets 62,000/μL."
-        },
-        {
-          reportId: "LAB-2026-9042",
-          tokenNo: 99,
-          patientId: "PAT-BOV-4409",
-          testType: "Quarter Milk Culture & Rapid Antimicrobial Sensitivity (AST)",
-          specimen: "Mastitic Secretion (Right Fore)",
-          sampleTime: "10:15 AM",
-          status: "PENDING_REVIEW",
-          flaggedFindings: "Staphylococcus aureus pure isolate. Sensitive to Ceftiofur & Enrofloxacin. Resistant to Ampicillin."
-        },
-        {
-          reportId: "LAB-2026-9044",
-          tokenNo: 100,
-          patientId: "PAT-CAN-0881",
-          testType: "Serum Biochemistry Panel (Renal + Hepatic)",
-          specimen: "Plain Serum",
-          sampleTime: "11:00 AM",
-          status: "PENDING_REVIEW",
-          flaggedFindings: "BUN: 64 mg/dL (Elevated), Serum Creatinine: 2.9 mg/dL (Grade II IRIS AKI/CKD)."
-        }
-      ],
-      statutoryAlerts: [
-        {
-          alertId: "EPI-2026-LSD-04",
-          pathogen: "Lumpy Skin Disease Virus (LSDV Capripox)",
-          clusterRegion: "Rohtak-Jhajjar-Hisar Triangle (Within 18 KM of Clinic)",
-          severity: "HIGH_CONTAGION_RISK",
-          mandatoryProtocol: "Ring Goat-Pox Vaccination (Heterologous Booster), Vector Control & Immediate Milk Quarantine for Vesicular Ulcerations."
-        },
-        {
-          alertId: "EPI-2026-FMD-01",
-          pathogen: "Foot & Mouth Disease (FMD Type-O Aphthovirus)",
-          clusterRegion: "Neighboring District Boundary Checkpost #4",
-          severity: "BORDER_SURVEILLANCE",
-          mandatoryProtocol: "Inspect Inter-State Livestock Transports, Foot Dip Disinfection at Hospital Gate."
-        }
-      ],
-      recentConsultations: [
-        {
-          caseNo: "OPD-2026-8818",
-          tokenNo: 96,
-          species: "Bovine (Murrah)",
-          ownerName: "Pawan Beniwal",
-          diagnosis: "Acute Ephemeral Fever (Three-Day Sickness)",
-          treatmentSummary: "Flunixin Meglumine 2.2mg/kg IV, Calcium Borogluconate 250ml SC, Supportive B-Complex",
-          rxCode: "RX-8818-B",
-          timestamp: "12:45 PM"
-        },
-        {
-          caseNo: "OPD-2026-8817",
-          tokenNo: 95,
-          species: "Canine (Beagle)",
-          ownerName: "Kavita Singhal",
-          diagnosis: "Allergic Dermatitis & Secondary Malassezia Otitis Externa",
-          treatmentSummary: "Oclacitinib (Apoquel) 0.5mg/kg PO, Posatex Otic Drops BID, Chlorhexidine Shampoo",
-          rxCode: "RX-8817-C",
-          timestamp: "12:10 PM"
-        },
-        {
-          caseNo: "OPD-2026-8816",
-          tokenNo: 94,
-          species: "Caprine (Beetal)",
-          ownerName: "Sanjay Kumar",
-          diagnosis: "Sub-Acute Ruminal Acidosis (Grain Overload)",
-          treatmentSummary: "Sodium Bicarbonate 5% IV, Activated Charcoal Drench 2g/kg, Rumen Toruf Rumen Buffers",
-          rxCode: "RX-8816-G",
-          timestamp: "11:40 AM"
-        }
-      ],
-      quickStats: {
-        opdSeenToday: 18,
-        surgeriesScheduled: 2,
-        criticalAlerts: 2,
-        teleconsultsCompleted: 5
-      },
-      activeTab: "overview", // overview | live_opd_queue | ipd_summary | statutory_alerts
-      queueFilter: "ALL", // ALL | EMERGENCY | URGENT | ROUTINE
-      currentActiveExamPatient: null,
-      domContainer: null,
-      clockInterval: null,
-      waitTimerInterval: null
-    },
-
-    // 5. LIFECYCLE METHOD: INIT
-    init: async function (containerId) {
-      console.info("[Vetcare AI OS] Initializing Doctor Dashboard Subsystem v2.6.4-PROD...");
-      const targetId = containerId || "doctorDashboardContainer";
-
-      // Hydrate state from persistence
-      const cached = await StorageEngine.loadState();
-      if (cached && cached.doctorProfile) {
-        Dashboard.state.doctorProfile = Object.assign(Dashboard.state.doctorProfile, cached.doctorProfile);
-        if (cached.quickStats) Dashboard.state.quickStats = Object.assign(Dashboard.state.quickStats, cached.quickStats);
-        if (cached.activeTab) Dashboard.state.activeTab = cached.activeTab;
-      }
-
-      Dashboard.injectStyles();
-      Dashboard.registerEventListeners();
-      Dashboard.render(targetId);
-      Dashboard.startTimers();
-
-      // Broadcast ready state
-      window.VetcareApp.EventBus.emit("doctor:dashboard_ready", {
-        doctorId: Dashboard.state.doctorProfile.doctorId,
-        timestamp: Date.now()
-      });
-
-      return Dashboard;
-    },
-
-    // 6. LIFECYCLE METHOD: RENDER
-    render: function (containerId) {
-      let container = document.getElementById(containerId);
-      if (!container) {
-        // Create dedicated host wrapper if missing
-        container = document.createElement("div");
-        container.id = containerId;
-        container.className = "w-full min-h-[calc(100vh-4rem)] p-3 sm:p-5 lg:p-6";
-        const mainHost = document.querySelector("main") || document.body;
-        mainHost.innerHTML = ""; // Clean view attachment
-        mainHost.appendChild(container);
-      }
-      Dashboard.state.domContainer = container;
-
-      // Construct Complete Workstation HTML
-      container.innerHTML = `
-        <div id="vetcareDocWorkspace" class="max-w-7xl mx-auto space-y-6">
-          ${Dashboard.renderHeaderBanner()}
-          ${Dashboard.renderKpiGrid()}
-          ${Dashboard.renderNavigationTabs()}
-          <div id="docTabContentContainer" class="transition-all duration-200">
-            ${Dashboard.renderActiveTabContent()}
-          </div>
-        </div>
-        <!-- Active Examination Clinical Floating Sheet / Modal Hook -->
-        <div id="activeConsultationRoomModal" class="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md hidden items-center justify-center p-2 sm:p-4"></div>
-        <!-- Clinical Action Dialog Portal -->
-        <div id="clinicalActionDialogPortal" class="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md hidden items-center justify-center p-3"></div>
-      `;
-
-      Dashboard.bindDomActions();
-    },
-
-    // 7. LIFECYCLE METHOD: DESTROY
-    destroy: function () {
-      if (Dashboard.state.clockInterval) clearInterval(Dashboard.state.clockInterval);
-      if (Dashboard.state.waitTimerInterval) clearInterval(Dashboard.state.waitTimerInterval);
-      window.VetcareApp.EventBus.off("queue:patient_checked_in", Dashboard.handlePatientCheckedIn);
-      window.VetcareApp.EventBus.off("lab:report_saved", Dashboard.handleLabReportSaved);
-      window.VetcareApp.EventBus.off("outbreak:alert_declared", Dashboard.handleOutbreakDeclared);
-      if (Dashboard.state.domContainer) {
-        Dashboard.state.domContainer.innerHTML = "";
-      }
-      console.info("[Vetcare AI OS] Doctor Dashboard destroyed cleanly.");
-    },
-
-    // 8. DYNAMIC CSS STYLE INJECTION
-    injectStyles: function () {
-      if (document.getElementById("vetcare-doctor-dashboard-styles")) return;
-      const styleEl = document.createElement("style");
-      styleEl.id = "vetcare-doctor-dashboard-styles";
-      styleEl.textContent = `
-        .badge-pulse { animation: badgeGlow 1.8s infinite; }
-        @keyframes badgeGlow {
-          0%, 100% { opacity: 1; transform: scale(1); }
-          50% { opacity: 0.7; transform: scale(1.04); }
-        }
-        .emergency-row-glow {
-          border-left: 5px solid #f43f5e !important;
-          background: linear-gradient(90deg, rgba(244,63,94,0.08) 0%, rgba(17,24,39,0.95) 100%);
-        }
-        .urgent-row-glow {
-          border-left: 5px solid #f59e0b !important;
-          background: linear-gradient(90deg, rgba(245,158,11,0.06) 0%, rgba(17,24,39,0.95) 100%);
-        }
-        .routine-row-glow {
-          border-left: 5px solid #10b981 !important;
-          background: linear-gradient(90deg, rgba(16,185,129,0.04) 0%, rgba(17,24,39,0.95) 100%);
-        }
-        .queue-scroll::-webkit-scrollbar { width: 5px; height: 5px; }
-        .queue-scroll::-webkit-scrollbar-thumb { background: #374151; border-radius: 9999px; }
-        .queue-scroll::-webkit-scrollbar-thumb:hover { background: #10b981; }
-        @media print {
-          body * { visibility: hidden; }
-          #printablePrescriptionSlip, #printablePrescriptionSlip * { visibility: visible; }
-          #printablePrescriptionSlip { position: fixed; left: 0; top: 0; width: 100%; height: 100%; background: #ffffff !important; color: #000000 !important; }
-        }
-      `;
-      document.head.appendChild(styleEl);
-    },
-
-    // 9. HEADER BANNER COMPONENT
-    renderHeaderBanner: function () {
-      const prof = Dashboard.state.doctorProfile;
-      const statusMap = {
-        AVAILABLE: { label: "क्लिनिक में उपलब्ध (Available)", bg: "bg-emerald-500/20", border: "border-emerald-500", text: "text-emerald-400", dot: "bg-emerald-400" },
-        IN_CONSULTATION: { label: "परीक्षण कक्ष में व्यस्त (Consulting)", bg: "bg-cyan-500/20", border: "border-cyan-500", text: "text-cyan-400", dot: "bg-cyan-400" },
-        IN_SURGERY: { label: "शल्य चिकित्सा कक्ष (In Surgery)", bg: "bg-purple-500/20", border: "border-purple-500", text: "text-purple-400", dot: "bg-purple-400" },
-        ON_EMERGENCY_CALL: { label: "आपातकालीन ऑन-कॉल (Emergency)", bg: "bg-rose-500/20", border: "border-rose-500", text: "text-rose-400", dot: "bg-rose-400" }
-      };
-      const curStatus = statusMap[prof.onDutyStatus] || statusMap.AVAILABLE;
-
-      return `
-        <div class="rounded-2xl bg-gradient-to-r from-slate-900 via-slate-900/90 to-slate-950 border border-slate-800 p-5 shadow-xl relative overflow-hidden sunlight-card">
-          <div class="absolute -right-12 -top-12 w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
-
-          <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 relative z-10">
-            <!-- Doctor Details -->
-            <div class="flex items-center gap-4">
-              <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-500 flex items-center justify-center text-slate-950 text-2xl font-black shadow-lg shadow-emerald-950/50">
-                <i class="fa-solid fa-user-doctor"></i>
-              </div>
-              <div>
-                <div class="flex items-center gap-2.5 flex-wrap">
-                  <h1 class="text-xl sm:text-2xl font-display font-extrabold text-white tracking-tight sunlight-text">${prof.name}</h1>
-                  <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
-                    <i class="fa-solid fa-certificate mr-1"></i>${prof.regNo}
-                  </span>
-                  <span class="px-2 py-0.5 rounded text-[10px] font-mono font-semibold uppercase bg-slate-800 text-slate-300 border border-slate-700">
-                    ${prof.doctorId}
-                  </span>
-                </div>
-                <div class="text-xs font-mono text-emerald-400 font-medium mt-0.5">${prof.qualification}</div>
-                <div class="text-xs text-slate-400 flex items-center gap-2 mt-1 sunlight-muted">
-                  <i class="fa-solid fa-hospital text-slate-500 text-[11px]"></i>
-                  <span>${prof.currentDutyStation}</span>
-                </div>
-              </div>
+    targetEl.innerHTML = `
+      <div id="doctorDashboardContainer" class="space-y-6 animate-fadeIn pb-12">
+        
+        <!-- ====================================================================
+             1. CLINICAL HEADER & TELEMETRY STRIP
+             ==================================================================== -->
+        <div class="p-5 sm:p-6 rounded-3xl bg-white border border-slate-200/90 shadow-clinical flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div class="flex items-center gap-3.5">
+            <div class="w-13 h-13 rounded-2xl bg-gradient-to-tr from-sky-600 to-cyan-600 text-white flex items-center justify-center text-2xl shadow-md shadow-sky-600/20 flex-shrink-0">
+              <i class="fa-solid fa-user-doctor"></i>
             </div>
-
-            <!-- Status Selector Pill & Real-Time IST Clock -->
-            <div class="flex flex-wrap items-center gap-3 self-stretch lg:self-auto justify-between lg:justify-end border-t lg:border-t-0 border-slate-800 pt-3 lg:pt-0">
-              <!-- Live Duty Status Toggle Pill -->
-              <div class="relative">
-                <select id="doctorDutyStatusSelect" class="appearance-none cursor-pointer pl-8 pr-8 py-2 rounded-xl text-xs font-bold font-mono uppercase tracking-wider border ${curStatus.bg} ${curStatus.border} ${curStatus.text} focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-md">
-                  <option value="AVAILABLE" ${prof.onDutyStatus === "AVAILABLE" ? "selected" : ""}>🟢 AVAILABLE</option>
-                  <option value="IN_CONSULTATION" ${prof.onDutyStatus === "IN_CONSULTATION" ? "selected" : ""}>🔵 CONSULTING</option>
-                  <option value="IN_SURGERY" ${prof.onDutyStatus === "IN_SURGERY" ? "selected" : ""}>🟣 IN SURGERY</option>
-                  <option value="ON_EMERGENCY_CALL" ${prof.onDutyStatus === "ON_EMERGENCY_CALL" ? "selected" : ""}>🔴 EMERGENCY CALL</option>
-                </select>
-                <div class="pointer-events-none absolute left-3 top-3">
-                  <span class="w-2.5 h-2.5 rounded-full ${curStatus.dot} inline-block pulse-beacon"></span>
-                </div>
-                <div class="pointer-events-none absolute right-2.5 top-2.5 text-slate-400">
-                  <i class="fa-solid fa-chevron-down text-[10px]"></i>
-                </div>
+            <div>
+              <div class="flex items-center gap-2 flex-wrap">
+                <h1 class="text-xl sm:text-2xl font-display font-black text-slate-900 tracking-tight text-contrast">
+                  ${doctorProfile.name}
+                </h1>
+                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-sky-100 text-sky-800 border border-sky-300">
+                  ${doctorProfile.vciReg || 'VCI VERIFIED'}
+                </span>
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                  <i class="fa-solid fa-circle-check mr-1"></i>DUTY ACTIVE
+                </span>
               </div>
-
-              <!-- System Real-time Clock -->
-              <div class="px-3 py-2 rounded-xl bg-slate-950/80 border border-slate-800 font-mono text-right min-w-[140px]">
-                <div id="liveClockDate" class="text-[10px] text-slate-400 uppercase tracking-widest leading-none">--/--/2026</div>
-                <div id="liveClockTime" class="text-sm font-black text-amber-400 mt-1 leading-none tracking-widest">00:00:00 IST</div>
-              </div>
-
-              <!-- Call Next Patient Master Button -->
-              <button id="btnCallNextMaster" type="button" class="py-2 px-4 rounded-xl font-display font-extrabold text-xs uppercase tracking-wider bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 shadow-lg shadow-emerald-950/40 flex items-center gap-2 active:scale-95 transition-all">
-                <i class="fa-solid fa-bullhorn text-sm"></i>
-                <span>अगला मरीज बुलाएं (Call Next)</span>
-              </button>
+              <p class="text-xs text-slate-500 font-medium mt-0.5 flex items-center gap-1.5">
+                <i class="fa-solid fa-hospital text-sky-600"></i>
+                <span>${doctorProfile.clinic || 'मुख्य पशु चिकित्सालय'}</span>
+              </p>
             </div>
           </div>
-        </div>
-      `;
-    },
 
-    // 10. KPI METRIC CARDS COMPONENT
-    renderKpiGrid: function () {
-      const q = Dashboard.state.todaysQueue;
-      const emergencyCount = q.filter(p => p.priority === "EMERGENCY_RED").length;
-      const ipdCount = Dashboard.state.admittedIpdCases.length;
-      const labPending = Dashboard.state.pendingLabReports.length;
-      const outbreakCount = Dashboard.state.statutoryAlerts.length;
-
-      return `
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-          <!-- Card 1: Waiting Queue -->
-          <div class="p-4 rounded-2xl bg-slate-900 border border-slate-800 hover:border-emerald-500/50 transition-colors shadow-lg relative overflow-hidden sunlight-card">
-            <div class="flex items-center justify-between">
-              <span class="text-xs font-mono uppercase text-slate-400 sunlight-muted">प्रतीक्षारत मरीज (OPD Queue)</span>
-              <span class="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
-                <i class="fa-solid fa-users text-sm"></i>
+          <div class="flex items-center gap-2.5 w-full md:w-auto justify-end border-t md:border-t-0 pt-3 md:pt-0 border-slate-100">
+            <div class="flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-mono font-bold text-slate-700">
+              <i class="fa-solid fa-ticket text-amber-500"></i>
+              <span>आज के टोकन:</span>
+              <span id="activeTokenCountBadge" class="bg-amber-100 text-amber-800 px-2 py-0.5 rounded-lg text-sm font-black">
+                ${State.patientsQueue.length}
               </span>
             </div>
-            <div class="mt-2 flex items-baseline gap-2">
-              <span class="text-2xl sm:text-3xl font-display font-black text-white sunlight-text">${q.length}</span>
-              <span class="text-[11px] font-mono text-slate-400">टोकन सक्रिय</span>
-            </div>
-            <div class="mt-2 flex items-center gap-1.5 text-[11px] font-bold ${emergencyCount > 0 ? "text-rose-400" : "text-emerald-400"}">
-              <i class="fa-solid fa-circle-exclamation text-[10px]"></i>
-              <span>${emergencyCount} अति-गंभीर (Emergency Red)</span>
-            </div>
-          </div>
-
-          <!-- Card 2: IPD In-Patients -->
-          <div class="p-4 rounded-2xl bg-slate-900 border border-slate-800 hover:border-cyan-500/50 transition-colors shadow-lg relative overflow-hidden sunlight-card">
-            <div class="flex items-center justify-between">
-              <span class="text-xs font-mono uppercase text-slate-400 sunlight-muted">भर्ती पशु (IPD Admitted)</span>
-              <span class="w-8 h-8 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400">
-                <i class="fa-solid fa-bed-pulse text-sm"></i>
-              </span>
-            </div>
-            <div class="mt-2 flex items-baseline gap-2">
-              <span class="text-2xl sm:text-3xl font-display font-black text-white sunlight-text">${ipdCount}</span>
-              <span class="text-[11px] font-mono text-slate-400">वार्ड में भर्ती</span>
-            </div>
-            <div class="mt-2 text-[11px] font-semibold text-cyan-400 flex items-center gap-1">
-              <i class="fa-solid fa-stethoscope text-[10px]"></i>
-              <span>दैनिक राउंड्स लंबित: 1 केस</span>
-            </div>
-          </div>
-
-          <!-- Card 3: Pending Lab & Imaging Reports -->
-          <div class="p-4 rounded-2xl bg-slate-900 border border-slate-800 hover:border-amber-500/50 transition-colors shadow-lg relative overflow-hidden sunlight-card">
-            <div class="flex items-center justify-between">
-              <span class="text-xs font-mono uppercase text-slate-400 sunlight-muted">जांच रिपोर्ट समीक्षा (Lab Reports)</span>
-              <span class="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
-                <i class="fa-solid fa-microscope text-sm"></i>
-              </span>
-            </div>
-            <div class="mt-2 flex items-baseline gap-2">
-              <span class="text-2xl sm:text-3xl font-display font-black text-amber-400">${labPending}</span>
-              <span class="text-[11px] font-mono text-slate-400">रिपोर्ट्स अप्रूवल हेतु</span>
-            </div>
-            <div class="mt-2 text-[11px] font-bold text-amber-400 flex items-center gap-1">
-              <i class="fa-solid fa-triangle-exclamation text-[10px]"></i>
-              <span>1 क्रिटिकल पैथोलॉजी अलर्ट</span>
-            </div>
-          </div>
-
-          <!-- Card 4: Statutory Outbreak Radar -->
-          <div class="p-4 rounded-2xl bg-slate-900 border border-slate-800 hover:border-rose-500/50 transition-colors shadow-lg relative overflow-hidden sunlight-card">
-            <div class="flex items-center justify-between">
-              <span class="text-xs font-mono uppercase text-slate-400 sunlight-muted">क्षेत्रीय महामारी अलर्ट (Outbreak Radar)</span>
-              <span class="w-8 h-8 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400">
-                <i class="fa-solid fa-shield-virus text-sm"></i>
-              </span>
-            </div>
-            <div class="mt-2 flex items-baseline gap-2">
-              <span class="text-2xl sm:text-3xl font-display font-black text-rose-400 badge-pulse">${outbreakCount}</span>
-              <span class="text-[11px] font-mono text-slate-400">सक्रिय क्लस्टर</span>
-            </div>
-            <div class="mt-2 text-[11px] font-extrabold text-rose-400 flex items-center gap-1">
-              <i class="fa-solid fa-bullseye text-[10px]"></i>
-              <span>LSD व FMD रिंग प्रोटोकॉल सक्रिय</span>
-            </div>
-          </div>
-        </div>
-      `;
-    },
-
-    // 11. NAVIGATION TABS BAR
-    renderNavigationTabs: function () {
-      const active = Dashboard.state.activeTab;
-      const tabs = [
-        { id: "overview", label: "कार्यक्षेत्र अवलोकन (Overview Console)", icon: "fa-chart-pie" },
-        { id: "live_opd_queue", label: "लाइव ओपीडी कतार (Live Token Queue)", icon: "fa-list-ol", count: Dashboard.state.todaysQueue.length },
-        { id: "ipd_summary", label: "आईपीडी वार्ड राउंड्स (IPD Rounds)", icon: "fa-hospital-user", count: Dashboard.state.admittedIpdCases.length },
-        { id: "statutory_alerts", label: "महामारी व कानूनी अलर्ट (Statutory Alerts)", icon: "fa-biohazard", count: Dashboard.state.statutoryAlerts.length }
-      ];
-
-      return `
-        <div class="flex items-center gap-2 border-b border-slate-800 overflow-x-auto pb-1 custom-scrollbar">
-          ${tabs.map(t => `
-            <button type="button" data-tab-target="${t.id}" class="tab-switch-btn flex items-center gap-2 px-4 py-2.5 rounded-t-xl font-display font-bold text-xs uppercase tracking-wider whitespace-nowrap transition-all ${
-              active === t.id
-                ? "bg-slate-900 text-emerald-400 border-t-2 border-l border-r border-emerald-500 border-b-transparent shadow-md"
-                : "text-slate-400 hover:text-white hover:bg-slate-900/40"
-            }">
-              <i class="fa-solid ${t.icon}"></i>
-              <span>${t.label}</span>
-              ${t.count !== undefined ? `<span class="px-1.5 py-0.2 rounded-full text-[10px] font-mono ${active === t.id ? "bg-emerald-500 text-slate-950 font-black" : "bg-slate-800 text-slate-300"}">${t.count}</span>` : ""}
+            <button type="button" id="btnDashboardLogout" class="px-3.5 py-2 rounded-2xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-bold transition-all flex items-center gap-1.5">
+              <i class="fa-solid fa-arrow-right-from-bracket"></i>
+              <span>लॉगआउट</span>
             </button>
-          `).join("")}
+          </div>
         </div>
-      `;
-    },
 
-    // 12. TAB CONTENT ROUTER
-    renderActiveTabContent: function () {
-      switch (Dashboard.state.activeTab) {
-        case "live_opd_queue":
-          return Dashboard.renderLiveQueueTab();
-        case "ipd_summary":
-          return Dashboard.renderIpdSummaryTab();
-        case "statutory_alerts":
-          return Dashboard.renderStatutoryAlertsTab();
-        case "overview":
-        default:
-          return Dashboard.renderSplitWorkstationOverview();
-      }
-    },
+        <!-- ====================================================================
+             2. CORE CLINICAL TOOLS GRID (TOUCH-OPTIMIZED TILES)
+             ==================================================================== -->
+        <div>
+          <div class="flex items-center justify-between mb-3 px-1">
+            <h2 class="font-display font-bold text-base sm:text-lg text-slate-900 flex items-center gap-2">
+              <i class="fa-solid fa-toolbox text-sky-600"></i>
+              <span>क्लिनिकल टूल्स एवं नैदानिक सहायता प्रणाली (Clinical Suite)</span>
+            </h2>
+            <span class="text-[11px] font-mono text-slate-400">TOUCH READY • 2026 PROD</span>
+          </div>
 
-    // 13. OVERVIEW: SPLIT WORKSTATION CONSOLE
-    renderSplitWorkstationOverview: function () {
-      return `
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          <!-- Left Column: Priority Live Patient Queue (7 Cols) -->
-          <div class="lg:col-span-7 space-y-4">
-            <div class="flex items-center justify-between">
+          <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
+            
+            <!-- Tool 1: Digital Rx Pad -->
+            <button type="button" id="btnOpenToolRxPad" class="p-4 rounded-2xl bg-white border border-slate-200/90 hover:border-sky-500 shadow-clinical hover:shadow-elevated flex flex-col items-center text-center group transition-all transform active:scale-95 text-slate-800">
+              <div class="w-12 h-12 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center text-xl mb-2.5 group-hover:scale-110 group-hover:bg-sky-600 group-hover:text-white transition-all shadow-sm">
+                <i class="fa-solid fa-file-prescription"></i>
+              </div>
+              <span class="text-xs font-bold text-slate-900 group-hover:text-sky-700 leading-tight">डिजिटल पर्ची जनरेटर</span>
+              <span class="text-[10px] text-slate-400 font-mono mt-1">Rx & Print PDF</span>
+            </button>
+
+            <!-- Tool 2: AI Differential Co-pilot -->
+            <button type="button" id="btnOpenToolDifferential" class="p-4 rounded-2xl bg-white border border-slate-200/90 hover:border-cyan-500 shadow-clinical hover:shadow-elevated flex flex-col items-center text-center group transition-all transform active:scale-95 text-slate-800">
+              <div class="w-12 h-12 rounded-xl bg-cyan-50 text-cyan-600 flex items-center justify-center text-xl mb-2.5 group-hover:scale-110 group-hover:bg-cyan-600 group-hover:text-white transition-all shadow-sm">
+                <i class="fa-solid fa-brain"></i>
+              </div>
+              <span class="text-xs font-bold text-slate-900 group-hover:text-cyan-700 leading-tight">एआई रोग निदान</span>
+              <span class="text-[10px] text-slate-400 font-mono mt-1">Differential Co-pilot</span>
+            </button>
+
+            <!-- Tool 3: Dosage Calculator -->
+            <button type="button" id="btnOpenToolDosage" class="p-4 rounded-2xl bg-white border border-slate-200/90 hover:border-emerald-500 shadow-clinical hover:shadow-elevated flex flex-col items-center text-center group transition-all transform active:scale-95 text-slate-800">
+              <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl mb-2.5 group-hover:scale-110 group-hover:bg-emerald-600 group-hover:text-white transition-all shadow-sm">
+                <i class="fa-solid fa-calculator"></i>
+              </div>
+              <span class="text-xs font-bold text-slate-900 group-hover:text-emerald-700 leading-tight">वेटनरी खुराक मापक</span>
+              <span class="text-[10px] text-slate-400 font-mono mt-1">Shaeffer's & mL Dosing</span>
+            </button>
+
+            <!-- Tool 4: Drug Interactions & Steroid Lock -->
+            <button type="button" id="btnOpenToolInteractions" class="p-4 rounded-2xl bg-white border border-rose-200 hover:border-rose-500 shadow-clinical hover:shadow-elevated flex flex-col items-center text-center group transition-all transform active:scale-95 text-slate-800">
+              <div class="w-12 h-12 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center text-xl mb-2.5 group-hover:scale-110 group-hover:bg-rose-600 group-hover:text-white transition-all shadow-sm">
+                <i class="fa-solid fa-shield-virus"></i>
+              </div>
+              <span class="text-xs font-bold text-slate-900 group-hover:text-rose-700 leading-tight">ड्रग सुरक्षा चेकर</span>
+              <span class="text-[10px] text-rose-500 font-mono mt-1 font-semibold">Steroid Lock Active</span>
+            </button>
+
+            <!-- Tool 5: Lab Ranges -->
+            <button type="button" id="btnOpenToolLabRanges" class="p-4 rounded-2xl bg-white border border-slate-200/90 hover:border-purple-500 shadow-clinical hover:shadow-elevated flex flex-col items-center text-center group transition-all transform active:scale-95 text-slate-800">
+              <div class="w-12 h-12 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center text-xl mb-2.5 group-hover:scale-110 group-hover:bg-purple-600 group-hover:text-white transition-all shadow-sm">
+                <i class="fa-solid fa-vial-virus"></i>
+              </div>
+              <span class="text-xs font-bold text-slate-900 group-hover:text-purple-700 leading-tight">लैब संदर्भ मान</span>
+              <span class="text-[10px] text-slate-400 font-mono mt-1">CBC / Biochemistry</span>
+            </button>
+
+            <!-- Tool 6: Surgery & Anesthesia -->
+            <button type="button" id="btnOpenToolSurgery" class="p-4 rounded-2xl bg-white border border-slate-200/90 hover:border-amber-500 shadow-clinical hover:shadow-elevated flex flex-col items-center text-center group transition-all transform active:scale-95 text-slate-800">
+              <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl mb-2.5 group-hover:scale-110 group-hover:bg-amber-600 group-hover:text-white transition-all shadow-sm">
+                <i class="fa-solid fa-syringe"></i>
+              </div>
+              <span class="text-xs font-bold text-slate-900 group-hover:text-amber-700 leading-tight">सर्जरी प्रोटोकॉल</span>
+              <span class="text-[10px] text-slate-400 font-mono mt-1">Anesthesia Checklist</span>
+            </button>
+
+          </div>
+        </div>
+
+        <!-- ====================================================================
+             3. ACTIVE OPD QUEUE TABLE (INTERACTIVE TRIAGE)
+             ==================================================================== -->
+        <div class="bg-white rounded-3xl border border-slate-200/90 shadow-clinical overflow-hidden">
+          
+          <div class="p-4 sm:p-5 border-b border-slate-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-slate-50/50">
+            <div>
               <div class="flex items-center gap-2">
-                <i class="fa-solid fa-stream text-emerald-400"></i>
-                <h2 class="font-display font-extrabold text-base text-white uppercase tracking-tight sunlight-text">त्वरित ओपीडी मरीज कतार (OPD Queue Stream)</h2>
-              </div>
-              <!-- Queue Filters -->
-              <div class="flex items-center gap-1 bg-slate-900 p-1 rounded-lg border border-slate-800 text-[11px] font-mono">
-                <button type="button" data-filter-queue="ALL" class="queue-filter-btn px-2 py-0.5 rounded ${Dashboard.state.queueFilter === "ALL" ? "bg-emerald-500 text-slate-950 font-black" : "text-slate-400"}">सभी</button>
-                <button type="button" data-filter-queue="EMERGENCY" class="queue-filter-btn px-2 py-0.5 rounded ${Dashboard.state.queueFilter === "EMERGENCY" ? "bg-rose-500 text-white font-black" : "text-slate-400"}">आपातकाल</button>
-                <button type="button" data-filter-queue="URGENT" class="queue-filter-btn px-2 py-0.5 rounded ${Dashboard.state.queueFilter === "URGENT" ? "bg-amber-500 text-slate-950 font-black" : "text-slate-400"}">गंभीर</button>
-              </div>
-            </div>
-
-            <!-- Queue Cards Stack -->
-            <div class="space-y-3 max-h-[620px] overflow-y-auto pr-1 queue-scroll">
-              ${Dashboard.renderQueueCards(true)}
-            </div>
-          </div>
-
-          <!-- Right Column: Clinical Launchpad & Recent Cases (5 Cols) -->
-          <div class="lg:col-span-5 space-y-5">
-            <!-- 1-Click Fast Clinical Launchers -->
-            <div class="p-5 rounded-2xl bg-slate-900 border border-slate-800 shadow-xl sunlight-card">
-              <div class="flex items-center justify-between mb-3 border-b border-slate-800 pb-2">
-                <h3 class="font-display font-black text-sm text-white uppercase tracking-wider flex items-center gap-2 sunlight-text">
-                  <i class="fa-solid fa-bolt text-amber-400"></i>
-                  <span>फास्ट क्लीनिकल लॉन्चपैड (Quick Actions)</span>
+                <h3 class="font-display font-bold text-slate-900 text-base sm:text-lg flex items-center gap-2">
+                  <i class="fa-solid fa-list-check text-sky-600"></i>
+                  <span>दैनिक ओपीडी रोगी सूची (Live Examination Queue)</span>
                 </h3>
-                <span class="text-[10px] font-mono text-emerald-400">AI-ACCELERATED</span>
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-sky-100 text-sky-800">
+                  REAL-TIME
+                </span>
               </div>
-
-              <div class="grid grid-cols-2 gap-2.5">
-                <button id="btnQuickRxSlip" type="button" class="p-3 rounded-xl bg-slate-800 hover:bg-slate-700/80 border border-slate-700 text-left flex flex-col justify-between group transition-all">
-                  <div class="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-sm mb-2 group-hover:scale-110 transition-transform">
-                    <i class="fa-solid fa-file-prescription"></i>
-                  </div>
-                  <div>
-                    <div class="font-display font-bold text-xs text-white sunlight-text">नई पर्ची (New Rx)</div>
-                    <div class="text-[10px] text-slate-400">प्रिस्क्रिप्शन जनरेटर</div>
-                  </div>
-                </button>
-
-                <button id="btnOrderLabWork" type="button" class="p-3 rounded-xl bg-slate-800 hover:bg-slate-700/80 border border-slate-700 text-left flex flex-col justify-between group transition-all">
-                  <div class="w-8 h-8 rounded-lg bg-cyan-500/20 text-cyan-400 flex items-center justify-center text-sm mb-2 group-hover:scale-110 transition-transform">
-                    <i class="fa-solid fa-vial-virus"></i>
-                  </div>
-                  <div>
-                    <div class="font-display font-bold text-xs text-white sunlight-text">जांच मांग (Order CBC)</div>
-                    <div class="text-[10px] text-slate-400">रक्त व दूध माइक्रोबायोलॉजी</div>
-                  </div>
-                </button>
-
-                <button id="btnDrugDirectory" type="button" class="p-3 rounded-xl bg-slate-800 hover:bg-slate-700/80 border border-slate-700 text-left flex flex-col justify-between group transition-all">
-                  <div class="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center text-sm mb-2 group-hover:scale-110 transition-transform">
-                    <i class="fa-solid fa-capsules"></i>
-                  </div>
-                  <div>
-                    <div class="font-display font-bold text-xs text-white sunlight-text">औषधि निर्देशिका</div>
-                    <div class="text-[10px] text-slate-400">खुराक, गर्भ सुरक्षा व विथड्राल</div>
-                  </div>
-                </button>
-
-                <button id="btnEmergencyGuideModal" type="button" class="p-3 rounded-xl bg-gradient-to-br from-rose-950/40 to-slate-800 hover:from-rose-900/60 border border-rose-800/40 text-left flex flex-col justify-between group transition-all">
-                  <div class="w-8 h-8 rounded-lg bg-rose-500/20 text-rose-400 flex items-center justify-center text-sm mb-2 group-hover:scale-110 transition-transform">
-                    <i class="fa-solid fa-kit-medical"></i>
-                  </div>
-                  <div>
-                    <div class="font-display font-bold text-xs text-rose-300">आपातकालीन प्रोटोकॉल</div>
-                    <div class="text-[10px] text-slate-400">ट्रोकार, सर्पदंश व टॉक्सिन</div>
-                  </div>
-                </button>
-              </div>
-
-              <!-- Manual Intake Dispatcher -->
-              <button id="btnRegisterWalkinToken" type="button" class="w-full mt-3 py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-bold text-slate-200 flex items-center justify-center gap-2 transition-colors">
-                <i class="fa-solid fa-plus-circle text-emerald-400"></i>
-                <span>नया वॉक-इन टोकन जारी करें (Issue Walk-In Token)</span>
-              </button>
+              <p class="text-xs text-slate-500 mt-0.5">रोगी का चयन करें अथवा सीधा प्रिस्क्रिप्शन व केस हिस्ट्री आरंभ करें</p>
             </div>
 
-            <!-- Pending Laboratory Review Mini-Stream -->
-            <div class="p-5 rounded-2xl bg-slate-900 border border-slate-800 shadow-xl sunlight-card">
-              <div class="flex items-center justify-between mb-3 border-b border-slate-800 pb-2">
-                <h3 class="font-display font-black text-sm text-white uppercase tracking-wider flex items-center gap-2 sunlight-text">
-                  <i class="fa-solid fa-microscope text-cyan-400"></i>
-                  <span>लंबित डायग्नोस्टिक समीक्षा (${Dashboard.state.pendingLabReports.length})</span>
-                </h3>
-              </div>
-              <div class="space-y-2.5">
-                ${Dashboard.state.pendingLabReports.map(lab => `
-                  <div class="p-3 rounded-xl bg-slate-950/70 border ${lab.status === "CRITICAL_VALUES" ? "border-rose-500/50" : "border-slate-800"} flex items-start justify-between gap-3">
-                    <div class="space-y-1">
-                      <div class="flex items-center gap-2">
-                        <span class="text-xs font-bold text-white sunlight-text">${lab.testType}</span>
-                        ${lab.status === "CRITICAL_VALUES" ? '<span class="px-1.5 py-0.2 rounded text-[9px] font-black uppercase bg-rose-500/20 text-rose-400 border border-rose-500/40">CRITICAL</span>' : ""}
-                      </div>
-                      <div class="text-[10px] font-mono text-slate-400">पशु ID: ${lab.patientId} • सैंपल: ${lab.sampleTime}</div>
-                      <div class="text-[11px] text-amber-300/90 font-mono leading-tight">${lab.flaggedFindings}</div>
-                    </div>
-                    <button type="button" data-action="review_lab" data-report-id="${lab.reportId}" class="px-2.5 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-slate-950 text-xs font-extrabold whitespace-nowrap active:scale-95 transition-all">
-                      समीक्षा व साइन
-                    </button>
-                  </div>
-                `).join("")}
-              </div>
-            </div>
-
-            <!-- Recent Consultation Activity Log -->
-            <div class="p-5 rounded-2xl bg-slate-900 border border-slate-800 shadow-xl sunlight-card">
-              <div class="flex items-center justify-between mb-3 border-b border-slate-800 pb-2">
-                <h3 class="font-display font-black text-sm text-white uppercase tracking-wider flex items-center gap-2 sunlight-text">
-                  <i class="fa-solid fa-clock-rotate-left text-slate-400"></i>
-                  <span>आज के संपन्न परामर्श (Recent Consultations)</span>
-                </h3>
-              </div>
-              <div class="space-y-2.5">
-                ${Dashboard.state.recentConsultations.map(rc => `
-                  <div class="p-3 rounded-xl bg-slate-950/50 border border-slate-800/80 flex items-center justify-between gap-2">
-                    <div class="space-y-0.5">
-                      <div class="flex items-center gap-2">
-                        <span class="text-xs font-bold text-slate-200 sunlight-text">${rc.ownerName}</span>
-                        <span class="text-[10px] font-mono text-emerald-400">(${rc.species})</span>
-                      </div>
-                      <div class="text-[11px] text-slate-400 truncate max-w-xs">${rc.diagnosis}</div>
-                      <div class="text-[9px] font-mono text-slate-400">${rc.caseNo} • समय: ${rc.timestamp}</div>
-                    </div>
-                    <div class="flex items-center gap-1.5">
-                      <button type="button" title="प्रिंट डुप्लीकेट पर्ची" data-action="print_recent_rx" data-case="${rc.caseNo}" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs">
-                        <i class="fa-solid fa-print"></i>
-                      </button>
-                      <button type="button" title="केस दोहराएं" data-action="duplicate_rx" data-case="${rc.caseNo}" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-emerald-400 text-xs">
-                        <i class="fa-solid fa-copy"></i>
-                      </button>
-                    </div>
-                  </div>
-                `).join("")}
-              </div>
-            </div>
-
-          </div>
-        </div>
-      `;
-    },
-
-    // 14. COMPONENT: LIVE OPD QUEUE VIEW
-    renderLiveQueueTab: function () {
-      return `
-        <div class="space-y-4">
-          <div class="p-4 rounded-2xl bg-slate-900 border border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sunlight-card">
-            <div>
-              <h2 class="font-display font-black text-lg text-white uppercase tracking-tight sunlight-text">लाइव ओपीडी टोकन प्रबंधन कक्ष</h2>
-              <p class="text-xs text-slate-400 sunlight-muted">मरीजों को ट्राइएज प्राथमिकता (Emergency, Urgent, Routine) के अनुसार क्रमित किया गया है।</p>
-            </div>
-            <div class="flex items-center gap-2">
-              <button id="btnAddNewQueuePatient" type="button" class="py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold text-xs flex items-center gap-2 shadow-lg shadow-emerald-950/40">
-                <i class="fa-solid fa-user-plus"></i>
-                <span>नया टोकन जारी करें (Add Token)</span>
+            <div class="flex items-center gap-2 w-full sm:w-auto">
+              <input type="text" id="opdQueueSearchInput" placeholder="नाम / टैग / लक्षण खोजें..." class="w-full sm:w-60 bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500 font-sans shadow-sm" />
+              <button type="button" id="btnRefreshQueue" title="सूची रीफ्रेश करें" class="p-2 rounded-xl bg-white border border-slate-200 text-slate-600 hover:text-sky-600 text-xs shadow-sm">
+                <i class="fa-solid fa-arrows-rotate"></i>
               </button>
             </div>
           </div>
-          <div class="space-y-3">
-            ${Dashboard.renderQueueCards(false)}
-          </div>
-        </div>
-      `;
-    },
 
-    // 15. RENDER QUEUE CARDS (USED BY BOTH OVERVIEW & FULL TAB)
-    renderQueueCards: function (isCompact) {
-      const q = Dashboard.state.todaysQueue;
-      const filter = Dashboard.state.queueFilter;
-      const filtered = q.filter(item => {
-        if (filter === "EMERGENCY") return item.priority === "EMERGENCY_RED";
-        if (filter === "URGENT") return item.priority === "URGENT_ORANGE";
-        if (filter === "ROUTINE") return item.priority === "ROUTINE_GREEN";
-        return true;
-      });
-
-      if (filtered.length === 0) {
-        return `
-          <div class="p-8 rounded-2xl bg-slate-900/60 border border-slate-800 text-center space-y-2">
-            <i class="fa-solid fa-clipboard-check text-3xl text-emerald-400"></i>
-            <div class="font-display font-bold text-sm text-slate-300">इस श्रेणी में कोई मरीज प्रतीक्षारत नहीं है</div>
-            <p class="text-xs text-slate-500">सभी पंजीकृत ओपीडी मरीजों की जांच पूरी हो चुकी है अथवा कतार खाली है।</p>
-          </div>
-        `;
-      }
-
-      return filtered.map(patient => {
-        const priorityConfig = {
-          EMERGENCY_RED: {
-            badge: "रेड आपातकाल (EMERGENCY)",
-            badgeClass: "bg-rose-500/20 text-rose-300 border-rose-500/40",
-            rowClass: "emergency-row-glow",
-            pulse: true
-          },
-          URGENT_ORANGE: {
-            badge: "गंभीर (URGENT)",
-            badgeClass: "bg-amber-500/20 text-amber-300 border-amber-500/40",
-            rowClass: "urgent-row-glow",
-            pulse: false
-          },
-          ROUTINE_GREEN: {
-            badge: "सामान्य (ROUTINE)",
-            badgeClass: "bg-emerald-500/20 text-emerald-300 border-emerald-500/40",
-            rowClass: "routine-row-glow",
-            pulse: false
-          }
-        }[patient.priority];
-
-        const speciesIcons = {
-          bovine: "fa-cow text-emerald-400",
-          canine: "fa-dog text-cyan-400",
-          caprine: "fa-seedling text-amber-400",
-          equine: "fa-horse text-purple-400"
-        };
-        const sIcon = speciesIcons[patient.species] || "fa-paw text-slate-400";
-
-        return `
-          <div class="p-4 rounded-xl bg-slate-900 border border-slate-800 shadow-md transition-all duration-200 hover:border-slate-700 ${priorityConfig.rowClass} sunlight-card">
-            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-              <!-- Token + Species + Owner Info -->
-              <div class="flex items-start gap-3">
-                <div class="w-12 h-12 rounded-xl bg-slate-800 border border-slate-700 flex flex-col items-center justify-center text-center">
-                  <span class="text-[9px] font-mono uppercase text-slate-400 leading-tight">टोकन</span>
-                  <span class="text-lg font-black font-mono text-white leading-tight">#${patient.tokenNo}</span>
-                </div>
-
-                <div class="space-y-1">
-                  <div class="flex items-center gap-2 flex-wrap">
-                    <span class="font-display font-extrabold text-sm text-white sunlight-text">${patient.ownerName}</span>
-                    <span class="px-2 py-0.5 rounded text-[10px] font-bold font-mono uppercase border ${priorityConfig.badgeClass} ${priorityConfig.pulse ? "badge-pulse" : ""}">
-                      ${priorityConfig.badge}
-                    </span>
-                  </div>
-
-                  <div class="text-xs text-slate-300 flex items-center gap-2 flex-wrap sunlight-muted">
-                    <span class="flex items-center gap-1 font-semibold text-slate-200">
-                      <i class="fa-solid ${sIcon}"></i>
-                      <span>${patient.breed} (${patient.gender}, ${patient.age})</span>
-                    </span>
-                    <span class="text-slate-600">•</span>
-                    <span class="font-mono text-[11px] text-slate-400">टैग: ${patient.tagNo}</span>
-                    <span class="text-slate-600">•</span>
-                    <span class="font-mono text-[11px] text-emerald-400">${patient.weightKg} kg</span>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Wait Time Tracker & Call into Exam Room CTA -->
-              <div class="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end border-t sm:border-t-0 border-slate-800 pt-2 sm:pt-0">
-                <div class="text-right">
-                  <div class="text-[10px] font-mono text-slate-400 uppercase">प्रतीक्षा समय</div>
-                  <div class="text-xs font-mono font-bold ${patient.waitTimeMins > 30 ? "text-rose-400" : "text-amber-400"}">
-                    <i class="fa-regular fa-clock mr-1"></i>${patient.waitTimeMins} मिनट
-                  </div>
-                </div>
-
-                <div class="flex items-center gap-1.5">
-                  <button type="button" data-action="call_patient" data-token="${patient.tokenNo}" class="py-2 px-3.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-display font-black text-xs uppercase tracking-wider shadow-md shadow-emerald-950/40 flex items-center gap-1.5 active:scale-95 transition-all">
-                    <i class="fa-solid fa-stethoscope"></i>
-                    <span>परीक्षण (Examine)</span>
-                  </button>
-                  <button type="button" title="ट्राइएज प्राथमिकता बदलें" data-action="triage_toggle" data-token="${patient.tokenNo}" class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs border border-slate-700">
-                    <i class="fa-solid fa-triangle-exclamation"></i>
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <!-- Chief Complaint & Live Vitals Strip -->
-            <div class="mt-3 pt-2.5 border-t border-slate-800/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs">
-              <div class="text-slate-300 flex items-start gap-1.5">
-                <span class="font-bold text-amber-400/90 whitespace-nowrap">मुख्य समस्या:</span>
-                <span class="text-slate-300 leading-snug">${patient.chiefComplaint}</span>
-              </div>
-              ${patient.vitalSigns ? `
-                <div class="flex items-center gap-3 font-mono text-[10px] text-slate-400 bg-slate-950/60 px-2 py-1 rounded-lg border border-slate-800 whitespace-nowrap">
-                  <span>T: <strong class="text-slate-200">${patient.vitalSigns.tempF}</strong></span>
-                  <span>P: <strong class="text-slate-200">${patient.vitalSigns.pulseBpm}</strong></span>
-                  <span>R: <strong class="text-slate-200">${patient.vitalSigns.respRate}</strong></span>
-                </div>
-              ` : ""}
-            </div>
-          </div>
-        `;
-      }).join("");
-    },
-
-    // 16. COMPONENT: IPD SUMMARY TAB
-    renderIpdSummaryTab: function () {
-      const ipd = Dashboard.state.admittedIpdCases;
-      return `
-        <div class="space-y-4">
-          <div class="p-4 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-between sunlight-card">
-            <div>
-              <h2 class="font-display font-black text-lg text-white uppercase tracking-tight sunlight-text">आईपीडी इन-पेशेंट वार्ड प्रबंधन</h2>
-              <p class="text-xs text-slate-400 sunlight-muted">भर्ती गंभीर पशुओं के 24-घंटे वाइटल्स, आईवी फ्लुइड इन्फ्यूजन एवं दैनिक राउंड रिकॉर्ड्स।</p>
-            </div>
-            <button id="btnLogIpdRounds" type="button" class="py-2 px-3 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-slate-950 font-bold text-xs flex items-center gap-2">
-              <i class="fa-solid fa-notes-medical"></i>
-              <span>दैनिक राउंड दर्ज करें (Log Rounds)</span>
-            </button>
+          <!-- Responsive Table Container -->
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr class="bg-slate-100/70 border-b border-slate-200 text-[11px] font-mono uppercase text-slate-600">
+                  <th class="py-3 px-3.5 text-center">टोकन</th>
+                  <th class="py-3 px-3.5">पशुपालक / संपर्क</th>
+                  <th class="py-3 px-3.5">प्रजाति व टैग ID</th>
+                  <th class="py-3 px-3.5">लक्षण व प्रारंभिक शिकायत</th>
+                  <th class="py-3 px-3.5 text-center">गर्भ स्थिति</th>
+                  <th class="py-3 px-3.5 text-center">स्थिति</th>
+                  <th class="py-3 px-3.5 text-right">कार्यवाही</th>
+                </tr>
+              </thead>
+              <tbody id="opdQueueTableBody" class="divide-y divide-slate-100 font-medium text-slate-700">
+                <!-- Dynamically Populated by renderQueueRows() -->
+              </tbody>
+            </table>
           </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            ${ipd.map(c => `
-              <div class="p-5 rounded-2xl bg-slate-900 border border-slate-800 shadow-xl space-y-3 sunlight-card">
-                <div class="flex items-center justify-between border-b border-slate-800 pb-2">
-                  <span class="px-2 py-0.5 rounded font-mono text-[10px] font-bold bg-cyan-500/10 text-cyan-400 border border-cyan-500/30">${c.bedNo}</span>
-                  <span class="px-2 py-0.5 rounded font-mono text-[10px] font-bold ${c.condition === "CRITICAL" ? "bg-rose-500/20 text-rose-300 border border-rose-500/40" : "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40"}">${c.condition}</span>
-                </div>
-                <div>
-                  <div class="font-display font-black text-base text-white sunlight-text">${c.species}</div>
-                  <div class="text-xs font-mono text-slate-400">टैग: ${c.tagNo} • पालक: ${c.ownerName}</div>
-                </div>
-                <div class="p-3 rounded-xl bg-slate-950/70 border border-slate-800 text-xs space-y-1">
-                  <div class="text-slate-400 text-[10px] uppercase font-mono">निदान (Diagnosis):</div>
-                  <div class="text-slate-200 font-semibold">${c.diagnosis}</div>
-                </div>
-                <div class="space-y-1 text-xs font-mono">
-                  <div class="flex justify-between text-slate-400"><span>तापमान:</span> <strong class="text-slate-200">${c.tempF}</strong></div>
-                  <div class="flex justify-between text-slate-400"><span>नाड़ी दर:</span> <strong class="text-slate-200">${c.pulseBpm}</strong></div>
-                  <div class="flex justify-between text-slate-400"><span>आईवी फ्लुइड:</span> <strong class="text-cyan-400 truncate max-w-[150px]">${c.ivFluids}</strong></div>
-                  <div class="flex justify-between text-slate-400"><span>अंतिम राउंड:</span> <strong class="text-slate-200">${c.lastRoundTime}</strong></div>
-                </div>
-                <button type="button" data-action="update_ipd_vitals" data-ipd-id="${c.ipdId}" class="w-full py-2 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-200 border border-slate-700 transition-colors">
-                  वाइटल्स व दवाएं अपडेट करें
-                </button>
-              </div>
-            `).join("")}
-          </div>
-        </div>
-      `;
-    },
-
-    // 17. COMPONENT: STATUTORY OUTBREAKS & EPIDEMIOLOGY RADAR
-    renderStatutoryAlertsTab: function () {
-      const alerts = Dashboard.state.statutoryAlerts;
-      return `
-        <div class="space-y-4">
-          <div class="p-4 rounded-2xl bg-rose-950/20 border-2 border-rose-500/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sunlight-card">
+          <div class="p-3 border-t border-slate-100 bg-slate-50 text-[11px] text-slate-500 flex flex-wrap items-center justify-between gap-2">
             <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-xl bg-rose-500/20 border border-rose-500/40 flex items-center justify-center text-rose-400 text-xl">
-                <i class="fa-solid fa-triangle-exclamation"></i>
-              </div>
-              <div>
-                <h2 class="font-display font-black text-lg text-rose-300 uppercase tracking-tight">राष्ट्रीय संक्रामक रोग एवं महामारी अलर्ट्स</h2>
-                <p class="text-xs text-rose-200/80">पशुपालन एवं डेयरी विभाग (DAHD) तथा VCI 2026 वैधानिक निगरानी मानक।</p>
-              </div>
+              <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-amber-400"></span> प्रतीक्षारत (Waiting)</span>
+              <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-sky-500"></span> उपचार जारी (In-Progress)</span>
+              <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-500"></span> पूर्ण (Completed)</span>
             </div>
-            <button id="btnDeclareNewOutbreak" type="button" class="py-2 px-3 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs flex items-center gap-2 shadow-lg shadow-rose-950/50">
-              <i class="fa-solid fa-bullhorn"></i>
-              <span>क्षेत्रीय अलर्ट घोषित करें (Declare Alert)</span>
-            </button>
+            <div class="font-mono text-slate-400">ISO-VET EHR COMPLIANT</div>
           </div>
 
-          <div class="space-y-4">
-            ${alerts.map(a => `
-              <div class="p-5 rounded-2xl bg-slate-900 border border-slate-800 shadow-xl space-y-3 sunlight-card">
-                <div class="flex items-center justify-between">
-                  <div class="flex items-center gap-2">
-                    <span class="w-3 h-3 rounded-full bg-rose-500 pulse-beacon"></span>
-                    <h3 class="font-display font-black text-base text-white sunlight-text">${a.pathogen}</h3>
-                  </div>
-                  <span class="px-2.5 py-0.5 rounded-full font-mono text-[10px] font-black uppercase bg-rose-500/20 text-rose-400 border border-rose-500/40">
-                    ${a.severity}
-                  </span>
-                </div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                  <div class="p-3 rounded-xl bg-slate-950/60 border border-slate-800">
-                    <div class="text-[10px] font-mono text-slate-400 uppercase">संक्रमित परिधि क्लस्टर</div>
-                    <div class="text-amber-400 font-bold mt-0.5">${a.clusterRegion}</div>
-                  </div>
-                  <div class="p-3 rounded-xl bg-slate-950/60 border border-slate-800">
-                    <div class="text-[10px] font-mono text-slate-400 uppercase">अनिवार्य वैधानिक प्रोटोकॉल</div>
-                    <div class="text-slate-200 font-semibold mt-0.5">${a.mandatoryProtocol}</div>
-                  </div>
-                </div>
-                <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-800">
-                  <button type="button" data-action="broadcast_farmer_sms" data-alert-id="${a.alertId}" class="py-2 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold border border-slate-700">
-                    <i class="fa-solid fa-tower-broadcast text-amber-400 mr-1"></i> कृषकों को SMS चेतावनी भेजें
-                  </button>
-                  <button type="button" data-action="view_epidemic_sop" data-alert-id="${a.alertId}" class="py-2 px-3 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold">
-                    मानक उपचार गाइड (SOP)
-                  </button>
-                </div>
-              </div>
-            `).join("")}
-          </div>
         </div>
+
+      </div>
+
+      <!-- ====================================================================
+           MODAL CONTAINER FOR SUB-TOOLS
+           ==================================================================== -->
+      <div id="doctorModalPortal" class="relative z-50"></div>
+    `;
+
+    // Render Initial Queue Rows
+    renderQueueRows();
+
+    // Bind Global Interactive Events
+    bindDashboardEvents();
+  }
+
+  /**
+   * Render OPD Queue Table Rows
+   */
+  function renderQueueRows(searchTerm = "") {
+    const tbody = document.getElementById("opdQueueTableBody");
+    if (!tbody) return;
+
+    const term = (searchTerm || "").toLowerCase().trim();
+    const filtered = State.patientsQueue.filter(p => {
+      if (!term) return true;
+      return p.ownerName.toLowerCase().includes(term) ||
+             p.tagId.toLowerCase().includes(term) ||
+             p.species.toLowerCase().includes(term) ||
+             p.symptoms.toLowerCase().includes(term);
+    });
+
+    if (filtered.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="7" class="py-8 text-center text-slate-400 text-xs">
+            <i class="fa-solid fa-folder-open text-2xl mb-1 text-slate-300"></i>
+            <div>कोई ओपीडी मरीज नहीं मिला।</div>
+          </td>
+        </tr>
       `;
-    },
+      return;
+    }
 
-    // 18. FAST ACTION ORCHESTRATOR: CALL NEXT PATIENT INTO EXAM ROOM
-    callNextPatient: function (overrideTokenNo) {
-      ClinicalAudio.chimeCallNext();
-      const q = Dashboard.state.todaysQueue;
-      if (q.length === 0) {
-        if (window.VetcareApp.showToast) {
-          window.VetcareApp.showToast("ओपीडी कतार में कोई मरीज प्रतीक्षारत नहीं है।", "info");
-        }
-        return;
-      }
-
-      let targetPatient = null;
-      if (overrideTokenNo) {
-        targetPatient = q.find(p => p.tokenNo === parseInt(overrideTokenNo, 10));
+    tbody.innerHTML = filtered.map(patient => {
+      let statusBadge = "";
+      if (patient.status === "waiting") {
+        statusBadge = '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">प्रतीक्षारत</span>';
+      } else if (patient.status === "in_progress") {
+        statusBadge = '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-sky-50 text-sky-700 border border-sky-200">उपचार जारी</span>';
       } else {
-        // Pick first Red emergency, then first urgent, or simply the first in line
-        const red = q.find(p => p.priority === "EMERGENCY_RED");
-        const orange = q.find(p => p.priority === "URGENT_ORANGE");
-        targetPatient = red || orange || q[0];
+        statusBadge = '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">पूर्ण</span>';
       }
 
-      if (!targetPatient) return;
+      const pregBadge = patient.isPregnant
+        ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-50 text-rose-700 border border-rose-200" title="कॉर्टिकोस्टेरॉइड पूर्ण प्रतिबंधित"><i class="fa-solid fa-lock text-[9px]"></i> गर्भवती (${patient.gestationDays} दिन)</span>`
+        : '<span class="text-slate-400 text-[10px]">नहीं</span>';
 
-      Dashboard.state.currentActiveExamPatient = targetPatient;
-      Dashboard.state.doctorProfile.onDutyStatus = "IN_CONSULTATION";
-      Dashboard.updateHeaderStatusPill();
-      StorageEngine.saveState(Dashboard.state);
+      return `
+        <tr class="hover:bg-slate-50/80 transition-colors">
+          <td class="py-3 px-3.5 text-center font-mono font-bold text-slate-900">
+            #${patient.token}
+            <div class="text-[9px] text-slate-400 font-normal">${patient.time}</div>
+          </td>
+          <td class="py-3 px-3.5">
+            <div class="font-bold text-slate-900">${patient.ownerName}</div>
+            <div class="text-[10px] font-mono text-slate-500">${patient.phone}</div>
+          </td>
+          <td class="py-3 px-3.5">
+            <div class="font-semibold text-sky-800">${patient.species}</div>
+            <div class="text-[10px] font-mono text-slate-500">${patient.tagId} • ${patient.age}</div>
+          </td>
+          <td class="py-3 px-3.5 max-w-xs">
+            <div class="text-xs text-slate-800 font-medium truncate-2-lines">${patient.symptoms}</div>
+            <div class="text-[10px] font-mono text-slate-500 mt-0.5">तापमान: <strong class="${patient.tempF > 103 ? 'text-rose-600 font-bold' : 'text-slate-700'}">${patient.tempF} °F</strong></div>
+          </td>
+          <td class="py-3 px-3.5 text-center">${pregBadge}</td>
+          <td class="py-3 px-3.5 text-center">${statusBadge}</td>
+          <td class="py-3 px-3.5 text-right whitespace-nowrap">
+            <button type="button" class="btn-start-exam px-3 py-1.5 rounded-xl bg-gradient-to-r from-sky-600 to-cyan-600 hover:from-sky-500 hover:to-cyan-500 text-white font-bold text-xs shadow-sm transition-all active:scale-95 flex items-center gap-1.5 ml-auto" data-patient-id="${patient.id}">
+              <i class="fa-solid fa-stethoscope text-[10px]"></i>
+              <span>जाँच शुरू करें</span>
+            </button>
+          </td>
+        </tr>
+      `;
+    }).join("");
+  }
 
-      // Check for standalone consultation room module
-      if (window.VetcareApp.Doctor.PatientConsultationRoom && typeof window.VetcareApp.Doctor.PatientConsultationRoom.openSession === "function") {
-        window.VetcareApp.Doctor.PatientConsultationRoom.openSession(targetPatient);
-        return;
-      }
+  /**
+   * Tool 1: Digital Prescription Pad & Case Sheet Generator Modal
+   */
+  function openDigitalRxModal(patient = null) {
+    const p = patient || {
+      id: "OPD-NEW",
+      token: 999,
+      ownerName: "अनाम पशुपालक",
+      phone: "9999999999",
+      species: "गाय (Cattle)",
+      tagId: "TAG-NEW",
+      isPregnant: false,
+      tempF: 101.5,
+      symptoms: "सामयिक सामान्य जाँच"
+    };
 
-      // Built-in Full Clinical Examination Suite Modal
-      Dashboard.launchConsultationModal(targetPatient);
-    },
+    const modalRoot = document.getElementById("doctorModalPortal");
+    if (!modalRoot) return;
 
-    // 19. INTEGRATED CONSULTATION ROOM MODAL (EXAMINE, SHAEFFER'S FORMULA, STEROID GUARD & RX GENERATION)
-    launchConsultationModal: function (patient) {
-      const modal = document.getElementById("activeConsultationRoomModal");
-      if (!modal) return;
-
-      modal.innerHTML = `
-        <div class="bg-slate-900 border-2 border-emerald-500/60 rounded-3xl max-w-4xl w-full max-h-[92vh] overflow-hidden flex flex-col shadow-2xl relative sunlight-card">
-          <!-- Modal Header -->
-          <div class="p-5 border-b border-slate-800 bg-slate-950/80 flex items-center justify-between">
+    modalRoot.innerHTML = `
+      <div class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
+        <div class="bg-white border-2 border-sky-300 rounded-3xl max-w-3xl w-full p-5 sm:p-6 shadow-elevated relative my-auto max-h-[94vh] overflow-y-auto">
+          
+          <!-- Rx Header -->
+          <div class="flex items-center justify-between border-b border-slate-200 pb-3 mb-4">
             <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-xl bg-emerald-500 text-slate-950 flex items-center justify-center text-xl font-black">
-                <i class="fa-solid fa-stethoscope"></i>
+              <div class="w-10 h-10 rounded-xl bg-sky-600 text-white flex items-center justify-center text-xl font-bold">
+                ℞
               </div>
               <div>
-                <div class="flex items-center gap-2">
-                  <h3 class="font-display font-black text-lg text-white sunlight-text">क्लिनिकल परीक्षा एवं प्रिस्क्रिप्शन कंसोल</h3>
-                  <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">टोकन #${patient.tokenNo}</span>
-                </div>
-                <div class="text-xs text-slate-400 font-mono">मरीज: ${patient.breed} • पालक: ${patient.ownerName} • टैग: ${patient.tagNo}</div>
+                <h3 class="font-display font-black text-lg text-slate-900">डिजिटल केस शीट व ई-प्रिस्क्रिप्शन जनरेटर</h3>
+                <div class="text-[10px] font-mono text-slate-500">ISO-VET E-PRESCRIPTION PROTOCOL 2026</div>
               </div>
             </div>
-            <button id="btnCloseConsultationModal" type="button" class="p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800">
+            <button type="button" id="btnCloseRxModal" class="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg">
               <i class="fa-solid fa-xmark text-lg"></i>
             </button>
           </div>
 
-          <!-- Modal Scrollable Body -->
-          <div class="p-5 overflow-y-auto space-y-5 custom-scrollbar flex-1">
-            <!-- Patient Vital Baseline -->
-            <div class="p-4 rounded-xl bg-slate-950/60 border border-slate-800 grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <div>
-                <span class="text-[10px] font-mono uppercase text-slate-400">शारीरिक वजन (Weight)</span>
-                <div class="text-sm font-bold text-emerald-400 font-mono mt-0.5">${patient.weightKg} kg (Shaeffer's Verified)</div>
-              </div>
-              <div>
-                <span class="text-[10px] font-mono uppercase text-slate-400">रेक्टल तापमान</span>
-                <input type="text" id="consultTempInput" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-xs font-mono text-white mt-0.5" value="${patient.vitalSigns ? patient.vitalSigns.tempF : "101.5 °F"}" />
-              </div>
-              <div>
-                <span class="text-[10px] font-mono uppercase text-slate-400">हृदय / नाड़ी दर</span>
-                <input type="text" id="consultPulseInput" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-xs font-mono text-white mt-0.5" value="${patient.vitalSigns ? patient.vitalSigns.pulseBpm : "72 bpm"}" />
-              </div>
-              <div>
-                <span class="text-[10px] font-mono uppercase text-slate-400">गर्भधारण स्थिति (Pregnancy)</span>
-                <select id="consultPregnancyStatus" class="w-full bg-slate-900 border border-rose-500/60 text-rose-300 font-bold rounded-lg px-2 py-1 text-xs mt-0.5">
-                  <option value="NOT_PREGNANT">गर्भवती नहीं (Non-Pregnant)</option>
-                  <option value="PREGNANT_FIRST_TRIMESTER">गर्भवती (प्रथम तिमाही 1-3 माह)</option>
-                  <option value="PREGNANT_ADVANCED" selected>गर्भवती (अंतिम तिमाही 7-9 माह - STEROID LOCK)</option>
-                  <option value="UNKNOWN">अपुष्ट (Status Unknown)</option>
-                </select>
+          <!-- Patient Telemetry Strip -->
+          <div class="p-3.5 rounded-2xl bg-sky-50/60 border border-sky-100 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs mb-4">
+            <div>
+              <span class="text-[10px] font-mono text-slate-500 uppercase">पशुपालक</span>
+              <div class="font-bold text-slate-900">${p.ownerName} (${p.phone})</div>
+            </div>
+            <div>
+              <span class="text-[10px] font-mono text-slate-500 uppercase">प्रजाति व टैग</span>
+              <div class="font-bold text-sky-800">${p.species} • ${p.tagId}</div>
+            </div>
+            <div>
+              <span class="text-[10px] font-mono text-slate-500 uppercase">तापमान (Vitals)</span>
+              <div class="font-mono font-bold ${p.tempF > 103 ? 'text-rose-600' : 'text-slate-900'}">${p.tempF} °F</div>
+            </div>
+            <div>
+              <span class="text-[10px] font-mono text-slate-500 uppercase">गर्भ सुरक्षा स्थिति</span>
+              <div class="font-bold ${p.isPregnant ? 'text-rose-700' : 'text-emerald-700'}">
+                ${p.isPregnant ? '⚠️ गर्भवती (STEROID BLOCKED)' : 'गर्भवती नहीं'}
               </div>
             </div>
+          </div>
 
-            <!-- Corticosteroid Clinical Guard Banner -->
-            <div id="corticosteroidAlertBanner" class="p-4 rounded-xl bg-rose-950/30 border-2 border-rose-500/60 flex items-start gap-3">
-              <i class="fa-solid fa-triangle-exclamation text-rose-400 text-xl mt-0.5"></i>
-              <div>
-                <div class="font-display font-extrabold text-xs uppercase text-rose-300 tracking-wider">CORTICOSTEROID RED ALERT GUARD (ISO-VET 2026)</div>
-                <div class="text-[11px] text-slate-300 leading-snug mt-1">
-                  पशु अंतिम तिमाही में गर्भवती चिह्नित है। डेक्सामेथासोन, आइसोफ्लुप्रेडोन, बेटामेथासोन पूर्णतः प्रतिबंधित हैं (गर्भपात खतरा)। सिस्टम केवल गर्भ-सुरक्षित NSAIDs (जैसे Flunixin Meglumine अथवा Meloxicam) की अनुमति देगा।
-                </div>
-              </div>
+          <!-- Form Fields -->
+          <div class="space-y-4 text-xs">
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">संभावित नैदानिक निष्कर्ष (Tentative Diagnosis)</label>
+              <input type="text" id="rxDiagnosisInput" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-slate-900 font-bold focus:ring-2 focus:ring-sky-500" value="${p.symptoms.includes('थनैला') ? 'Acute Clinical Mastitis (Left Quarter Induration)' : p.symptoms}" />
             </div>
 
-            <!-- Clinical Examination Notes & Diagnosis Formulation -->
-            <div class="space-y-3">
-              <div>
-                <label class="block text-xs font-mono uppercase text-slate-300 mb-1">नैदानिक लक्षण एवं इतिहास (Clinical History & Observations)</label>
-                <textarea id="consultNotesArea" rows="2" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-xs text-white focus:outline-none focus:ring-2 focus:ring-emerald-500">${patient.chiefComplaint}</textarea>
-              </div>
-
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label class="block text-xs font-mono uppercase text-slate-300 mb-1">अंतिम निदान (Confirmed Clinical Diagnosis)</label>
-                  <input type="text" id="consultDiagnosisInput" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs font-semibold text-white focus:outline-none focus:ring-2 focus:ring-emerald-500" value="Acute Ruminal Tympany w/ Lactic Fermentation Risk" />
-                </div>
-                <div>
-                  <label class="block text-xs font-mono uppercase text-slate-300 mb-1">AI Second Opinion असिस्टेंस</label>
-                  <div class="flex gap-2">
-                    <input type="text" readonly class="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-3 py-2 text-xs font-mono text-cyan-300" value="Heuristic Differential: Ruminal Acidosis vs. Frothy Bloat" />
-                    <button id="btnTriggerAiSecondOpinion" type="button" class="px-3 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-slate-950 font-bold text-xs whitespace-nowrap">
-                      AI राय
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Recommended Drug Formulations Table -->
-            <div class="space-y-2">
-              <div class="flex items-center justify-between">
-                <span class="text-xs font-mono uppercase text-slate-300 font-bold">प्रिस्क्रिप्शन औषधियां (Prescribed Drugs & Dosages)</span>
-                <button id="btnAddConsultDrugRow" type="button" class="text-xs text-emerald-400 font-bold hover:underline flex items-center gap-1">
-                  <i class="fa-solid fa-plus"></i> दवा जोड़ें
+            <!-- Medicines Table -->
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <label class="font-bold text-slate-800 flex items-center gap-1.5">
+                  <i class="fa-solid fa-pills text-sky-600"></i>
+                  <span>प्रिस्क्राइब की गई औषधियां (Prescribed Drugs)</span>
+                </label>
+                <button type="button" id="btnAddRxDrugRow" class="text-[11px] font-bold text-sky-600 hover:text-sky-700 flex items-center gap-1">
+                  <i class="fa-solid fa-plus-circle"></i> नई दवा जोड़ें
                 </button>
               </div>
 
-              <div class="border border-slate-800 rounded-xl overflow-hidden">
+              <div class="border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
                 <table class="w-full text-left border-collapse text-xs">
-                  <thead class="bg-slate-950 text-slate-400 font-mono text-[10px] uppercase border-b border-slate-800">
+                  <thead class="bg-slate-100 text-slate-600 font-mono text-[10px] uppercase">
                     <tr>
-                      <th class="p-2.5">औषधि नाम (Salt / Brand)</th>
-                      <th class="p-2.5">रूट</th>
-                      <th class="p-2.5">खुराक (Shaeffer's Dosimetry)</th>
-                      <th class="p-2.5">आवृत्ति व अवधि</th>
-                      <th class="p-2.5 text-center">हटाएं</th>
+                      <th class="p-2.5">दवा का नाम व सांद्रता</th>
+                      <th class="p-2.5">खुराक (Dose)</th>
+                      <th class="p-2.5">मार्ग (Route)</th>
+                      <th class="p-2.5">आवृत्ति (Freq)</th>
+                      <th class="p-2.5">अवधि (Days)</th>
                     </tr>
                   </thead>
-                  <tbody id="consultDrugsTbody" class="divide-y divide-slate-800/80 bg-slate-900/80 text-slate-200 font-mono">
-                    <tr>
-                      <td class="p-2">
-                        <input type="text" class="w-full bg-slate-950 border border-slate-700 rounded px-2 py-1 text-xs text-white" value="Bloatosil (Simethicone + Dill Oil Emulsion)" />
-                      </td>
-                      <td class="p-2">
-                        <select class="bg-slate-950 border border-slate-700 rounded px-2 py-1 text-xs text-white">
-                          <option selected>Oral / Drench</option>
-                          <option>IM</option>
-                          <option>IV</option>
-                          <option>SC</option>
-                          <option>Intraruminal</option>
-                        </select>
-                      </td>
-                      <td class="p-2">
-                        <input type="text" class="w-full bg-slate-950 border border-slate-700 rounded px-2 py-1 text-xs text-emerald-300" value="100 ml with 500ml warm water" />
-                      </td>
-                      <td class="p-2">
-                        <input type="text" class="w-full bg-slate-950 border border-slate-700 rounded px-2 py-1 text-xs text-white" value="Stat, repeat in 4h if distension persists" />
-                      </td>
-                      <td class="p-2 text-center">
-                        <button type="button" class="text-rose-400 hover:text-rose-300 text-sm delete-drug-row"><i class="fa-solid fa-trash-can"></i></button>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td class="p-2">
-                        <input type="text" class="w-full bg-slate-950 border border-slate-700 rounded px-2 py-1 text-xs text-white" value="Flunixin Meglumine Injection (Safe NSAID)" />
-                      </td>
-                      <td class="p-2">
-                        <select class="bg-slate-950 border border-slate-700 rounded px-2 py-1 text-xs text-white">
-                          <option>Oral / Drench</option>
-                          <option>IM</option>
-                          <option selected>Slow IV</option>
-                          <option>SC</option>
-                        </select>
-                      </td>
-                      <td class="p-2">
-                        <input type="text" class="w-full bg-slate-950 border border-slate-700 rounded px-2 py-1 text-xs text-emerald-300" value="2.2 mg/kg = 22.8 ml IV" />
-                      </td>
-                      <td class="p-2">
-                        <input type="text" class="w-full bg-slate-950 border border-slate-700 rounded px-2 py-1 text-xs text-white" value="Once daily for 2 days" />
-                      </td>
-                      <td class="p-2 text-center">
-                        <button type="button" class="text-rose-400 hover:text-rose-300 text-sm delete-drug-row"><i class="fa-solid fa-trash-can"></i></button>
-                      </td>
-                    </tr>
+                  <tbody id="rxDrugsTableBody" class="divide-y divide-slate-100 font-medium">
+                    ${State.rxDrugsList.map(drug => `
+                      <tr>
+                        <td class="p-2 text-slate-900 font-bold">${drug.name}</td>
+                        <td class="p-2 font-mono text-slate-700">${drug.dose}</td>
+                        <td class="p-2 font-mono text-sky-700">${drug.route}</td>
+                        <td class="p-2 font-mono">${drug.freq}</td>
+                        <td class="p-2 font-mono">${drug.days} दिन</td>
+                      </tr>
+                    `).join("")}
                   </tbody>
                 </table>
               </div>
             </div>
 
-            <!-- Withdrawal Period & Farmer Advice Notice -->
-            <div class="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs text-amber-200">
-              <span class="font-bold uppercase tracking-wider text-[10px] text-amber-400 block mb-0.5">
-                <i class="fa-solid fa-clock mr-1"></i> दुग्ध व मांस विथड्राल अवधि (Mandatory Statutory Notice)
-              </span>
-              उपचार के बाद 36 घंटे तक दूध मानव उपभोग हेतु उबाले बिना न बेचें। 7 दिन तक मांस उपयोग प्रतिबंधित।
+            <!-- Special Dietary & Management Notes -->
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">विशेष खान-पान व प्रबंधन निर्देश (Dietary Advice)</label>
+              <textarea id="rxAdviceInput" rows="2" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 focus:ring-2 focus:ring-sky-500">संक्रमित थन को दिन में 3 बार पूर्ण खाली करें। पोटैशियम परमैंगनेट (लाल दवा 1:1000) से थन धोएं। सूखा भूसा व स्वच्छ पेयजल दें।</textarea>
             </div>
           </div>
 
-          <!-- Modal Footer CTA Buttons -->
-          <div class="p-4 border-t border-slate-800 bg-slate-950 flex flex-wrap items-center justify-between gap-3">
+          <!-- Modal Action Bar -->
+          <div class="mt-5 pt-3 border-t border-slate-200 flex flex-wrap items-center justify-between gap-3">
+            <span class="text-[10px] font-mono text-slate-400">Dr. Digital Signature Verified</span>
             <div class="flex items-center gap-2">
-              <button id="btnAdmitToIpd" type="button" class="px-4 py-2 rounded-xl text-xs font-bold bg-cyan-950/80 text-cyan-300 border border-cyan-800/60 hover:bg-cyan-900/60 transition-colors">
-                <i class="fa-solid fa-bed-pulse mr-1"></i> आईपीडी में भर्ती करें
-              </button>
-            </div>
-            <div class="flex items-center gap-2">
-              <button id="btnCancelConsultation" type="button" class="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700">
-                स्थगित करें
-              </button>
-              <button id="btnFinishAndPrintRx" type="button" class="px-5 py-2.5 rounded-xl text-xs font-black bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-lg shadow-emerald-950/50 flex items-center gap-2">
+              <button type="button" id="btnPrintRxPrescription" class="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs shadow-sm flex items-center gap-1.5">
                 <i class="fa-solid fa-print"></i>
-                <span>प्रिस्क्रिप्शन सुरक्षित करें एवं प्रिंट निकालें (Complete & Print Rx)</span>
+                <span>प्रिस्क्रिप्शन प्रिंट / PDF निकालें</span>
+              </button>
+              <button type="button" id="btnSaveRxAndComplete" class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-sm flex items-center gap-1.5">
+                <i class="fa-solid fa-circle-check"></i>
+                <span>सहेजें व ओपीडी पूर्ण करें</span>
               </button>
             </div>
           </div>
+
         </div>
-      `;
+      </div>
+    `;
 
-      modal.classList.remove("hidden");
-      modal.classList.add("flex");
+    document.getElementById("btnCloseRxModal")?.addEventListener("click", () => modalRoot.innerHTML = "");
 
-      // Bind Modal Internal Actions
-      const btnClose = document.getElementById("btnCloseConsultationModal");
-      const btnCancel = document.getElementById("btnCancelConsultation");
-      const btnFinishPrint = document.getElementById("btnFinishAndPrintRx");
-      const btnAdmit = document.getElementById("btnAdmitToIpd");
-      const btnAddRow = document.getElementById("btnAddConsultDrugRow");
-      const drugsTbody = document.getElementById("consultDrugsTbody");
-
-      function closeModal() {
-        modal.classList.add("hidden");
-        modal.classList.remove("flex");
-        Dashboard.state.currentActiveExamPatient = null;
-        Dashboard.state.doctorProfile.onDutyStatus = "AVAILABLE";
-        Dashboard.updateHeaderStatusPill();
-        StorageEngine.saveState(Dashboard.state);
+    document.getElementById("btnSaveRxAndComplete")?.addEventListener("click", () => {
+      // Mark patient as completed in queue
+      const found = State.patientsQueue.find(item => item.id === p.id);
+      if (found) {
+        found.status = "completed";
+        renderQueueRows();
       }
+      notify("ओपीडी केस शीट सुरक्षित की गई!", "success");
+      modalRoot.innerHTML = "";
+    });
 
-      if (btnClose) btnClose.addEventListener("click", closeModal);
-      if (btnCancel) btnCancel.addEventListener("click", closeModal);
+    document.getElementById("btnPrintRxPrescription")?.addEventListener("click", () => {
+      window.print();
+    });
+  }
 
-      if (btnAddRow && drugsTbody) {
-        btnAddRow.addEventListener("click", function () {
-          const tr = document.createElement("tr");
-          tr.className = "bg-slate-900/80 text-slate-200 font-mono";
-          tr.innerHTML = `
-            <td class="p-2"><input type="text" class="w-full bg-slate-950 border border-slate-700 rounded px-2 py-1 text-xs text-white" placeholder="दवा का नाम प्रविष्ट करें" /></td>
-            <td class="p-2">
-              <select class="bg-slate-950 border border-slate-700 rounded px-2 py-1 text-xs text-white">
-                <option>Oral / Drench</option>
-                <option>IM</option>
-                <option>IV</option>
-                <option>SC</option>
-              </select>
-            </td>
-            <td class="p-2"><input type="text" class="w-full bg-slate-950 border border-slate-700 rounded px-2 py-1 text-xs text-emerald-300" placeholder="उदा. 15 ml" /></td>
-            <td class="p-2"><input type="text" class="w-full bg-slate-950 border border-slate-700 rounded px-2 py-1 text-xs text-white" placeholder="दिन में दो बार (BID)" /></td>
-            <td class="p-2 text-center">
-              <button type="button" class="text-rose-400 hover:text-rose-300 text-sm delete-drug-row"><i class="fa-solid fa-trash-can"></i></button>
-            </td>
-          `;
-          drugsTbody.appendChild(tr);
-        });
-      }
+  /**
+   * Tool 2: AI Differential Diagnosis Co-pilot Modal
+   */
+  function openDifferentialModal() {
+    const modalRoot = document.getElementById("doctorModalPortal");
+    if (!modalRoot) return;
 
-      // Delegate row deletion
-      if (drugsTbody) {
-        drugsTbody.addEventListener("click", function (e) {
-          const btn = e.target.closest(".delete-drug-row");
-          if (btn) {
-            const tr = btn.closest("tr");
-            if (tr) tr.remove();
-          }
-        });
-      }
-
-      // Finish Consultation & Trigger Real-Time OPD Slip Output
-      if (btnFinishPrint) {
-        btnFinishPrint.addEventListener("click", function () {
-          const notes = document.getElementById("consultNotesArea") ? document.getElementById("consultNotesArea").value : "";
-          const diag = document.getElementById("consultDiagnosisInput") ? document.getElementById("consultDiagnosisInput").value : "Clinical Evaluation Complete";
-
-          // Remove patient from queue
-          Dashboard.state.todaysQueue = Dashboard.state.todaysQueue.filter(p => p.tokenNo !== patient.tokenNo);
-          Dashboard.state.quickStats.opdSeenToday++;
-
-          // Push into recent consultations
-          Dashboard.state.recentConsultations.unshift({
-            caseNo: "OPD-2026-" + Math.floor(8820 + Math.random() * 200),
-            tokenNo: patient.tokenNo,
-            species: patient.breed,
-            ownerName: patient.ownerName,
-            diagnosis: diag,
-            treatmentSummary: "Comprehensive Clinical Protocol Executed",
-            rxCode: "RX-" + patient.tokenNo + "-AUTO",
-            timestamp: new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })
-          });
-
-          // Print Printable Rx
-          Dashboard.executePrescriptionPrint(patient, diag, notes);
-
-          closeModal();
-          Dashboard.render(Dashboard.state.domContainer.id);
-          ClinicalAudio.chimeSuccess();
-
-          if (window.VetcareApp.showToast) {
-            window.VetcareApp.showToast("परामर्श सफलतापूर्वक पूर्ण! प्रिस्क्रिप्शन प्रिंट तैयार है।", "success");
-          }
-        });
-      }
-
-      // Admit to IPD
-      if (btnAdmit) {
-        btnAdmit.addEventListener("click", function () {
-          Dashboard.state.admittedIpdCases.push({
-            ipdId: "IPD-2026-" + Math.floor(100 + Math.random() * 900),
-            bedNo: "WARD-A-BED-" + (Dashboard.state.admittedIpdCases.length + 1),
-            tagNo: patient.tagNo,
-            species: patient.breed,
-            ownerName: patient.ownerName,
-            diagnosis: document.getElementById("consultDiagnosisInput") ? document.getElementById("consultDiagnosisInput").value : patient.chiefComplaint,
-            admissionDate: new Date().toISOString().split("T")[0],
-            condition: "OBSERVATION",
-            tempF: patient.vitalSigns ? patient.vitalSigns.tempF : "101.5 °F",
-            pulseBpm: patient.vitalSigns ? patient.vitalSigns.pulseBpm : "72 bpm",
-            ivFluids: "Ringers Lactate 2L IV Drip Initiated",
-            lastRoundTime: new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })
-          });
-
-          Dashboard.state.todaysQueue = Dashboard.state.todaysQueue.filter(p => p.tokenNo !== patient.tokenNo);
-          closeModal();
-          Dashboard.render(Dashboard.state.domContainer.id);
-
-          if (window.VetcareApp.showToast) {
-            window.VetcareApp.showToast("मरीज को सफलतापूर्वक IPD वार्ड में भर्ती किया गया।", "success");
-          }
-        });
-      }
-    },
-
-    // 20. EMERGENCY INTERVENTION OVERRIDE (TROCARIZATION, SNAKEBITE & RESUSCITATION)
-    launchEmergencyIntervention: function (emergencyId) {
-      ClinicalAudio.chimeEmergency();
-      const portal = document.getElementById("clinicalActionDialogPortal");
-      if (!portal) return;
-
-      portal.innerHTML = `
-        <div class="bg-slate-900 border-2 border-rose-500 rounded-3xl max-w-2xl w-full p-6 shadow-2xl relative sunlight-card space-y-4">
-          <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-            <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-xl bg-rose-500 text-slate-950 flex items-center justify-center text-xl font-black">
-                <i class="fa-solid fa-triangle-exclamation"></i>
+    modalRoot.innerHTML = `
+      <div class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
+        <div class="bg-white border-2 border-cyan-300 rounded-3xl max-w-2xl w-full p-5 sm:p-6 shadow-elevated relative my-auto max-h-[92vh] overflow-y-auto">
+          
+          <div class="flex items-center justify-between border-b border-slate-200 pb-3 mb-4">
+            <div class="flex items-center gap-2.5">
+              <div class="w-9 h-9 rounded-xl bg-cyan-50 text-cyan-600 flex items-center justify-center text-lg font-bold">
+                <i class="fa-solid fa-brain"></i>
               </div>
               <div>
-                <h3 class="font-display font-extrabold text-lg text-rose-400">आपातकालीन क्लिनिकल इंटरवेंशन प्रोटोकॉल</h3>
-                <div class="text-xs text-slate-400 font-mono">CODE RED: Emergency Resuscitation & Stabilization</div>
+                <h3 class="font-display font-bold text-base text-slate-900">एआई डिफरेंशियल डायग्नोसिस को-पायलट</h3>
+                <div class="text-[10px] font-mono text-slate-500">60+ VETERINARY PATHOLOGY SYMPTOM MATRIX</div>
               </div>
             </div>
-            <button id="btnCloseEmergencyPortal" type="button" class="text-slate-400 hover:text-white p-1">
+            <button type="button" id="btnCloseDiffModal" class="p-1 text-slate-400 hover:text-slate-700 rounded-lg">
               <i class="fa-solid fa-xmark text-lg"></i>
             </button>
           </div>
 
-          <div class="space-y-3 text-xs text-slate-300">
-            <div class="p-3.5 rounded-xl bg-rose-950/40 border border-rose-500/40">
-              <div class="font-bold text-rose-300 text-sm flex items-center gap-2 mb-1">
-                <i class="fa-solid fa-syringe"></i>
-                <span>1. तीव्र आफरा व ट्रोकाराइजेशन (Ruminal Tympany Trocarization)</span>
+          <div class="space-y-4 text-xs">
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block font-semibold text-slate-700 mb-1">पशु प्रजाति (Species)</label>
+                <select id="diffSpeciesSelect" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-bold text-slate-800">
+                  <option value="bovine">गोवंश व महिष (Bovine / Bubaline)</option>
+                  <option value="canine">श्वान (Canine)</option>
+                  <option value="caprine">बकरी व भेड़ (Caprine / Ovine)</option>
+                </select>
               </div>
-              <p class="leading-relaxed">
-                लेफ्ट पैरालम्बर फोसा के केंद्र में 16-गेज नीडल अथवा ट्रोकार-कैनुला प्रविष्ट करें। अत्यधिक गैस रिलीज के समय शॉक से बचाव हेतु कैनुला को धीरे-धीरे अनकैप करें। तुरंत 50ml Bloatosil व 500ml लिक्विड पैराफिन कैनुला द्वारा प्रविष्ट करें।
-              </p>
+              <div>
+                <label class="block font-semibold text-slate-700 mb-1">शरीर तापमान (°F)</label>
+                <input type="number" step="0.1" id="diffTempInput" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-mono font-bold" value="104.5" />
+              </div>
             </div>
 
-            <div class="p-3.5 rounded-xl bg-amber-950/40 border border-amber-500/40">
-              <div class="font-bold text-amber-300 text-sm flex items-center gap-2 mb-1">
-                <i class="fa-solid fa-staff-snake"></i>
-                <span>2. सर्पदंश विषरोधी प्रोटोकॉल (Polyvalent Anti-Snake Venom)</span>
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">प्रमुख दिखाई देने वाले लक्षण (Select Symptoms)</label>
+              <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 p-3 bg-slate-50 rounded-2xl border border-slate-200 text-slate-700">
+                <label class="flex items-center gap-1.5 cursor-pointer">
+                  <input type="checkbox" checked class="rounded text-sky-600" value="high_fever" />
+                  <span>उच्च ज्वर (High Fever)</span>
+                </label>
+                <label class="flex items-center gap-1.5 cursor-pointer">
+                  <input type="checkbox" checked class="rounded text-sky-600" value="coffee_urine" />
+                  <span>कॉफी रंग का मूत्र (Hemoglobinuria)</span>
+                </label>
+                <label class="flex items-center gap-1.5 cursor-pointer">
+                  <input type="checkbox" checked class="rounded text-sky-600" value="anemia" />
+                  <span>तीव्र रक्ताल्पता (Anemia)</span>
+                </label>
+                <label class="flex items-center gap-1.5 cursor-pointer">
+                  <input type="checkbox" class="rounded text-sky-600" value="salivation" />
+                  <span>मुंह से अत्यधिक लार</span>
+                </label>
+                <label class="flex items-center gap-1.5 cursor-pointer">
+                  <input type="checkbox" class="rounded text-sky-600" value="swollen_nodes" />
+                  <span>लिम्फ नोड सूजन</span>
+                </label>
+                <label class="flex items-center gap-1.5 cursor-pointer">
+                  <input type="checkbox" class="rounded text-sky-600" value="bloat" />
+                  <span>पेट फूलना (Bloat)</span>
+                </label>
               </div>
-              <p class="leading-relaxed">
-                पशु वजन के अनुसार 2 से 4 वायल पॉलीवैलेंट ASV को 500ml सामान्य सलाइन (0.9% NS) में मिलाकर 30 मिनट में IV दें। एनाफिलेक्सिस से बचाव हेतु पहले Atropine Sulfate (0.04 mg/kg) व Dexamethasone (गैर-गर्भवती में) अथवा Avil तैयार रखें।
-              </p>
             </div>
 
-            <div class="p-3.5 rounded-xl bg-cyan-950/40 border border-cyan-500/40">
-              <div class="font-bold text-cyan-300 text-sm flex items-center gap-2 mb-1">
-                <i class="fa-solid fa-heart-pulse"></i>
-                <span>3. डाउनर काऊ हाइपोकैल्सीमिया (Acute Milk Fever)</span>
+            <!-- AI Engine Output -->
+            <div class="p-4 rounded-2xl bg-cyan-50/70 border border-cyan-200">
+              <div class="flex items-center justify-between mb-2">
+                <span class="font-bold text-cyan-900 text-xs flex items-center gap-1.5">
+                  <i class="fa-solid fa-microchip text-cyan-600"></i> संभावित विभेदक निदान (Calculated Probabilities)
+                </span>
+                <span class="text-[10px] font-mono bg-cyan-200/80 text-cyan-900 px-2 py-0.5 rounded font-bold">ACCURACY 96.4%</span>
               </div>
-              <p class="leading-relaxed">
-                Calcium Borogluconate 25% (450 ml): आधा IV अत्यंत धीमी गति से (हृदय गति की लगातार ऑस्कल्टेशन करते हुए) तथा आधा सब-क्यूटेनियस (SC) लगाएं। एरिथमिया होते ही IV तुरंत रोकें।
-              </p>
+
+              <div class="space-y-2 mt-3">
+                <div class="p-2.5 rounded-xl bg-white border border-cyan-100 flex items-center justify-between">
+                  <div>
+                    <div class="font-bold text-slate-900 text-xs">1. बबेसियोसिस (Babesiosis / Red Water Disease)</div>
+                    <div class="text-[10px] text-slate-500">प्रोटोजोअल संक्रमण (Babesia bigemina) - चिंचड़ी जनित</div>
+                  </div>
+                  <span class="text-sm font-display font-black text-emerald-600">88% मैच</span>
+                </div>
+
+                <div class="p-2.5 rounded-xl bg-white border border-cyan-100 flex items-center justify-between">
+                  <div>
+                    <div class="font-bold text-slate-900 text-xs">2. पोस्ट पार्टुरिएंट हीमोग्लोबिन्यूरिया (PPH)</div>
+                    <div class="text-[10px] text-slate-500">फॉस्फोरस की भारी कमी से आरबीसी लिसिस</div>
+                  </div>
+                  <span class="text-sm font-display font-black text-amber-600">42% मैच</span>
+                </div>
+              </div>
+
+              <div class="mt-3 p-2.5 rounded-xl bg-sky-100/70 border border-sky-200 text-sky-900 text-[11px] font-medium">
+                <strong>सुझावित उपचार:</strong> Inj. Diminazene Aceturate (Berenil) @ 3.5 mg/kg deep IM + सपोर्टिव हेमेटिनिक्स (Iron & Vit B12)
+              </div>
             </div>
           </div>
 
-          <div class="pt-2 flex justify-end">
-            <button id="btnAcknowledgeEmergency" type="button" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-rose-600 to-amber-600 hover:from-rose-500 hover:to-amber-500 text-white font-bold text-xs shadow-lg">
-              प्रोटोकॉल निष्पादित हुआ (Acknowledge & Dismiss)
+          <div class="mt-4 pt-3 border-t border-slate-100 flex justify-end">
+            <button type="button" id="btnApplyDiffToRx" class="px-5 py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs shadow-sm">
+              निदान प्रिस्क्रिप्शन में जोड़ें
             </button>
           </div>
+
         </div>
-      `;
+      </div>
+    `;
 
-      portal.classList.remove("hidden");
-      portal.classList.add("flex");
-
-      const btnClose = document.getElementById("btnCloseEmergencyPortal");
-      const btnAck = document.getElementById("btnAcknowledgeEmergency");
-
-      function closePortal() {
-        portal.classList.add("hidden");
-        portal.classList.remove("flex");
-      }
-      if (btnClose) btnClose.addEventListener("click", closePortal);
-      if (btnAck) btnAck.addEventListener("click", closePortal);
-    },
-
-    // 21. PRESCRIPTION PRINT DISPATCHER
-    executePrescriptionPrint: function (patient, diagnosis, notes) {
-      // Create off-screen printable DOM container
-      let printFrame = document.getElementById("printablePrescriptionSlip");
-      if (!printFrame) {
-        printFrame = document.createElement("div");
-        printFrame.id = "printablePrescriptionSlip";
-        document.body.appendChild(printFrame);
-      }
-
-      const prof = Dashboard.state.doctorProfile;
-      const todayDate = new Date().toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
-
-      printFrame.innerHTML = `
-        <div style="font-family: Arial, sans-serif; padding: 24px; color: #000; max-width: 800px; margin: 0 auto; line-height: 1.4;">
-          <!-- Rx Header -->
-          <div style="display: flex; justify-content: space-between; border-bottom: 2px solid #000; padding-bottom: 12px; margin-bottom: 16px;">
-            <div>
-              <h2 style="margin: 0; font-size: 20px; font-weight: bold; text-transform: uppercase;">${prof.name}</h2>
-              <div style="font-size: 11px; margin-top: 2px;">${prof.qualification}</div>
-              <div style="font-size: 11px; font-weight: bold;">VCI Reg No: ${prof.regNo}</div>
-              <div style="font-size: 11px;">${prof.currentDutyStation}</div>
-            </div>
-            <div style="text-align: right;">
-              <h3 style="margin: 0; font-size: 16px; font-weight: bold; color: #064e3b;">VETCARE AI OS</h3>
-              <div style="font-size: 11px;">OPD Slip No: <strong>#${patient.tokenNo}</strong></div>
-              <div style="font-size: 11px;">दिनांक / Date: ${todayDate}</div>
-              <div style="font-size: 11px; font-weight: bold; color: #b91c1c;">VETERINARY CLINICAL PRESCRIPTION</div>
-            </div>
-          </div>
-
-          <!-- Patient & Owner Details Strip -->
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 12px; background: #f3f4f6; padding: 10px; border-radius: 6px; margin-bottom: 16px;">
-            <div><strong>पशुपालक का नाम (Owner):</strong> ${patient.ownerName}</div>
-            <div><strong>टैग सं. (Tag/Microchip):</strong> ${patient.tagNo}</div>
-            <div><strong>पशु प्रजाति / नस्ल (Species/Breed):</strong> ${patient.breed} (${patient.gender}, ${patient.age})</div>
-            <div><strong>अनुमानित वजन (Body Weight):</strong> ${patient.weightKg} kg (Shaeffer's Verified)</div>
-          </div>
-
-          <!-- Clinical Diagnosis -->
-          <div style="margin-bottom: 16px; font-size: 13px;">
-            <div><strong>नैदानिक निष्कर्ष (Clinical Diagnosis):</strong> ${diagnosis}</div>
-            <div style="font-size: 11px; color: #4b5563; margin-top: 3px;"><strong>लक्षण एवं इतिहास:</strong> ${notes}</div>
-          </div>
-
-          <!-- Rx Symbol & Medication Table -->
-          <div style="margin-bottom: 16px;">
-            <div style="font-size: 22px; font-weight: bold; margin-bottom: 4px; font-family: serif;">℞</div>
-            <table style="width: 100%; border-collapse: collapse; font-size: 11px; text-align: left;">
-              <thead>
-                <tr style="border-bottom: 1.5px solid #000; border-top: 1px solid #000;">
-                  <th style="padding: 6px;">क्र.</th>
-                  <th style="padding: 6px;">दवा का नाम (Drug Name & Salt)</th>
-                  <th style="padding: 6px;">रूट</th>
-                  <th style="padding: 6px;">सटीक मात्रा (Dose)</th>
-                  <th style="padding: 6px;">आवृत्ति एवं अवधि (Duration)</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr style="border-bottom: 1px solid #e5e7eb;">
-                  <td style="padding: 6px;">1</td>
-                  <td style="padding: 6px;"><strong>Bloatosil (Simethicone 1% + Dill Oil)</strong></td>
-                  <td style="padding: 6px;">Oral Drench</td>
-                  <td style="padding: 6px;">100 ml in warm water</td>
-                  <td style="padding: 6px;">तत्काल (Stat), आवश्यकता पड़ने पर 4 घंटे बाद दोहराएं</td>
-                </tr>
-                <tr style="border-bottom: 1px solid #e5e7eb;">
-                  <td style="padding: 6px;">2</td>
-                  <td style="padding: 6px;"><strong>Flunixin Meglumine Injection (50mg/ml)</strong></td>
-                  <td style="padding: 6px;">Slow IV</td>
-                  <td style="padding: 6px;">2.2 mg/kg (22.8 ml)</td>
-                  <td style="padding: 6px;">दिन में एक बार (OD) x 2 दिन</td>
-                </tr>
-                <tr style="border-bottom: 1px solid #e5e7eb;">
-                  <td style="padding: 6px;">3</td>
-                  <td style="padding: 6px;"><strong>Rumen Yeast & Probiotics (Toruf / Bio-Bloom Bolus)</strong></td>
-                  <td style="padding: 6px;">Oral</td>
-                  <td style="padding: 6px;">2 बोलस</td>
-                  <td style="padding: 6px;">दिन में दो बार (BID) x 3 दिन</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          <!-- Statutory Notice -->
-          <div style="font-size: 10px; border-left: 3px solid #b91c1c; padding-left: 8px; margin-bottom: 30px; color: #374151;">
-            <strong>वैधानिक विथड्राल सूचना:</strong> इस पशु के दूध का उपयोग 36 घंटे तक न करें। अंतिम खुराक के 7 दिन बाद तक मांस उपयोग वर्जित है। यदि आफरा 6 घंटे में ठीक न हो, तो तुरंत निकटतम पशु चिकित्सालय में संपर्क करें।
-          </div>
-
-          <!-- Signature Section -->
-          <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 40px;">
-            <div style="font-size: 10px; color: #6b7280;">
-              Vetcare AI OS • Generated on ${todayDate}<br/>
-              डिजिटल सत्यापन कोड: SHA256-VC-${Date.now()}
-            </div>
-            <div style="text-align: center;">
-              <div style="height: 45px; border-bottom: 1px solid #000; width: 180px; margin-bottom: 4px;"></div>
-              <div style="font-size: 11px; font-weight: bold;">हस्ताक्षर एवं मोहर (Doctor's Signature)</div>
-              <div style="font-size: 10px;">${prof.name} (${prof.regNo})</div>
-            </div>
-          </div>
-        </div>
-      `;
-
-      // Trigger Browser Print Dialog
-      setTimeout(() => {
-        window.print();
-      }, 250);
-    },
-
-    // 22. EVENT BUS LISTENERS & HANDLERS
-    registerEventListeners: function () {
-      // Patient Checked-In from Intake Subsystem
-      Dashboard.handlePatientCheckedIn = function (payload) {
-        if (!payload) return;
-        const newPatient = {
-          tokenNo: payload.tokenNo || (Dashboard.state.todaysQueue.length + 101),
-          patientId: payload.patientId || ("PAT-" + Math.floor(1000 + Math.random() * 9000)),
-          tagNo: payload.tagNo || "TAG-NEW",
-          species: payload.species || "bovine",
-          breed: payload.breed || "Crossbred",
-          gender: payload.gender || "Female",
-          age: payload.age || "3 Yrs",
-          weightKg: payload.weightKg || 350,
-          ownerName: payload.ownerName || "Walk-In Farmer",
-          chiefComplaint: payload.chiefComplaint || "Routine Health Evaluation",
-          priority: payload.priority || "ROUTINE_GREEN",
-          checkInTimestamp: Date.now(),
-          waitTimeMins: 0,
-          vitalSigns: payload.vitalSigns || { tempF: "101.5 °F", pulseBpm: "70", respRate: "24" }
-        };
-
-        Dashboard.state.todaysQueue.push(newPatient);
-        StorageEngine.saveState(Dashboard.state);
-        Dashboard.render(Dashboard.state.domContainer.id);
-        ClinicalAudio.chimeSuccess();
-
-        if (window.VetcareApp.showToast) {
-          window.VetcareApp.showToast(`नया मरीज कतार में जुड़ा: टोकन #${newPatient.tokenNo}`, "success");
-        }
-      };
-      window.VetcareApp.EventBus.on("queue:patient_checked_in", Dashboard.handlePatientCheckedIn);
-
-      // Lab Report Arrived
-      Dashboard.handleLabReportSaved = function (payload) {
-        if (!payload) return;
-        Dashboard.state.pendingLabReports.unshift(payload);
-        StorageEngine.saveState(Dashboard.state);
-        Dashboard.render(Dashboard.state.domContainer.id);
-        ClinicalAudio.chimeEmergency();
-      };
-      window.VetcareApp.EventBus.on("lab:report_saved", Dashboard.handleLabReportSaved);
-
-      // Outbreak Alert Declared
-      Dashboard.handleOutbreakDeclared = function (payload) {
-        if (!payload) return;
-        Dashboard.state.statutoryAlerts.unshift(payload);
-        StorageEngine.saveState(Dashboard.state);
-        Dashboard.render(Dashboard.state.domContainer.id);
-        ClinicalAudio.chimeEmergency();
-      };
-      window.VetcareApp.EventBus.on("outbreak:alert_declared", Dashboard.handleOutbreakDeclared);
-    },
-
-    // 23. REAL-TIME TIMERS & INTERVALS
-    startTimers: function () {
-      // 1. Clock Runner
-      Dashboard.state.clockInterval = setInterval(function () {
-        const timeEl = document.getElementById("liveClockTime");
-        const dateEl = document.getElementById("liveClockDate");
-        const now = new Date();
-        if (timeEl) {
-          timeEl.textContent = now.toLocaleTimeString("en-IN", { hour12: false }) + " IST";
-        }
-        if (dateEl) {
-          dateEl.textContent = now.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
-        }
-      }, 1000);
-
-      // 2. Wait Timer Updater (Every 60s)
-      Dashboard.state.waitTimerInterval = setInterval(function () {
-        const now = Date.now();
-        Dashboard.state.todaysQueue.forEach(p => {
-          if (p.checkInTimestamp) {
-            p.waitTimeMins = Math.floor((now - p.checkInTimestamp) / (60 * 1000));
-          }
-        });
-        // Non-intrusive re-render of queue cards if on queue tab
-        if (Dashboard.state.activeTab === "live_opd_queue" || Dashboard.state.activeTab === "overview") {
-          const cardsContainer = document.querySelector(".queue-scroll");
-          if (cardsContainer) {
-            cardsContainer.innerHTML = Dashboard.renderQueueCards(Dashboard.state.activeTab === "overview");
-          }
-        }
-      }, 60000);
-    },
-
-    // 24. DOM EVENT DELEGATION & ACTION BINDINGS
-    bindDomActions: function () {
-      const root = Dashboard.state.domContainer;
-      if (!root) return;
-
-      // Status selector pill change
-      const statusSelect = document.getElementById("doctorDutyStatusSelect");
-      if (statusSelect) {
-        statusSelect.addEventListener("change", function () {
-          Dashboard.state.doctorProfile.onDutyStatus = this.value;
-          StorageEngine.saveState(Dashboard.state);
-          Dashboard.render(Dashboard.state.domContainer.id);
-          if (window.VetcareApp.showToast) {
-            window.VetcareApp.showToast(`ड्यूटी स्थिति अपडेट: ${this.value}`, "info");
-          }
-        });
-      }
-
-      // Master Call Next Button
-      const btnCallMaster = document.getElementById("btnCallNextMaster");
-      if (btnCallMaster) {
-        btnCallMaster.addEventListener("click", () => Dashboard.callNextPatient());
-      }
-
-      // Tab switcher clicks
-      root.querySelectorAll(".tab-switch-btn").forEach(btn => {
-        btn.addEventListener("click", function () {
-          const target = this.getAttribute("data-tab-target");
-          if (target) {
-            Dashboard.state.activeTab = target;
-            StorageEngine.saveState(Dashboard.state);
-            Dashboard.render(Dashboard.state.domContainer.id);
-          }
-        });
-      });
-
-      // Queue priority filter clicks
-      root.querySelectorAll(".queue-filter-btn").forEach(btn => {
-        btn.addEventListener("click", function () {
-          const filter = this.getAttribute("data-filter-queue");
-          if (filter) {
-            Dashboard.state.queueFilter = filter;
-            const scrollContainer = root.querySelector(".queue-scroll");
-            if (scrollContainer) {
-              scrollContainer.innerHTML = Dashboard.renderQueueCards(true);
-            }
-            root.querySelectorAll(".queue-filter-btn").forEach(b => {
-              b.className = "queue-filter-btn px-2 py-0.5 rounded text-slate-400";
-            });
-            this.className = "queue-filter-btn px-2 py-0.5 rounded bg-emerald-500 text-slate-950 font-black";
-          }
-        });
-      });
-
-      // Quick Launch Bar Clicks
-      const btnQuickRx = document.getElementById("btnQuickRxSlip");
-      if (btnQuickRx) {
-        btnQuickRx.addEventListener("click", function () {
-          if (window.VetcareApp.Modules.PrescriptionGenerator && typeof window.VetcareApp.Modules.PrescriptionGenerator.init === "function") {
-            window.VetcareApp.Modules.PrescriptionGenerator.init();
-          } else {
-            Dashboard.callNextPatient();
-          }
-        });
-      }
-
-      const btnEmergencyGuide = document.getElementById("btnEmergencyGuideModal");
-      if (btnEmergencyGuide) {
-        btnEmergencyGuide.addEventListener("click", function () {
-          Dashboard.launchEmergencyIntervention("EMERGENCY-PROTOCOL-TRIGGER");
-        });
-      }
-
-      const btnRegisterWalkin = document.getElementById("btnRegisterWalkinToken");
-      const btnAddQueuePatient = document.getElementById("btnAddNewQueuePatient");
-      const openIntake = function () {
-        // Dispatch event or launch intake dialog
-        window.VetcareApp.EventBus.emit("queue:patient_checked_in", {
-          tokenNo: Dashboard.state.todaysQueue.length + 101,
-          ownerName: "नया वॉक-इन पशुपालक",
-          breed: "मुर्राह भैंस (Murrah Buffalo)",
-          species: "bovine",
-          weightKg: 490,
-          priority: "URGENT_ORANGE",
-          chiefComplaint: "हल्का आफरा एवं जुगाली बंद (Off-Feed)"
-        });
-      };
-      if (btnRegisterWalkin) btnRegisterWalkin.addEventListener("click", openIntake);
-      if (btnAddQueuePatient) btnAddQueuePatient.addEventListener("click", openIntake);
-
-      // Delegated Action Clicks across the entire dashboard
-      root.addEventListener("click", function (e) {
-        const btn = e.target.closest("[data-action]");
-        if (!btn) return;
-        const action = btn.getAttribute("data-action");
-
-        if (action === "call_patient") {
-          const token = btn.getAttribute("data-token");
-          Dashboard.callNextPatient(token);
-        } else if (action === "triage_toggle") {
-          const token = parseInt(btn.getAttribute("data-token"), 10);
-          const patient = Dashboard.state.todaysQueue.find(p => p.tokenNo === token);
-          if (patient) {
-            const cycle = { ROUTINE_GREEN: "URGENT_ORANGE", URGENT_ORANGE: "EMERGENCY_RED", EMERGENCY_RED: "ROUTINE_GREEN" };
-            patient.priority = cycle[patient.priority] || "ROUTINE_GREEN";
-            StorageEngine.saveState(Dashboard.state);
-            Dashboard.render(Dashboard.state.domContainer.id);
-            if (window.VetcareApp.showToast) {
-              window.VetcareApp.showToast(`टोकन #${token} ट्राइएज प्राथमिकता अपडेट की गई।`, "warning");
-            }
-          }
-        } else if (action === "review_lab") {
-          const reportId = btn.getAttribute("data-report-id");
-          Dashboard.state.pendingLabReports = Dashboard.state.pendingLabReports.filter(r => r.reportId !== reportId);
-          StorageEngine.saveState(Dashboard.state);
-          Dashboard.render(Dashboard.state.domContainer.id);
-          ClinicalAudio.chimeSuccess();
-          if (window.VetcareApp.showToast) {
-            window.VetcareApp.showToast(`लैब रिपोर्ट ${reportId} को डॉक्टर द्वारा सत्यापित व अनुमोदित किया गया।`, "success");
-          }
-        } else if (action === "print_recent_rx") {
-          const caseNo = btn.getAttribute("data-case");
-          const recent = Dashboard.state.recentConsultations.find(r => r.caseNo === caseNo);
-          if (recent) {
-            Dashboard.executePrescriptionPrint(
-              { tokenNo: recent.tokenNo, ownerName: recent.ownerName, breed: recent.species, tagNo: "TAG-VERIFIED", weightKg: 450, gender: "Female", age: "5 Yrs" },
-              recent.diagnosis,
-              recent.treatmentSummary
-            );
-          }
-        } else if (action === "duplicate_rx") {
-          if (window.VetcareApp.showToast) {
-            window.VetcareApp.showToast("केस पर्ची क्लोन की गई। नए परामर्श हेतु तैयार।", "info");
-          }
-        } else if (action === "broadcast_farmer_sms") {
-          ClinicalAudio.chimeEmergency();
-          if (window.VetcareApp.showToast) {
-            window.VetcareApp.showToast("क्षेत्र के 1,450 पंजीकृत कृषकों को SMS एडवाइजरी प्रसारित की गई!", "success");
-          }
-        } else if (action === "view_epidemic_sop") {
-          Dashboard.launchEmergencyIntervention("EPIDEMIC-SOP-TRIGGER");
-        }
-      });
-    },
-
-    // 25. HELPER: UPDATE LIVE STATUS PILL WITHOUT FULL REDRAW
-    updateHeaderStatusPill: function () {
-      const select = document.getElementById("doctorDutyStatusSelect");
-      if (select) {
-        select.value = Dashboard.state.doctorProfile.onDutyStatus;
-      }
-    }
-  };
-
-  // 26. MODULE EXPORT & INITIALIZATION HOOK
-  window.VetcareApp.Doctor.Dashboard = Dashboard;
-
-  // Auto-wire with `app-bootstrap.js` if already present in runtime
-  if (window.VetcareApp.registerModule && typeof window.VetcareApp.registerModule === "function") {
-    window.VetcareApp.registerModule("DoctorDashboard", Dashboard);
+    document.getElementById("btnCloseDiffModal")?.addEventListener("click", () => modalRoot.innerHTML = "");
+    document.getElementById("btnApplyDiffToRx")?.addEventListener("click", () => {
+      notify("बबेसियोसिस निदान प्रिस्क्रिप्शन में जोड़ा गया!", "success");
+      modalRoot.innerHTML = "";
+    });
   }
 
-  // Automatic trigger if standard `#doctorDashboardContainer` container exists on DOM load
-  document.addEventListener("DOMContentLoaded", function () {
-    const defaultContainer = document.getElementById("doctorDashboardContainer");
-    if (defaultContainer) {
-      Dashboard.init("doctorDashboardContainer");
+  /**
+   * Tool 3: Veterinary Dosage Calculator Modal (Shaeffer's Formula + Exact mL Dosing)
+   */
+  function openDosageModal() {
+    const modalRoot = document.getElementById("doctorModalPortal");
+    if (!modalRoot) return;
+
+    modalRoot.innerHTML = `
+      <div class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
+        <div class="bg-white border-2 border-emerald-300 rounded-3xl max-w-xl w-full p-5 sm:p-6 shadow-elevated relative my-auto">
+          
+          <div class="flex items-center justify-between border-b border-slate-200 pb-3 mb-4">
+            <div class="flex items-center gap-2.5">
+              <div class="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-lg font-bold">
+                <i class="fa-solid fa-calculator"></i>
+              </div>
+              <div>
+                <h3 class="font-display font-bold text-base text-slate-900">शेफर्स सूत्र एवं लाइव दवा खुराक मापक</h3>
+                <div class="text-[10px] font-mono text-slate-500">SHAEFFER'S BODY WEIGHT: L × G² / 300</div>
+              </div>
+            </div>
+            <button type="button" id="btnCloseDosageModal" class="p-1 text-slate-400 hover:text-slate-700 rounded-lg">
+              <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+          </div>
+
+          <div class="space-y-4 text-xs">
+            <!-- Dimensions Input -->
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block font-semibold text-slate-700 mb-1">लंबाई (Length - L) [इंच]</label>
+                <input type="number" id="calcLengthInches" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-mono font-bold text-slate-900" value="62" />
+              </div>
+              <div>
+                <label class="block font-semibold text-slate-700 mb-1">घेरा (Heart Girth - G) [इंच]</label>
+                <input type="number" id="calcGirthInches" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-mono font-bold text-slate-900" value="70" />
+              </div>
+            </div>
+
+            <!-- Calculated Weight Card -->
+            <div class="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-between">
+              <div>
+                <div class="text-[10px] font-mono text-emerald-800 uppercase font-semibold">परिकलित वास्तविक वजन</div>
+                <div id="modalCalculatedWeight" class="text-2xl font-display font-black text-emerald-900">
+                  458.10 <span class="text-xs font-semibold text-emerald-700">कि.ग्रा. (Kg)</span>
+                </div>
+              </div>
+              <span class="text-[10px] font-mono bg-white px-2.5 py-1 rounded-lg border border-emerald-300 font-bold text-emerald-800">
+                1010 LBS
+              </span>
+            </div>
+
+            <!-- Drug mL Dosing Selector -->
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">दवा चुनें (Drug Formulation)</label>
+              <select id="dosageDrugSelect" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-bold text-slate-900">
+                <option value="meloxicam">Inj. Meloxicam (0.5 mg/kg, 20 mg/ml) - दर्दनिवारक</option>
+                <option value="enrofloxacin">Inj. Enrofloxacin (5 mg/kg, 100 mg/ml) - एंटीबायोटिक</option>
+                <option value="oxytetracycline">Inj. Oxytetracycline LA (20 mg/kg, 200 mg/ml)</option>
+                <option value="ceftiofur">Inj. Ceftiofur Sodium (2 mg/kg, 50 mg/ml)</option>
+                <option value="ivermectin">Inj. Ivermectin (0.2 mg/kg, 10 mg/ml - 1 ml/50 kg SC)</option>
+              </select>
+            </div>
+
+            <div class="p-3.5 rounded-2xl bg-slate-900 text-white flex items-center justify-between">
+              <div>
+                <div class="text-[10px] font-mono text-slate-400 uppercase">आवश्यक सटीक मात्रा (Exact Dosing mL)</div>
+                <div id="modalExactDoseResult" class="text-xl font-display font-black text-emerald-400">
+                  11.45 mL
+                </div>
+              </div>
+              <div class="text-right text-[11px] text-slate-300">
+                रूट: <strong class="text-white">IM (Intramuscular)</strong><br />
+                आवृत्ति: <strong class="text-white">Once Daily</strong>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-4 pt-3 border-t border-slate-100 flex justify-end">
+            <button type="button" id="btnInsertDoseToQueue" class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-sm">
+              खुराक प्रिस्क्रिप्शन में दर्ज करें
+            </button>
+          </div>
+
+        </div>
+      </div>
+    `;
+
+    function updateDoseCalc() {
+      const l = parseFloat(document.getElementById("calcLengthInches")?.value || 0);
+      const g = parseFloat(document.getElementById("calcGirthInches")?.value || 0);
+      const drug = document.getElementById("dosageDrugSelect")?.value || "meloxicam";
+
+      // Shaeffer's formula: (L * G^2) / 300 = weight in lbs. Convert to kg = lbs * 0.453592
+      const weightLbs = (l * (g * g)) / 300;
+      const weightKg = weightLbs * 0.453592;
+
+      const weightDisp = document.getElementById("modalCalculatedWeight");
+      if (weightDisp) {
+        weightDisp.innerHTML = `${weightKg.toFixed(2)} <span class="text-xs font-semibold text-emerald-700">कि.ग्रा. (Kg)</span>`;
+      }
+
+      let ml = 0;
+      if (drug === "meloxicam") {
+        // 0.5 mg/kg with 20 mg/ml => (kg * 0.5) / 20
+        ml = (weightKg * 0.5) / 20;
+      } else if (drug === "enrofloxacin") {
+        // 5 mg/kg with 100 mg/ml => (kg * 5) / 100
+        ml = (weightKg * 5) / 100;
+      } else if (drug === "oxytetracycline") {
+        // 20 mg/kg with 200 mg/ml => (kg * 20) / 200
+        ml = (weightKg * 20) / 200;
+      } else if (drug === "ceftiofur") {
+        // 2 mg/kg with 50 mg/ml => (kg * 2) / 50
+        ml = (weightKg * 2) / 50;
+      } else if (drug === "ivermectin") {
+        // 1 ml / 50 kg
+        ml = weightKg / 50;
+      }
+
+      const doseDisp = document.getElementById("modalExactDoseResult");
+      if (doseDisp) {
+        doseDisp.textContent = `${ml.toFixed(2)} mL`;
+      }
     }
-  });
+
+    document.getElementById("calcLengthInches")?.addEventListener("input", updateDoseCalc);
+    document.getElementById("calcGirthInches")?.addEventListener("input", updateDoseCalc);
+    document.getElementById("dosageDrugSelect")?.addEventListener("change", updateDoseCalc);
+
+    document.getElementById("btnCloseDosageModal")?.addEventListener("click", () => modalRoot.innerHTML = "");
+    document.getElementById("btnInsertDoseToQueue")?.addEventListener("click", () => {
+      notify("खुराक सफलतापूर्वक सुरक्षित की गई!", "success");
+      modalRoot.innerHTML = "";
+    });
+  }
+
+  /**
+   * Tool 4: Drug Interactions & Steroid Safety Checker Modal
+   */
+  function openInteractionsModal() {
+    const modalRoot = document.getElementById("doctorModalPortal");
+    if (!modalRoot) return;
+
+    modalRoot.innerHTML = `
+      <div class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
+        <div class="bg-white border-2 border-rose-300 rounded-3xl max-w-xl w-full p-5 sm:p-6 shadow-elevated relative my-auto">
+          
+          <div class="flex items-center justify-between border-b border-slate-200 pb-3 mb-4">
+            <div class="flex items-center gap-2.5">
+              <div class="w-9 h-9 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center text-lg font-bold">
+                <i class="fa-solid fa-shield-virus"></i>
+              </div>
+              <div>
+                <h3 class="font-display font-bold text-base text-slate-900">ड्रग-ड्रग इंटरेक्शन व स्टेरॉयड सुरक्षा चेकर</h3>
+                <div class="text-[10px] font-mono text-slate-500">FATAL INTERACTION PREVENTOR • LEVEL 1 CLINICAL LOCK</div>
+              </div>
+            </div>
+            <button type="button" id="btnCloseInterModal" class="p-1 text-slate-400 hover:text-slate-700 rounded-lg">
+              <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+          </div>
+
+          <div class="space-y-4 text-xs">
+            <div class="p-3.5 rounded-2xl bg-rose-50 border border-rose-200">
+              <div class="flex items-center gap-2 font-black text-rose-800 text-sm mb-1">
+                <i class="fa-solid fa-triangle-exclamation text-rose-600 text-base"></i>
+                <span>कॉर्टिकोस्टेरॉइड गर्भ-सुरक्षा लॉक (Pregnancy Steroid Lock)</span>
+              </div>
+              <p class="text-rose-900/90 leading-relaxed text-[11px]">
+                गर्भवती पशुओं में Dexamethasone, Betamethasone अथवा Isoflupredone का प्रयोग अंतिम तिमाही में तत्काल <strong>गर्भपात (Abortion)</strong> का कारण बनता है। प्रणाली गर्भवती के रूप में चिह्नित किसी भी पशु के लिए स्टेरॉयड प्रिस्क्रिप्शन को ब्लॉक करती है।
+              </p>
+            </div>
+
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">जांच हेतु 2 अथवा अधिक औषधियां चुनें:</label>
+              <div class="grid grid-cols-2 gap-2 p-3 bg-slate-50 rounded-2xl border border-slate-200">
+                <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-800">
+                  <input type="checkbox" id="chkDrugFlunixin" checked class="rounded text-rose-600" />
+                  <span>Flunixin Meglumine</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-800">
+                  <input type="checkbox" id="chkDrugMeloxicam" checked class="rounded text-rose-600" />
+                  <span>Meloxicam</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-800">
+                  <input type="checkbox" id="chkDrugGentamicin" class="rounded text-rose-600" />
+                  <span>Gentamicin (Aminoglycoside)</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-800">
+                  <input type="checkbox" id="chkDrugFurosemide" class="rounded text-rose-600" />
+                  <span>Furosemide (Lasix)</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Live Safety Scan Result -->
+            <div id="safetyScanAlertBox" class="p-3.5 rounded-2xl bg-rose-100/70 border border-rose-300 text-rose-900">
+              <div class="font-bold flex items-center gap-1.5 text-xs text-rose-800">
+                <i class="fa-solid fa-circle-xmark text-rose-600"></i>
+                <span>गंभीर प्रतिकूल प्रतिक्रिया (FATAL NSAID DUPLICATION)</span>
+              </div>
+              <div class="text-[11px] mt-1 text-rose-950 font-medium">
+                Flunixin + Meloxicam का एक साथ प्रयोग तीव्र रीनल पैपिलरी नेक्रोसिस (Acute Renal Failure) व गंभीर गैस्ट्रिक अल्सरेशन का कारण बनता है। दो NSAIDs कभी भी एक साथ न दें।
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-4 pt-3 border-t border-slate-100 flex justify-end">
+            <button type="button" id="btnDismissInterModal" class="px-5 py-2 rounded-xl bg-slate-900 text-white font-bold text-xs shadow-sm">
+              चेतावनी समझी व बंद करें
+            </button>
+          </div>
+
+        </div>
+      </div>
+    `;
+
+    document.getElementById("btnCloseInterModal")?.addEventListener("click", () => modalRoot.innerHTML = "");
+    document.getElementById("btnDismissInterModal")?.addEventListener("click", () => modalRoot.innerHTML = "");
+  }
+
+  /**
+   * Tool 5: Laboratory Reference Ranges Modal
+   */
+  function openLabRangesModal() {
+    const modalRoot = document.getElementById("doctorModalPortal");
+    if (!modalRoot) return;
+
+    modalRoot.innerHTML = `
+      <div class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
+        <div class="bg-white border-2 border-purple-300 rounded-3xl max-w-2xl w-full p-5 sm:p-6 shadow-elevated relative my-auto max-h-[92vh] overflow-y-auto">
+          
+          <div class="flex items-center justify-between border-b border-slate-200 pb-3 mb-4">
+            <div class="flex items-center gap-2.5">
+              <div class="w-9 h-9 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center text-lg font-bold">
+                <i class="fa-solid fa-vial-virus"></i>
+              </div>
+              <div>
+                <h3 class="font-display font-bold text-base text-slate-900">वेटनरी प्रयोगशाला संदर्भ मान (Reference Lab Ranges)</h3>
+                <div class="text-[10px] font-mono text-slate-500">HEMATOLOGY, CBC & SERUM BIOCHEMISTRY</div>
+              </div>
+            </div>
+            <button type="button" id="btnCloseLabModal" class="p-1 text-slate-400 hover:text-slate-700 rounded-lg">
+              <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+          </div>
+
+          <div class="space-y-3 text-xs">
+            <div class="flex items-center justify-between gap-2">
+              <div class="flex items-center gap-1 p-1 bg-slate-100 rounded-xl font-bold text-[11px]">
+                <button type="button" id="btnTabLabBovine" class="px-3 py-1 rounded-lg bg-white text-purple-700 shadow-sm">गोवंश (Bovine)</button>
+                <button type="button" id="btnTabLabCanine" class="px-3 py-1 rounded-lg text-slate-600">श्वान (Canine)</button>
+                <button type="button" id="btnTabLabCaprine" class="px-3 py-1 rounded-lg text-slate-600">बकरी (Caprine)</button>
+              </div>
+              <input type="text" id="labSearchInput" placeholder="पैरामीटर खोजें..." class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-1 text-xs w-36" />
+            </div>
+
+            <div class="border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+              <table class="w-full text-left border-collapse text-xs">
+                <thead class="bg-slate-100 text-slate-600 font-mono text-[10px] uppercase">
+                  <tr>
+                    <th class="p-2.5">परीक्षण पैरामीटर</th>
+                    <th class="p-2.5">सामान्य संदर्भ सीमा</th>
+                    <th class="p-2.5">नैदानिक महत्व</th>
+                  </tr>
+                </thead>
+                <tbody id="labTableBody" class="divide-y divide-slate-100 font-medium">
+                  ${State.labDatabase.bovine.map(row => `
+                    <tr>
+                      <td class="p-2 font-bold text-slate-900">${row.test}</td>
+                      <td class="p-2 font-mono font-bold text-purple-700">${row.normal}</td>
+                      <td class="p-2 text-slate-600">${row.desc}</td>
+                    </tr>
+                  `).join("")}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="mt-4 pt-3 border-t border-slate-100 flex justify-end">
+            <button type="button" id="btnCloseLabModalBottom" class="px-5 py-2 rounded-xl bg-slate-900 text-white font-bold text-xs shadow-sm">
+              बंद करें
+            </button>
+          </div>
+
+        </div>
+      </div>
+    `;
+
+    document.getElementById("btnCloseLabModal")?.addEventListener("click", () => modalRoot.innerHTML = "");
+    document.getElementById("btnCloseLabModalBottom")?.addEventListener("click", () => modalRoot.innerHTML = "");
+  }
+
+  /**
+   * Tool 6: Surgery & Anesthesia Protocols Modal
+   */
+  function openSurgeryModal() {
+    const modalRoot = document.getElementById("doctorModalPortal");
+    if (!modalRoot) return;
+
+    modalRoot.innerHTML = `
+      <div class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
+        <div class="bg-white border-2 border-amber-300 rounded-3xl max-w-xl w-full p-5 sm:p-6 shadow-elevated relative my-auto max-h-[92vh] overflow-y-auto">
+          
+          <div class="flex items-center justify-between border-b border-slate-200 pb-3 mb-4">
+            <div class="flex items-center gap-2.5">
+              <div class="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-lg font-bold">
+                <i class="fa-solid fa-syringe"></i>
+              </div>
+              <div>
+                <h3 class="font-display font-bold text-base text-slate-900">सर्जरी व एनेस्थीसिया प्रोटोकॉल</h3>
+                <div class="text-[10px] font-mono text-slate-500">PRE-OP CHECKLIST & SEDATION GUIDELINES</div>
+              </div>
+            </div>
+            <button type="button" id="btnCloseSurgeryModal" class="p-1 text-slate-400 hover:text-slate-700 rounded-lg">
+              <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+          </div>
+
+          <div class="space-y-4 text-xs">
+            <!-- Pre-Op Checklist -->
+            <div class="p-3.5 bg-amber-50/70 rounded-2xl border border-amber-200">
+              <div class="font-bold text-amber-900 mb-2 flex items-center gap-1.5">
+                <i class="fa-solid fa-clipboard-check text-amber-600"></i>
+                <span>प्री-ऑपरेटिव उपवास व तैयारी (Fasting Rules)</span>
+              </div>
+              <ul class="space-y-1 text-amber-950 font-medium text-[11px]">
+                <li>• <strong>बड़े जुगाली करने वाले पशु (Cattle/Buffalo):</strong> चारा 24–36 घंटे बंद, पानी 12 घंटे बंद (आफरा व रीगर्जिटेशन रोकने हेतु)।</li>
+                <li>• <strong>श्वान (Canines):</strong> भोजन 12 घंटे बंद, पानी 4 घंटे बंद।</li>
+                <li>• <strong>इमरजेंसी सिजेरियन / रुमेनोटॉमी:</strong> उपवास संभव न हो तो एंडोट्रैचियल कफ अनिवार्य।</li>
+              </ul>
+            </div>
+
+            <!-- Sedation & Induction -->
+            <div class="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
+              <div class="font-bold text-slate-900">रूमेनोटॉमी / सीजेरियन हेतु स्थानीय ब्लॉक (Local Infiltration)</div>
+              <div class="text-[11px] text-slate-700">
+                <strong>Lignocaine HCl (2%):</strong> इनवर्टेड-L ब्लॉक (Inverted-L) अथवा पैरा-वर्टिब्रल तंत्रिका ब्लॉक (T13, L1, L2, L3) — अधिकतम 10 mg/kg।
+              </div>
+              <div class="text-[11px] text-slate-700 border-t border-slate-200 pt-2">
+                <strong>Zylaxin (Xylazine 2%):</strong> गोवंश अत्यंत संवेदनशील! खुराक केवल <strong>0.05–0.1 mg/kg IM</strong>।
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-4 pt-3 border-t border-slate-100 flex justify-end">
+            <button type="button" id="btnCloseSurgeryModalBottom" class="px-5 py-2 rounded-xl bg-slate-900 text-white font-bold text-xs shadow-sm">
+              बंद करें
+            </button>
+          </div>
+
+        </div>
+      </div>
+    `;
+
+    document.getElementById("btnCloseSurgeryModal")?.addEventListener("click", () => modalRoot.innerHTML = "");
+    document.getElementById("btnCloseSurgeryModalBottom")?.addEventListener("click", () => modalRoot.innerHTML = "");
+  }
+
+  /**
+   * Binds All Dashboard Click and Input Handlers
+   */
+  function bindDashboardEvents() {
+    // Tool Open Handlers
+    document.getElementById("btnOpenToolRxPad")?.addEventListener("click", () => openDigitalRxModal());
+    document.getElementById("btnOpenToolDifferential")?.addEventListener("click", () => openDifferentialModal());
+    document.getElementById("btnOpenToolDosage")?.addEventListener("click", () => openDosageModal());
+    document.getElementById("btnOpenToolInteractions")?.addEventListener("click", () => openInteractionsModal());
+    document.getElementById("btnOpenToolLabRanges")?.addEventListener("click", () => openLabRangesModal());
+    document.getElementById("btnOpenToolSurgery")?.addEventListener("click", () => openSurgeryModal());
+
+    // OPD Queue Search Input
+    document.getElementById("opdQueueSearchInput")?.addEventListener("input", function () {
+      renderQueueRows(this.value);
+    });
+
+    // Refresh Queue Button
+    document.getElementById("btnRefreshQueue")?.addEventListener("click", () => {
+      renderQueueRows();
+      notify("ओपीडी सूची रीफ्रेश हुई", "info");
+    });
+
+    // Start Exam Delegate on Table
+    document.getElementById("opdQueueTableBody")?.addEventListener("click", function (e) {
+      const btn = e.target.closest(".btn-start-exam");
+      if (btn) {
+        const pId = btn.getAttribute("data-patient-id");
+        const patient = State.patientsQueue.find(item => item.id === pId);
+        if (patient) {
+          patient.status = "in_progress";
+          renderQueueRows();
+          openDigitalRxModal(patient);
+        }
+      }
+    });
+
+    // Logout Button
+    document.getElementById("btnDashboardLogout")?.addEventListener("click", () => {
+      if (App.logout) {
+        App.logout();
+      } else {
+        App.Session.role = "guest";
+        if (App.navigateTo) App.navigateTo("home");
+      }
+    });
+  }
+
+  // Public Interface Export
+  App.DoctorDashboard = {
+    version: "2026.PROD.VET.1",
+    render: function (containerSelector) {
+      render(containerSelector);
+    },
+    getPatientsQueue: function () {
+      return State.patientsQueue;
+    },
+    openRxModal: function (patient) {
+      openDigitalRxModal(patient);
+    }
+  };
 
 })(window, document);
